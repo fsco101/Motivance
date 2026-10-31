@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "fresh_source_copy": true,
+  "copied_local_properties": false,
+  "supabase_config_supplied": false,
+  "command": ":app:assembleDebug :app:lintDebug :app:testDebugUnitTest :core:assessment:test --no-daemon",
+  "log": "tmp/sprint-1-clean-pc09zw7b/build.log"
+}

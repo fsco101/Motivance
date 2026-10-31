@@ -1,0 +1,31 @@
+{
+  "source": "local build with ARM packaging and native Stitch UI",
+  "suites": [
+    {
+      "name": "com.motivance.data.remote.SupabaseAuthRepositoryTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "com.motivance.feature.auth.AuthViewModelTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "CameraDiagnosticsTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "PreviewMappingTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0"
+    }
+  ],
+  "total_tests": 23,
+  "lint_errors": 0
+}

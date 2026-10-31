@@ -1,0 +1,299 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Motivance - Exercise Setup &amp; Camera Positioning</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3f608d",
+            "on-primary": "#ffffff",
+            "surface-container-high": "#dce9ff",
+            "on-primary-container": "#80a0d1",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed": "#001c3a",
+            "secondary": "#006a61",
+            "primary-fixed-dim": "#a8c8fc",
+            "tertiary-fixed": "#ffddb8",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#a8c8fc",
+            "primary-container": "#0f3661",
+            "outline-variant": "#c3c6d0",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-bright": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#4e2f00",
+            "surface": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-surface-variant": "#43474f",
+            "inverse-surface": "#213145",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#d3e4fe",
+            "primary": "#002042",
+            "on-secondary-container": "#006f66",
+            "on-surface": "#0b1c30",
+            "primary-fixed": "#d4e3ff",
+            "surface-container": "#e5eeff",
+            "on-background": "#0b1c30",
+            "on-tertiary-container": "#dd8d00",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-secondary-fixed-variant": "#005049",
+            "secondary-fixed": "#89f5e7",
+            "on-secondary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "on-primary-fixed-variant": "#254874",
+            "surface-dim": "#cbdbf5",
+            "tertiary": "#311c00",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "secondary-container": "#86f2e4",
+            "outline": "#737780",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.25rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-xl": "2.25rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "data-metric": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "data-metric": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-outlined.fill-icon {
+      font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); box-shadow: 0 0 24px rgba(13, 148, 136, 0.45); }
+    }
+    .animate-teal-glow {
+      animation: pulse-glow 2.4s infinite ease-in-out;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex justify-center selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Mobile Viewport Outer Container -->
+<div class="relative w-full max-w-md bg-surface min-h-screen pb-28 flex flex-col shadow-2xl overflow-x-hidden">
+<!-- Top Navigation Bar (Shared Component JSON anchor) -->
+<header class="sticky top-0 z-40 bg-surface dark:bg-inverse-surface shadow-sm dark:shadow-none flex justify-between items-center w-full px-margin h-16 transition-colors">
+<div class="flex items-center gap-2">
+<button aria-label="Menu navigation" class="w-10 h-10 flex items-center justify-center rounded-xl text-primary dark:text-inverse-primary hover:bg-surface-container-high dark:hover:bg-surface-container active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary">menu</span>
+</button>
+<div class="flex items-center"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGa2x5Hn6Ber1YrxfgSuqZU_9bp2ZTuo4ThxOiFXWudwnEJz_Hz3Az6rc5gqH5vuMbW-gpQahMRti7jZ1SabvhyP1JDJrefSDRgCnWldtmU2o_jZAErA4-2kw2Mr-Vm2UNu0yH6dVFtRYKwQuDlldr-WCNBq-RB2LKh4YGqkNZRIfBuT_-BzaWFDOW9K4zsChZwK2tmRW-5Azpb6cU5Liv3vVND7jvsT0ArHrVGBnVMdf1hQwj3ymdrw" alt="Motivance" class="w-7 h-7 rounded-lg object-contain mr-2 inline-block"><span class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight">Motivance</span></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wider flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary animate-ping inline-block"></span>
+          VISION AI
+        </span>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold overflow-hidden border border-outline-variant/40">
+<span class="material-symbols-outlined text-primary">person</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin pt-space-sm space-y-space-md">
+<!-- Context Subheader / Screen Purpose -->
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">csv</span>
+<span class="">CALIBRATION PROTOCOL • STEP 1 OF 3</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">
+          Elbow Flexion Rehabilitation
+        </h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Position your device on a stable surface at chest level for precision motion tracking.
+        </p>
+</div>
+<!-- Live Optical Viewfinder Container -->
+<div class="relative w-full rounded-2xl overflow-hidden border border-outline-variant/60 shadow-lg bg-inverse-surface aspect-[3/4] flex flex-col justify-between">
+<!-- Live Camera Feed Simulation with Biomechanical Overlay -->
+<div class="absolute inset-0 z-0">
+<img alt="Patient camera calibration standing view" class="w-full h-full object-cover opacity-85" data-alt="Photorealistic medium full-shot of a female patient or athletic woman standing upright in a brightly lit modern clinic room, facing slightly at a three-quarter angle towards the camera with right forearm slightly bent ready for elbow flexion physical therapy exercise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB47L4SwTgyXViwJIXIic3TU4iozlNDYEY33LPZVmyZHXnKI2kC1qK_bkKbtpWfSYEtEPMYWHGslz06QHCE9yp8PpStx_SjXEyhCZr5QF8NS3F2wA3UuefL7UHaGBv-q3awyPrBPUoZ73yfyvH-gOgQDnR7OSBjQARQIRE7wYlfIiZCWCe9DbnwryRJFMna6sQ1Z970elM5WWYV-0Tj14YYPTCnyBRs6bmyBpvUtp7NtF4gETytTfK2nQ" style="object-position: center 20%;">
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/90 via-transparent to-inverse-surface/60 pointer-events-none"></div>
+<!-- Anatomical Pose Skeleton Vector Wireframe -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" fill="none" viewBox="0 0 360 480" xmlns="http://www.w3.org/2000/svg"><rect x="110" y="60" width="145" height="380" rx="16" stroke="#86F2E4" stroke-width="1.5" stroke-dasharray="6 6" stroke-opacity="0.6"></rect><circle cx="176" cy="102" r="4.5" fill="#FFFFFF" stroke="#006A61" stroke-width="2"></circle><circle cx="177" cy="136" r="4" fill="#FFFFFF" stroke="#006A61" stroke-width="2"></circle><line x1="176" y1="102" x2="177" y2="136" stroke="#86F2E4" stroke-width="2" stroke-opacity="0.8"></line><line x1="177" y1="136" x2="158" y2="152" stroke="#86F2E4" stroke-width="2.5" stroke-linecap="round"></line><line x1="177" y1="136" x2="200" y2="148" stroke="#86F2E4" stroke-width="2.5" stroke-linecap="round"></line><circle cx="200" cy="148" r="4.5" fill="#86F2E4" stroke="#006A61" stroke-width="2"></circle><circle cx="158" cy="152" r="6" fill="#86F2E4" stroke="#006A61" stroke-width="2.5"></circle><line x1="158" y1="152" x2="166" y2="220" stroke="#86F2E4" stroke-width="3.5" stroke-linecap="round"></line><circle cx="166" cy="220" r="12" fill="none" stroke="#86F2E4" stroke-width="2" class="animate-ping" style="transform-origin: 166px 220px; animation-duration: 2s;"></circle><circle cx="166" cy="220" r="7" fill="#86F2E4" stroke="#002042" stroke-width="2.5"></circle><line x1="166" y1="220" x2="174" y2="214" stroke="#86F2E4" stroke-width="3.5" stroke-linecap="round"></line><circle cx="174" cy="214" r="5" fill="#FFFFFF" stroke="#006A61" stroke-width="2.5"></circle><line x1="177" y1="136" x2="180" y2="255" stroke="#86F2E4" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="3 3"></line><circle cx="180" cy="255" r="4.5" fill="#86F2E4" stroke="#006A61" stroke-width="2"></circle><rect x="48" y="206" width="68" height="26" rx="6" fill="#002042" fill-opacity="0.9" stroke="#86F2E4" stroke-width="1"></rect><text x="82" y="223" fill="#86F2E4" font-family="Plus Jakarta Sans" font-size="11" font-weight="700" text-anchor="middle">98° ROM</text><line x1="116" y1="219" x2="154" y2="220" stroke="#86F2E4" stroke-width="1.5" stroke-dasharray="2 2"></line></svg>
+</div>
+<!-- Top Status Layer: Camera Switch & Lighting Meter -->
+<div class="relative z-20 p-3 flex justify-between items-center">
+<div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/80 backdrop-blur-md text-surface border border-outline-variant/30">
+<span class="material-symbols-outlined text-[16px] text-secondary-container">videocam</span>
+<span class="font-label-sm text-label-sm font-semibold tracking-wide">ULTRAWIDE FRONT</span>
+</div>
+<button aria-label="Switch camera view" class="w-9 h-9 rounded-full bg-primary/80 backdrop-blur-md flex items-center justify-center text-surface border border-outline-variant/30 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">flip_camera_ios</span>
+</button>
+</div>
+<!-- Middle Overlay: Optimal Alignment Banner (Green Checkmark Banner) -->
+<div class="relative z-20 px-3">
+<div class="bg-secondary-container/95 backdrop-blur-md rounded-xl p-3 shadow-md border border-secondary flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px] font-bold">check</span>
+</div>
+<div>
+<p class="font-label-lg text-label-lg text-on-secondary-container leading-tight">
+                Good Position
+              </p>
+<p class="font-body-sm text-body-sm text-on-secondary-container/90">
+                Upper Body Fully In Frame
+              </p>
+</div>
+</div>
+</div>
+<!-- Bottom HUD: Real-Time Optical Telemetry Feed -->
+<div class="relative z-20 p-3 bg-inverse-surface/90 backdrop-blur-lg border-t border-outline-variant/20">
+<div class="grid grid-cols-3 gap-2 text-center divide-x divide-outline-variant/20">
+<!-- Distance Indicator -->
+<div class="px-1">
+<div class="flex items-center justify-center gap-1 text-secondary-container mb-0.5">
+<span class="material-symbols-outlined text-[14px]">straighten</span>
+<span class="font-label-sm text-label-sm text-secondary-container">Distance</span>
+</div>
+<p class="font-headline-sm text-headline-sm text-surface font-bold leading-none">1.8m</p>
+<p class="font-label-sm text-label-sm text-outline-variant text-[10px] mt-1">Opt. 1.5–2.0m</p>
+</div>
+<!-- Lighting Indicator -->
+<div class="px-1">
+<div class="flex items-center justify-center gap-1 text-secondary-container mb-0.5">
+<span class="material-symbols-outlined text-[14px]">light_mode</span>
+<span class="font-label-sm text-label-sm text-secondary-container">Lighting</span>
+</div>
+<p class="font-headline-sm text-headline-sm text-surface font-bold leading-none">Sufficient</p>
+<p class="font-label-sm text-label-sm text-secondary-container text-[10px] mt-1 flex items-center justify-center gap-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container inline-block"></span> 420 Lux
+              </p>
+</div>
+<!-- Pose Tracking Indicator -->
+<div class="px-1">
+<div class="flex items-center justify-center gap-1 text-secondary-container mb-0.5">
+<span class="material-symbols-outlined text-[14px]">motion_sensor_active</span>
+<span class="font-label-sm text-label-sm text-secondary-container">Tracking</span>
+</div>
+<p class="font-headline-sm text-headline-sm text-surface font-bold leading-none">Ready</p>
+<p class="font-label-sm text-label-sm text-secondary-container text-[10px] mt-1">60 FPS • Low Latency</p>
+</div>
+</div>
+</div>
+</div>
+<!-- High-Clarity Accessibility Prompt Card for Elderly / Patients -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant/50 shadow-sm flex items-start gap-3.5">
+<div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[24px]">accessibility_new</span>
+</div>
+<div class="space-y-1">
+<p class="font-label-lg text-label-lg text-primary font-bold">
+            Patient Posture Guidance
+          </p>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">
+            Stand or sit comfortably with your full right arm visible to the camera.
+          </p>
+<div class="pt-1 flex items-center gap-2 text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">volume_up</span>
+<span class="underline cursor-pointer">Replay audio instruction</span>
+</div>
+</div>
+</div>
+<!-- Primary Action: Start Session Button -->
+<div class="pt-space-xs space-y-2">
+<button class="w-full h-14 bg-secondary hover:bg-secondary/95 text-on-secondary rounded-xl font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-150 animate-teal-glow">
+<span class="material-symbols-outlined text-[24px]">videocam</span>
+<span class="">START SESSION</span>
+</button>
+<p class="text-center font-body-sm text-body-sm text-on-surface-variant">
+          Your camera stream is processed locally and strictly confidential.
+        </p>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Shared Component JSON anchor) -->
+<!-- Active tab: 'Exercises' since current view is the Exercise Setup & Calibration -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-space-xs bg-surface-container-lowest dark:bg-inverse-surface shadow-lg dark:shadow-none border-0">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container text-primary dark:text-inverse-primary active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<span class="font-label-md text-label-md mt-0.5">Home</span>
+</a>
+<!-- Exercises (ACTIVE DESTINATION) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl min-w-[56px] min-h-[52px] px-3 py-1.5 active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined text-[24px] fill-icon">fitness_center</span>
+<span class="font-label-md text-label-md font-bold mt-0.5">Exercises</span>
+</a>
+<!-- Progress -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container text-primary dark:text-inverse-primary active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined text-[24px]">monitoring</span>
+<span class="font-label-md text-label-md mt-0.5">Progress</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container text-primary dark:text-inverse-primary active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="font-label-md text-label-md mt-0.5">Profile</span>
+</a>
+</nav>
+</div>
+
+
+
+
+
+
+</body></html>

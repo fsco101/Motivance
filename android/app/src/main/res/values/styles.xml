@@ -1,0 +1,9 @@
+<resources>
+    <style name="Base.Theme.Motivance" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">#002042</item>
+        <item name="android:windowBackground">#F8F9FF</item>
+    </style>
+    <style name="Theme.Motivance" parent="Base.Theme.Motivance" />
+</resources>

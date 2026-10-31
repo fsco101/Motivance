@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "repository": "fsco101/Motivance",
+  "plan_issue": 1,
+  "schedule": {
+    "duration_weeks": 10,
+    "mvp_week": 8,
+    "start_date": null,
+    "contributors_assumed": "3-4 plus therapist input"
+  },
+  "files": [
+    "sprint-01.json",
+    "sprint-02.json",
+    "sprint-03.json",
+    "sprint-04.json",
+    "sprint-05.json"
+  ],
+  "sync": {
+    "default": "dry-run",
+    "close_issues": "Only when the entire sprint is completed and completion evidence passes validation.",
+    "close_milestone": "Only when all milestone issues are closed.",
+    "close_plan": "Only when all five sprints are completed.",
+    "managed_body_markers": [
+      "<!-- motivance-sprint:start -->",
+      "<!-- motivance-sprint:end -->"
+    ]
+  },
+  "labels": [
+    {
+      "name": "type:feature",
+      "color": "1D76DB",
+      "description": "Type: feature"
+    },
+    {
+      "name": "type:task",
+      "color": "1D76DB",
+      "description": "Type: task"
+    },
+    {
+      "name": "type:spike",
+      "color": "1D76DB",
+      "description": "Type: spike"
+    },
+    {
+      "name": "type:validation",
+      "color": "1D76DB",
+      "description": "Type: validation"
+    },
+    {
+      "name": "type:epic",
+      "color": "1D76DB",
+      "description": "Type: epic"
+    },
+    {
+      "name": "area:mobile",
+      "color": "5319E7",
+      "description": "Area: mobile"
+    },
+    {
+      "name": "area:cv",
+      "color": "5319E7",
+      "description": "Area: cv"
+    },
+    {
+      "name": "area:backend",
+      "color": "5319E7",
+      "description": "Area: backend"
+    },
+    {
+      "name": "area:security",
+      "color": "5319E7",
+      "description": "Area: security"
+    },
+    {
+      "name": "area:qa",
+      "color": "5319E7",
+      "description": "Area: qa"
+    },
+    {
+      "name": "area:devops",
+      "color": "5319E7",
+      "description": "Area: devops"
+    },
+    {
+      "name": "area:ux",
+      "color": "5319E7",
+      "description": "Area: ux"
+    },
+    {
+      "name": "area:planning",
+      "color": "5319E7",
+      "description": "Area: planning"
+    },
+    {
+      "name": "priority:p0",
+      "color": "D93F0B",
+      "description": "Release-critical; must pass before pilot release"
+    },
+    {
+      "name": "priority:p1",
+      "color": "D93F0B",
+      "description": "Required MVP supporting capability"
+    },
+    {
+      "name": "priority:p2",
+      "color": "D93F0B",
+      "description": "Optional or deferred; outside committed MVP"
+    },
+    {
+      "name": "status:blocked",
+      "color": "B60205",
+      "description": "Actual impediment documented with unblock action"
+    },
+    {
+      "name": "status:planned",
+      "description": "Planned work; implementation has not started",
+      "color": "EDEDED"
+    },
+    {
+      "name": "status:in-progress",
+      "description": "Implementation is underway",
+      "color": "FBCA04"
+    },
+    {
+      "name": "status:review",
+      "description": "Awaiting acceptance review",
+      "color": "D4C5F9"
+    },
+    {
+      "name": "status:done",
+      "description": "Acceptance evidence recorded; closes on completed sprint sync",
+      "color": "0E8A16"
+    },
+    {
+      "name": "sprint:01",
+      "description": "Sprint 1: weeks 1-2",
+      "color": "0052CC"
+    },
+    {
+      "name": "sprint:02",
+      "description": "Sprint 2: weeks 3-4",
+      "color": "0052CC"
+    },
+    {
+      "name": "sprint:03",
+      "description": "Sprint 3: weeks 5-6",
+      "color": "0052CC"
+    },
+    {
+      "name": "sprint:04",
+      "description": "Sprint 4: weeks 7-8",
+      "color": "0052CC"
+    },
+    {
+      "name": "sprint:05",
+      "description": "Sprint 5: weeks 9-10",
+      "color": "0052CC"
+    }
+  ]
+}

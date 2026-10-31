@@ -1,0 +1,483 @@
+{
+  "schema_version": 1,
+  "id": "S3",
+  "title": "S3 - Connected rehabilitation workflow",
+  "description": "Weeks 5-6. Exit: therapist assigns versioned prescriptions; patient completes an offline session; results synchronize once; server enforces patient boundaries.",
+  "goal": "Connect therapist prescriptions to the complete patient exercise workflow.",
+  "status": "planned",
+  "weeks": {
+    "start": 5,
+    "end": 6
+  },
+  "github_milestone": 3,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Assign a prescription, finish the exercise offline, reconnect and show exactly one saved session to the authorized therapist.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Assign a prescription, finish the exercise offline, reconnect and show exactly one saved session to the authorized therapist.",
+  "risks": [
+    "Auth and prescription version contracts must be stable.",
+    "Exercise synchronization failures with lost server acknowledgements."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and measurement risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 31,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-13",
+      "github_issue": 14,
+      "title": "Build therapist patient management and access assignment",
+      "description": "Provide the therapist patient list, patient profile creation/linking and assigned-patient history entry point.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Android developers",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p0",
+        "sprint:03"
+      ],
+      "dependencies": [
+        "MOT-03",
+        "MOT-04",
+        "MOT-06"
+      ],
+      "requirements": "PDF pp. 6, 9",
+      "target_paths": [
+        "supabase/",
+        "android/app/src/main/java/com/motivance/data/remote/",
+        "android/app/src/main/java/com/motivance/data/repository/"
+      ],
+      "functions": [
+        {
+          "name": "managePatientProfiles",
+          "description": "Register or link patients through an authorized invitation workflow.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "manageTherapistPatientLinks",
+          "description": "Grant or revoke assigned-patient access and expose appropriate history.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-13-AC1",
+          "description": "Therapist can register/link a patient through an approved invitation flow without knowing their password.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-13-AC2",
+          "description": "Only authorized staff can create or revoke therapist-patient links.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-13-AC3",
+          "description": "Revoking a link prevents future server access; offline cache limitations and expiry behavior are explicit.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-13-AC4",
+          "description": "Loading, empty, validation and denied-access states are handled.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-14",
+      "github_issue": 15,
+      "title": "Implement exercise catalogue and versioned prescriptions",
+      "description": "Allow therapists to prescribe supported exercises with side, ROM targets, repetition target and applicable duration/form parameters.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Android developers",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p0",
+        "sprint:03"
+      ],
+      "dependencies": [
+        "MOT-01",
+        "MOT-03",
+        "MOT-04",
+        "MOT-13"
+      ],
+      "requirements": "PDF pp. 7-9, 13",
+      "target_paths": [
+        "supabase/",
+        "android/app/src/main/java/com/motivance/data/remote/",
+        "android/app/src/main/java/com/motivance/data/repository/"
+      ],
+      "functions": [
+        {
+          "name": "maintainExerciseCatalogue",
+          "description": "Serve supported exercise definitions and validate configurable parameters.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "publishPrescriptionVersion",
+          "description": "Create immutable versions of individualized exercise targets and instructions.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-14-AC1",
+          "description": "Server validates parameters against the supported exercise schema.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-14-AC2",
+          "description": "Editing a prescription creates a new immutable version; historical sessions retain the original version.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-14-AC3",
+          "description": "Patients can read their active assignments but cannot change prescribed targets.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-14-AC4",
+          "description": "Add/change parameters for an existing supported algorithm without modifying pose-detection code.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-15",
+      "github_issue": 16,
+      "title": "Connect patient assignments to offline exercise sessions",
+      "description": "Complete the patient journey from assigned exercise to setup, live guidance and saved result.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Android developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:mobile",
+        "priority:p0",
+        "sprint:03"
+      ],
+      "dependencies": [
+        "MOT-10",
+        "MOT-11",
+        "MOT-14"
+      ],
+      "requirements": "PDF pp. 8, 11",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/feature/",
+        "android/app/src/main/java/com/motivance/data/",
+        "android/core/domain/"
+      ],
+      "functions": [
+        {
+          "name": "loadPatientAssignments",
+          "description": "Show downloaded active assignments, instructions and synchronization freshness.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "startAssignedSession",
+          "description": "Pin a valid prescription version and launch setup and exercise execution online or offline.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-15-AC1",
+          "description": "Exercise list shows current prescription, instructions and last synchronization time.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-15-AC2",
+          "description": "Session pins the downloaded prescription version at start and retains it through completion.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-15-AC3",
+          "description": "An already signed-in user can complete a cached assignment offline, subject to the documented cache validity policy.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-15-AC4",
+          "description": "Exercise unavailable, expired assignment and missing model/instructions have actionable messages.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-16",
+      "github_issue": 17,
+      "title": "Implement retry-safe session synchronization",
+      "description": "Use WorkManager plus a validated transactional server operation to upload sessions and child measurements.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Android developers",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p0",
+        "sprint:03"
+      ],
+      "dependencies": [
+        "MOT-04",
+        "MOT-11",
+        "MOT-14"
+      ],
+      "requirements": "PDF pp. 8-9, 11-12",
+      "target_paths": [
+        "supabase/",
+        "android/app/src/main/java/com/motivance/data/remote/",
+        "android/app/src/main/java/com/motivance/data/repository/"
+      ],
+      "functions": [
+        {
+          "name": "enqueueSessionUpload",
+          "description": "Schedule persistent uploads with backoff and explicit authentication/error states.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "ingestSessionAtomically",
+          "description": "Validate ownership and commit session measurements once despite duplicate requests.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-16-AC1",
+          "description": "Retries and duplicate requests create exactly one session and one logical set of measurements.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-16-AC2",
+          "description": "Session and measurements commit atomically; patient ID and prescription ownership are validated server-side.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-16-AC3",
+          "description": "Offline, network timeout, expired token and process restart recover with visible pending/synced/failed states.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-16-AC4",
+          "description": "Conflicts preserve the prescription used during recording and do not overwrite newer therapist settings.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-16-AC5",
+          "description": "Backoff, auth-required errors and permanently rejected writes have bounded, documented recovery behavior.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-17",
+      "github_issue": 18,
+      "title": "Implement consent records, retention and audit events",
+      "description": "Record consent version and key changes while implementing approved data retention and patient withdrawal workflows.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend developer",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:security",
+        "priority:p0",
+        "sprint:03"
+      ],
+      "dependencies": [
+        "MOT-03",
+        "MOT-04",
+        "MOT-06"
+      ],
+      "requirements": "PDF p. 12",
+      "target_paths": [
+        "supabase/migrations/",
+        "supabase/tests/",
+        "android/app/src/main/java/com/motivance/feature/auth/"
+      ],
+      "functions": [
+        {
+          "name": "recordConsent",
+          "description": "Capture consent version and withdrawal decisions independently of camera permission.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "applyRetentionAndAudit",
+          "description": "Implement approved data lifecycle rules and audit privileged changes without exposing sensitive logs.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-17-AC1",
+          "description": "Consent is recorded before collecting session data; camera permission alone is insufficient.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-17-AC2",
+          "description": "Audit logs capture role/link/prescription changes and authorized record actions without raw tokens or unnecessary health details.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-17-AC3",
+          "description": "Define retention periods, deletion/export request handling and backup-retention implications with the project owner.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-17-AC4",
+          "description": "Camera frames stay in memory by default; logs and analytics do not upload raw video or identifiable pose traces.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-18",
+      "github_issue": 19,
+      "title": "Test authorization boundaries and offline synchronization end to end",
+      "description": "Validate the complete therapist-to-patient workflow and database boundaries using synthetic records.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "QA contributor",
+      "estimate_points": 5,
+      "labels": [
+        "type:validation",
+        "area:qa",
+        "priority:p0",
+        "sprint:03"
+      ],
+      "dependencies": [
+        "MOT-13",
+        "MOT-14",
+        "MOT-15",
+        "MOT-16",
+        "MOT-17"
+      ],
+      "requirements": "PDF pp. 6, 11-12",
+      "target_paths": [
+        "docs/validation/",
+        "android/core/assessment/src/test/",
+        "android/app/src/androidTest/"
+      ],
+      "functions": [
+        {
+          "name": "testAccessBoundaries",
+          "description": "Attempt direct unauthorized reads and writes across patient, therapist and admin roles.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "testOfflineReplay",
+          "description": "Simulate network interruption, duplicate upload and restart without data loss.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-18-AC1",
+          "description": "Two patients and two therapists prove cross-patient isolation through direct API requests, not just hidden UI controls.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-18-AC2",
+          "description": "Airplane mode, dropped responses after commit and repeated retry produce no duplicate/lost completed sessions.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-18-AC3",
+          "description": "Role tampering, prescription tampering and child-table access are rejected.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-18-AC4",
+          "description": "Record reproducible test evidence and link defects to the release checklist.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    }
+  ],
+  "plan_reference": "docs/PLAN.md"
+}

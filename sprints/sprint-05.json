@@ -1,0 +1,477 @@
+{
+  "schema_version": 1,
+  "id": "S5",
+  "title": "S5 - Validation and live deployment",
+  "description": "Weeks 9-10. Exit: accuracy, usability, security and device-performance gates pass; production configuration, restore drill, signed build and handover are complete. Store approval timing remains external.",
+  "goal": "Validate and release the pilot within ten weeks.",
+  "status": "planned",
+  "weeks": {
+    "start": 9,
+    "end": 10
+  },
+  "github_milestone": 5,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Present signed-off accuracy, usability and security evidence, a working production build and operational handover.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Present signed-off accuracy, usability and security evidence, a working production build and operational handover.",
+  "risks": [
+    "Reserve time for defects; no new features.",
+    "Store approval is external and must be reported separately from submission."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and measurement risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 31,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-25",
+      "github_issue": 26,
+      "title": "Complete ROM and repetition validation with therapist review",
+      "description": "Execute the predeclared protocol on the final candidate with representative participants and supported devices.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "QA + therapist",
+      "estimate_points": 8,
+      "labels": [
+        "type:validation",
+        "area:qa",
+        "priority:p0",
+        "sprint:05"
+      ],
+      "dependencies": [
+        "MOT-01",
+        "MOT-12",
+        "MOT-22",
+        "MOT-23"
+      ],
+      "requirements": "PDF pp. 5, 10",
+      "target_paths": [
+        "docs/validation/",
+        "android/core/assessment/src/test/",
+        "android/app/src/androidTest/"
+      ],
+      "functions": [
+        {
+          "name": "validateFinalMeasurements",
+          "description": "Execute the predeclared accuracy and repeatability study on the release candidate.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "approveSupportedExercises",
+          "description": "Record therapist review of measured results, limitations and excluded exercises.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-25-AC1",
+          "description": "Report per-exercise angle errors, repeatability, repetition errors and tracking failures using the predetermined sample and reference method.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-25-AC2",
+          "description": "Document camera geometry, lighting, affected side, device and algorithm versions for reproducibility.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-25-AC3",
+          "description": "Therapist reviews results and supported-use limitations; failed exercises are fixed and retested or excluded explicitly.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-25-AC4",
+          "description": "Published results distinguish pose estimates from validated reference measurements.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-26",
+      "github_issue": 27,
+      "title": "Complete security, privacy and backup restore review",
+      "description": "Review production access controls, data handling and recoverability before the pilot.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + QA contributors",
+      "estimate_points": 5,
+      "labels": [
+        "type:validation",
+        "area:security",
+        "priority:p0",
+        "sprint:05"
+      ],
+      "dependencies": [
+        "MOT-18",
+        "MOT-20",
+        "MOT-24"
+      ],
+      "requirements": "PDF pp. 11-12",
+      "target_paths": [
+        "supabase/migrations/",
+        "supabase/tests/",
+        "android/app/src/main/java/com/motivance/feature/auth/"
+      ],
+      "functions": [
+        {
+          "name": "auditReleaseSecurity",
+          "description": "Check production access policies, credentials and data lifecycle controls.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "verifyBackupRestore",
+          "description": "Restore synthetic backup records in isolation and measure recovery against the runbook.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-26-AC1",
+          "description": "Repeat access-policy tests against release migrations and verify private storage policies if storage is used.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-26-AC2",
+          "description": "Inspect APK/repository/logs for privileged credentials and unintended patient data.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-26-AC3",
+          "description": "Restore synthetic data from a backup into an isolated environment and record recovery steps and measured recovery time.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-26-AC4",
+          "description": "Validate consent withdrawal, access revocation and retention workflows; document remaining limitations.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-27",
+      "github_issue": 28,
+      "title": "Complete usability and device performance release evaluation",
+      "description": "Evaluate the final candidate against the usability and performance gates agreed in sprint 1.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "QA + UX contributors",
+      "estimate_points": 5,
+      "labels": [
+        "type:validation",
+        "area:qa",
+        "priority:p0",
+        "sprint:05"
+      ],
+      "dependencies": [
+        "MOT-21",
+        "MOT-22",
+        "MOT-23"
+      ],
+      "requirements": "PDF pp. 5, 10-12",
+      "target_paths": [
+        "docs/validation/",
+        "android/core/assessment/src/test/",
+        "android/app/src/androidTest/"
+      ],
+      "functions": [
+        {
+          "name": "evaluateReleasePerformance",
+          "description": "Measure latency, stability, thermal effects and ordinary app response on supported phones.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "evaluateReleaseUsability",
+          "description": "Repeat representative tasks in both languages and resolve usability release failures.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-27-AC1",
+          "description": "Report feedback latency, FPS, thermal/battery behavior and stability across the declared device matrix.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-27-AC2",
+          "description": "Measure ordinary online app response against the approximately three-second PDF target under recorded network conditions.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-27-AC3",
+          "description": "Repeat representative patient tasks in both languages and record completion and error rates.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-27-AC4",
+          "description": "Fix failing release gates and rerun the affected evaluation before sign-off.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-28",
+      "github_issue": 29,
+      "title": "Deploy production backend and distribute signed Android release",
+      "description": "Apply production migrations, provision trusted roles and distribute the signed release through the agreed channel.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "DevOps + Android developers",
+      "estimate_points": 5,
+      "labels": [
+        "type:task",
+        "area:devops",
+        "priority:p0",
+        "sprint:05"
+      ],
+      "dependencies": [
+        "MOT-23",
+        "MOT-24",
+        "MOT-25",
+        "MOT-26",
+        "MOT-27",
+        "MOT-30"
+      ],
+      "requirements": "PDF pp. 11-12",
+      "target_paths": [
+        ".github/workflows/",
+        "docs/operations/"
+      ],
+      "functions": [
+        {
+          "name": "deployBackend",
+          "description": "Apply reviewed production migrations and verify trusted configuration and monitoring.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "distributeSignedRelease",
+          "description": "Smoke-test the signed app and record actual distribution or store-review status.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-28-AC1",
+          "description": "Run a clean-install smoke test against production using approved test accounts.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-28-AC2",
+          "description": "Verify authentication email delivery, assignments, local exercise completion, upload and therapist review.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-28-AC3",
+          "description": "Record deployed schema/build/model versions, rollback procedure and health/quota alerts.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-28-AC4",
+          "description": "Provide the signed artifact and distribution evidence; track store submission and store approval separately if review remains pending.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-29",
+      "github_issue": 30,
+      "title": "Complete pilot handover and operational documentation",
+      "description": "Deliver installation, therapist/patient guidance, architecture, operations and evaluation evidence to the project owner.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Project lead + all contributors",
+      "estimate_points": 3,
+      "labels": [
+        "type:task",
+        "area:devops",
+        "priority:p1",
+        "sprint:05"
+      ],
+      "dependencies": [
+        "MOT-25",
+        "MOT-26",
+        "MOT-27",
+        "MOT-28"
+      ],
+      "requirements": "PDF pp. 5, 13",
+      "target_paths": [
+        ".github/workflows/",
+        "docs/operations/"
+      ],
+      "functions": [
+        {
+          "name": "handoverOperations",
+          "description": "Deliver installation, deployment, restore and incident instructions with ownership.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "handoverPilotEvidence",
+          "description": "Provide user guidance, evaluation reports, known limitations and owner acknowledgement.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-29-AC1",
+          "description": "Provide patient setup and therapist prescription guides in the agreed languages.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-29-AC2",
+          "description": "Document build/deploy/restore procedures, supported devices/exercises and measured limitations.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-29-AC3",
+          "description": "Record operating budget, account ownership, support contact and incident response responsibilities.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-29-AC4",
+          "description": "Pilot owner acknowledges the release checklist and receives a list of deferred features and known nonblocking defects.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-30",
+      "github_issue": 31,
+      "title": "Resolve final pilot defects and record release decision",
+      "description": "Reserve sprint capacity for evaluation defects; do not use this buffer for new features. Individual defects may be fixed during validation before this umbrella issue closes.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "All contributors",
+      "estimate_points": 5,
+      "labels": [
+        "type:task",
+        "area:qa",
+        "priority:p0",
+        "sprint:05"
+      ],
+      "dependencies": [
+        "MOT-25",
+        "MOT-26",
+        "MOT-27"
+      ],
+      "requirements": "PDF pp. 5, 10-13",
+      "target_paths": [
+        "docs/validation/",
+        "android/core/assessment/src/test/",
+        "android/app/src/androidTest/"
+      ],
+      "functions": [
+        {
+          "name": "triagePilotDefects",
+          "description": "Track evaluation failures, responsible owners and fixes without adding new scope.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "decideReleaseReadiness",
+          "description": "Require rerun evidence and no critical blockers before issuing the final go/no-go.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-30-AC1",
+          "description": "Every validation failure has a linked defect, owner and disposition.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-30-AC2",
+          "description": "No open critical security, measurement-validity or completed-session data-loss defect remains.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-30-AC3",
+          "description": "Affected tests are rerun after fixes; final evidence names the exact candidate build.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-30-AC4",
+          "description": "Record go/no-go before deployment and handover; scope reductions require explicit therapist/project-owner agreement.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    }
+  ],
+  "plan_reference": "docs/PLAN.md"
+}

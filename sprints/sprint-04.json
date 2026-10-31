@@ -1,0 +1,478 @@
+{
+  "schema_version": 1,
+  "id": "S4",
+  "title": "S4 - Feature-complete MVP",
+  "description": "Weeks 7-8. Exit: progress dashboard, basic administration, English/Filipino accessibility, interrupted-session recovery and end-to-end checks pass. Eight-week completion is possible only if release validation also passes.",
+  "goal": "Complete the eight-week MVP and prepare the release environment.",
+  "status": "planned",
+  "weeks": {
+    "start": 7,
+    "end": 8
+  },
+  "github_milestone": 4,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Demonstrate all three roles, history/charts, bilingual patient flows and recovery after interruptions.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Demonstrate all three roles, history/charts, bilingual patient flows and recovery after interruptions.",
+  "risks": [
+    "Avoid adding a separate web dashboard or new exercise algorithms.",
+    "Start distribution verification before the final sprint."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and measurement risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 28,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-19",
+      "github_issue": 20,
+      "title": "Build therapist results dashboard and progress charts",
+      "description": "Show session history and ROM/repetition trends for assigned patients.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Android developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:mobile",
+        "priority:p0",
+        "sprint:04"
+      ],
+      "dependencies": [
+        "MOT-13",
+        "MOT-14",
+        "MOT-16"
+      ],
+      "requirements": "PDF p. 9",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/feature/",
+        "android/app/src/main/java/com/motivance/data/",
+        "android/core/domain/"
+      ],
+      "functions": [
+        {
+          "name": "queryPatientHistory",
+          "description": "Retrieve permitted session records with exercise, side and date filters.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "chartRehabilitationProgress",
+          "description": "Display comparable ROM/repetition series with measurement quality and prescription changes.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-19-AC1",
+          "description": "Filter by patient, exercise, side and date range; show units and measurement quality.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-19-AC2",
+          "description": "Separate exercise/side series and show prescription changes so incomparable measurements are not silently combined.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-19-AC3",
+          "description": "Historical targets remain those of the session prescription version.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-19-AC4",
+          "description": "Empty, partial, interrupted and invalid-measurement sessions are clearly distinguished.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-20",
+      "github_issue": 21,
+      "title": "Implement basic administrator account and catalogue controls",
+      "description": "Add a minimal administrator flow in the Android app for trusted role assignment, account status, therapist links and supported exercise catalogue maintenance.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Android developers",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p1",
+        "sprint:04"
+      ],
+      "dependencies": [
+        "MOT-04",
+        "MOT-13",
+        "MOT-14",
+        "MOT-17"
+      ],
+      "requirements": "PDF pp. 6, 13",
+      "target_paths": [
+        "supabase/",
+        "android/app/src/main/java/com/motivance/data/remote/",
+        "android/app/src/main/java/com/motivance/data/repository/"
+      ],
+      "functions": [
+        {
+          "name": "administerAccounts",
+          "description": "Provision trusted roles and account status through audited server operations.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "administerCatalogueAndLinks",
+          "description": "Manage supported exercise definitions and patient links while preserving historical references.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-20-AC1",
+          "description": "Admin privileges are provisioned through a trusted operation; no public self-promotion path exists.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-20-AC2",
+          "description": "Admin can disable access and manage therapist-patient links with audited changes.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-20-AC3",
+          "description": "Catalogue edits preserve historical prescription references and supported algorithm versions.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-20-AC4",
+          "description": "Patient and therapist clients cannot call administrative operations successfully.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-21",
+      "github_issue": 22,
+      "title": "Complete English and Filipino accessibility and usability pass",
+      "description": "Complete localized interfaces and test the primary patient tasks with representative users under the approved protocol.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "UX/QA + Android developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:ux",
+        "priority:p1",
+        "sprint:04"
+      ],
+      "dependencies": [
+        "MOT-06",
+        "MOT-15",
+        "MOT-19",
+        "MOT-20"
+      ],
+      "requirements": "PDF p. 11",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/designsystem/",
+        "android/app/src/main/java/com/motivance/feature/"
+      ],
+      "functions": [
+        {
+          "name": "localizeCriticalFlows",
+          "description": "Provide reviewed English and Filipino labels, instructions and error messages.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "evaluateAccessibility",
+          "description": "Check large fonts, screen readers, contrast, touch targets and representative task completion.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-21-AC1",
+          "description": "All patient-critical strings exist in English and Filipino and terminology is reviewed.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-21-AC2",
+          "description": "Large font settings, screen-reader labels, contrast and touch-target sizes are checked.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-21-AC3",
+          "description": "Measure task completion, setup mistakes and feedback comprehension; log observed difficulties.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-21-AC4",
+          "description": "Resolve blockers that prevent the intended users from starting or finishing a prescribed session.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-22",
+      "github_issue": 23,
+      "title": "Harden lifecycle recovery and long exercise sessions",
+      "description": "Exercise backgrounding, interruptions, rotation, process death and prolonged inference on target phones.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Android + CV developers",
+      "estimate_points": 5,
+      "labels": [
+        "type:task",
+        "area:mobile",
+        "priority:p0",
+        "sprint:04"
+      ],
+      "dependencies": [
+        "MOT-10",
+        "MOT-11",
+        "MOT-15",
+        "MOT-16"
+      ],
+      "requirements": "PDF pp. 10-11",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/feature/",
+        "android/app/src/main/java/com/motivance/data/",
+        "android/core/domain/"
+      ],
+      "functions": [
+        {
+          "name": "recoverInterruptedSession",
+          "description": "Handle rotation, backgrounding, process death and camera rebind without false counts.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "sustainLongSession",
+          "description": "Measure memory, heat and battery behavior and verify quality/performance fallback.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-22-AC1",
+          "description": "A session of the agreed maximum duration does not leak memory or crash on supported devices.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-22-AC2",
+          "description": "Camera release/rebind and app lifecycle transitions preserve valid counts without processing stale frames.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-22-AC3",
+          "description": "Thermal throttling and battery use are measured; a documented quality/performance fallback is verified.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-22-AC4",
+          "description": "Completed results survive process termination and remain eligible for upload.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-23",
+      "github_issue": 24,
+      "title": "Run MVP acceptance regression and resolve release blockers",
+      "description": "Demonstrate all specified MVP roles and functional requirements by the end of week 8.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "QA + all developers",
+      "estimate_points": 5,
+      "labels": [
+        "type:validation",
+        "area:qa",
+        "priority:p0",
+        "sprint:04"
+      ],
+      "dependencies": [
+        "MOT-12",
+        "MOT-18",
+        "MOT-19",
+        "MOT-20",
+        "MOT-21",
+        "MOT-22"
+      ],
+      "requirements": "PDF pp. 4-13",
+      "target_paths": [
+        "docs/validation/",
+        "android/core/assessment/src/test/",
+        "android/app/src/androidTest/"
+      ],
+      "functions": [
+        {
+          "name": "runMvpRegression",
+          "description": "Execute traceable patient, therapist and administrator acceptance scenarios.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "assessMvpReadiness",
+          "description": "Record week-eight results and block acceptance on core data, access or workflow defects.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-23-AC1",
+          "description": "Trace each PDF functional requirement to an implemented flow and validation evidence.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-23-AC2",
+          "description": "Repeat the complete assigned exercise, offline completion, synchronization and therapist-review scenario.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-23-AC3",
+          "description": "No open critical defect permits cross-patient disclosure, false completion, lost completed sessions or blocked patient core tasks.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-23-AC4",
+          "description": "Publish a week-8 go/no-go report; an eight-week final release requires the S5 validation/deployment criteria too.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-24",
+      "github_issue": 25,
+      "title": "Prepare production configuration and Android distribution readiness",
+      "description": "Prepare the live backend, environment checklist and Play Console requirements early enough to expose external lead times.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend/DevOps contributor",
+      "estimate_points": 3,
+      "labels": [
+        "type:task",
+        "area:devops",
+        "priority:p0",
+        "sprint:04"
+      ],
+      "dependencies": [
+        "MOT-03",
+        "MOT-04",
+        "MOT-17"
+      ],
+      "requirements": "PDF pp. 11-12",
+      "target_paths": [
+        ".github/workflows/",
+        "docs/operations/"
+      ],
+      "functions": [
+        {
+          "name": "prepareProductionConfiguration",
+          "description": "Document environments, migration sequence, rollback, email and quota monitoring.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "prepareAndroidDistribution",
+          "description": "Establish signing custody, privacy declarations and account verification requirements.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-24-AC1",
+          "description": "Document development/production separation, secret handling, migration order and rollback approach.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-24-AC2",
+          "description": "Prepare signing-key custody, app identifier, privacy notice, store data declarations and distribution checklist.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-24-AC3",
+          "description": "Verify applicable account verification/testing requirements and record external schedule dependencies before the end of week 8.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-24-AC4",
+          "description": "Document cost assumptions, quota alerts and custom email delivery configuration; purchases or provisioning require the account owner to supply access.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    }
+  ],
+  "plan_reference": "docs/PLAN.md"
+}

@@ -1,0 +1,580 @@
+{
+  "schema_version": 1,
+  "id": "S2",
+  "title": "S2 - Reliable movement assessment",
+  "description": "Weeks 3-4. Exit: camera setup, confidence handling, ROM and repetitions work for the approved exercise set; session recovery and initial accuracy evidence exist.",
+  "goal": "Turn landmarks into reliable exercise measurements and recoverable sessions.",
+  "status": "in-progress",
+  "weeks": {
+    "start": 3,
+    "end": 4
+  },
+  "github_milestone": 2,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Perform a supported exercise with live angles, counted repetitions, tracking-loss handling and saved offline results.",
+      "passed": false,
+      "evidence": [
+        "docs/validation/SPRINT-02-IMPLEMENTATION.md: deterministic engine and Room evidence only; physical exercise demonstration pending"
+      ]
+    }
+  ],
+  "demo": "Perform a supported exercise with live angles, counted repetitions, tracking-loss handling and saved offline results.",
+  "risks": [
+    "Measurement quality takes precedence over increasing exercise count.",
+    "Resolve early validation failures before sprint 3."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and measurement risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 31,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-07",
+      "github_issue": 8,
+      "title": "Implement camera setup, calibration and tracking-quality gates",
+      "description": "Guide phone placement and verify required joints before assessment. Treat camera calibration as an exercise-specific setup check, with limitations documented.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "CV developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:cv",
+        "priority:p0",
+        "sprint:02"
+      ],
+      "dependencies": [
+        "MOT-01",
+        "MOT-05",
+        "MOT-06"
+      ],
+      "requirements": "PDF pp. 6, 10-12",
+      "target_paths": [
+        "android/core/domain/",
+        "android/core/assessment/",
+        "android/app/src/main/java/com/motivance/feature/exercise/"
+      ],
+      "functions": [
+        {
+          "name": "MovementAssessment.process",
+          "description": "Check selected-side required joints, confidence, bounds, upright torso and stable tracking; reset partial cycles on ambiguity or loss.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-07-AC1",
+          "description": "Check required landmark visibility and selected side before enabling measurement.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-07-AC2",
+          "description": "Tracking loss, occlusion, multiple-person ambiguity and camera interruption produce explicit states.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-07-AC3",
+          "description": "Invalid frames cannot count repetitions or update valid ROM extrema.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-07-AC4",
+          "description": "User can recover after repositioning without a fabricated angle or repetition.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": [
+          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+        ]
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "S1/MOT-01 exercise/setup approval and MOT-05 physical phone feasibility evidence remain pending; technical gates are ready for review."
+      ]
+    },
+    {
+      "id": "MOT-08",
+      "github_issue": 9,
+      "title": "Build joint-angle and ROM calculation engine",
+      "description": "Implement exercise-specific angle definitions, coordinate conventions and filtering as pure Kotlin domain logic.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "CV developer",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:cv",
+        "priority:p0",
+        "sprint:02"
+      ],
+      "dependencies": [
+        "MOT-01",
+        "MOT-05"
+      ],
+      "requirements": "PDF pp. 4, 7, 10",
+      "target_paths": [
+        "android/core/domain/",
+        "android/core/assessment/",
+        "android/app/src/main/java/com/motivance/feature/exercise/"
+      ],
+      "functions": [
+        {
+          "name": "JointAngles.included",
+          "description": "Calculate pixel-aspect-correct image-plane angles, rejecting degenerate/nonfinite inputs.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        },
+        {
+          "name": "MovementAssessment.process",
+          "description": "Convert to documented flexion/abduction conventions, median-filter valid samples and accumulate session ROM extrema.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-08-AC1",
+          "description": "Known synthetic poses yield expected angles; degenerate vectors and missing joints return invalid results.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/sprint-02-synthetic-results.json"
+          ]
+        },
+        {
+          "id": "MOT-08-AC2",
+          "description": "Define anatomical zero, degrees, left/right handling and whether each exercise uses 2D or model-estimated 3D coordinates.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/sprint-02-synthetic-results.json"
+          ]
+        },
+        {
+          "id": "MOT-08-AC3",
+          "description": "Document smoothing delay and outlier rejection; compute valid minimum, maximum and ROM per exercise.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/sprint-02-synthetic-results.json"
+          ]
+        },
+        {
+          "id": "MOT-08-AC4",
+          "description": "A first comparison with reference measurements is recorded; model-estimated depth is not presented as ground truth.",
+          "passed": false,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": [
+          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+        ]
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Matched goniometer/reference comparison with therapist-approved positioning and actual participants is not available (AC4).",
+        "S1/MOT-01 and MOT-05 acceptance dependencies remain open."
+      ]
+    },
+    {
+      "id": "MOT-09",
+      "github_issue": 10,
+      "title": "Implement repetition state machine and supported form rules",
+      "description": "Count complete exercise cycles using therapist-approved thresholds, hysteresis and duration rules.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "CV developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:cv",
+        "priority:p0",
+        "sprint:02"
+      ],
+      "dependencies": [
+        "MOT-07",
+        "MOT-08"
+      ],
+      "requirements": "PDF pp. 7-8",
+      "target_paths": [
+        "android/core/domain/",
+        "android/core/assessment/",
+        "android/app/src/main/java/com/motivance/feature/exercise/"
+      ],
+      "functions": [
+        {
+          "name": "MovementAssessment.process",
+          "description": "Advance neutral, rest, moving and held-target phases using immutable ExerciseRules; count only a complete return.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        },
+        {
+          "name": "MovementAssessment.incomplete",
+          "description": "Record incomplete range, too-fast and timed-out cycle totals with observable text feedback.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-09-AC1",
+          "description": "Replay traces cover valid, incomplete, jittering and excessively brief movement cycles.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-09-AC2",
+          "description": "Pause and tracking loss cannot create duplicate repetitions.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-09-AC3",
+          "description": "Only documented observable form conditions trigger feedback; thresholds come from prescription configuration.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-09-AC4",
+          "description": "Record completed/incomplete counts and reasons with deterministic test traces.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": [
+          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+        ]
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Therapist approval of exercise thresholds, timing/form rules and predecessor acceptance remains open; debug rules are clearly marked demonstrations."
+      ]
+    },
+    {
+      "id": "MOT-10",
+      "github_issue": 11,
+      "title": "Build live exercise screen with skeleton and feedback",
+      "description": "Integrate camera overlay, measured angle, target ROM, repetition count, duration and start/pause/finish controls.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "Android developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:mobile",
+        "priority:p0",
+        "sprint:02"
+      ],
+      "dependencies": [
+        "MOT-06",
+        "MOT-07",
+        "MOT-08",
+        "MOT-09"
+      ],
+      "requirements": "PDF p. 8",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/feature/",
+        "android/app/src/main/java/com/motivance/data/",
+        "android/core/domain/"
+      ],
+      "functions": [
+        {
+          "name": "CameraPrototype",
+          "description": "Present the timestamped skeleton, filtered angle, targets, counts, duration, quality and separate storage consent.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        },
+        {
+          "name": "ExerciseSessionViewModel",
+          "description": "Gate start/resume, handle lifecycle pause, checkpoint state and wait for a successful atomic finish before leaving.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-10-AC1",
+          "description": "Overlay and numerical feedback use the same timestamped assessment state.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-10-AC2",
+          "description": "Target reached, incomplete movement and tracking lost use readable text/icons as well as color.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-10-AC3",
+          "description": "A patient can start, pause, resume and finish a supported exercise.",
+          "passed": false,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-10-AC4",
+          "description": "Rotation, backgrounding and permission withdrawal produce safe, recoverable state transitions.",
+          "passed": false,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": [
+          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+        ]
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Demonstrate prescribed motion with patient/therapist and verify dynamic overlay alignment on target phones.",
+        "Complete physical rotation, permission-withdrawal, accessibility and background/recovery matrix; emulator smoke checks are partial evidence.",
+        "Required S1/S2 predecessor acceptance remains open."
+      ]
+    },
+    {
+      "id": "MOT-11",
+      "github_issue": 12,
+      "title": "Persist assignments and exercise sessions with Room",
+      "description": "Add local entities, DAO/repositories, schema migrations and an outbox for unsynchronized completed sessions.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "Android developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:mobile",
+        "priority:p0",
+        "sprint:02"
+      ],
+      "dependencies": [
+        "MOT-02",
+        "MOT-03"
+      ],
+      "requirements": "PDF pp. 8-9, 11",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/feature/",
+        "android/app/src/main/java/com/motivance/data/",
+        "android/core/domain/"
+      ],
+      "functions": [
+        {
+          "name": "PrescriptionCache.decode",
+          "description": "Decode only supported authenticated patient prescriptions with pinned versions, instructions and cache expiry.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        },
+        {
+          "name": "SessionStore.save",
+          "description": "Persist immutable owner-scoped aggregate sessions; complete session and stable-UUID outbox in one transaction.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        },
+        {
+          "name": "SessionStore.recover",
+          "description": "Recover file-backed drafts as interrupted; restore aggregates only and require explicit resume with fresh calibration.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-11-AC1",
+          "description": "Cached assignments and instructions are available after connectivity loss.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-11-AC2",
+          "description": "Session and outbox entry are committed in one transaction with a stable UUID.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-11-AC3",
+          "description": "Process termination recovers a checkpointed session as interrupted and never silently marks it complete.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-11-AC4",
+          "description": "Account-specific local data are isolated, and logout/cache retention behavior is documented and exercised.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/sprint-02-test-results.json"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": [
+          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+        ]
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Technical persistence tests pass; S1/MOT-02 foundation acceptance/review remains open.",
+        "Offline clinical cold start still requires online login because authentication tokens are memory-only; this limitation is documented."
+      ]
+    },
+    {
+      "id": "MOT-12",
+      "github_issue": 13,
+      "title": "Run early ROM accuracy and camera performance evaluation",
+      "description": "Execute the initial protocol on the implemented exercise set while correction time remains.",
+      "status": "blocked",
+      "owner": null,
+      "suggested_owner_role": "QA + therapist",
+      "estimate_points": 3,
+      "labels": [
+        "type:validation",
+        "area:qa",
+        "priority:p0",
+        "sprint:02"
+      ],
+      "dependencies": [
+        "MOT-01",
+        "MOT-07",
+        "MOT-08",
+        "MOT-09"
+      ],
+      "requirements": "PDF pp. 5, 10",
+      "target_paths": [
+        "docs/validation/",
+        "android/core/assessment/src/test/",
+        "android/app/src/androidTest/"
+      ],
+      "functions": [
+        {
+          "name": "SyntheticEvaluationTest.evaluateKnownAnglesAndRepetitionsAcrossAspectRatios",
+          "description": "Evaluate 216 mathematical angle fixtures and 120 repetition cycles without claiming clinical accuracy.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        },
+        {
+          "name": "CameraDiagnostics.record",
+          "description": "Expose rolling FPS/p95 inference latency and thermal status; physical 15-minute reference testing remains pending.",
+          "kind": "implemented capability; clinical acceptance pending where noted"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-12-AC1",
+          "description": "Report angle error, repeatability, repetition accuracy and invalid-tracking rate by exercise and device.",
+          "passed": false,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-12-AC2",
+          "description": "Record latency and session stability under the defined camera setup and lighting conditions.",
+          "passed": false,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-12-AC3",
+          "description": "Compare findings with predeclared thresholds and open corrective issues for failures.",
+          "passed": false,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-12-AC4",
+          "description": "Unreliable exercises are corrected or removed with therapist approval before the connected pilot.",
+          "passed": false,
+          "evidence": [
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": [
+          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+        ]
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Therapist protocol approval, reference measurements, participants and two physical phones are unavailable.",
+        "An emulator/laptop-webcam empty-room spot check observed p95 inference 634ms under concurrent host build load, above the provisional 250ms phone gate. Profile/resolve on target phones and rerun a controlled 15-minute evaluation before acceptance.",
+        "Synthetic geometry/repetition results cannot replace clinical angle-error, human repeatability, tracking-rate or therapist sign-off evidence."
+      ]
+    }
+  ],
+  "plan_reference": "docs/PLAN.md",
+  "implementation_note": "Development implementation built on the S1 technical foundation; therapist approval and physical-device acceptance from S1 remain open. See docs/validation/SPRINT-02-IMPLEMENTATION.md."
+}

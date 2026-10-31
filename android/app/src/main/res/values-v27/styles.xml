@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.Motivance" parent="Base.Theme.Motivance">
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:navigationBarColor">#F8F9FF</item>
+    </style>
+</resources>

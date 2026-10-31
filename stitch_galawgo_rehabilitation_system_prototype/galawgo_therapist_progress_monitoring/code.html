@@ -1,0 +1,608 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>GALAWGO - Patient Clinical Progress</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3f608d",
+            "on-primary": "#ffffff",
+            "surface-container-high": "#dce9ff",
+            "on-primary-container": "#80a0d1",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed": "#001c3a",
+            "secondary": "#006a61",
+            "primary-fixed-dim": "#a8c8fc",
+            "tertiary-fixed": "#ffddb8",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#a8c8fc",
+            "primary-container": "#0f3661",
+            "outline-variant": "#c3c6d0",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-bright": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#4e2f00",
+            "surface": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-surface-variant": "#43474f",
+            "inverse-surface": "#213145",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#d3e4fe",
+            "primary": "#002042",
+            "on-secondary-container": "#006f66",
+            "on-surface": "#0b1c30",
+            "primary-fixed": "#d4e3ff",
+            "surface-container": "#e5eeff",
+            "on-background": "#0b1c30",
+            "on-tertiary-container": "#dd8d00",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-secondary-fixed-variant": "#005049",
+            "secondary-fixed": "#89f5e7",
+            "on-secondary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "on-primary-fixed-variant": "#254874",
+            "surface-dim": "#cbdbf5",
+            "tertiary": "#311c00",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "secondary-container": "#86f2e4",
+            "outline": "#737780",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.25rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-xl": "2.25rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "data-metric": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "data-metric": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-chart-gradient {
+      background: linear-gradient(180deg, rgba(13, 148, 136, 0.22) 0%, rgba(13, 148, 136, 0.0) 100%);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TOP APP BAR -->
+<header class="bg-surface-container-lowest sticky top-0 z-40 w-full shadow-sm">
+<div class="max-w-7xl mx-auto px-margin md:px-8 h-16 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<button aria-label="Go Back" class="w-10 h-10 rounded-xl flex items-center justify-center text-primary hover:bg-surface-container transition-transform active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-bold">Biomechanical Review</span>
+<h1 class="font-headline-sm text-headline-sm text-primary tracking-tight flex items-center gap-2">
+            Patient Clinical Progress
+          </h1>
+</div>
+</div>
+<!-- Quick Session Badges & Actions -->
+<div class="flex items-center gap-3">
+<div class="hidden sm:flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-full border border-surface-container-highest">
+<span class="inline-block w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-md text-label-md text-primary font-bold">Active Patient Track</span>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-secondary overflow-hidden flex items-center justify-center bg-surface-container"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2hvjc5CGCmEaotsb6NCOXUVpUSzODQuKni2nWZV2bu2xsIajgzvGZUXQ7cZztvIHoZUqRaiWIYBerUEbH8DHeSZYf4CwCBk9Lw1Oe8_wOMOWo3PkW4lfRHWN6U_yhU4WxkmfogTXlf1cwo0XvVOvT8H7-ef7B9b2CnmWPzuTeOhxYsGUhTcCs8wiN7acNsHlgZ8H9IzrcUg2DPtpOCikjFiHMpmob8C_syKjrfIXw9GUfucRMtwisHQ" alt="Brand Logo" class="w-full h-full object-cover"></div>
+</div>
+</div>
+</header>
+<!-- MAIN CANVAS -->
+<main class="flex-1 max-w-7xl w-full mx-auto px-margin md:px-8 py-space-lg flex flex-col gap-space-lg">
+<!-- PATIENT IDENTITY HEADER STRIP -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg border border-outline-variant/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center text-primary font-headline-md text-headline-md font-bold border border-surface-container-highest">
+          RG
+        </div>
+<div>
+<div class="flex flex-wrap items-center gap-2">
+<h2 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">Roberto Gomez</h2>
+<span class="bg-surface-container-high text-primary font-label-sm text-label-sm px-2.5 py-0.5 rounded-md font-bold">#GW-2041</span>
+<span class="bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-2.5 py-0.5 rounded-md font-bold">Post-Op Knee Flexion</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Age: 64 • Protocol: Right TKA Protocol v2.4 • Primary Therapist: <span class="font-bold text-primary">Dr. Santos, DPT</span>
+</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-col text-right hidden sm:block">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Protocol Phase</span>
+<span class="font-label-lg text-label-lg text-primary font-bold">Phase II: Functional ROM</span>
+</div>
+<button class="bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md px-4 py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center gap-2 border border-outline-variant/30">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+          Adjust Protocol
+        </button>
+</div>
+</div>
+<!-- 4 KEY CLINICAL METRIC BLOCKS (BENTO GRID) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Average ROM -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant/40 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Average ROM</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-secondary">
+<span class="material-symbols-outlined" data-icon="straighten">straighten</span>
+</span>
+</div>
+<div class="my-3">
+<div class="font-data-metric text-data-metric text-primary font-bold tracking-tight">138°</div>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="inline-flex items-center text-secondary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span> +3° over target
+            </span>
+</div>
+</div>
+<div class="pt-2 border-t border-surface-container-low flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="">Target baseline</span>
+<span class="font-bold text-primary">135°</span>
+</div>
+</div>
+<!-- Card 2: Target ROM -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant/40 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Target ROM</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-primary">
+<span class="material-symbols-outlined" data-icon="flag">flag</span>
+</span>
+</div>
+<div class="my-3">
+<div class="font-data-metric text-data-metric text-primary font-bold tracking-tight">135°</div>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Threshold for Full Discharge</span>
+</div>
+</div>
+<div class="pt-2 border-t border-surface-container-low flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="">Clinical Status</span>
+<span class="text-secondary font-bold font-label-sm text-label-sm">GOAL SURPASSED</span>
+</div>
+</div>
+<!-- Card 3: Completed Reps -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant/40 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary-container"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Completed Reps</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-on-secondary-container">
+<span class="material-symbols-outlined" data-icon="repeat">repeat</span>
+</span>
+</div>
+<div class="my-3">
+<div class="font-data-metric text-data-metric text-primary font-bold tracking-tight">28/30</div>
+<div class="w-full bg-surface-container h-2 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 93.3%;"></div>
+</div>
+</div>
+<div class="pt-2 border-t border-surface-container-low flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="">Adherence Score</span>
+<span class="font-bold text-secondary">93% Compliant</span>
+</div>
+</div>
+<!-- Card 4: Progress Indicator -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant/40 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 w-full h-1 bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Progress Velocity</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-tertiary-container">
+<span class="material-symbols-outlined" data-icon="auto_graph">auto_graph</span>
+</span>
+</div>
+<div class="my-3">
+<div class="font-headline-lg text-headline-lg text-primary font-bold tracking-tight mt-1">Improving</div>
+<div class="flex items-center gap-1.5 mt-2">
+<span class="bg-secondary/15 text-secondary font-label-md text-label-md px-2 py-0.5 rounded font-bold">
+              +12% over baseline
+            </span>
+</div>
+</div>
+<div class="pt-2 border-t border-surface-container-low flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="">Consistency index</span>
+<span class="font-bold text-primary">High (0.94)</span>
+</div>
+</div>
+</section>
+<!-- INTERMEDIATE SECTION: ROM SESSION TREND CHART & SENSOR HEALTH -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- CLEAN CLINICAL ROM SESSION TREND CHART (2 Cols) -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg border border-outline-variant/40 shadow-sm flex flex-col">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold">ROM Session Trend</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Progression across 6 most recent clinical tracking sessions</p>
+</div>
+<div class="flex items-center gap-4 text-xs font-label-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span class="text-on-surface">Achieved Flexion</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-0.5 border-t-2 border-dashed border-tertiary-container"></span>
+<span class="text-on-surface-variant">Target Threshold (135°)</span>
+</div>
+</div>
+</div>
+<!-- SVG Clinical Vector Chart Container -->
+<div class="relative w-full h-64 sm:h-72 flex flex-col justify-end pt-4 pb-2">
+<!-- Background Guidelines & Threshold Line -->
+<svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 600 240">
+<!-- Grid lines -->
+<line stroke="#E2E8F0" stroke-width="1" x1="0" x2="600" y1="40" y2="40"></line>
+<line stroke="#E2E8F0" stroke-width="1" x1="0" x2="600" y1="90" y2="90"></line>
+<line stroke="#E2E8F0" stroke-width="1" x1="0" x2="600" y1="140" y2="140"></line>
+<line stroke="#E2E8F0" stroke-width="1" x1="0" x2="600" y1="190" y2="190"></line>
+<!-- Target Threshold Dotted Line (135° maps to y=85) -->
+<line stroke="#4E2F00" stroke-dasharray="6,6" stroke-width="2" x1="0" x2="600" y1="85" y2="85"></line>
+<text fill="#4E2F00" font-family="Plus Jakarta Sans" font-size="11" font-weight="700" x="10" y="78">Target Threshold: 135°</text>
+<!-- Gradient Area fill beneath line -->
+<defs>
+<linearGradient id="trendGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#006A61" stop-opacity="0.25"></stop>
+<stop offset="100%" stop-color="#006A61" stop-opacity="0.0"></stop>
+</linearGradient>
+</defs>
+<!-- Data Path: S1:120°(y=165), S2:124°(y=145), S3:129°(y=120), S4:131°(y=108), S5:136°(y=80), S6:138°(y=68) -->
+<polygon fill="url(#trendGradient)" points="50,165 150,145 250,120 350,108 450,80 550,68 550,220 50,220"></polygon>
+<polyline fill="none" points="50,165 150,145 250,120 350,108 450,80 550,68" stroke="#006A61" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"></polyline>
+<!-- Point Dots with Realtime Labels -->
+<!-- Session 1: 120° -->
+<circle cx="50" cy="165" fill="#FFFFFF" r="5" stroke="#006A61" stroke-width="3"></circle>
+<text fill="#0B1C30" font-family="Plus Jakarta Sans" font-size="11" font-weight="700" text-anchor="middle" x="50" y="152">120°</text>
+<!-- Session 2: 124° -->
+<circle cx="150" cy="145" fill="#FFFFFF" r="5" stroke="#006A61" stroke-width="3"></circle>
+<text fill="#0B1C30" font-family="Plus Jakarta Sans" font-size="11" font-weight="700" text-anchor="middle" x="150" y="132">124°</text>
+<!-- Session 3: 129° -->
+<circle cx="250" cy="120" fill="#FFFFFF" r="5" stroke="#006A61" stroke-width="3"></circle>
+<text fill="#0B1C30" font-family="Plus Jakarta Sans" font-size="11" font-weight="700" text-anchor="middle" x="250" y="107">129°</text>
+<!-- Session 4: 131° -->
+<circle cx="350" cy="108" fill="#FFFFFF" r="5" stroke="#006A61" stroke-width="3"></circle>
+<text fill="#0B1C30" font-family="Plus Jakarta Sans" font-size="11" font-weight="700" text-anchor="middle" x="350" y="95">131°</text>
+<!-- Session 5: 136° -->
+<circle cx="450" cy="80" fill="#86F2E4" r="6" stroke="#006A61" stroke-width="3.5"></circle>
+<text fill="#006A61" font-family="Plus Jakarta Sans" font-size="11" font-weight="800" text-anchor="middle" x="450" y="67">136°</text>
+<!-- Session 6: 138° -->
+<circle cx="550" cy="68" fill="#006A61" r="7" stroke="#FFFFFF" stroke-width="3"></circle>
+<text fill="#006A61" font-family="Plus Jakarta Sans" font-size="13" font-weight="800" text-anchor="middle" x="550" y="52">138°</text>
+</svg>
+<!-- X-Axis Labels -->
+<div class="flex justify-between px-6 pt-2 font-label-sm text-label-sm text-on-surface-variant font-medium">
+<span class="">Oct 12 (S1)</span>
+<span class="">Oct 15 (S2)</span>
+<span class="">Oct 19 (S3)</span>
+<span class="">Oct 22 (S4)</span>
+<span class="">Oct 26 (S5)</span>
+<span class="text-secondary font-bold">Today (S6)</span>
+</div>
+</div>
+<div class="mt-4 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-sm" data-icon="verified">verified</span>
+<span class="">Joint kinematics measured using Motivance PoseCore Computer Vision v3.1</span></div>
+<span class="font-bold text-primary hidden sm:inline">Margin of Error: ±1.2°</span>
+</div>
+</div>
+<!-- BIOMECHANICAL ANALYSIS & ACCORDION NOTES -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg border border-outline-variant/40 shadow-sm flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold mb-1">Kinematic Integrity</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Pose tracking &amp; joint compensation indicators</p>
+<div class="space-y-3.5">
+<!-- Metric 1: Hip Hitching -->
+<div class="p-3 rounded-xl bg-surface-container/50 border border-surface-container-highest">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-md text-label-md text-primary font-bold">Hip Hitching Compensation</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold bg-secondary-container px-2 py-0.5 rounded">Minimal (2%)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Decreased significantly compared to initial baseline of 18%.</p>
+</div>
+<!-- Metric 2: Pelvic Rotation -->
+<div class="p-3 rounded-xl bg-surface-container/50 border border-surface-container-highest">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-md text-label-md text-primary font-bold">Pelvic Trunk Alignment</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold bg-secondary-container px-2 py-0.5 rounded">Stable</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Trunk coronal sway remained below normal threshold of 3.5°.</p>
+</div>
+<!-- Metric 3: Movement Velocity -->
+<div class="p-3 rounded-xl bg-surface-container/50 border border-surface-container-highest">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-md text-label-md text-primary font-bold">Concentric Cadence</span>
+<span class="font-label-sm text-label-sm text-primary font-bold bg-surface-container-high px-2 py-0.5 rounded">2.4 sec/rep</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Patient exhibits smooth eccentric control without terminal jerk.</p>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-outline-variant/30 flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Next Scheduled Assessment</span>
+<span class="font-label-md text-label-md text-primary font-bold">Friday, Nov 03 • 10:30 AM</span>
+</div>
+<button class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary hover:bg-surface-container-high transition-transform active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+</button>
+</div>
+</div>
+</div>
+<!-- CHRONOLOGICAL SESSION HISTORY LIST -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg border border-outline-variant/40 shadow-sm">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold">Session History &amp; Telemetry Logs</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Comprehensive breakdown of past monitored rehabilitation sessions</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-primary font-label-md text-label-md font-bold hover:bg-surface-container-high transition-colors">
+            All Sessions (6)
+          </button>
+<button class="px-3 py-1.5 rounded-lg text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
+            Flagged Only (1)
+          </button>
+</div>
+</div>
+<!-- History Table / Structured tactile rows -->
+<div class="space-y-3">
+<!-- Row 1 (Latest - Today) -->
+<div class="p-4 rounded-xl border border-surface-container-highest bg-surface-container-low/40 hover:bg-surface-container-low transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div class="flex items-center gap-3.5 min-w-[220px]">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+</div>
+<div>
+<div class="font-label-lg text-label-lg text-primary font-bold flex items-center gap-2">
+                Session #06
+                <span class="bg-secondary-container text-on-secondary-container text-xs px-2 py-0.5 rounded font-bold">Latest</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Today, Oct 29 • 09:15 AM</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 w-full md:w-auto">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Achieved ROM</span>
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">138°</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Adherence</span>
+<span class="font-label-lg text-label-lg text-primary font-bold">100% (30/30)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Compensations</span>
+<span class="inline-flex items-center text-secondary font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-sm mr-1" data-icon="check">check</span> None
+              </span>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end md:self-center">
+<button class="text-primary hover:bg-surface-container p-2 rounded-lg transition-transform active:scale-[0.98]" title="View Pose Recording">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</button>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="p-4 rounded-xl border border-surface-container-highest bg-surface-container-lowest hover:bg-surface-container-low transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div class="flex items-center gap-3.5 min-w-[220px]">
+<div class="w-10 h-10 rounded-full bg-surface-container text-primary flex items-center justify-center font-bold">
+<span class="font-label-md text-label-md">05</span>
+</div>
+<div>
+<div class="font-label-lg text-label-lg text-primary font-bold">Session #05</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Oct 26, 2023 • 04:30 PM</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 w-full md:w-auto">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Achieved ROM</span>
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">136°</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Adherence</span>
+<span class="font-label-lg text-label-lg text-primary font-bold">93% (28/30)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Compensations</span>
+<span class="inline-flex items-center text-secondary font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-sm mr-1" data-icon="check">check</span> Minor (1)
+              </span>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end md:self-center">
+<button class="text-primary hover:bg-surface-container p-2 rounded-lg transition-transform active:scale-[0.98]" title="View Pose Recording">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</button>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Row 3 (With Flagged Compensation) -->
+<div class="p-4 rounded-xl border border-tertiary-fixed-dim/60 bg-surface-container-low/20 hover:bg-surface-container-low transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div class="flex items-center gap-3.5 min-w-[220px]">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed text-tertiary-container flex items-center justify-center font-bold">
+<span class="font-label-md text-label-md">04</span>
+</div>
+<div>
+<div class="font-label-lg text-label-lg text-primary font-bold flex items-center gap-2">
+                Session #04
+                <span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded font-bold">Flagged</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Oct 22, 2023 • 11:00 AM</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 w-full md:w-auto">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Achieved ROM</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">131°</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Adherence</span>
+<span class="font-label-lg text-label-lg text-primary font-bold">87% (26/30)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Compensations</span>
+<span class="inline-flex items-center text-tertiary-container font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-sm mr-1" data-icon="warning">warning</span> Pelvic Tilt
+              </span>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end md:self-center">
+<button class="text-primary hover:bg-surface-container p-2 rounded-lg transition-transform active:scale-[0.98]" title="View Pose Recording">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</button>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="p-4 rounded-xl border border-surface-container-highest bg-surface-container-lowest hover:bg-surface-container-low transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div class="flex items-center gap-3.5 min-w-[220px]">
+<div class="w-10 h-10 rounded-full bg-surface-container text-primary flex items-center justify-center font-bold">
+<span class="font-label-md text-label-md">03</span>
+</div>
+<div>
+<div class="font-label-lg text-label-lg text-primary font-bold">Session #03</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Oct 19, 2023 • 02:15 PM</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 w-full md:w-auto">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Achieved ROM</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">129°</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Adherence</span>
+<span class="font-label-lg text-label-lg text-primary font-bold">90% (27/30)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Compensations</span>
+<span class="inline-flex items-center text-secondary font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-sm mr-1" data-icon="check">check</span> None
+              </span>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end md:self-center">
+<button class="text-primary hover:bg-surface-container p-2 rounded-lg transition-transform active:scale-[0.98]" title="View Pose Recording">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</button>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+<!-- CLINICAL REVIEW NOTE TEXT BOX & EXPORT ACTION -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg border border-outline-variant/40 shadow-sm flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="rate_review">rate_review</span>
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold">Therapist Clinical Notes</h3>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-on-surface-variant">Attending: <strong>Dr. Santos, DPT</strong> (ID: #PT-889)</span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="text-xs text-secondary font-bold">Signed &amp; Verified</span>
+</div>
+</div>
+<!-- Clinical Textarea -->
+<div class="relative">
+<label class="sr-only" for="therapist_notes">Therapist Review Notes</label>
+<textarea class="w-full rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4 text-on-surface font-body-md text-body-md focus:border-secondary focus:ring-2 focus:ring-secondary/30 transition-all outline-none resize-none leading-relaxed" id="therapist_notes" placeholder="Enter observation notes, adjustments to exercise angle boundaries, or home exercise recommendations..." rows="4">Patient Roberto Gomez (#GW-2041) demonstrates exceptional active right knee flexion progress, officially exceeding the protocol target threshold (138° vs 135° benchmark). Hip hitching has subsided as quad engagement and hamstring mobility stabilized. Recommend initiating closed-chain kinetic progressions and light resistance cycling next session.</textarea>
+</div>
+<!-- Note Action Bar -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+<div class="flex items-center gap-3 text-on-surface-variant font-body-sm text-body-sm w-full sm:w-auto">
+<button class="inline-flex items-center gap-1.5 text-primary font-label-md text-label-md hover:underline" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="history_edu">history_edu</span> Note Revision History (3)
+          </button>
+<span class="">•</span>
+<span class="">Last saved: 14 minutes ago</span>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<button class="bg-surface-container hover:bg-surface-container-high text-primary font-label-lg text-label-lg px-5 py-3 rounded-xl border border-outline-variant/40 transition-transform active:scale-[0.98]" type="button">
+            Save Draft
+          </button>
+<button class="bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg px-6 py-3 rounded-xl shadow-sm hover:shadow transition-all active:scale-[0.98] flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="">Export Clinical Report (PDF)</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- CLINICAL FOOTER META -->
+<footer class="mt-8 border-t border-surface-container py-6 text-center text-on-surface-variant font-body-sm text-body-sm">
+<div class="max-w-7xl mx-auto px-margin flex flex-col sm:flex-row items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="font-bold text-primary tracking-tight">MOTIVANCE CLINICAL</span>
+<span class="">• Tele-Rehabilitation Suite v2.4</span>
+</div>
+<p class="">HIPAA &amp; Medical Data Compliant • Encrypted Biometric Stream</p>
+</div>
+</footer>
+
+
+
+
+</body></html>

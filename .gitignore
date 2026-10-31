@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+tmp/
+**/.gradle/
+**/.idea/
+*.iml
+**/.kotlin/
+**/build/
+android/local.properties
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/

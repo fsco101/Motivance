@@ -1,0 +1,33 @@
+{
+  "environment": "isolated local Supabase; email captured locally",
+  "checks_passed": 24,
+  "checks": [
+    "Registration a accepted",
+    "Unconfirmed account a cannot sign in",
+    "Email confirmation a creates a session",
+    "Registration b accepted",
+    "Unconfirmed account b cannot sign in",
+    "Email confirmation b creates a session",
+    "Signup metadata cannot grant an admin role",
+    "Real API isolates patient profiles",
+    "Real API rejects role self-promotion",
+    "Dashboard read succeeds: profiles",
+    "Dashboard read succeeds: patients",
+    "Dashboard read succeeds: sessions",
+    "Dashboard read succeeds: exercise_assignments",
+    "Dashboard read succeeds: exercise_assignments",
+    "Confirmed patient signs in",
+    "Refresh token produces a new session",
+    "Recovery request accepted by local mail capture",
+    "Recovery email code is verified",
+    "Recovery session can set a new password",
+    "Old password is rejected after recovery",
+    "New password signs in",
+    "Logout succeeds",
+    "Revoked refresh token cannot create another session",
+    "Invalid refresh token is rejected"
+  ],
+  "limitations": [
+    "No hosted SMTP or Android device transport is tested by this script."
+  ]
+}

@@ -1,0 +1,5 @@
+# Copy to local.properties; use only the PUBLIC publishable/anon key.
+sdk.dir=C:/Users/YOUR_USER/AppData/Local/Android/Sdk
+# Optional overrides; leave commented when using android/.env.
+# SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+# SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLIC_KEY

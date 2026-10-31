@@ -1,0 +1,404 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>GALAWGO - Assign New Protocol</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Plus Jakarta Sans Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3f608d",
+            "on-primary": "#ffffff",
+            "surface-container-high": "#dce9ff",
+            "on-primary-container": "#80a0d1",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed": "#001c3a",
+            "secondary": "#006a61",
+            "primary-fixed-dim": "#a8c8fc",
+            "tertiary-fixed": "#ffddb8",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#a8c8fc",
+            "primary-container": "#0f3661",
+            "outline-variant": "#c3c6d0",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-bright": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#4e2f00",
+            "surface": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-surface-variant": "#43474f",
+            "inverse-surface": "#213145",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#d3e4fe",
+            "primary": "#002042",
+            "on-secondary-container": "#006f66",
+            "on-surface": "#0b1c30",
+            "primary-fixed": "#d4e3ff",
+            "surface-container": "#e5eeff",
+            "on-background": "#0b1c30",
+            "on-tertiary-container": "#dd8d00",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-secondary-fixed-variant": "#005049",
+            "secondary-fixed": "#89f5e7",
+            "on-secondary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "on-primary-fixed-variant": "#254874",
+            "surface-dim": "#cbdbf5",
+            "tertiary": "#311c00",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "secondary-container": "#86f2e4",
+            "outline": "#737780",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.25rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-xl": "2.25rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "data-metric": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "data-metric": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md text-body-md min-h-screen flex flex-col antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Clinical Focused App Bar (Task-Focused with Back Action, Shell Nav appropriately suppressed) -->
+<header class="sticky top-0 z-40 bg-surface shadow-sm px-margin py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Go back" class="w-12 h-12 flex items-center justify-center rounded-xl bg-surface-container-lowest text-primary border border-outline-variant hover:bg-surface-container-low active:scale-[0.98] transition-transform duration-150" onclick="history.back()">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs2LT7Rcu-Dz7Lj-DBfBqhRPPOKusZ1d09yIWPY39BZz7KnWETxcWCEfDtq1pw-V-Dr9xgmq9w04IrzXLkUBXtriYggO3GWPBBfz6ewzRKL31EG83-e9JkruqwQ4yr3tg0Ez3abycyEAI-1qKxRUxuZEdKx5u-nsbIHe_TE9Y_1y0D-izPfBcMXLzoqmVwGFbaWil1RySOAX3bYA_kYKTxr5wtTLEFgAniUgwzyRS9iwjVfMCD71moeA" alt="Galawgo Logo" class="w-4 h-4 rounded object-cover inline-block"> CLINICIAN WORKBENCH
+        </span>
+<h1 class="font-headline-sm text-headline-sm text-primary tracking-tight">Assign New Protocol</h1>
+</div>
+</div>
+<!-- Active Patient Profile Badge -->
+<div class="flex items-center gap-space-sm bg-surface-container-lowest border border-outline-variant rounded-xl px-3 py-1.5 shadow-sm">
+<div class="w-8 h-8 rounded-full bg-primary-container text-surface-container-lowest flex items-center justify-center font-label-md text-label-md">
+        RG
+      </div>
+<div class="hidden sm:flex flex-col">
+<span class="font-label-md text-label-md text-primary font-bold leading-tight">Roberto Gomez</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">#GW-2041 • Post-Op R-Elbow</span>
+</div>
+<div class="sm:hidden font-label-md text-label-md text-primary font-bold">
+        #GW-2041
+      </div>
+</div>
+</header>
+<!-- Main Canvas Container -->
+<main class="flex-1 max-w-4xl w-full mx-auto p-margin pb-24 space-y-space-lg">
+<!-- Bento Grid Section 1: Exercise Selection Card & Vision Diagram -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg border border-outline-variant shadow-sm relative overflow-hidden">
+<!-- Status Rail Indicator: Upper joint accent line -->
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-secondary"></div>
+<div class="flex flex-col md:flex-row gap-space-lg items-start md:items-center justify-between">
+<div class="space-y-space-xs flex-1">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+              Biomechanical Vision Tier
+            </span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+              Sagittal Plane Active
+            </span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Elbow Flexion &amp; Extension</h2>
+<p class="text-on-surface-variant font-body-md text-body-md leading-relaxed">
+            Prescribing dynamic computer-vision kinematic analysis for right humeroulnar joint articulation. Camera tracking validates active range limits while monitoring secondary torso compensation.
+          </p>
+<div class="flex items-center gap-4 pt-2">
+<div class="flex items-center gap-1 text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="">Sub-millimeter AI Landmark Accuracy</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">videocam</span>
+<span class="">60 FPS Tracking</span>
+</div>
+</div>
+</div>
+<!-- Anatomical Diagram Visual with Camera HUD Overlay Style -->
+<div class="relative w-full md:w-56 h-48 rounded-xl overflow-hidden border border-outline-variant bg-surface flex-shrink-0 group">
+<img class="w-full h-full object-cover" data-alt="A clean modern medical digital illustration of human upper extremity biomechanics showing elbow flexion and extension in the sagittal plane. The diagram features anatomical line art with bright teal glowing skeletal landmark points and amber calibration vector lines against a clean pristine white clinical backdrop, in professional healthcare UI aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU-wKlGtdW-36R0N-ZOict-rVDseySq4nM__9V5llA7M4wm59DhIIZFARo1Dkf2WRsp0Cr1lnlgTRItc3NKIhp5t6qojyU0SsyTzw6lfrodioi1r5rn1eUk2-DppBXQ4OjaV1eD3fEEyLPCJ0A5JVl6iLS1_K9-7u_AwUWugB068naKe_PlsgSsKKDDqWXSvlDh8sXHexH8IRMOCrZS1KAbakAuuX_ETvulJ8QPnmwJHDWBn0cJ7QW_g">
+<!-- Subtle Biomechanical HUD Telemetry Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-surface-container-lowest">
+<div class="flex justify-between items-center text-xs font-label-sm">
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container animate-pulse"></span> HUD LIVE
+              </span>
+<span class="font-bold text-secondary-container">132.4° Angle</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Grid Section 2: Prescription Parameter Inputs (Interactive Steppers & Sliders) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Stepper: Target Repetitions -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-bold">Target Repetitions</label>
+<span class="material-symbols-outlined text-secondary text-[20px]">fitness_center</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Recommended volume for acute motor re-education phase.</p>
+</div>
+<div class="my-space-md flex flex-col items-center">
+<div class="font-data-metric text-data-metric text-primary" id="reps-display">
+            3 × 10
+          </div>
+<span class="font-label-sm text-label-sm text-secondary font-bold tracking-wider">SETS × REPS</span>
+</div>
+<!-- Stepper Controls (Tactile 52px Minimum Target) -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-xs">
+<button class="h-[52px] rounded-xl bg-surface border border-outline-variant hover:bg-surface-container-high text-primary font-label-lg flex items-center justify-center active:scale-[0.98] transition-transform" onclick="adjustReps(-1)" type="button">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<button class="h-[52px] rounded-xl bg-surface border border-outline-variant hover:bg-surface-container-high text-primary font-label-lg flex items-center justify-center active:scale-[0.98] transition-transform" onclick="adjustReps(1)" type="button">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<!-- Range Slider: Target ROM -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-bold">Target Range of Motion</label>
+<span class="material-symbols-outlined text-on-tertiary-container text-[20px]">sync_alt</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Visual safe-zone bounded between extension and peak flex.</p>
+</div>
+<div class="my-space-md flex flex-col items-center">
+<div class="font-data-metric text-data-metric text-primary" id="rom-display">
+            120° – 145°
+          </div>
+<span class="font-label-sm text-label-sm text-on-tertiary-container font-bold tracking-wider">TARGET EXTENSION/FLEXION</span>
+</div>
+<!-- Range Slider Adjuster -->
+<div class="space-y-2">
+<input class="w-full h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-secondary" id="rom-slider" max="160" min="90" oninput="updateRom(this.value)" type="range" value="145">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span class="">90° (Guarded)</span>
+<span class="">160° (Full)</span>
+</div>
+</div>
+</div>
+<!-- Cadence Setting Adjuster -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-outline-variant shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-bold">Cadence Velocity</label>
+<span class="material-symbols-outlined text-secondary text-[20px]">speed</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Audio-visual metronome pacing to avoid spastic jerking.</p>
+</div>
+<div class="my-space-md flex flex-col items-center">
+<div class="font-data-metric text-data-metric text-primary" id="cadence-display">
+            1.2s – 2.0s
+          </div>
+<span class="font-label-sm text-label-sm text-secondary font-bold tracking-wider">SECONDS PER REPETITION</span>
+</div>
+<!-- Presets Selection Chips -->
+<div class="grid grid-cols-2 gap-space-xs">
+<button class="cadence-chip h-[42px] px-2 rounded-lg bg-surface border border-outline-variant font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container active:scale-[0.98]" onclick="setCadence('1.0s – 1.5s', this)" type="button">
+            Brisk (1.2s)
+          </button>
+<button class="cadence-chip h-[42px] px-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm active:scale-[0.98]" onclick="setCadence('1.2s – 2.0s', this)" type="button">
+            Standard (1.6s)
+          </button>
+</div>
+</div>
+</section>
+<!-- Bento Grid Section 3: Protocol Movement Conditions & Quality Gates -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg border border-outline-variant shadow-sm space-y-space-md">
+<div class="flex items-center justify-between border-b border-surface-container pb-space-sm">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Movement Conditions &amp; Automated AI Filters</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">System halts repetition credit if patient deviates from established posture rules.</p>
+</div>
+<span class="px-3 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm hidden sm:inline-block">
+          3 Telemetry Rules Active
+        </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<!-- Condition 1 -->
+<div class="p-space-sm bg-surface-container-low rounded-xl border border-surface-container flex gap-3 items-start">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest text-secondary flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined">center_focus_strong</span>
+</div>
+<div class="space-y-1">
+<h4 class="font-label-md text-label-md text-primary font-bold">Patient Positioning</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Patient seated upright facing front-camera at 1.5m optical distance.</p>
+</div>
+</div>
+<!-- Condition 2 -->
+<div class="p-space-sm bg-surface-container-low rounded-xl border border-surface-container flex gap-3 items-start">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest text-secondary flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined">accessibility_new</span>
+</div>
+<div class="space-y-1">
+<h4 class="font-label-md text-label-md text-primary font-bold">Arm Isolation</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Arm held stationary at flank; humeral abduction strictly &lt; 5°.</p>
+</div>
+</div>
+<!-- Condition 3 -->
+<div class="p-space-sm bg-error-container/40 rounded-xl border border-error-container flex gap-3 items-start">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest text-error flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div class="space-y-1">
+<h4 class="font-label-md text-label-md text-error font-bold">Hike Abort Safety</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Auto-flag and pause rep if compensatory shoulder hike exceeds 10°.</p>
+</div>
+</div>
+</div>
+<!-- Movement Guidance Notes Field -->
+<div class="space-y-2 pt-space-xs">
+<label class="block font-label-md text-label-md text-on-surface font-bold" for="therapist-notes">
+          Therapist Movement Guidance Notes (Rendered in Audio HUD for Patient)
+        </label>
+<textarea class="w-full rounded-lg border-1.5 border-outline-variant bg-surface-container-lowest p-3 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all outline-none" id="therapist-notes" placeholder="e.g., Focus on a smooth eccentric descent. Do not lean toward the left side during terminal flexion." rows="3"></textarea>
+</div>
+</section>
+<!-- Bottom Action Ribbon with High Ergonomic Reach CTA -->
+<div class="pt-space-sm flex flex-col sm:flex-row items-center gap-space-md justify-between">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm order-2 sm:order-1">
+<span class="material-symbols-outlined text-secondary text-[20px]">cloud_done</span>
+<span class="">Synchronized with Roberto's Tablet Station</span>
+</div>
+<!-- 56px Primary Action Button -->
+<button class="w-full sm:w-auto min-w-[280px] h-[56px] px-8 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-3 shadow-md hover:bg-primary-container active:scale-[0.98] transition-all duration-150 order-1 sm:order-2" id="assign-btn" onclick="triggerAssignment()">
+<span class="material-symbols-outlined">send</span>
+<span class="">Assign Exercise to Patient</span>
+</button>
+</div>
+</main>
+<!-- Confirmation Toast / Notification (Clinician Validation) -->
+<div class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none" id="toast-notification">
+<div class="bg-primary text-surface-container-lowest px-5 py-4 rounded-xl shadow-xl border border-secondary-container flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary text-surface-container-lowest flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<div>
+<p class="font-label-md text-label-md font-bold">Protocol Assigned Successfully</p>
+<p class="font-body-sm text-body-sm text-surface-variant">Live telemetry package sent to Roberto Gomez (#GW-2041).</p>
+</div>
+</div>
+</div>
+<!-- Interactive JavaScript Logic -->
+<script>
+    let sets = 3;
+    let reps = 10;
+
+    function adjustReps(delta) {
+      reps = Math.max(4, Math.min(25, reps + delta));
+      document.getElementById('reps-display').innerText = `${sets} × ${reps}`;
+    }
+
+    function updateRom(val) {
+      document.getElementById('rom-display').innerText = `120° – ${val}°`;
+    }
+
+    function setCadence(cadenceText, el) {
+      document.getElementById('cadence-display').innerText = cadenceText;
+      const chips = document.querySelectorAll('.cadence-chip');
+      chips.forEach(c => {
+        c.classList.remove('bg-primary', 'text-on-primary');
+        c.classList.add('bg-surface', 'text-on-surface-variant', 'border', 'border-outline-variant');
+      });
+      el.classList.add('bg-primary', 'text-on-primary');
+      el.classList.remove('bg-surface', 'text-on-surface-variant', 'border');
+    }
+
+    function triggerAssignment() {
+      const btn = document.getElementById('assign-btn');
+      const toast = document.getElementById('toast-notification');
+      
+      // Loading State
+      btn.innerHTML = `<span class="material-symbols-outlined animate-spin">progress_activity</span><span>Syncing Telemetry...</span>`;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = `<span class="material-symbols-outlined">check_circle</span><span>Protocol Active</span>`;
+        btn.classList.remove('bg-primary');
+        btn.classList.add('bg-secondary');
+
+        // Show Toast
+        toast.classList.remove('translate-y-24', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+
+        setTimeout(() => {
+          toast.classList.remove('translate-y-0', 'opacity-100');
+          toast.classList.add('translate-y-24', 'opacity-0');
+          btn.disabled = false;
+          btn.innerHTML = `<span class="material-symbols-outlined">send</span><span>Assign Exercise to Patient</span>`;
+          btn.classList.add('bg-primary');
+          btn.classList.remove('bg-secondary');
+        }, 3200);
+      }, 750);
+    }
+  </script>
+
+
+</body></html>
