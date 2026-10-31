@@ -10,8 +10,9 @@ fun config(name: String): String {
 }
 android {
     namespace = "com.motivance"; compileSdk = 35
-    defaultConfig { applicationId = "com.motivance"; minSdk = 26; targetSdk = 35; versionCode = 1; versionName = "0.1.0"; buildConfigField("String", "SUPABASE_URL", config("SUPABASE_URL")); buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", config("SUPABASE_PUBLISHABLE_KEY")) }
+    defaultConfig { applicationId = "com.motivance"; minSdk = 26; targetSdk = 35; versionCode = 3; versionName = "0.3.0"; buildConfigField("String", "SUPABASE_URL", config("SUPABASE_URL")); buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", config("SUPABASE_PUBLISHABLE_KEY")) }
     defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     // MediaPipe 0.10.21 has ARM32/ARM64 JNI, but no x86_64 JNI. Avoid a
     // mixed APK selecting x86_64 because a different dependency provides it.
     defaultConfig.ndk { abiFilters += setOf("arm64-v8a", "armeabi-v7a") }
@@ -32,8 +33,12 @@ dependencies {
     testImplementation("org.json:json:20240303")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     implementation(libs.room.runtime); implementation(libs.room.ktx); ksp(libs.room.compiler)
+    implementation(libs.work.runtime)
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }

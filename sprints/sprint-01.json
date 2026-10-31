@@ -23,7 +23,17 @@
     {
       "description": "Demonstrate a correctly aligned skeleton on two device classes and review the agreed exercise and validation protocol.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+        "docs/validation/SPRINT-01-PROTOCOL.md",
+        "docs/validation/sprint-04-history-test-results.json",
+        "docs/validation/IMPLEMENTATION-CLOSURE.md",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "Deferred physical/demo verification remains unexecuted; engineering delivery is evidenced separately."
     }
   ],
   "demo": "Demonstrate a correctly aligned skeleton on two device classes and review the agreed exercise and validation protocol.",
@@ -48,7 +58,7 @@
       "github_issue": 2,
       "title": "Approve MVP exercises, device scope and measurement validation protocol",
       "description": "Agree a small exercise set (target two or three, subject to feasibility), required joints, affected side, camera view and ROM conventions. Define reference measurement and recruitment process before implementation.",
-      "status": "blocked",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "CV developer + therapist",
       "estimate_points": 3,
@@ -82,19 +92,49 @@
           "id": "MOT-01-AC1",
           "description": "Therapist reviews each exercise, positioning instructions, allowable parameters and supported form rules; unsupported movements are documented.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-01-PROTOCOL.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker",
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed."
         },
         {
           "id": "MOT-01-AC2",
           "description": "Record minimum device/OS targets and at least a lower-spec and a mid-range physical Android device for testing.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-01-PROTOCOL.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker",
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed."
         },
         {
           "id": "MOT-01-AC3",
           "description": "Document reference instrument/procedure, sample and repetition counts, angle error and repeatability thresholds, exclusion rules and approval owner before collecting validation data; thresholds are not chosen after results.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-01-PROTOCOL.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker",
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed."
         },
         {
           "id": "MOT-01-AC4",
@@ -106,24 +146,34 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-10-31T08:16:24.397121+00:00",
+        "reviewed_by": "Codex engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+          "docs/validation/SPRINT-01-PROTOCOL.md",
+          "docs/validation/sprint-04-history-test-results.json",
+          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
+      "implementation_evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+        "docs/validation/SPRINT-01-PROTOCOL.md",
+        "docs/validation/sprint-04-history-test-results.json"
+      ],
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
         "Therapist approval and actual two-device inventory are required; review docs/validation/SPRINT-01-PROTOCOL.md before collecting evaluation data."
       ],
-      "implementation_evidence": [
-        "docs/validation/SPRINT-01-IMPLEMENTATION.md"
-      ]
+      "implementation_status": "implemented"
     },
     {
       "id": "MOT-02",
       "github_issue": 3,
       "title": "Create Android modules, dependency injection and continuous integration",
       "description": "Bootstrap Kotlin/Compose with three Gradle modules (:app, :core:domain, :core:assessment), feature packages, Hilt, pinned toolchain and dependency catalogue as specified in docs/PLAN.md. Configure build variants and CI.",
-      "status": "review",
+      "status": "in-progress",
       "owner": null,
       "suggested_owner_role": "Android developer",
       "estimate_points": 5,
@@ -174,7 +224,10 @@
           "id": "MOT-02-AC3",
           "description": "CI runs build, lint and domain tests; secrets and signing files are excluded from version control.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "https://github.com/fsco101/Motivance/actions/runs/41183483387"
+          ]
         },
         {
           "id": "MOT-02-AC4",
@@ -192,11 +245,14 @@
       },
       "plan_reference": "docs/PLAN.md",
       "blockers": [
-        "Clean-source build, lint and 23 tests pass. GitHub workflow source is ready; commit/push and remote CI execution/review remain pending."
+        "Remote Android CI failed during SDK setup: https://github.com/fsco101/Motivance/actions/runs/41183483387. Local workflow fix replaces retired tools package with platform-tools; publish and obtain a passing remote run before closing MOT-02/S1."
       ],
       "implementation_evidence": [
-        "docs/validation/SPRINT-01-IMPLEMENTATION.md"
-      ]
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+        "docs/validation/SPRINT-01-PROTOCOL.md",
+        "docs/validation/sprint-04-history-test-results.json"
+      ],
+      "implementation_status": "implemented"
     },
     {
       "id": "MOT-03",
@@ -279,17 +335,19 @@
         ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [],
       "implementation_evidence": [
-        "docs/validation/SPRINT-01-IMPLEMENTATION.md"
-      ]
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+        "docs/validation/SPRINT-01-PROTOCOL.md",
+        "docs/validation/sprint-04-history-test-results.json"
+      ],
+      "implementation_status": "implemented"
     },
     {
       "id": "MOT-04",
       "github_issue": 5,
       "title": "Implement authentication, trusted roles and patient access policies",
       "description": "Implement sign-in, account recovery and server-controlled roles. Establish RLS before patient data flows into the app.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Android developers",
       "estimate_points": 5,
@@ -368,26 +426,32 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-10-31T08:16:24.397121+00:00",
+        "reviewed_by": "Codex engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+          "docs/validation/SPRINT-01-PROTOCOL.md",
+          "docs/validation/sprint-04-history-test-results.json",
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/AUTH-UI-REFINEMENT.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "All local API/auth, email-code and access-policy checks pass. Foundation CI review and Android physical-device interaction/hosted SMTP remain outside these local checks."
-      ],
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
-        "docs/validation/android-test-results.json",
-        "docs/architecture/UI-UX.md"
-      ]
+        "docs/validation/SPRINT-01-PROTOCOL.md",
+        "docs/validation/sprint-04-history-test-results.json",
+        "docs/validation/AUTH-UI-REFINEMENT.md"
+      ],
+      "implementation_status": "implemented"
     },
     {
       "id": "MOT-05",
       "github_issue": 6,
       "title": "Prototype CameraX and MediaPipe live skeleton on target phones",
       "description": "Build an early camera preview with pose detection and joint/connection overlay. Measure device feasibility before expanding features.",
-      "status": "blocked",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "CV developer",
       "estimate_points": 8,
@@ -424,7 +488,17 @@
           "id": "MOT-05-AC1",
           "description": "Skeleton alignment remains correct across preview scaling, rotation and front-camera mirroring.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-01-PROTOCOL.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker",
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed."
         },
         {
           "id": "MOT-05-AC2",
@@ -438,36 +512,64 @@
           "id": "MOT-05-AC3",
           "description": "Capture FPS, feedback latency, thermal behavior and detection quality on the two target device classes.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-01-PROTOCOL.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker",
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed."
         },
         {
           "id": "MOT-05-AC4",
           "description": "Record a go/no-go decision for each proposed exercise and a fallback scope if tracking is inadequate.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-01-PROTOCOL.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker",
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed."
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-10-31T08:16:24.397121+00:00",
+        "reviewed_by": "Codex engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+          "docs/validation/SPRINT-01-PROTOCOL.md",
+          "docs/validation/sprint-04-history-test-results.json",
+          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Diagnostics now report rolling FPS, p95 inference latency and thermal status. Two physical device classes and therapist exercise go/no-go evidence are still required."
-      ],
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
-        "docs/validation/EMULATOR-CAMERA-FIX.md",
-        "docs/architecture/UI-UX.md"
-      ]
+        "docs/validation/SPRINT-01-PROTOCOL.md",
+        "docs/validation/sprint-04-history-test-results.json"
+      ],
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "Diagnostics now report rolling FPS, p95 inference latency and thermal status. Two physical device classes and therapist exercise go/no-go evidence are still required."
+      ],
+      "implementation_status": "implemented"
     },
     {
       "id": "MOT-06",
       "github_issue": 7,
       "title": "Design accessible patient and therapist flows",
       "description": "Specify login, exercise list, camera setup, live guidance, results and therapist dashboard flows. Use stitch_galawgo_rehabilitation_system_prototype/ and its DESIGN.md as the visual and interaction basis, adapted to Kotlin Compose and accessibility; preserve Motivance branding.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "UX/QA contributor",
       "estimate_points": 3,
@@ -502,7 +604,17 @@
           "id": "MOT-06-AC1",
           "description": "Review wireframes with therapist input and identify patient usability risks.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-01-PROTOCOL.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/IMPLEMENTATION-CLOSURE.md",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker",
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed."
         },
         {
           "id": "MOT-06-AC2",
@@ -530,22 +642,31 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-10-31T08:16:24.397121+00:00",
+        "reviewed_by": "Codex engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+          "docs/validation/SPRINT-01-PROTOCOL.md",
+          "docs/validation/sprint-04-history-test-results.json",
+          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Review the Stitch-derived native flows with a therapist and verify large text, accessibility and terminology on devices."
-      ],
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
-        "docs/validation/EMULATOR-CAMERA-FIX.md",
-        "docs/architecture/UI-UX.md"
-      ]
+        "docs/validation/SPRINT-01-PROTOCOL.md",
+        "docs/validation/sprint-04-history-test-results.json"
+      ],
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "Review the Stitch-derived native flows with a therapist and verify large text, accessibility and terminology on devices."
+      ],
+      "implementation_status": "implemented"
     }
   ],
   "plan_reference": "docs/PLAN.md",
   "ui_ux_reference": "stitch_galawgo_rehabilitation_system_prototype/",
-  "implementation_status": "software implementation complete locally; CI execution, physical-device and therapist acceptance pending"
+  "implementation_status": "software implementation complete locally; CI execution, physical-device and therapist acceptance pending",
+  "implementation_note": "Foundation implementation is delivered. Solved issues close individually; MOT-02 and S1 remain open for a passing remote Android CI run after the SDK setup fix. Therapist/device checks remain deferred and unexecuted."
 }

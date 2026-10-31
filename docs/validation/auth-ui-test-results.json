@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-31",
+  "app_unit_suites": [
+    {
+      "name": "com.motivance.data.remote.ConnectedRepositoryTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "name": "com.motivance.data.remote.HistoryRepositoryTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "name": "com.motivance.data.remote.PrescriptionCacheTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "name": "com.motivance.data.remote.SupabaseAuthRepositoryTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "name": "com.motivance.data.remote.SyncFailuresTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "name": "com.motivance.feature.auth.AuthViewModelTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "name": "com.motivance.feature.rehabilitation.HistoryViewModelTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "app_unit_total": 37,
+  "full_emulator_suite": {
+    "tests": 21,
+    "failures": 0,
+    "log": "docs/validation/auth-ui-validation.log"
+  },
+  "focused_auth_emulator_suite": {
+    "tests": 6,
+    "failures": 0,
+    "log": "docs/validation/auth-ui-final.log"
+  },
+  "lint": {
+    "Warning": 78,
+    "Information": 1
+  },
+  "physical_device_and_talkback": "deferred, not executed",
+  "final_packaged_auth_emulator_suite": {
+    "tests": 6,
+    "failures": 0,
+    "log": "docs/validation/auth-ui-device.log"
+  }
+}

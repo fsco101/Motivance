@@ -11,7 +11,7 @@ import javax.inject.Singleton
 import org.json.JSONObject
 
 @Singleton class SessionStore internal constructor(val database:SessionDatabase) {
-    @Inject constructor(@ApplicationContext context:Context):this(Room.databaseBuilder(context,SessionDatabase::class.java,"motivance-sessions.db").build())
+    @Inject constructor(@ApplicationContext context:Context):this(Room.databaseBuilder(context,SessionDatabase::class.java,"motivance-sessions.db").addMigrations(SessionMigrations.FROM_1_TO_2).build())
     val dao=database.sessions()
     suspend fun recover(owner:String)=dao.interruptDrafts(owner,System.currentTimeMillis())
     suspend fun save(owner:String,id:String,rules:ExerciseRules,snapshot:AssessmentSnapshot,startedAt:Long,status:String) {
@@ -26,10 +26,12 @@ import org.json.JSONObject
             val conflict=database.openHelper.readableDatabase.query("SELECT ownerId FROM local_sessions WHERE id=?",arrayOf(id)).use { it.moveToFirst() && it.getString(0)!=owner }
             check(!conflict)
             val now=System.currentTimeMillis()
-            val row=LocalSession(id,owner,ExerciseJson.rules(rules),ExerciseJson.snapshot(snapshot),status,startedAt,now,if(status=="COMPLETED") now else null)
+            val grant=if(rules.demo) null else if(old!=null) old.consentId else dao.latestConsent(owner)?.takeIf {it.event=="granted" && it.occurredAt<=startedAt}?.id
+            require(rules.demo || grant!=null) {"Recording consent is required before a prescribed session"}
+            val row=LocalSession(id,owner,ExerciseJson.rules(rules),ExerciseJson.snapshot(snapshot),status,startedAt,now,if(status=="COMPLETED") now else null,grant)
             dao.put(row)
             if(status=="COMPLETED") {
-                val payload=JSONObject().put("sessionId",id).put("ownerId",owner).put("rules",JSONObject(row.rulesJson)).put("metrics",JSONObject(row.snapshotJson)).put("startedAt",startedAt).put("endedAt",now).toString()
+                val payload=JSONObject().put("schemaVersion",2).put("consentId",grant ?: JSONObject.NULL).put("sessionId",id).put("ownerId",owner).put("rules",JSONObject(row.rulesJson)).put("metrics",JSONObject(row.snapshotJson)).put("startedAt",startedAt).put("endedAt",now).toString()
                 dao.enqueue(OutboxEntry(id,owner,if(rules.demo) "LOCAL_ONLY" else "PENDING",payload))
             }
         }
@@ -45,4 +47,11 @@ import org.json.JSONObject
         database.withTransaction { dao.clearPrescriptions(owner); prescriptions.forEach {cache(it)} }
     }
     suspend fun clearCacheOnLogout(owner:String) { database.withTransaction { dao.clearPrescriptions(owner); dao.interruptDrafts(owner,System.currentTimeMillis()) } }
+    suspend fun recordConsent(owner:String,granted:Boolean):LocalConsent=database.withTransaction {
+        require(owner.isNotBlank())
+        val previous=dao.latestConsent(owner)
+        if(granted && previous?.event=="granted") return@withTransaction previous
+        val event=LocalConsent(UUID.randomUUID().toString(),owner,if(granted) "granted" else "withdrawn","movement-summary-v1",maxOf(System.currentTimeMillis(),(previous?.occurredAt ?: 0)+1))
+        dao.consent(event); event
+    }
 }

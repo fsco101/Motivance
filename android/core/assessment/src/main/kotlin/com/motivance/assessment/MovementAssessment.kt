@@ -29,7 +29,7 @@ class MovementAssessment(val rules:ExerciseRules, restored:AssessmentSnapshot?=n
     val snapshot:AssessmentSnapshot get()=state
 
     fun start(timestampMs:Long):Boolean {
-        if(state.running || state.quality!=TrackingQuality.READY || timestampMs<state.timestampMs) return false
+        if(state.running || state.quality!=TrackingQuality.READY || timestampMs<state.timestampMs || timestampMs-state.timestampMs>1000) return false
         state=state.copy(running=true,phase=MovementPhase.SEEKING_START,feedback=RepFeedback.NONE)
         lastClock=timestampMs
         return true

@@ -4,7 +4,7 @@
   "title": "S4 - Feature-complete MVP",
   "description": "Weeks 7-8. Exit: progress dashboard, basic administration, English/Filipino accessibility, interrupted-session recovery and end-to-end checks pass. Eight-week completion is possible only if release validation also passes.",
   "goal": "Complete the eight-week MVP and prepare the release environment.",
-  "status": "planned",
+  "status": "in-progress",
   "weeks": {
     "start": 7,
     "end": 8
@@ -48,7 +48,7 @@
       "github_issue": 20,
       "title": "Build therapist results dashboard and progress charts",
       "description": "Show session history and ROM/repetition trends for assigned patients.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Android developer",
       "estimate_points": 5,
@@ -71,48 +71,78 @@
       ],
       "functions": [
         {
-          "name": "queryPatientHistory",
-          "description": "Retrieve permitted session records with exercise, side and date filters.",
-          "kind": "planned capability; implementation names may change"
+          "name": "SupabaseAuthRepository.loadHistory / HistoryJson.path / HistoryViewModel",
+          "description": "Read one permitted patient history with exercise-version, side and inclusive UTC date filters, 50-record keyset pages, full measurements and account-safe refresh.",
+          "kind": "implemented capability"
         },
         {
-          "name": "chartRehabilitationProgress",
-          "description": "Display comparable ROM/repetition series with measurement quality and prescription changes.",
-          "kind": "planned capability; implementation names may change"
+          "name": "rehabilitationProgress / ResultsDashboard",
+          "description": "Render separate comparable ROM/repetition series, historical prescription targets, quality gaps and detailed session states.",
+          "kind": "implemented capability"
         }
       ],
       "acceptance_criteria": [
         {
           "id": "MOT-19-AC1",
           "description": "Filter by patient, exercise, side and date range; show units and measurement quality.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-04-HISTORY.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/sprint-04-history-backend-results.json"
+          ]
         },
         {
           "id": "MOT-19-AC2",
           "description": "Separate exercise/side series and show prescription changes so incomparable measurements are not silently combined.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-04-HISTORY.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/sprint-04-history-backend-results.json"
+          ]
         },
         {
           "id": "MOT-19-AC3",
           "description": "Historical targets remain those of the session prescription version.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-04-HISTORY.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/sprint-04-history-backend-results.json"
+          ]
         },
         {
           "id": "MOT-19-AC4",
           "description": "Empty, partial, interrupted and invalid-measurement sessions are clearly distinguished.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-04-HISTORY.md",
+            "docs/validation/sprint-04-history-test-results.json",
+            "docs/validation/sprint-04-history-backend-results.json"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-10-31T08:16:24.397121+00:00",
+        "reviewed_by": "Codex engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/SPRINT-04-HISTORY.md",
+          "docs/validation/sprint-04-history-test-results.json",
+          "docs/validation/sprint-04-history-backend-results.json",
+          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+        ]
       },
-      "plan_reference": "docs/PLAN.md"
+      "plan_reference": "docs/PLAN.md",
+      "implementation_status": "implemented",
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-04-HISTORY.md",
+        "docs/validation/sprint-04-history-test-results.json"
+      ]
     },
     {
       "id": "MOT-20",
@@ -474,5 +504,6 @@
       "plan_reference": "docs/PLAN.md"
     }
   ],
-  "plan_reference": "docs/PLAN.md"
+  "plan_reference": "docs/PLAN.md",
+  "implementation_note": "MOT-19 history/charts is solved and closed after engineering evidence review. MOT-20 through MOT-24 remain planned; S4 remains open. Physical/therapist checks are deferred."
 }

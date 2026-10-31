@@ -1,5 +1,23 @@
 # Database implementation decisions
 
+## Sprint 4 history reads
+
+MOT-19 uses the existing RLS policies and schema. A history query fixes one patient and optionally filters the referenced prescription exercise version/side and inclusive UTC start-date range. The explicit `sessions_prescription_version_id_patient_id_fkey` embedding resolves the session's original immutable prescription, never the latest assignment version. All child measurements and tracking counts are retained. Keyset pages use `(started_at desc, id desc)` with a 50-row page and one lookahead; a newer concurrent upload cannot shift earlier pages. History is kept in memory only, cleared on account/filter change or request failure and refreshed through the authenticated API. No additional Room table, SQL migration or service credential is introduced.
+
+The local API regression includes tied timestamps, a newer upload between pages, multiple child metrics, original targets after prescription edits, date boundaries, empty/interrupted fixtures, unauthorized reads and revoked access. See [history evidence](../validation/SPRINT-04-HISTORY.md). The S1–S3 records below remain historical implementation evidence.
+
+## Sprint 3 contract
+
+`202611010001_connected_workflow.sql` adds invitations, privacy requests and a development retention-policy row, plus prescription parameters, consent event IDs/times, session payload hashes/consent/duration and measurement quality/reason totals. Nullable paired extrema preserve unknown ROM rather than fabricating zeros.
+
+Authenticated writes use `invite_patient`, `accept_patient_invitation`, `revoke_patient_link`, `publish_prescription`, `record_consent`, `ingest_session` and `request_patient_data`. Definer functions use an empty search path, explicit grants and internal role/ownership checks; direct authenticated inserts into sessions/measurements/prescriptions/consents are revoked to prevent bypassing validation. Patients never receive a service key. Invitations bind a hashed 48-character random code to the confirmed patient's email and expire after seven days; raw codes are returned once for manual sharing, not sent to email by the app.
+
+Prescription requests have stable assignment/version UUIDs; an identical retry returns the existing version. Edits append a version under a per-assignment lock. Ingestion locks the session UUID and hashes canonical JSON; identical retries acknowledge the same result, while a conflicting payload is rejected. Ownership, active assignment/link, pinned exercise/side/targets/timing/form parameters, chronological consent and measurement validity are checked before parent/child writes commit. A withdrawn grant cannot authorize later sessions. Previously completed results remain readable to their patient; link revocation removes therapist access immediately.
+
+Audit triggers append minimal actor/action/table/identifier events for role, link, prescription and privacy-request changes; invitations append a separate audit event. Tokens, invitation codes, video and pose traces are not audit payloads. Export/deletion requests remain `requested` until a trusted operator resolves them. The explicit development policy disables automatic deletion and sets review after 365 days. This is an engineering default, not a legal/clinical retention determination. The application does not claim a request has already erased data or expired backups. See [data lifecycle operations](../operations/DATA-LIFECYCLE.md).
+
+Room v2 adds consent events, consent IDs, cache download time and outbox attempts/errors. Existing aggregate sessions remain intact; legacy unconsented pending payloads become `REVIEW_REQUIRED`. The session vault uses Android Keystore AES/GCM with an atomic, backup-excluded encrypted file scoped to the backend URL. Logout clears tokens/cache, retaining owner-scoped pending results. Worker credentials must match the outbox owner before a network write. See `docs/validation/SPRINT-03-IMPLEMENTATION.md` for current test evidence; the S1/S2 sections below are historical implementation records.
+
 The authoritative entity relationships are in `docs/PLAN.md`; the executable schema is `supabase/migrations/202610310001_foundation.sql`. Fresh startup and reset have executed the migration and synthetic seed successfully. All 18 pgTAP access/integrity tests pass; `docs/validation/database-test-results.log` records the result. The live auth check also verifies signup provisioning and patient isolation through the API.
 
 ## Access matrix

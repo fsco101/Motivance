@@ -98,9 +98,37 @@ class AuthViewModelTest {
         assertFalse(vm.overview.value.busy)
     }
 
+    @Test fun restorationShowsLoadingUntilSessionCheckFinishes()=runTest(dispatcher) {
+        val vm=AuthViewModel(repository)
+        assertTrue(vm.state.value.restoring)
+        repository.restoreGate=CompletableDeferred()
+        vm.restore(); runCurrent()
+        assertTrue(vm.state.value.restoring)
+        assertTrue(vm.state.value.busy)
+        repository.restoreGate!!.complete(repository.session)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.restoring)
+        assertFalse(vm.state.value.busy)
+        assertEquals(repository.session,vm.state.value.session)
+    }
+    @Test fun failedRestorationExitsLoadingAndAllowsSignIn()=runTest(dispatcher) {
+        val vm=AuthViewModel(repository)
+        repository.restoreGate=CompletableDeferred()
+        vm.restore(); runCurrent()
+        repository.restoreGate!!.completeExceptionally(IllegalStateException("unavailable"))
+        advanceUntilIdle()
+        assertFalse(vm.state.value.restoring)
+        assertFalse(vm.state.value.busy)
+        assertNull(vm.state.value.session)
+        vm.act(AuthAction.SIGN_IN,"a@example.test","password"); advanceUntilIdle()
+        assertEquals(repository.session,vm.state.value.session)
+    }
+
     private class FakeAuth : AuthRepository {
         val session=UserSession("fixture",setOf(UserRole.PATIENT))
         var calls=0
+        var restoreGate: CompletableDeferred<UserSession?>?=null
+        override suspend fun restoreSession():UserSession? = restoreGate?.await()
         var signInGate: CompletableDeferred<UserSession>?=null
         var signOutGate: CompletableDeferred<Unit>?=null
         var overviewGate: CompletableDeferred<WorkspaceOverview>?=null

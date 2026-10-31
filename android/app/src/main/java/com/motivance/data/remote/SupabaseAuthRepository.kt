@@ -15,6 +15,9 @@ import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.motivance.data.local.SessionStore
+import com.motivance.data.local.SessionVault
+import java.io.IOException
+import java.time.Instant
 
 /** GoTrue REST adapter. Tokens deliberately remain in memory in the S1 prototype. */
 @Singleton class SupabaseAuthRepository internal constructor(
@@ -22,13 +25,37 @@ import com.motivance.data.local.SessionStore
     private val baseUrl: String,
     private val publicKey: String,
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
-    private val cache:SessionStore?=null
-) : AuthRepository {
-    @Inject constructor(store:SessionStore) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store)
+    private val cache:SessionStore?=null,
+    private val vault:SessionVault?=null
+) : AuthRepository, RehabilitationRepository {
+    @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
     private var refreshToken: String? = null
     private var userId: String? = null
+    private var cachedRoles:Set<UserRole> = emptySet()
+    private var expiresAt=0L
+    private fun clearSession() {access=null; refreshToken=null; userId=null; cachedRoles=emptySet(); vault?.clear()}
+    private fun loadStored() {
+        if(access!=null) return
+        val stored=vault?.read() ?: return
+        try {
+            val j=JSONObject(stored); require(j.getString("backend")==baseUrl); access=j.getString("access_token"); refreshToken=j.getString("refresh_token"); userId=j.getString("id"); expiresAt=j.getLong("expires_at")
+            cachedRoles=j.getJSONArray("roles").let { a -> (0 until a.length()).map {UserRole.valueOf(a.getString(it))}.toSet() }
+        } catch(_:Exception) {clearSession()}
+    }
+    private suspend fun <T> authorized(owner:String?=null,action:suspend (String,String)->T):T=mutex.withLock {
+        loadStored()
+        val id=userId ?: throw RemoteFailure(401)
+        if(owner!=null && id!=owner) throw RemoteFailure(401)
+        val token=access ?: throw RemoteFailure(401)
+        try {action(token,id)} catch(e:RemoteFailure) {
+            if(e.status!=401) throw e
+            try {accept(call("/auth/v1/token?grant_type=refresh_token",JSONObject().put("refresh_token",refreshToken)))}
+            catch(refreshError:RemoteFailure) {if(refreshError.status in setOf(400,401)) clearSession(); throw RemoteFailure(if(refreshError.status==400) 401 else refreshError.status)}
+            action(checkNotNull(access),id)
+        }
+    }
     private suspend fun call(path: String, body: JSONObject?, bearer: String? = null, method: String = "POST"): String = withContext(Dispatchers.IO) {
         val url = baseUrl.toHttpUrlOrNull()
         val localDebug = allowLocalDevelopment && url?.scheme == "http" && url.host in setOf("localhost", "127.0.0.1", "10.0.2.2") && url.port == 54321
@@ -37,7 +64,7 @@ import com.motivance.data.local.SessionStore
         if (bearer != null) builder.header("Authorization", "Bearer $bearer")
         if (method == "GET") builder.get() else builder.method(method, (body ?: JSONObject()).toString().toRequestBody("application/json".toMediaType()))
         http.newCall(builder.build()).execute().use { response ->
-            check(response.isSuccessful) { "Authentication request failed (${response.code}). Check your details or connection and try again." }
+            if(!response.isSuccessful) throw RemoteFailure(response.code)
             response.body?.string().orEmpty()
         }
     }
@@ -48,7 +75,15 @@ import com.motivance.data.local.SessionStore
         val roles = JSONArray(call("/rest/v1/user_roles?select=role&user_id=eq.$id", null, token, "GET"))
         val mapped = (0 until roles.length()).map { UserRole.valueOf(roles.getJSONObject(it).getString("role").uppercase()) }.toSet()
         access = token; refreshToken = value.getString("refresh_token"); userId = id
+        cachedRoles=mapped; expiresAt=value.optLong("expires_at",System.currentTimeMillis()/1000+value.optLong("expires_in",3600))
+        vault?.write(JSONObject().put("backend",baseUrl).put("id",id).put("access_token",token).put("refresh_token",refreshToken).put("expires_at",expiresAt).put("roles",JSONArray(mapped.map {it.name})).toString())
         return UserSession(id, mapped)
+    }
+    override suspend fun restoreSession():UserSession?=mutex.withLock {
+        loadStored(); val id=userId ?: return@withLock null
+        try {accept(call("/auth/v1/token?grant_type=refresh_token",JSONObject().put("refresh_token",refreshToken)))}
+        catch(e:IOException) {if(expiresAt>System.currentTimeMillis()/1000) UserSession(id,cachedRoles) else null}
+        catch(e:RemoteFailure) {if(e.status in setOf(400,401)) clearSession(); throw e}
     }
     override suspend fun signIn(email: String, password: String) = mutex.withLock { accept(call("/auth/v1/token?grant_type=password", JSONObject().put("email",email).put("password",password))) }
     override suspend fun register(email: String, password: String) { call("/auth/v1/signup", JSONObject().put("email",email).put("password",password)) }
@@ -64,25 +99,23 @@ import com.motivance.data.local.SessionStore
     }
     override suspend fun refresh() = mutex.withLock {
         try { accept(call("/auth/v1/token?grant_type=refresh_token", JSONObject().put("refresh_token", checkNotNull(refreshToken)))) }
-        catch (e: Exception) { access=null; refreshToken=null; userId=null; throw e }
+        catch (e: RemoteFailure) { if(e.status in setOf(400,401)) clearSession(); throw e }
     }
     override suspend fun signOut() = mutex.withLock {
         val old=access
         val account=userId
-        access=null; refreshToken=null; userId=null
+        clearSession()
         try { if(account!=null) cache?.clearCacheOnLogout(account) }
         finally { if (old != null) call("/auth/v1/logout",JSONObject(),old) }
         Unit
     }
-    override suspend fun loadOverview() = mutex.withLock {
-        val token=checkNotNull(access)
-        val id=checkNotNull(userId)
+    override suspend fun loadOverview() = authorized { token,id ->
         val profiles=JSONArray(call("/rest/v1/profiles?select=display_name&id=eq.$id",null,token,"GET"))
         val patients=JSONArray(call("/rest/v1/patients?select=id",null,token,"GET"))
         val sessions=JSONArray(call("/rest/v1/sessions?select=id,patient_id,started_at,status&order=started_at.desc&limit=20",null,token,"GET"))
         val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id&active=eq.true",null,token,"GET"))
         if(cache!=null) {
-            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
+            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
             cache.replaceCache(id,PrescriptionCache.decode(id,details,System.currentTimeMillis()))
         }
         WorkspaceOverview(
@@ -92,4 +125,38 @@ import com.motivance.data.local.SessionStore
             assignments=(0 until assignments.length()).map { val a=assignments.getJSONObject(it); AssignmentSummary(a.getString("id"),a.getString("patient_id")) }
         )
     }
+    override suspend fun loadWorkspace()=authorized { token,_ ->
+        val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name)",null,token,"GET"))
+        val catalogue=JSONArray(call("/rest/v1/exercise_versions?select=id,algorithm_key,definition&published=eq.true",null,token,"GET"))
+        val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)&active=eq.true",null,token,"GET"))
+        val requests=JSONArray(call("/rest/v1/data_requests?select=id,kind,status&order=created_at.desc",null,token,"GET"))
+        fun <T> rows(a:JSONArray,convert:(JSONObject)->T)=(0 until a.length()).map {convert(a.getJSONObject(it))}
+        RehabWorkspace(
+            rows(patients) {LinkedPatient(it.getString("id"),it.optJSONObject("profiles")?.optString("display_name").orEmpty())},
+            rows(catalogue) {val d=it.getJSONObject("definition"); CatalogueExercise(it.getString("id"),d.optString("name",it.getString("algorithm_key")),it.getString("algorithm_key"),d.optString("instructions_en"))}.filter {it.algorithm in setOf("elbow-flexion-v1","shoulder-abduction-v1")},
+            rows(assignments) {a -> val v=a.getJSONArray("prescription_versions"); if(v.length()==0) null else {
+                val p=(0 until v.length()).map {v.getJSONObject(it)}.maxBy {it.getInt("version")}
+                PrescriptionSummary(a.getString("id"),p.getString("id"),a.getString("patient_id"),p.getString("exercise_version_id"),p.getInt("version"),p.getString("side"),p.getDouble("minimum_degrees"),p.getDouble("maximum_degrees"),p.getInt("target_repetitions"),p.optJSONObject("parameters")?.toString() ?: "{}")
+            }}.filterNotNull(),
+            rows(requests) {PrivacyRequest(it.getString("id"),it.getString("kind"),it.getString("status"))})
+    }
+    override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
+        HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
+    }
+    override suspend fun invitePatient(email:String)=authorized { token,_ -> JSONObject(call("/rest/v1/rpc/invite_patient",JSONObject().put("p_email",email.trim()),token)).getString("code") }
+    override suspend fun acceptInvitation(code:String) {authorized {token,_ -> call("/rest/v1/rpc/accept_patient_invitation",JSONObject().put("p_code",code.trim()),token)} }
+    override suspend fun revokeLink(patientId:String) {authorized {token,_ -> call("/rest/v1/rpc/revoke_patient_link",JSONObject().put("p_patient",patientId),token)} }
+    override suspend fun publishPrescription(draft:PrescriptionDraft) {authorized {token,_ ->
+        val p=JSONObject().put("minimum_cycle_ms",draft.minimumCycleMs).put("maximum_cycle_ms",draft.maximumCycleMs).put("peak_hold_ms",draft.peakHoldMs).put("max_trunk_lean_degrees",draft.maxTrunkLean).put("confidence",draft.confidence)
+        val body=JSONObject().put("p_assignment",draft.assignmentId).put("p_version",draft.requestId).put("p_patient",draft.patientId).put("p_exercise",draft.exerciseId).put("p_side",draft.side.name.lowercase()).put("p_low",draft.low).put("p_high",draft.high).put("p_repetitions",draft.repetitions).put("p_parameters",p)
+        call("/rest/v1/rpc/publish_prescription",body,token)
+    }}
+    override suspend fun requestPatientData(id:String,kind:String) {authorized {token,_ -> call("/rest/v1/rpc/request_patient_data",JSONObject().put("p_id",id).put("p_kind",kind),token)} }
+    override suspend fun uploadConsent(owner:String,id:String,event:String,version:String,occurredAt:Long) {authorized(owner) {token,_ ->
+        call("/rest/v1/rpc/record_consent",JSONObject().put("p_id",id).put("p_event",event).put("p_version",version).put("p_occurred_at",Instant.ofEpochMilli(occurredAt).toString()),token)
+    }}
+    override suspend fun uploadSession(owner:String,payload:String) {authorized(owner) {token,_ ->
+        val result=JSONObject(call("/rest/v1/rpc/ingest_session",JSONObject().put("p_payload",JSONObject(payload)),token))
+        check(result.getString("sessionId")==JSONObject(payload).getString("sessionId"))
+    }}
 }

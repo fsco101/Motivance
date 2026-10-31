@@ -1,0 +1,22 @@
+name: Database migration and access checks
+on:
+  push:
+    paths: ['supabase/**', 'scripts/test_local_auth.py', '.github/workflows/database-ci.yml']
+  pull_request:
+    paths: ['supabase/**', 'scripts/test_local_auth.py', '.github/workflows/database-ci.yml']
+permissions:
+  contents: read
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.20.12
+      - run: supabase start
+      - run: supabase db reset
+      - run: supabase test db
+      - run: python scripts/test_local_auth.py
+      - if: always()
+        run: supabase stop --no-backup

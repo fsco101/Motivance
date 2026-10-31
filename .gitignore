@@ -14,3 +14,4 @@ android/local.properties
 !.env.example
 supabase/.temp/
 supabase/.branches/
+docs/operations/local-test-accounts.json

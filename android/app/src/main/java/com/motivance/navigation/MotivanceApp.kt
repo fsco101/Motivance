@@ -29,6 +29,7 @@ import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.data.local.ExerciseJson
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.motivance.feature.rehabilitation.*
 
 private val Navy=Color(0xFF002042)
 private val Teal=Color(0xFF006A61)
@@ -38,14 +39,26 @@ private val Teal=Color(0xFF006A61)
     val overview by vm.overview.collectAsStateWithLifecycle()
     val exercise:ExerciseSessionViewModel=viewModel()
     val local by exercise.state.collectAsStateWithLifecycle()
-    LaunchedEffect(auth.session?.userId) { exercise.configure(auth.session?.userId ?: "local-demo") }
+    val rehabilitation:RehabilitationViewModel=viewModel()
+    val connected by rehabilitation.state.collectAsStateWithLifecycle()
+    val history:HistoryViewModel=viewModel()
+    LaunchedEffect(Unit) {vm.restore()}
+    LaunchedEffect(auth.session?.userId) {
+        exercise.configure(auth.session?.userId ?: "local-demo")
+        rehabilitation.configure(auth.session?.userId)
+        history.configure(auth.session?.userId)
+    }
     var route by rememberSaveable { mutableStateOf("LANDING") }
     var selectedRole by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedPatient by rememberSaveable {mutableStateOf<String?>(null)}
+    var editingAssignment by rememberSaveable {mutableStateOf<String?>(null)}
     val role=selectedRole?.let { UserRole.valueOf(it) }
     LaunchedEffect(auth.session?.userId) {
+        selectedPatient=null; editingAssignment=null
         if(auth.session!=null) { route="HOME"; vm.loadOverview() }
         else if(route !in setOf("LANDING","AUTH","SETUP","CAMERA","CHECK_COMPLETE")) route="AUTH"
     }
+    if(auth.restoring) { AuthLoadingScreen(); return }
     BackHandler(enabled=route!="LANDING" && route!="HOME") {
         route=when(route) { "AUTH" -> "LANDING"; "CAMERA" -> "SETUP"; else -> if(auth.session!=null) "HOME" else "LANDING" }
     }
@@ -86,6 +99,7 @@ private val Teal=Color(0xFF006A61)
                         if(local.saved) {
                             Text(stringResource(R.string.completed_reps,local.metrics.completed,local.rules.targetRepetitions))
                             Text(stringResource(R.string.session_metrics,local.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",local.metrics.incomplete,local.metrics.durationMs/1000))
+                            connected.outbox.firstOrNull {it.sessionId==local.id}?.let {Text(syncLabel(it.state))}
                         }
                     }
                     PrimaryAction(R.string.try_camera_again) { route="SETUP" }
@@ -102,6 +116,8 @@ private val Teal=Color(0xFF006A61)
                         OutlinedButton({vm.act(AuthAction.REFRESH)},enabled=!auth.busy,modifier=Modifier.fillMaxWidth()) { Text(stringResource(R.string.refresh_session)) }
                         OutlinedButton({vm.act(AuthAction.SIGN_OUT); route="AUTH"},enabled=!auth.busy,modifier=Modifier.fillMaxWidth()) { Text(stringResource(R.string.sign_out)) }
                     }
+                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
+                    SyncAndPrivacy(connected,rehabilitation,actualRole==UserRole.PATIENT) {exercise.newSession(); rehabilitation.withdraw()}
                 }
                 "LOCAL_HISTORY" -> {
                     SectionTitle(R.string.local_history,R.string.local_history_detail)
@@ -114,37 +130,38 @@ private val Teal=Color(0xFF006A61)
                         Text(stringResource(R.string.completed_reps,metrics.completed,rules.targetRepetitions))
                         Text(stringResource(R.string.session_metrics,metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",metrics.incomplete,metrics.durationMs/1000))
                         Text(stringResource(if(rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall)
+                        connected.outbox.firstOrNull {it.sessionId==row.id}?.let {Text(syncLabel(it.state))}
                     } }
                 }
                 "PATIENTS" -> {
                     SectionTitle(R.string.patient_management,R.string.assigned_patients_only)
-                    OverviewStatus(overview) { vm.loadOverview() }
-                    val patients=overview.data?.patientIds.orEmpty()
-                    if(patients.isEmpty() && overview.data!=null) EmptyCard(R.string.no_patients,R.string.no_patients_detail)
-                    patients.forEach { id -> ClinicalCard {
-                        Row(verticalAlignment=Alignment.CenterVertically) {
-                            Icon(Icons.Default.Person,null,tint=Teal,modifier=Modifier.size(40.dp))
-                            Column(Modifier.padding(start=12.dp).weight(1f)) { Text(stringResource(R.string.patient_reference,id.take(8)),fontWeight=FontWeight.Bold); Text(stringResource(R.string.assigned_patient)) }
-                            IconButton({route="ASSIGN"}) { Icon(Icons.Default.ArrowForward,stringResource(R.string.exercise_assignment)) }
-                        }
+                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
+                    PatientManagement(connected,rehabilitation) {selectedPatient=it; route="PATIENT_DETAIL"}
+                }
+                "PATIENT_DETAIL" -> {
+                    Text(connected.workspace.patients.firstOrNull {it.id==selectedPatient}?.name.orEmpty(),style=MaterialTheme.typography.headlineMedium)
+                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
+                    PrimaryAction(R.string.assign_exercise) {editingAssignment=null; route="ASSIGN"}
+                    connected.workspace.prescriptions.filter {it.patientId==selectedPatient}.forEach {p -> ClinicalCard {
+                        Text(connected.workspace.catalogue.firstOrNull {it.id==p.exerciseId}?.name.orEmpty())
+                        Text(stringResource(R.string.prescription_summary,p.version,p.low.toInt(),p.high.toInt(),p.repetitions))
+                        OutlinedButton({editingAssignment=p.assignmentId;route="ASSIGN"}) {Text(stringResource(R.string.edit_prescription))}
                     } }
-                    OutlinedButton({route="ASSIGN"},modifier=Modifier.fillMaxWidth()) { Text(stringResource(R.string.exercise_assignment)) }
+                    ResultsDashboard(connected.workspace,connected.owner,selectedPatient,history)
                 }
                 "ASSIGN" -> {
                     SectionTitle(R.string.exercise_assignment,R.string.professional_targets)
+                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
                     ClinicalCard {
-                        Text(stringResource(R.string.prescription_parameters),style=MaterialTheme.typography.titleLarge)
-                        Text(stringResource(R.string.no_approved_catalogue))
-                        listOf(R.string.select_patient,R.string.select_exercise,R.string.target_range,R.string.target_repetitions).forEach { label ->
-                            OutlinedTextField("",{},enabled=false,label={Text(stringResource(label))},modifier=Modifier.fillMaxWidth())
-                        }
-                        Button({},enabled=false,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp)) { Text(stringResource(R.string.assign_exercise)) }
+                        val existing=connected.workspace.prescriptions.firstOrNull {it.assignmentId==editingAssignment}
+                        key(existing?.versionId ?: "new") {PrescriptionForm(connected,rehabilitation,selectedPatient,existing)}
                     }
                 }
                 "EXERCISES" -> {
                     SectionTitle(R.string.your_exercises,R.string.professional_targets)
-                    OverviewStatus(overview) { vm.loadOverview() }
-                    AssignmentCards(overview.data)
+                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
+                    CachedAssignments(local.cached,connected.workspace.prescriptions.any {p -> local.cached.none {it.versionId==p.versionId}}) {exercise.newSession(); exercise.usePrescription(it); route="SETUP"}
+                    PatientInvitation(connected,rehabilitation)
                     ClinicalCard {
                         Text(stringResource(R.string.camera_check),style=MaterialTheme.typography.titleLarge)
                         Text(stringResource(R.string.camera_preview_only))
@@ -153,13 +170,8 @@ private val Teal=Color(0xFF006A61)
                 }
                 "PROGRESS" -> {
                     SectionTitle(R.string.recovery_progress,R.string.valid_measurements_only)
-                    OverviewStatus(overview) { vm.loadOverview() }
-                    MetricRow(R.string.recent_sessions,overview.data?.sessions?.size?.toString() ?: "—",R.string.active_assignments,overview.data?.assignments?.size?.toString() ?: "—")
-                    ClinicalCard {
-                        Text(stringResource(R.string.rom_progression),style=MaterialTheme.typography.titleLarge)
-                        Box(Modifier.fillMaxWidth().height(140.dp).background(Color(0xFFEFF4FF),RoundedCornerShape(16.dp)),contentAlignment=Alignment.Center) { Text(stringResource(R.string.no_rom_data),Modifier.padding(20.dp)) }
-                    }
-                    SessionCards(overview.data)
+                    ConnectedStatus(connected) {rehabilitation.refresh(); history.refresh()}
+                    ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history)
                 }
                 else -> {
                     SectionTitle(if(actualRole==UserRole.PATIENT) R.string.your_recovery else R.string.clinical_overview,if(actualRole==UserRole.PATIENT) R.string.personal_rehabilitation else R.string.assigned_patients_only)
@@ -221,7 +233,7 @@ private val Teal=Color(0xFF006A61)
 
 @Composable fun BrandHeader(onProfile:(()->Unit)?=null) {
     Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal=20.dp,vertical=16.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-        Icon(painterResource(R.drawable.ic_motivance),null,tint=Color.Unspecified,modifier=Modifier.size(36.dp))
+        androidx.compose.foundation.Image(painterResource(R.drawable.motivance_logo),stringResource(R.string.app_name),modifier=Modifier.size(48.dp))
         Column(Modifier.weight(1f)) { Text(stringResource(R.string.app_name),style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=Navy); Text(stringResource(R.string.biomechanics_vision),style=MaterialTheme.typography.labelSmall,color=Teal) }
         if(onProfile!=null) IconButton(onProfile) { Icon(Icons.Default.AccountCircle,stringResource(R.string.nav_profile),tint=Navy) }
         else Badge(R.string.development_badge)

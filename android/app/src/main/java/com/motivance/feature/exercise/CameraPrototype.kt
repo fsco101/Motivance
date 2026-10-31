@@ -135,16 +135,21 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
         }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.camera_title),style=MaterialTheme.typography.titleLarge)
+        Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.motivance_logo),null,Modifier.size(36.dp))
+            Text(stringResource(R.string.camera_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))
+        }
         Text(stringResource(if(exercise.rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall)
         Text(stringResource(R.string.camera_setup),style=MaterialTheme.typography.bodySmall)
         if(exercise.id==null) {
+            if(exercise.rules.demo) {
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 FilterChip(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION,{session.select(ExerciseKind.ELBOW_FLEXION,exercise.rules.side)},label={Text(stringResource(R.string.elbow_flexion))})
                 FilterChip(exercise.rules.kind==ExerciseKind.SHOULDER_ABDUCTION,{session.select(ExerciseKind.SHOULDER_ABDUCTION,exercise.rules.side)},label={Text(stringResource(R.string.shoulder_abduction))})
             }
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 BodySide.entries.forEach { side -> FilterChip(exercise.rules.side==side,{session.select(exercise.rules.kind,side)},label={Text(stringResource(if(side==BodySide.LEFT) R.string.left_side else R.string.right_side))}) }
+            }
             }
             exercise.cached.filter {it.expiresAt>System.currentTimeMillis()}.forEach { cached ->
                 OutlinedButton({session.usePrescription(cached)}) { Text(stringResource(R.string.use_cached_prescription)) }
@@ -192,7 +197,7 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
             OutlinedButton({if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f),enabled=!exercise.saving) { Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera)) }
         }
         if(exercise.id==null) Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
-            Checkbox(consent,{consent=it}); Text(stringResource(R.string.local_metrics_consent),style=MaterialTheme.typography.bodySmall)
+            Checkbox(consent,{consent=it}); Text(stringResource(if(exercise.rules.demo) R.string.local_metrics_consent else R.string.sync_metrics_consent),style=MaterialTheme.typography.bodySmall)
         }
         if(exercise.recoverable!=null && exercise.id==null) TextButton({session.restore()}) { Text(stringResource(R.string.recover_interrupted)) }
         if(exercise.saved) {
@@ -200,6 +205,8 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
             OutlinedButton({session.newSession(); consent=false}) {Text(stringResource(R.string.new_session))}
         } else if(!exercise.metrics.running) Button({session.start(consent || exercise.id!=null)},enabled=exercise.metrics.quality==TrackingQuality.READY && !paused && !exercise.saving && (consent || exercise.id!=null) && (if(exercise.rules.demo) BuildConfig.DEBUG else exercise.cached.any {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}),modifier=Modifier.fillMaxWidth()) { Text(stringResource(if(exercise.id==null) R.string.start_measurement else R.string.resume_measurement)) }
         if(exercise.error) Text(stringResource(R.string.local_save_failed),color=MaterialTheme.colorScheme.error)
+        if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
+        if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({session.newSession();consent=false},enabled=!exercise.saving) {Text(stringResource(R.string.new_session))}
         Button({if(exercise.id!=null && !exercise.saved) {exitRequested=true; session.finish()} else onBack()},enabled=!exercise.saving,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp),shape=RoundedCornerShape(12.dp)) { Text(stringResource(if(exercise.saving) R.string.saving_session else if(exercise.id!=null && !exercise.saved) R.string.finish_save_session else R.string.finish_camera)) }
     }
 }
