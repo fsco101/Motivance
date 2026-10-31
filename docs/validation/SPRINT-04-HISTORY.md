@@ -1,6 +1,6 @@
 # Sprint 4 MOT-19: patient history and progress
 
-Implemented the shared patient/therapist history dashboard following the S3 connected workflow. MOT-19 is available for engineering acceptance review; the rest of S4 is still planned. No sprint is marked complete and no GitHub issue is closed by this delivery.
+Implemented the shared patient/therapist history dashboard following the S3 connected workflow. MOT-19 closes after engineering evidence review under the user's standing instruction; the rest of S4 is still planned and its milestone remains open. See [closure review](IMPLEMENTATION-CLOSURE.md); deferred physical/therapist checks remain unexecuted.
 
 Progress requires a single patient: the patient account is fixed to itself, while a therapist chooses a linked patient. Patient detail opens the same dashboard with that patient fixed. Filters support exercise definition version, side and optional inclusive UTC calendar dates. Server reads use the existing RLS policies, explicit composite prescription FK and every child measurement. No new schema migration is required.
 

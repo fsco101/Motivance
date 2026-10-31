@@ -1,12 +1,15 @@
-# Post-implementation checks for Sprints 2, 3 and 4
+# Post-implementation checks for Sprints 1 through 4
 
 The user explicitly deferred therapist and physical-device checks until after implementation. These checks are **follow-up verification, not development blockers**. Leave unexecuted checks unchecked and record actual results; implementation does not itself establish clinical accuracy. The supported development catalogue is usable without therapist sign-off.
+
+Solved implementation issues and implemented sprint milestones may close while these checks remain unexecuted, per the user's standing instruction. Preserve their original false acceptance records and explicit deferrals in sprint JSON. A closed implementation issue never represents therapist approval or a physical/clinical test pass. Confirm the S1 protocol approval owner, actual two-phone inventory, wireframe review and exercise feasibility decisions during the corresponding checks below.
 
 ## Installation and logo
 
 - [ ] Open `android/`, sync Gradle with JDK 17, and run the debug `app` on the intended phone.
 - [ ] Confirm the supplied Motivance logo appears on the launcher and landing/auth/dashboard headers; check a circular and a rounded-square launcher mask.
 - [ ] Check readable contrast, 48dp touch targets, English/Filipino copy, large fonts and TalkBack. Check form validation and scrolling with the keyboard visible.
+- [ ] Review the refined loading/login/signup/recovery screens on physical phones: TalkBack password visibility labels and loading/error announcements, keyboard Next/Done, rotation with credentials cleared, and patient/therapist wording. Emulator screenshots and synthetic flow tests are recorded in `AUTH-UI-REFINEMENT.md`; these physical and human checks remain unexecuted.
 - [ ] Verify emulator/USB-phone/hosted URL selection using `docs/operations/ENVIRONMENT.md`. Test the two local accounts; no privileged key should exist in the APK.
 
 ## Therapist-to-patient workflow

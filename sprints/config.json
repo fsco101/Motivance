@@ -17,7 +17,7 @@
   ],
   "sync": {
     "default": "dry-run",
-    "close_issues": "Only when the entire sprint is completed and completion evidence passes validation.",
+    "close_issues": "Close each solved issue immediately after its own engineering evidence validates; explicit user-deferred checks remain false with nonblocking follow-up records.",
     "close_milestone": "Only when all milestone issues are closed.",
     "close_plan": "Only when all five sprints are completed.",
     "managed_body_markers": [
@@ -128,7 +128,7 @@
     },
     {
       "name": "status:done",
-      "description": "Acceptance evidence recorded; closes on completed sprint sync",
+      "description": "Engineering implementation resolved with evidence; close the issue immediately",
       "color": "0E8A16"
     },
     {

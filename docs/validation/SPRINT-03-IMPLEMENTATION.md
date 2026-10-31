@@ -2,6 +2,8 @@
 
 Development delivery: Kotlin Android 0.3.0, Room schema 2, Supabase connected-workflow migration. Therapist and physical-device checks are explicitly deferred to `POST-IMPLEMENTATION-CHECKLIST.md` per the user's instruction; they are not development blockers or substituted with fabricated clinical results.
 
+Current closure update: S2 and S3 implementation issues/milestones close under the user's standing instruction after engineering evidence review. Original deferred acceptance checks remain false. See [closure review](IMPLEMENTATION-CLOSURE.md) for the real S1 CI failure that remains open and the separation from final clinical/release acceptance.
+
 ## Delivered functions
 
 | Issue | Functions and behavior |

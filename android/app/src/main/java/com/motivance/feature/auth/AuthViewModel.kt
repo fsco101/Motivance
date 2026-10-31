@@ -12,16 +12,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 enum class AuthAction { SIGN_IN, REGISTER, CONFIRM, REQUEST_RECOVERY, RECOVER, REFRESH, SIGN_OUT }
 enum class AuthNotice { INVALID_EMAIL, PASSWORD_REQUIRED, CODE_REQUIRED, CONFIRM_EMAIL, RECOVERY_SENT, REQUEST_FAILED, SESSION_EXPIRED }
-data class AuthState(val session: UserSession? = null, val busy: Boolean = false, val notice: AuthNotice? = null)
+data class AuthState(val session: UserSession? = null, val busy: Boolean = false, val notice: AuthNotice? = null, val restoring: Boolean = false)
 data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean = false, val failed: Boolean = false)
 @HiltViewModel class AuthViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
-    private val mutable = MutableStateFlow(AuthState())
+    private val mutable = MutableStateFlow(AuthState(restoring=true))
     val state = mutable.asStateFlow()
     private val overviewMutable=MutableStateFlow(OverviewState())
     val overview=overviewMutable.asStateFlow()
     fun restore() {
         if(mutable.value.session!=null || mutable.value.busy) return
-        mutable.value=AuthState(busy=true)
+        mutable.value=AuthState(busy=true,restoring=true)
         viewModelScope.launch {
             try {mutable.value=AuthState(session=auth.restoreSession())}
             catch(e:CancellationException) {throw e}
@@ -40,6 +40,7 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
             catch(e: Exception) { if(mutable.value.session?.userId==user) overviewMutable.value=OverviewState(failed=true) }
         }
     }
+    fun clearNotice() { if (!mutable.value.busy) mutable.value=mutable.value.copy(notice=null) }
     fun act(action: AuthAction, email: String = "", password: String = "", otp: String = "") {
         if (mutable.value.busy) return
         val needsEmail=action in setOf(AuthAction.SIGN_IN,AuthAction.REGISTER,AuthAction.CONFIRM,AuthAction.REQUEST_RECOVERY,AuthAction.RECOVER)
@@ -49,8 +50,8 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
             action in setOf(AuthAction.CONFIRM,AuthAction.RECOVER) && otp.isBlank() -> AuthNotice.CODE_REQUIRED
             else -> null
         }
-        if(notice!=null) { mutable.value=mutable.value.copy(notice=notice); return }
-        mutable.value=mutable.value.copy(busy=true,notice=null)
+        if(notice!=null) { mutable.value=mutable.value.copy(notice=notice,restoring=false); return }
+        mutable.value=mutable.value.copy(busy=true,notice=null,restoring=false)
         viewModelScope.launch {
             try {
                 when(action) {

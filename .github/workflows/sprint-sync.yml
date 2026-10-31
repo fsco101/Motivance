@@ -1,11 +1,12 @@
 name: Validate and sync sprint records
 on:
   push:
-    branches: [main]
+    branches: [develop, main]
     paths:
       - 'sprints/**'
       - 'docs/PLAN.md'
       - 'scripts/sync_sprints.py'
+      - 'scripts/test_sync_sprints.py'
       - '.github/workflows/sprint-sync.yml'
   workflow_dispatch:
 permissions:
@@ -23,6 +24,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python scripts/sync_sprints.py --validate-only
+      - run: python -m unittest discover -s scripts -p 'test_sync_sprints.py'
       - name: Synchronize issues and milestones
         env:
           GH_TOKEN: ${{ github.token }}

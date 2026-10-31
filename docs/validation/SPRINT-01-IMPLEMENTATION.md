@@ -1,6 +1,6 @@
 # Sprint 1 implementation and verification
 
-The engineering implementation is available and verified locally, including the running Docker/Supabase backend and ignored environment configuration. Sprint 1 remains in progress because licensed-therapist review and two-device physical feasibility evidence have not been supplied. Software checks are not clinical approval or physical-device validation.
+The engineering implementation is available and verified locally, including the running Docker/Supabase backend and ignored environment configuration. Current closure review: S1 remains in progress because MOT-02 has a real remote Android CI setup failure; its configuration fix awaits publication and a passing rerun. Therapist and two-device checks are explicitly deferred and do not block engineering closure. The sections below preserve historical S1 evidence. See [closure review](IMPLEMENTATION-CLOSURE.md); software checks are not clinical approval or physical-device validation.
 
 ## Delivered
 

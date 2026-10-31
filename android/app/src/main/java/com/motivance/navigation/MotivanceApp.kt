@@ -58,6 +58,7 @@ private val Teal=Color(0xFF006A61)
         if(auth.session!=null) { route="HOME"; vm.loadOverview() }
         else if(route !in setOf("LANDING","AUTH","SETUP","CAMERA","CHECK_COMPLETE")) route="AUTH"
     }
+    if(auth.restoring) { AuthLoadingScreen(); return }
     BackHandler(enabled=route!="LANDING" && route!="HOME") {
         route=when(route) { "AUTH" -> "LANDING"; "CAMERA" -> "SETUP"; else -> if(auth.session!=null) "HOME" else "LANDING" }
     }

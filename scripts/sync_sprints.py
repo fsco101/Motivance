@@ -16,6 +16,16 @@ def require(condition, message):
 def evidence(value):
     return isinstance(value, list) and bool(value) and all(isinstance(v,str) and v.strip() for v in value)
 
+def acceptance_satisfied(criterion):
+    if criterion['passed']:
+        return evidence(criterion.get('evidence'))
+    # Explicit user deferrals permit implementation closure, never a fabricated test pass.
+    target=criterion.get('deferred_to','')
+    return (criterion.get('non_blocking') is True and evidence(criterion.get('evidence'))
+            and isinstance(criterion.get('disposition'),str) and bool(criterion['disposition'].strip())
+            and isinstance(criterion.get('deferral_authority'),str) and bool(criterion['deferral_authority'].strip())
+            and target=='docs/validation/POST-IMPLEMENTATION-CHECKLIST.md' and (ROOT/target).is_file())
+
 def completion(record, context):
     require(isinstance(record,dict), f'{context}: missing completion record')
     require(isinstance(record.get('reviewed_by'),str) and record['reviewed_by'].strip(), f'{context}: reviewer required')
@@ -50,11 +60,15 @@ def validate(config, sprints):
             require(t['acceptance_criteria'], 'Acceptance criteria required')
             require(all(type(c['passed']) is bool for c in t['acceptance_criteria']), 'Acceptance passed must be boolean')
             if t['status']=='done':
-                require(all(c['passed'] and evidence(c['evidence']) for c in t['acceptance_criteria']), f"{t['id']}: acceptance evidence incomplete")
+                require(all(acceptance_satisfied(c) for c in t['acceptance_criteria']), f"{t['id']}: acceptance evidence incomplete")
+                if any(not c['passed'] for c in t['acceptance_criteria']):
+                    require(t['completion'].get('acceptance_basis')=='engineering-implementation', f"{t['id']}: deferred closure basis required")
                 completion(t['completion'],t['id'])
         if s['status']=='completed':
             require(all(t['status']=='done' for t in s['issues']), f"{s['id']}: unfinished issues")
-            require(s['exit_criteria'] and all(c['passed'] is True and evidence(c['evidence']) for c in s['exit_criteria']), f"{s['id']}: exit evidence incomplete")
+            require(s['exit_criteria'] and all(acceptance_satisfied(c) for c in s['exit_criteria']), f"{s['id']}: exit evidence incomplete")
+            if any(not c['passed'] for c in s['exit_criteria']):
+                require(s['completion'].get('acceptance_basis')=='engineering-implementation', f"{s['id']}: deferred closure basis required")
             completion(s['completion'],s['id'])
     def visit(key, path):
         require(key not in path, f'Dependency cycle: {path} -> {key}')
@@ -63,7 +77,9 @@ def validate(config, sprints):
             visit(d,path+[key])
     for k,t in keys.items():
         visit(k,[])
-        if t['status']=='done': require(all(keys[d]['status']=='done' for d in t['dependencies']), f'{k}: unfinished dependency')
+        if t['status']=='done':
+            require(all(keys[d]['status']=='done' or (keys[d].get('implementation_status')=='implemented'
+                and evidence(keys[d].get('implementation_evidence'))) for d in t['dependencies']), f'{k}: unfinished implementation dependency')
     return keys
 
 class GitHub:
@@ -103,9 +119,12 @@ def issue_section(s,t,keys):
         text+='\n\n### Remaining acceptance work\n\n'+'\n'.join('- '+b for b in t['blockers'])
     text+='\n\nTarget paths: '+', '.join(f'`{p}`' for p in t['target_paths'])
     text+='\n\nDependencies: '+(', '.join(f"#{keys[d]['github_issue']} ({d})" for d in t['dependencies']) or 'None')
-    text+='\n\n### Acceptance record\n\n'+'\n'.join(f"- [{'x' if c['passed'] else ' '}] {c['description']}"+(' Evidence: '+'; '.join(c['evidence']) if c['evidence'] else '') for c in t['acceptance_criteria'])
+    text+='\n\n### Acceptance record\n\n'+'\n'.join(f"- [{'x' if c['passed'] else ' '}] {c['description']}"+(' Evidence: '+'; '.join(c['evidence']) if c['evidence'] else '')+
+        (f" Deferred (not executed; nonblocking implementation closure): {c['deferred_to']}. {c.get('disposition','')}" if not c['passed'] and c.get('non_blocking') else '') for c in t['acceptance_criteria'])
+    if t['completion'].get('acceptance_basis')=='engineering-implementation':
+        text+='\n\nClosure basis: engineering implementation and recorded evidence. Unchecked user-deferred items are not test passes or clinical approval.'
     if t['status']=='done': text+=f"\n\nReviewed by: {t['completion']['reviewed_by']} at {t['completion']['completed_at']}.\n\nEvidence: "+'; '.join(t['completion']['evidence'])
-    return text+'\n\nSource: `sprints/sprint-'+s['id'][1:].zfill(2)+'.json`. Issue closure occurs only after completed-sprint validation.'
+    return text+'\n\nSource: `sprints/sprint-'+s['id'][1:].zfill(2)+'.json`. Solved issues close after their own evidence validation; milestones close when all their issues are resolved.'
 
 def synchronize(config,sprints,api,apply=False,selected=None):
     keys=validate(config,sprints)
@@ -121,6 +140,7 @@ def synchronize(config,sprints,api,apply=False,selected=None):
             require(not (r['state']=='closed' and t['status']!='done'),f"{t['id']}: remote is closed but local is unfinished; reconcile manually")
             managed_body(r.get('body'),issue_section(s,t,keys))
         require(not (milestones[s['github_milestone']]['state']=='closed' and s['status']!='completed'), f"{s['id']}: milestone closed but local incomplete")
+        if s['status']=='completed': managed_body(milestones[s['github_milestone']].get('description'),'Preflight')
     require(config['plan_issue'] in remote,'Plan issue missing')
     changes=[]
     def change(path,method,data,description):
@@ -143,7 +163,7 @@ def synchronize(config,sprints,api,apply=False,selected=None):
             labels.update(t['labels']); labels.add('status:'+t['status'])
             desired={'body':managed_body(r.get('body'),issue_section(s,t,keys)),'labels':sorted(labels),'milestone':s['github_milestone']}
             patch={k:v for k,v in desired.items() if (sorted(l['name'] for l in r['labels']) if k=='labels' else (r.get('milestone') or {}).get('number') if k=='milestone' else r.get(k))!=v}
-            if s['status']=='completed' and r['state']!='closed': patch.update(state='closed',state_reason='completed')
+            if t['status']=='done' and r['state']!='closed': patch.update(state='closed',state_reason='completed')
             if patch:
                 change(f"issues/{t['github_issue']}",'PATCH',patch,f"update #{t['github_issue']} ({', '.join(patch)})")
                 if apply:
@@ -158,10 +178,22 @@ def synchronize(config,sprints,api,apply=False,selected=None):
             change(f"issues/{config['plan_issue']}",'PATCH',{'state':'closed','state_reason':'completed'},'close implementation plan')
             remote[config['plan_issue']]['state']='closed'
     for s in selected_sprints:
-        if s['status']=='completed' and milestones[s['github_milestone']]['state']!='closed':
+        if s['status']=='completed':
             members=[r for r in remote.values() if (r.get('milestone') or {}).get('number')==s['github_milestone']]
             if all(r['state']=='closed' for r in members):
-                change(f"milestones/{s['github_milestone']}",'PATCH',{'state':'closed'},f"close milestone {s['id']}")
+                milestone=milestones[s['github_milestone']]
+                record=s['completion']
+                section=(f"Engineering implementation closed after evidence review by {record['reviewed_by']} at {record['completed_at']}.\n\n"
+                         'Explicitly user-deferred therapist/device checks remain unexecuted in docs/validation/POST-IMPLEMENTATION-CHECKLIST.md. '
+                         'This closure is not clinical validation or production release approval.\n\nEvidence: '+'; '.join(record['evidence']))
+                desired={'state':'closed','description':managed_body(milestone.get('description'),section)}
+                patch={k:v for k,v in desired.items() if milestone.get(k)!=v}
+                if patch:
+                    path=f"milestones/{s['github_milestone']}"
+                    change(path,'PATCH',patch,f"close/update milestone {s['id']}")
+                    if apply:
+                        check=api.request(path)
+                        require(all(check.get(k)==v for k,v in patch.items()),'Milestone readback mismatch')
             else: print(f"KEEP OPEN {s['id']}: another milestone issue remains open",flush=True)
     return changes
 

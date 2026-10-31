@@ -48,7 +48,7 @@
       "github_issue": 20,
       "title": "Build therapist results dashboard and progress charts",
       "description": "Show session history and ROM/repetition trends for assigned patients.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Android developer",
       "estimate_points": 5,
@@ -124,18 +124,24 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
+        "completed_at": "2026-10-31T08:16:24.397121+00:00",
+        "reviewed_by": "Codex engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
         "evidence": [
           "docs/validation/SPRINT-04-HISTORY.md",
           "docs/validation/sprint-04-history-test-results.json",
-          "docs/validation/sprint-04-history-backend-results.json"
+          "docs/validation/sprint-04-history-backend-results.json",
+          "docs/validation/IMPLEMENTATION-CLOSURE.md"
         ]
       },
       "plan_reference": "docs/PLAN.md",
       "implementation_status": "implemented",
       "post_implementation_checks": [
         "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-04-HISTORY.md",
+        "docs/validation/sprint-04-history-test-results.json"
       ]
     },
     {
@@ -499,5 +505,5 @@
     }
   ],
   "plan_reference": "docs/PLAN.md",
-  "implementation_note": "MOT-19 history filters/charts are implemented and in engineering review. MOT-20 through MOT-24 remain planned. Therapist and physical-device checks are deferred follow-up, not implementation blockers."
+  "implementation_note": "MOT-19 history/charts is solved and closed after engineering evidence review. MOT-20 through MOT-24 remain planned; S4 remains open. Physical/therapist checks are deferred."
 }

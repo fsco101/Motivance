@@ -56,6 +56,14 @@ Profile exposes owner-scoped pending/uploaded/auth-required/failed/rejected/lega
 
 The user's therapist/physical-device review is deferred to `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md` and does not block these development flows. Emulator evidence includes the supplied header logo, both role logins, protected restart, linked patient/prescription detail and patient cached-assignment display. Broader accessibility, patient comprehension and physical camera/reference checks remain explicitly listed follow-up tasks.
 
+## Authentication design refinement
+
+Loading, login, patient signup, email confirmation and password recovery share a pale mint/blue background, supplied Motivance logo, navy headings, teal portal label and white 24dp-radius form surface. Forms cap their width at 480dp, scroll on compact displays and account for the keyboard. Primary buttons remain at least 56dp high; the camera setup is a secondary action. Login copy distinguishes patient and therapist workspaces, and the therapist portal does not offer patient signup.
+
+Startup displays an indeterminate branded loading screen only while checking the stored session, with no artificial delay or percentage. Failed/empty restoration returns to the unauthenticated flow. Form submission shows an action-specific loading label and disables repeat submissions/navigation. Notices use readable text and a polite accessibility live region. Email keyboards, Next/Done actions, show/hide password and separate new-password/code labels support the forms. Switching forms clears passwords, codes, visibility and stale notices; passwords and codes are never stored in saved instance state. Email and the current form survive configuration recreation. New copy has English and Filipino resources.
+
+This refines the existing email/password flow without adding Gmail authentication, media sharing or a new sprint. Evidence is recorded in [AUTH-UI-REFINEMENT.md](../validation/AUTH-UI-REFINEMENT.md). Physical-device, TalkBack and therapist wording reviews remain deferred in the post-implementation checklist.
+
 ## Sprint 4 history and progress
 
 Progress and therapist patient detail now share native history filters and Canvas charts. Therapists first choose one linked patient; patients are fixed to their own account. Filters select an exercise definition version, anatomical side and optional inclusive UTC calendar dates. Invalid or reversed dates show a correction message and hide earlier results. Loading, no matching uploads, failed access/network, refresh and older-page states are explicit. Pending offline records remain in Local history until uploaded.
