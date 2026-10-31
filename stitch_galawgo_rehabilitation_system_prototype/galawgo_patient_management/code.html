@@ -1,0 +1,446 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Motivance - Patient Clinical Record: Roberto Gomez</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3f608d",
+            "on-primary": "#ffffff",
+            "surface-container-high": "#dce9ff",
+            "on-primary-container": "#80a0d1",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed": "#001c3a",
+            "secondary": "#006a61",
+            "primary-fixed-dim": "#a8c8fc",
+            "tertiary-fixed": "#ffddb8",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#a8c8fc",
+            "primary-container": "#0f3661",
+            "outline-variant": "#c3c6d0",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-bright": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#4e2f00",
+            "surface": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-surface-variant": "#43474f",
+            "inverse-surface": "#213145",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#d3e4fe",
+            "primary": "#002042",
+            "on-secondary-container": "#006f66",
+            "on-surface": "#0b1c30",
+            "primary-fixed": "#d4e3ff",
+            "surface-container": "#e5eeff",
+            "on-background": "#0b1c30",
+            "on-tertiary-container": "#dd8d00",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-secondary-fixed-variant": "#005049",
+            "secondary-fixed": "#89f5e7",
+            "on-secondary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "on-primary-fixed-variant": "#254874",
+            "surface-dim": "#cbdbf5",
+            "tertiary": "#311c00",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "secondary-container": "#86f2e4",
+            "outline": "#737780",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.25rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-xl": "2.25rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "data-metric": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "data-metric": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 22px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      vertical-align: middle;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TOP APP BAR (Focused Clinical Header with Back Navigation) -->
+<header class="sticky top-0 z-40 bg-surface shadow-sm w-full flex items-center justify-between px-margin h-16">
+<div class="flex items-center gap-3"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl0Ofh8aHUm7mMugCQPBTPdO0vqc6cf7upbw7qyFPIf18U8vBr4cexKyYJoL6GB1TPKiiABxZuq2QeEQ0brtb2NPxUykTcRfjw__Zd75Y240cB25n20-qsCKD-4q29qBS5U1qMkqJVCSkmqgOnls86qc8aQu7wtd4SMhjVHnY5ZliQwkUK3_KlRG2WgdjBl30H5-kpFw7aOKse6mR-moWp3ikFK6t6-dC8cdgi6tx-v1NV0uJPH0sQ1g" alt="Motivance Brand Emblem" class="w-9 h-9 rounded-xl object-cover shadow-sm flex-shrink-0">
+<button aria-label="Go Back" class="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-surface-container-high transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h1 class="font-headline-sm text-headline-sm text-primary tracking-tight">Roberto Gomez</h1>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-bold">#GW-2041</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Age: 64 • Upper Limb Motor Recovery</p>
+</div>
+</div>
+<div class="flex items-center gap-3"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl0Ofh8aHUm7mMugCQPBTPdO0vqc6cf7upbw7qyFPIf18U8vBr4cexKyYJoL6GB1TPKiiABxZuq2QeEQ0brtb2NPxUykTcRfjw__Zd75Y240cB25n20-qsCKD-4q29qBS5U1qMkqJVCSkmqgOnls86qc8aQu7wtd4SMhjVHnY5ZliQwkUK3_KlRG2WgdjBl30H5-kpFw7aOKse6mR-moWp3ikFK6t6-dC8cdgi6tx-v1NV0uJPH0sQ1g" alt="Motivance Brand Emblem" class="w-9 h-9 rounded-xl object-cover shadow-sm flex-shrink-0">
+<div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-md text-label-md font-bold">Active Adherence (92%)</span>
+</div>
+<button aria-label="Therapist Profile" class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold border border-outline-variant overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A clinical portrait of Dr. Santos, a licensed physical therapist wearing a navy blue medical polo shirt with a stethoscope aesthetic in a bright modern physical therapy clinic room." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGuzzr1a665w3FutQj79LY0zVMOgTKWMeL-woPEh5M0RdMWSxiBbdCfQmfqYv7A8lKzq2wI2MfEwnRo0nxArkm2yI5OyKR0GUP6VnqFcig1U4E7a64f3YFR5L6cjNDatnJYaHbEgA4-1RnNM3cuwpEBvJx4pJSERoiyM35Ev-48Dh80sSU2ZY8lBZRG4b4SuIyqo8F6MLDKqf29aflyQ2V5633eW4-3ALfWyh-bdttf1cqXQCEP50Z5w">
+</button>
+</div>
+</header>
+<!-- MOBILE STATUS PILL (Visible below 640px) -->
+<div class="sm:hidden px-margin pt-3">
+<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-secondary-container text-on-secondary-container">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-md text-label-md font-bold">Active Adherence (92%)</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-secondary-container">Subacute Phase</span>
+</div>
+</div>
+<!-- MAIN CLINICAL CANVAS -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-margin py-space-lg space-y-space-lg pb-12">
+<!-- PATIENT DEMOGRAPHICS & VITALS CARD -->
+<section class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
+<!-- Status Rail: Joint Calibration Indicator -->
+<div class="h-1 bg-secondary w-full"></div>
+<div class="p-space-lg grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+<!-- Patient Identity Column -->
+<div class="flex items-center gap-4 md:col-span-1 border-b md:border-b-0 md:border-r border-outline-variant pb-4 md:pb-0 md:pr-4">
+<div class="relative w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-high border border-outline-variant flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A warm and dignified portrait of a 64-year-old Hispanic male patient named Roberto, smiling gently in a well-lit medical rehabilitation clinic setting with soft clinical teal background tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHJ4sWbYNq0vqjAvikTKX_AYPx7qJb3hnG6H5823uTdOvoenA83M9Ff7vTHcsYHD-jQQdN9hyFZiKkNkqYO9LIG0d4O1t2yVM_t4cZlNVzUxGlHGmRnr-hmHquL_xkVegFgvXyhoK4V3TFs9yyV3_bXzpI96POpIT_BaWnTb6Pd5DPjr_kRtrPM9DSz_DTRUA2dHEBhycpd0gqECL7kss8Ml_bxZuZ847vcPfaV6fw1eZXO0LB7_KNDA">
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Roberto Gomez</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Stroke Rehabilitation</p>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-secondary font-bold mt-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">verified_user</span>
+              Consent Signed
+            </span>
+</div>
+</div>
+<!-- Telemetry Details Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-3 md:col-span-3 gap-4">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Condition Diagnosis</span>
+<span class="font-label-lg text-label-lg text-on-surface mt-0.5">Post-Stroke Upper Limb Motor Recovery</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Assigned PT</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-secondary" style="font-size: 16px;">medical_services</span>
+<span class="font-label-lg text-label-lg text-on-surface">Dr. A. Santos</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Protocol Start Date</span>
+<span class="font-label-lg text-label-lg text-on-surface mt-0.5">Oct 12, 2024</span>
+</div>
+<div class="flex flex-col col-span-2 sm:col-span-3">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Current Phase Focus</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">Phase 2 of 4</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full w-3/5"></div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold mt-1">Subacute Sagittal Restoration (Flexion / Extension Alignment)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- BENTO GRID: RECENT SESSIONS TELEMETRY & REHAB EXERCISES -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- LEFT COLUMN: RECENT SESSIONS BIOMECHANICAL TELEMETRY (5 cols) -->
+<section class="lg:col-span-5 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">analytics</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Recent Telemetry</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Session #14 • Today, 09:30 AM</span>
+</div>
+<!-- Biomechanical Telemetry Card -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-space-md shadow-sm space-y-5">
+<!-- Primary Metric: ROM Flexion -->
+<div class="p-4 rounded-xl bg-surface-container-low border border-surface-container-high">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Active ROM Result (Elbow Flexion)</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-data-metric text-data-metric text-secondary">138°</span>
+<span class="font-label-md text-label-md text-on-surface-variant">/ 135° Target</span>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
+                Target Surpassed
+              </span>
+</div>
+<!-- Visual Progress Arc / Range Indicator -->
+<div class="mt-4 pt-3 border-t border-surface-container-high">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">Baseline (102°)</span>
+<span class="font-bold text-secondary">Current (138°)</span>
+<span class="">Normal (145°)</span>
+</div>
+<div class="relative w-full bg-surface-container-highest h-3 rounded-full overflow-hidden">
+<!-- Baseline marker -->
+<div class="absolute left-[30%] top-0 bottom-0 w-0.5 bg-outline z-10"></div>
+<!-- Actual achieved fill -->
+<div class="bg-secondary h-full rounded-full w-[88%]"></div>
+</div>
+</div>
+</div>
+<!-- Secondary Metrics Grid -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Form Precision Block -->
+<div class="p-3.5 rounded-xl bg-surface border border-outline-variant flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Form Precision</span>
+<div class="my-2">
+<span class="font-headline-lg text-headline-lg text-primary">98%</span>
+</div>
+<div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined" style="font-size: 14px;">insights</span>
+                High Pose Fidelity
+              </div>
+</div>
+<!-- Pain Tolerance Block -->
+<div class="p-3.5 rounded-xl bg-surface border border-outline-variant flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pain Arc Incident</span>
+<div class="my-2">
+<span class="font-headline-lg text-headline-lg text-secondary">0</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-secondary" style="font-size: 14px;">mood</span>
+                No Pain Reported
+              </div>
+</div>
+</div>
+<!-- Vision Pose Tracking Preview Minimal -->
+<div class="relative rounded-xl overflow-hidden border border-outline-variant bg-inverse-surface text-on-secondary p-3.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-secondary-fixed">
+<span class="material-symbols-outlined">videocam</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-surface-container-lowest">Vision Pose Estimation</p>
+<p class="font-label-sm text-label-sm text-outline-variant">Recorded 30 FPS Keypoint Cloud</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-lowest/10 hover:bg-surface-container-lowest/20 text-surface-container-lowest font-label-sm text-label-sm transition-colors">
+              Review
+            </button>
+</div>
+</div>
+</section>
+<!-- RIGHT COLUMN: ASSIGNED REHABILITATION EXERCISES (7 cols) -->
+<section class="lg:col-span-7 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">fitness_center</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Assigned Rehabilitation Exercises</h3>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-1 bg-surface-container-high text-primary rounded-full font-bold">2 Protocols Active</span>
+</div>
+<div class="space-y-space-sm">
+<!-- EXERCISE CARD 1: Elbow Flexion & Extension -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-space-md shadow-sm hover:border-secondary transition-all">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-3.5">
+<div class="w-12 h-12 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined" style="font-size: 26px;">accessibility_new</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Elbow Flexion &amp; Extension</h4>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold">Active Today</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Prescribed for Sagittal Motor Control &amp; Bicep/Tricep recruitment</p>
+<!-- Prescription Badges -->
+<div class="flex flex-wrap items-center gap-2 mt-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-md text-label-md border border-outline-variant">
+<span class="material-symbols-outlined text-secondary" style="font-size: 15px;">repeat</span>
+                      3 Sets × 10 Reps
+                    </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-md text-label-md border border-outline-variant">
+<span class="material-symbols-outlined text-secondary" style="font-size: 15px;">straighten</span>
+                      Target: 120°–145°
+                    </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-md text-label-md border border-outline-variant">
+<span class="material-symbols-outlined text-secondary" style="font-size: 15px;">speed</span>
+                      Tempo: 3s Hold
+                    </span>
+</div>
+</div>
+</div>
+<button aria-label="Exercise options" class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Adherence Progress Mini Bar -->
+<div class="mt-4 pt-3 border-t border-surface-container-high flex items-center justify-between text-body-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Weekly Rep Completion</span>
+<span class="font-label-sm text-label-sm font-bold text-secondary">30/30 Reps (100%)</span>
+</div>
+</div>
+<!-- EXERCISE CARD 2: Shoulder Abduction -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-space-md shadow-sm hover:border-secondary transition-all">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-3.5">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high text-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined" style="font-size: 26px;">sports_gymnastics</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Shoulder Abduction</h4>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-bold">Gradual Progression</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Coronal plane glenohumeral elevation with compensation guard</p>
+<!-- Prescription Badges -->
+<div class="flex flex-wrap items-center gap-2 mt-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-md text-label-md border border-outline-variant">
+<span class="material-symbols-outlined text-secondary" style="font-size: 15px;">repeat</span>
+                      1 Set × 8 Reps
+                    </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-md text-label-md border border-outline-variant">
+<span class="material-symbols-outlined text-secondary" style="font-size: 15px;">straighten</span>
+                      Target: 80°–95°
+                    </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-md text-label-md border border-outline-variant">
+<span class="material-symbols-outlined text-secondary" style="font-size: 15px;">timer</span>
+                      Pause: 4s
+                    </span>
+</div>
+</div>
+</div>
+<button aria-label="Exercise options" class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Adherence Progress Mini Bar -->
+<div class="mt-4 pt-3 border-t border-surface-container-high flex items-center justify-between text-body-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Weekly Rep Completion</span>
+<span class="font-label-sm text-label-sm font-bold text-on-surface">6/8 Reps (75%)</span>
+</div>
+</div>
+<!-- Add Exercise Placeholder / Quick Prescribe Area -->
+<button class="w-full border-2 border-dashed border-outline-variant hover:border-secondary rounded-2xl p-4 flex items-center justify-center gap-2 text-primary hover:text-secondary bg-surface-container-low/40 hover:bg-surface-container-low transition-all active:scale-[0.99]">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-lg text-label-lg font-bold">Prescribe New Movement Protocol</span>
+</button>
+</div>
+</section>
+</div>
+<!-- PRIMARY CLINICAL ACTION DOCK -->
+<section class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-space-md shadow-sm">
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary">Clinical Interventions &amp; Records</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Update protocol constraints or export certified physical rehabilitation telemetry.</p>
+</div>
+<div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+<!-- Action: Exercise History Log -->
+<button class="flex-1 sm:flex-initial h-[52px] px-5 rounded-xl border-2 border-outline-variant text-primary hover:bg-surface-container-low font-label-lg text-label-lg flex items-center justify-center gap-2 transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined">history</span>
+            Exercise History Log
+          </button>
+<!-- Action: View Progress Analytics -->
+<button class="flex-1 sm:flex-initial h-[52px] px-5 rounded-xl border-2 border-secondary text-secondary hover:bg-secondary-container/20 font-label-lg text-label-lg flex items-center justify-center gap-2 transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined">ssid_chart</span>
+            View Progress Analytics
+          </button>
+<!-- Action: Assign Exercise -->
+<button class="w-full sm:w-auto h-[56px] px-6 rounded-xl bg-primary-container text-on-primary font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-transform active:scale-[0.98] focus:ring-4 focus:ring-secondary/30">
+<span class="material-symbols-outlined">post_add</span>
+            Assign Exercise
+          </button>
+</div>
+</div>
+</section>
+</main>
+<!-- BOTTOM METADATA BAR (Contextual Clinical Footer) -->
+<footer class="mt-auto border-t border-surface-container-high bg-surface py-3 px-margin">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center text-on-surface-variant font-label-sm text-label-sm gap-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="">Motivance Clinical Engine v2.4 • Biomechanical Vision Tracking Adherent</span>
+</div>
+<span class="">Motivance Clinical Engine v2.4 • Biomechanical Vision Tracking Adherent</span>
+</div>
+</footer>
+
+
+
+
+</body></html>

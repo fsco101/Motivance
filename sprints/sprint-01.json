@@ -1,0 +1,551 @@
+{
+  "schema_version": 1,
+  "id": "S1",
+  "title": "S1 - Foundations and camera feasibility",
+  "description": "Weeks 1-2. Exit: therapist-approved exercise scope and validation protocol; runnable Android shell, schema and access foundation; live skeleton demonstrated on target phones. Stop and re-scope unsupported exercises if feasibility fails.",
+  "goal": "Prove the technical approach before committing to the exercise scope.",
+  "status": "in-progress",
+  "weeks": {
+    "start": 1,
+    "end": 2
+  },
+  "github_milestone": 1,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Demonstrate a correctly aligned skeleton on two device classes and review the agreed exercise and validation protocol.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Demonstrate a correctly aligned skeleton on two device classes and review the agreed exercise and validation protocol.",
+  "risks": [
+    "Therapist review and test devices must be available in week 1.",
+    "Camera feasibility can reduce the exercise scope."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and measurement risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 29,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-01",
+      "github_issue": 2,
+      "title": "Approve MVP exercises, device scope and measurement validation protocol",
+      "description": "Agree a small exercise set (target two or three, subject to feasibility), required joints, affected side, camera view and ROM conventions. Define reference measurement and recruitment process before implementation.",
+      "status": "blocked",
+      "owner": null,
+      "suggested_owner_role": "CV developer + therapist",
+      "estimate_points": 3,
+      "labels": [
+        "type:spike",
+        "area:cv",
+        "priority:p0",
+        "sprint:01"
+      ],
+      "dependencies": [],
+      "requirements": "PDF pp. 4-5, 10, 12",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/vision/",
+        "android/core/assessment/",
+        "android/app/src/main/java/com/motivance/feature/exercise/"
+      ],
+      "functions": [
+        {
+          "name": "approveExerciseScope",
+          "description": "Define supported joints, affected side, camera view and observable form rules with the therapist.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "defineValidationProtocol",
+          "description": "Predeclare reference measurements, sample counts and acceptable error before testing.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-01-AC1",
+          "description": "Therapist reviews each exercise, positioning instructions, allowable parameters and supported form rules; unsupported movements are documented.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-01-AC2",
+          "description": "Record minimum device/OS targets and at least a lower-spec and a mid-range physical Android device for testing.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-01-AC3",
+          "description": "Document reference instrument/procedure, sample and repetition counts, angle error and repeatability thresholds, exclusion rules and approval owner before collecting validation data; thresholds are not chosen after results.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-01-AC4",
+          "description": "Document pilot consent, withdrawal and de-identification workflow.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Therapist approval and actual two-device inventory are required; review docs/validation/SPRINT-01-PROTOCOL.md before collecting evaluation data."
+      ],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "id": "MOT-02",
+      "github_issue": 3,
+      "title": "Create Android modules, dependency injection and continuous integration",
+      "description": "Bootstrap Kotlin/Compose with three Gradle modules (:app, :core:domain, :core:assessment), feature packages, Hilt, pinned toolchain and dependency catalogue as specified in docs/PLAN.md. Configure build variants and CI.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "Android developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:task",
+        "area:mobile",
+        "priority:p0",
+        "sprint:01"
+      ],
+      "dependencies": [],
+      "requirements": "PDF p. 13",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/feature/",
+        "android/app/src/main/java/com/motivance/data/",
+        "android/core/domain/"
+      ],
+      "functions": [
+        {
+          "name": "composeApplication",
+          "description": "Wire Android modules, navigation and dependency injection at the app entry point.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        },
+        {
+          "name": "verifyBuild",
+          "description": "Build, lint and run domain checks from a clean checkout in CI.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-02-AC1",
+          "description": "Clean checkout builds a debug APK using documented toolchain versions.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/clean-android-build.json",
+            "docs/validation/android-test-results.json"
+          ]
+        },
+        {
+          "id": "MOT-02-AC2",
+          "description": "Module dependency rules are enforced or checked; core domain code has no Android camera or Supabase imports.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-02-AC3",
+          "description": "CI runs build, lint and domain tests; secrets and signing files are excluded from version control.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-02-AC4",
+          "description": "Provide development configuration examples and English/Filipino resource scaffolding.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Clean-source build, lint and 23 tests pass. GitHub workflow source is ready; commit/push and remote CI execution/review remain pending."
+      ],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "id": "MOT-03",
+      "github_issue": 4,
+      "title": "Create PostgreSQL schema and versioned Supabase migrations",
+      "description": "Implement the PostgreSQL schema in docs/PLAN.md: trusted roles, therapist links, versioned exercise definitions and prescriptions, sessions, measurements, consent and audit records. Add constraints, RLS, indexes and synthetic seeds through migrations.",
+      "status": "done",
+      "owner": null,
+      "suggested_owner_role": "Backend developer",
+      "estimate_points": 5,
+      "labels": [
+        "type:task",
+        "area:backend",
+        "priority:p0",
+        "sprint:01"
+      ],
+      "dependencies": [],
+      "requirements": "PDF pp. 6-9, 12",
+      "target_paths": [
+        "supabase/",
+        "android/app/src/main/java/com/motivance/data/remote/",
+        "android/app/src/main/java/com/motivance/data/repository/"
+      ],
+      "functions": [
+        {
+          "name": "migrateRehabilitationSchema",
+          "description": "Create relational records, constraints and indexes through repeatable migrations.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        },
+        {
+          "name": "seedDevelopmentData",
+          "description": "Populate only synthetic patients, prescriptions and sessions for development.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-03-AC1",
+          "description": "Migrations recreate a clean local database; seed data are synthetic.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/architecture/DATABASE.md"
+          ]
+        },
+        {
+          "id": "MOT-03-AC2",
+          "description": "Foreign keys and checks enforce ownership, valid sides, units, durations and nonnegative repetition counts.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/architecture/DATABASE.md"
+          ]
+        },
+        {
+          "id": "MOT-03-AC3",
+          "description": "Sessions reference an immutable prescription version and have a client-generated UUID for deduplication.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/architecture/DATABASE.md"
+          ]
+        },
+        {
+          "id": "MOT-03-AC4",
+          "description": "Document ERD, indexes and retention decisions; do not store passwords or raw videos in application tables.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/architecture/DATABASE.md"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": "2026-10-31T03:53:52.070940+00:00",
+        "reviewed_by": "Codex (local schema/access-test execution and technical source review)",
+        "evidence": [
+          "docs/validation/database-test-results.log",
+          "docs/architecture/DATABASE.md"
+        ]
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "id": "MOT-04",
+      "github_issue": 5,
+      "title": "Implement authentication, trusted roles and patient access policies",
+      "description": "Implement sign-in, account recovery and server-controlled roles. Establish RLS before patient data flows into the app.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "Backend + Android developers",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:security",
+        "priority:p0",
+        "sprint:01"
+      ],
+      "dependencies": [
+        "MOT-02",
+        "MOT-03"
+      ],
+      "requirements": "PDF pp. 6, 12",
+      "target_paths": [
+        "supabase/migrations/",
+        "supabase/tests/",
+        "android/app/src/main/java/com/motivance/feature/auth/"
+      ],
+      "functions": [
+        {
+          "name": "authenticateUser",
+          "description": "Handle registration, login, password recovery, token expiry and sign-out.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        },
+        {
+          "name": "authorizePatientAccess",
+          "description": "Enforce trusted roles and assigned-patient access in database policies.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-04-AC1",
+          "description": "Patient A cannot read or modify patient B records; unassigned therapists cannot access that patient.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/validation/local-auth-results.json",
+            "docs/validation/android-test-results.json",
+            "docs/validation/environment-checks.json"
+          ]
+        },
+        {
+          "id": "MOT-04-AC2",
+          "description": "Patients cannot grant themselves therapist/admin roles or modify prescriptions; privileged credentials are absent from the APK.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/validation/local-auth-results.json",
+            "docs/validation/android-test-results.json",
+            "docs/validation/environment-checks.json"
+          ]
+        },
+        {
+          "id": "MOT-04-AC3",
+          "description": "Registration, sign-in, sign-out, token expiry and password recovery are exercised.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/validation/local-auth-results.json",
+            "docs/validation/android-test-results.json",
+            "docs/validation/environment-checks.json"
+          ]
+        },
+        {
+          "id": "MOT-04-AC4",
+          "description": "Authorization tests cover anonymous, patient, assigned/unassigned therapist and administrator access, including child measurement tables.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/database-test-results.log",
+            "docs/validation/local-auth-results.json",
+            "docs/validation/android-test-results.json",
+            "docs/validation/environment-checks.json"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "All local API/auth, email-code and access-policy checks pass. Foundation CI review and Android physical-device interaction/hosted SMTP remain outside these local checks."
+      ],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+        "docs/validation/android-test-results.json",
+        "docs/architecture/UI-UX.md"
+      ]
+    },
+    {
+      "id": "MOT-05",
+      "github_issue": 6,
+      "title": "Prototype CameraX and MediaPipe live skeleton on target phones",
+      "description": "Build an early camera preview with pose detection and joint/connection overlay. Measure device feasibility before expanding features.",
+      "status": "blocked",
+      "owner": null,
+      "suggested_owner_role": "CV developer",
+      "estimate_points": 8,
+      "labels": [
+        "type:spike",
+        "area:cv",
+        "priority:p0",
+        "sprint:01"
+      ],
+      "dependencies": [
+        "MOT-01",
+        "MOT-02"
+      ],
+      "requirements": "PDF pp. 6-7, 10, 12",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/vision/",
+        "android/core/assessment/",
+        "android/app/src/main/java/com/motivance/feature/exercise/"
+      ],
+      "functions": [
+        {
+          "name": "detectPoseStream",
+          "description": "Convert timestamped CameraX frames into MediaPipe landmarks without blocking the UI.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        },
+        {
+          "name": "renderSkeleton",
+          "description": "Transform landmarks into preview coordinates and draw correctly mirrored joints and connections.",
+          "kind": "implemented technical foundation; acceptance pending the documented checks"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-05-AC1",
+          "description": "Skeleton alignment remains correct across preview scaling, rotation and front-camera mirroring.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-05-AC2",
+          "description": "Inference runs off the UI thread with frame backpressure and timestamped results.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-05-AC3",
+          "description": "Capture FPS, feedback latency, thermal behavior and detection quality on the two target device classes.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-05-AC4",
+          "description": "Record a go/no-go decision for each proposed exercise and a fallback scope if tracking is inadequate.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Diagnostics now report rolling FPS, p95 inference latency and thermal status. Two physical device classes and therapist exercise go/no-go evidence are still required."
+      ],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+        "docs/validation/EMULATOR-CAMERA-FIX.md",
+        "docs/architecture/UI-UX.md"
+      ]
+    },
+    {
+      "id": "MOT-06",
+      "github_issue": 7,
+      "title": "Design accessible patient and therapist flows",
+      "description": "Specify login, exercise list, camera setup, live guidance, results and therapist dashboard flows. Use stitch_galawgo_rehabilitation_system_prototype/ and its DESIGN.md as the visual and interaction basis, adapted to Kotlin Compose and accessibility; preserve Motivance branding.",
+      "status": "review",
+      "owner": null,
+      "suggested_owner_role": "UX/QA contributor",
+      "estimate_points": 3,
+      "labels": [
+        "type:task",
+        "area:ux",
+        "priority:p1",
+        "sprint:01"
+      ],
+      "dependencies": [
+        "MOT-01"
+      ],
+      "requirements": "PDF pp. 8-9, 11-12",
+      "target_paths": [
+        "android/app/src/main/java/com/motivance/designsystem/",
+        "android/app/src/main/java/com/motivance/feature/"
+      ],
+      "functions": [
+        {
+          "name": "designPatientJourney",
+          "description": "Specify exercise selection, setup, live guidance and completion with accessible feedback.",
+          "kind": "implemented native auth/camera flow and documented remaining screen contracts; therapist review pending"
+        },
+        {
+          "name": "designTherapistJourney",
+          "description": "Specify patient management, prescription editing and progress review states.",
+          "kind": "documented therapist flow contracts from Stitch reference; therapist review pending"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-06-AC1",
+          "description": "Review wireframes with therapist input and identify patient usability risks.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-06-AC2",
+          "description": "Include large controls, readable text, text/icon feedback in addition to color, and English/Filipino terminology.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-06-AC3",
+          "description": "Specify empty, permission-denied, loading, offline and tracking-lost states.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+          ]
+        },
+        {
+          "id": "MOT-06-AC4",
+          "description": "Consent separates camera permission from collection of rehabilitation records.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+          ]
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Review the Stitch-derived native flows with a therapist and verify large text, accessibility and terminology on devices."
+      ],
+      "implementation_evidence": [
+        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
+        "docs/validation/EMULATOR-CAMERA-FIX.md",
+        "docs/architecture/UI-UX.md"
+      ]
+    }
+  ],
+  "plan_reference": "docs/PLAN.md",
+  "ui_ux_reference": "stitch_galawgo_rehabilitation_system_prototype/",
+  "implementation_status": "software implementation complete locally; CI execution, physical-device and therapist acceptance pending"
+}

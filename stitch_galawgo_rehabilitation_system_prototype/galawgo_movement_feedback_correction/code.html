@@ -1,0 +1,424 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>GALAWGO - Real-Time Exercise-Form Feedback</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3f608d",
+            "on-primary": "#ffffff",
+            "surface-container-high": "#dce9ff",
+            "on-primary-container": "#80a0d1",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed": "#001c3a",
+            "secondary": "#006a61",
+            "primary-fixed-dim": "#a8c8fc",
+            "tertiary-fixed": "#ffddb8",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#a8c8fc",
+            "primary-container": "#0f3661",
+            "outline-variant": "#c3c6d0",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-bright": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#4e2f00",
+            "surface": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-surface-variant": "#43474f",
+            "inverse-surface": "#213145",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#d3e4fe",
+            "primary": "#002042",
+            "on-secondary-container": "#006f66",
+            "on-surface": "#0b1c30",
+            "primary-fixed": "#d4e3ff",
+            "surface-container": "#e5eeff",
+            "on-background": "#0b1c30",
+            "on-tertiary-container": "#dd8d00",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-secondary-fixed-variant": "#005049",
+            "secondary-fixed": "#89f5e7",
+            "on-secondary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "on-primary-fixed-variant": "#254874",
+            "surface-dim": "#cbdbf5",
+            "tertiary": "#311c00",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "secondary-container": "#86f2e4",
+            "outline": "#737780",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.25rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-xl": "2.25rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "data-metric": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "data-metric": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md text-body-md overflow-x-hidden selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TOP APP BAR -->
+<header class="bg-surface shadow-sm docked full-width top-0 z-40 sticky">
+<div class="flex justify-between items-center w-full px-margin h-16 max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<button aria-label="Menu" class="w-10 h-10 rounded-xl flex items-center justify-center text-primary hover:bg-surface-container-high active:scale-[0.98] transition-transform duration-150 ease-out" type="button">
+<span class="material-symbols-outlined text-primary text-2xl">menu</span>
+</button>
+<div class="flex items-center"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl0Ofh8aHUm7mMugCQPBTPdO0vqc6cf7upbw7qyFPIf18U8vBr4cexKyYJoL6GB1TPKiiABxZuq2QeEQ0brtb2NPxUykTcRfjw__Zd75Y240cB25n20-qsCKD-4q29qBS5U1qMkqJVCSkmqgOnls86qc8aQu7wtd4SMhjVHnY5ZliQwkUK3_KlRG2WgdjBl30H5-kpFw7aOKse6mR-moWp3ikFK6t6-dC8cdgi6tx-v1NV0uJPH0sQ1g" alt="Motivance" class="w-7 h-7 rounded-lg object-contain mr-2 inline-block"><span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Motivance</span></div>
+</div>
+<div class="flex items-center gap-2">
+<div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-full border border-surface-container-high">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-secondary font-bold tracking-wider">AI TRACKING ACTIVE</span>
+</div>
+<div class="w-10 h-10 rounded-full ring-2 ring-surface-container-high overflow-hidden bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN VIEWPORT CANVAS: Vision Screen Safe Zone Architecture -->
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 md:px-margin py-4 md:py-space-lg flex flex-col gap-space-lg">
+<!-- Active Protocol Status Header -->
+<section class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-surface-container-lowest p-space-md rounded-2xl border border-surface-container shadow-sm">
+<div class="flex items-center gap-3.5">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-secondary border border-secondary-fixed">
+<span class="material-symbols-outlined text-2xl material-symbols-fill">fitness_center</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-bold">REHAB PROTOCOL #4</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-md bg-secondary-container text-on-secondary-container font-bold">RIGHT ARM</span>
+</div>
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold mt-0.5">Active Elbow Flexion &amp; Extension</h1>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-surface-bright px-4 py-2 rounded-xl border border-surface-container-low">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Target Zone</span>
+<span class="font-label-lg text-label-lg text-secondary font-bold">120° – 145°</span>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Pace Cadence</span>
+<span class="font-label-lg text-label-lg text-primary font-bold">3.2s / rep</span>
+</div>
+</div>
+</section>
+<!-- BENTO GRID: CAMERA FEED + BIOMECHANICAL TELEMETRY HUD -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT: Live Vision Camera Viewport & HUD Overlay (lg:col-span-8) -->
+<div class="lg:col-span-8 relative bg-primary rounded-3xl overflow-hidden shadow-lg border border-surface-container-high aspect-[4/3] md:aspect-[16/10] flex flex-col justify-between">
+<!-- Live Camera Stream Image Background -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-alt="A clinical physical rehabilitation setting showing an elderly patient standing in clear natural room light engaged in an elbow flexion exercise. High-key, clean medical aesthetic with vast optical clarity. Bright studio lighting illuminates clean modern physiotherapy room with minimalist clinical equipment. The scene demonstrates empowering biomechanical care." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida/AEtjO1WE9QSTiw32UaB6pDLR14OoZ6RTfUcLO1_jW6Gs06IzJVK_lFDAOT4RPBeoaw0aaVyctX0iC96dOlon3_j2iRQUvhNhIeUIOm1hwhHQ2F5R3EaqVGnLUdbQCZlYfgwBaY3QiWqpK0tKS5klV52JIM1UkRnWh7cW82GBFyiTGCmalJD4PNZL7RX6WVrozhubvET-fnECXCrmHs5wYr_5Mn86CwsYF8V1FbaDjNAGpyPjvq8LYZ5HYlt1E7bu&quot;); background-position: 50% 20%;">
+</div>
+<!-- Computer Vision Darkening Veil for High Contrast Legibility -->
+<div class="absolute inset-0 bg-primary/25 pointer-events-none"></div>
+<!-- SKELETON OVERLAY (SVG Coordinate Layer) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" preserveAspectRatio="none" viewBox="0 0 800 600"><!-- Head and Cervical Spine -->
+<circle cx="505" cy="145" r="26" fill="none" stroke="#89f5e7" stroke-width="2" stroke-dasharray="3 3" opacity="0.7"></circle>
+<circle cx="505" cy="145" r="5" fill="#6bd8cb" stroke="#ffffff" stroke-width="2"></circle>
+<line x1="505" y1="170" x2="505" y2="195" stroke="#89f5e7" stroke-width="3" stroke-linecap="round"></line>
+
+<!-- Shoulder Clavicle Vector -->
+<line x1="470" y1="205" x2="545" y2="200" stroke="#89f5e7" stroke-width="4" stroke-linecap="round"></line>
+<!-- Left Shoulder (Background arm) -->
+<circle cx="545" cy="200" r="7" fill="#006a61" stroke="#ffffff" stroke-width="2"></circle>
+<line x1="545" y1="200" x2="558" y2="290" stroke="#89f5e7" stroke-width="2" opacity="0.4" stroke-linecap="round"></line>
+
+<!-- Torso & Hip Alignment (Green/Teal stable posture confirmation) -->
+<line x1="507" y1="200" x2="500" y2="340" stroke="#89f5e7" stroke-width="4" stroke-linecap="round"></line>
+<line x1="470" y1="340" x2="535" y2="338" stroke="#89f5e7" stroke-width="4" stroke-linecap="round"></line>
+<circle cx="475" cy="340" r="6" fill="#006a61" stroke="#ffffff" stroke-width="2"></circle>
+<circle cx="530" cy="338" r="6" fill="#006a61" stroke="#ffffff" stroke-width="2"></circle>
+
+<!-- ACTIVE RIGHT ARM KINEMATIC CHAIN (Flexion Assessment) -->
+<!-- Right Shoulder Joint (Glenohumeral Pivot) -->
+<circle cx="470" cy="205" r="8" fill="#006a61" stroke="#ffffff" stroke-width="2.5"></circle>
+<text x="420" y="200" fill="#89f5e7" font-size="11" font-family="Plus Jakarta Sans" font-weight="bold">R. Shoulder [0°]</text>
+
+<!-- Upper Arm Segment (Humerus: Shoulder to Elbow) -->
+<line x1="470" y1="205" x2="475" y2="295" stroke="#6bd8cb" stroke-width="5" stroke-linecap="round"></line>
+
+<!-- Active Forearm Segment (Radius/Ulna: Elbow to Wrist in 108° flexion) -->
+<line x1="475" y1="295" x2="440" y2="235" stroke="#dd8d00" stroke-width="5" stroke-linecap="round"></line>
+
+<!-- Target Virtual Arc & Ghost Projection (Target 135° Range) -->
+<line x1="475" y1="295" x2="455" y2="212" stroke="#006a61" stroke-width="2.5" stroke-dasharray="4 4"></line>
+<circle cx="455" cy="212" r="7" fill="none" stroke="#6bd8cb" stroke-dasharray="2 2" stroke-width="2"></circle>
+
+<!-- Dynamic Goniometer Angular Arcs at Elbow (475, 295) -->
+<path d="M 475 255 A 40 40 0 0 0 455 260" fill="none" stroke="#dd8d00" stroke-width="4" stroke-linecap="round"></path>
+<path d="M 455 260 A 40 40 0 0 0 460 238" fill="none" stroke="#6bd8cb" stroke-dasharray="3 3" stroke-width="3" stroke-linecap="round"></path>
+
+<!-- Elbow Landmark: Warning Amber Pulsing Joint -->
+<circle class="animate-ping opacity-75" cx="475" cy="295" r="16" fill="none" stroke="#dd8d00" stroke-width="3"></circle>
+<circle cx="475" cy="295" r="10" fill="#dd8d00" stroke="#ffffff" stroke-width="3.5"></circle>
+
+<!-- Wrist Landmark (Flexed Forearm Terminal Point) -->
+<circle cx="440" cy="235" r="7" fill="#dd8d00" stroke="#ffffff" stroke-width="2.5"></circle>
+
+<!-- Goniometer Visual Angle Callout Tag -->
+<g transform="translate(340, 275)">
+  <rect width="96" height="34" rx="8" fill="#002042" fill-opacity="0.9" stroke="#dd8d00" stroke-width="1.5"></rect>
+  <text x="8" y="16" fill="#ffb95f" font-size="10" font-family="Plus Jakarta Sans" font-weight="bold">CURRENT ROM</text>
+  <text x="8" y="29" fill="#ffffff" font-size="13" font-family="Plus Jakarta Sans" font-weight="800">108° <tspan fill="#ffb95f" font-size="10">(-12°)</tspan></text>
+  <!-- Pointer line from tag to elbow joint -->
+  <line x1="96" y1="17" x2="130" y2="20" stroke="#dd8d00" stroke-width="1.5" stroke-dasharray="2 2"></line>
+</g></svg>
+<!-- TOP HUD RAIL (Inside Camera Stream) -->
+<div class="relative z-20 p-space-md md:p-space-lg flex items-center justify-between pointer-events-none">
+<div class="flex items-center gap-2 bg-primary/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-surface-container-high/20 shadow-md">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-primary font-bold">LIVE POSE SKELETON</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-mono">60 FPS</span>
+</div>
+<!-- Dynamic Calibration Tag -->
+<div class="bg-primary/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-surface-container-high/20 flex items-center gap-1.5 text-on-primary">
+<span class="material-symbols-outlined text-sm text-secondary-fixed">videocam</span>
+<span class="font-label-sm text-label-sm">Depth: 1.8m (Optimal)</span>
+</div>
+</div>
+<!-- CENTER HUD: BIOMECHANICAL CORRECTION ALERT BADGE -->
+<div class="relative z-20 px-4 flex justify-end w-full pointer-events-none">
+<div class="bg-tertiary-container/95 border-2 border-on-tertiary-container shadow-2xl rounded-2xl p-3 max-w-xs w-full flex items-center gap-2.5 backdrop-blur-md pointer-events-auto transform hover:scale-[1.01] transition-transform mr-1 md:mr-3">
+<div class="w-9 h-9 rounded-xl bg-tertiary-fixed flex-shrink-0 flex items-center justify-center text-on-tertiary-fixed shadow-sm">
+<span class="material-symbols-outlined text-xl material-symbols-fill">warning</span>
+</div>
+<div class="flex-1 min-w-0">
+<span class="font-label-sm text-[10px] uppercase tracking-wider font-bold text-tertiary-fixed block">Real-Time Correction</span>
+<p class="font-headline-sm text-sm md:text-base text-on-tertiary font-bold tracking-tight leading-tight truncate">INCREASE RANGE OF MOTION</p>
+</div>
+</div>
+</div>
+<!-- BOTTOM HUD: FLOATING REAL-TIME QUICK STATS OVERLAY -->
+<div class="relative z-20 p-space-md md:p-space-lg">
+<div class="bg-primary/90 backdrop-blur-md border border-white/15 rounded-2xl p-space-md text-on-primary shadow-xl grid grid-cols-3 gap-3 divide-x divide-white/10">
+<!-- Metric 1: Current ROM (Alert state) -->
+<div class="flex flex-col items-center justify-center text-center px-2">
+<span class="font-label-sm text-label-sm text-tertiary-fixed-dim uppercase tracking-wider font-bold">Current ROM</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-data-metric text-data-metric text-tertiary-fixed-dim font-bold">108°</span>
+</div>
+<span class="font-label-sm text-label-sm text-white/70">Sub-threshold</span>
+</div>
+<!-- Metric 2: Target Safe Band -->
+<div class="flex flex-col items-center justify-center text-center px-2">
+<span class="font-label-sm text-label-sm text-secondary-fixed uppercase tracking-wider font-bold">Target Arc</span>
+<div class="flex items-baseline gap-0.5 mt-0.5">
+<span class="font-headline-md text-headline-md text-secondary-fixed font-bold">120°–145°</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim">Clinical Window</span>
+</div>
+<!-- Metric 3: Rep Counter -->
+<div class="flex flex-col items-center justify-center text-center px-2">
+<span class="font-label-sm text-label-sm text-surface-container-high uppercase tracking-wider font-bold">Repetition</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-data-metric text-data-metric text-on-primary font-bold">4</span>
+<span class="font-headline-sm text-headline-sm text-outline-variant font-medium">/ 10</span>
+</div>
+<span class="font-label-sm text-label-sm text-white/70">Set 2 of 3</span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT: CLINICAL PRECISION TELEMETRY & CONTROLS (lg:col-span-4) -->
+<div class="lg:col-span-4 flex flex-col gap-space-md">
+<!-- CARD 1: Visual Goniometer Progress Bar -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-surface-container shadow-sm flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">straighten</span>
+<h2 class="font-label-lg text-label-lg text-primary font-bold">Dynamic Goniometer Bar</h2>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-bold">-12° Short</span>
+</div>
+<!-- The Range Bar -->
+<div class="space-y-2">
+<div class="flex justify-between font-label-sm text-label-sm text-outline">
+<span class="">0° (Rest)</span>
+<span class="text-tertiary-container font-bold">Current: 108°</span>
+<span class="text-secondary font-bold">Target: 120°–145°</span>
+<span class="">180°</span>
+</div>
+<!-- Custom Goniometer Slider Visual -->
+<div class="relative w-full h-7 bg-surface-container-low rounded-xl overflow-hidden border border-surface-container p-1">
+<!-- Safe Target Zone Band (120deg to 145deg -> ~66% to 80% width) -->
+<div class="absolute top-1 bottom-1 left-[66%] w-[14%] bg-secondary-container/70 border border-secondary rounded-md z-0 flex items-center justify-center">
+<span class="font-label-sm text-[9px] text-on-secondary-container font-bold">TARGET</span>
+</div>
+<!-- Current Progress Bar (Up to 108deg -> ~60% width) in Alert Amber -->
+<div class="relative h-full bg-on-tertiary-container rounded-lg transition-all duration-300 z-10 flex items-center justify-end pr-2" style="width: 60%;">
+<span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm pt-1">
+<span class="material-symbols-outlined text-base text-tertiary">info</span>
+<span class="">Current movement is below the minimum therapeutic threshold (120°).</span>
+</div>
+</div>
+</div>
+<!-- CARD 2: Supportive Corrective Guidance Box -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-surface-container shadow-sm flex flex-col gap-3 relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-tertiary-container"></div>
+<div class="flex items-center gap-2 text-primary font-bold">
+<div class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg material-symbols-fill">record_voice_over</span>
+</div>
+<h3 class="font-label-lg text-label-lg">Therapist Voice Cue</h3>
+</div>
+<div class="bg-surface-bright rounded-xl p-3.5 border border-surface-container-low">
+<p class="font-body-md text-body-md text-on-surface font-semibold italic text-primary">
+              "Gentle reminder: Raise your forearm slightly higher toward the shoulder without lifting your elbow."
+            </p>
+</div>
+<!-- Secondary Biomechanical Compliance Indicators -->
+<div class="space-y-2 pt-1">
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low font-label-md text-label-md">
+<span class="text-on-surface-variant">Shoulder Compensation</span>
+<span class="text-secondary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-base material-symbols-fill">check_circle</span> Stable (0°)
+              </span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low font-label-md text-label-md">
+<span class="text-on-surface-variant">Trunk Posture Drift</span>
+<span class="text-secondary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-base material-symbols-fill">check_circle</span> Aligned
+              </span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low font-label-md text-label-md">
+<span class="text-on-surface-variant">Forearm Flexion Angle</span>
+<span class="text-tertiary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-base material-symbols-fill">arrow_upward</span> Needs +12°
+              </span>
+</div>
+</div>
+</div>
+<!-- CARD 3: Session Controls (Pause & End Exercise) -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-surface-container shadow-sm flex flex-col gap-3">
+<h4 class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Session Execution</h4>
+<div class="flex flex-col sm:flex-row lg:flex-col gap-3">
+<!-- Pause Action Button -->
+<button class="flex-1 min-h-[52px] h-14 bg-surface-container-lowest border-2 border-surface-container-highest hover:bg-surface-container-low text-primary rounded-xl font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform duration-150 ease-out shadow-sm" type="button">
+<span class="material-symbols-outlined text-2xl material-symbols-fill">pause_circle</span>
+<span class="">Pause Exercise</span>
+</button>
+<!-- End Exercise Button -->
+<button class="flex-1 min-h-[52px] h-14 bg-error-container hover:bg-error/20 text-on-error-container border border-error/30 rounded-xl font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform duration-150 ease-out" type="button">
+<span class="material-symbols-outlined text-2xl">stop_circle</span>
+<span class="">End Exercise</span>
+</button>
+</div>
+<!-- Micro Quick Action -->
+<button class="w-full py-2 text-center text-outline hover:text-primary font-label-sm text-label-sm font-semibold transition-colors flex items-center justify-center gap-1" type="button">
+<span class="material-symbols-outlined text-base">settings_accessibility</span>
+<span class="">Recalibrate Body Position</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchor) -->
+<!-- Note: Destination Count: 4, label_texts: ["Home", "Exercises", "Progress", "Profile"] -->
+<!-- Active state assigned to "Exercises" since user is in active exercise execution -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-space-xs bg-surface-container-lowest shadow-lg docked full-width bottom-0">
+<!-- Home (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low text-primary active:scale-[0.98] transition-transform duration-150 ease-out rounded-lg" href="#">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<!-- Exercises (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl min-w-[56px] min-h-[52px] px-3 py-1.5 active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined text-2xl material-symbols-fill">fitness_center</span>
+<span class="font-label-md text-label-md font-bold">Exercises</span>
+</a>
+<!-- Progress (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low text-primary active:scale-[0.98] transition-transform duration-150 ease-out rounded-lg" href="#">
+<span class="material-symbols-outlined text-2xl">monitoring</span>
+<span class="font-label-md text-label-md">Progress</span>
+</a>
+<!-- Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low text-primary active:scale-[0.98] transition-transform duration-150 ease-out rounded-lg" href="#">
+<span class="material-symbols-outlined text-2xl">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+<!-- Spacer to ensure bottom nav does not conceal interface content -->
+<div class="h-20 w-full shrink-0"></div>
+
+
+
+
+
+
+</body></html>

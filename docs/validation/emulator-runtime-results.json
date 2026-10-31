@@ -1,0 +1,20 @@
+{
+  "device": "emulator-5554",
+  "device_type": "x86_64 emulator with ARM64 native translation",
+  "selected_app_abi": "arm64-v8a",
+  "native_library_load": "successful",
+  "inference_executed": true,
+  "observed_frame_size": [
+    480,
+    640
+  ],
+  "spot_check_fps": 8.4,
+  "spot_check_inference_ms": 118,
+  "spot_check_rolling_p95_ms": 142,
+  "pause_resume_verified": true,
+  "body_tracking_accuracy_verified": false,
+  "input": "emulated virtual room; no person",
+  "packaging_check": "all packaged ABIs contain MediaPipe vision JNI",
+  "ui_reference": "stitch_galawgo_rehabilitation_system_prototype/",
+  "ui_screenshot": "docs/validation/ui/role-selection.png"
+}

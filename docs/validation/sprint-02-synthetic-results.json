@@ -1,0 +1,130 @@
+{
+  "scope": "Synthetic pixel geometry and deterministic traces; no camera model or human reference",
+  "clinical_accuracy": null,
+  "angle_tolerance_degrees": 0.001,
+  "results": [
+    {
+      "exercise": "ELBOW_FLEXION",
+      "side": "LEFT",
+      "image": "1000x1000",
+      "known_angles": 18,
+      "mae_degrees": 1.11e-06,
+      "max_error_degrees": 6.34e-06,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "ELBOW_FLEXION",
+      "side": "LEFT",
+      "image": "1280x720",
+      "known_angles": 18,
+      "mae_degrees": 5.29e-06,
+      "max_error_degrees": 1.932e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "ELBOW_FLEXION",
+      "side": "LEFT",
+      "image": "720x1280",
+      "known_angles": 18,
+      "mae_degrees": 4.27e-06,
+      "max_error_degrees": 1.932e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "ELBOW_FLEXION",
+      "side": "RIGHT",
+      "image": "1000x1000",
+      "known_angles": 18,
+      "mae_degrees": 1.74e-06,
+      "max_error_degrees": 6.34e-06,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "ELBOW_FLEXION",
+      "side": "RIGHT",
+      "image": "1280x720",
+      "known_angles": 18,
+      "mae_degrees": 2.62e-06,
+      "max_error_degrees": 1.03e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "ELBOW_FLEXION",
+      "side": "RIGHT",
+      "image": "720x1280",
+      "known_angles": 18,
+      "mae_degrees": 3.64e-06,
+      "max_error_degrees": 1.932e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "SHOULDER_ABDUCTION",
+      "side": "LEFT",
+      "image": "1000x1000",
+      "known_angles": 18,
+      "mae_degrees": 3.25e-06,
+      "max_error_degrees": 1.06e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "SHOULDER_ABDUCTION",
+      "side": "LEFT",
+      "image": "1280x720",
+      "known_angles": 18,
+      "mae_degrees": 6.8e-06,
+      "max_error_degrees": 1.932e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "SHOULDER_ABDUCTION",
+      "side": "LEFT",
+      "image": "720x1280",
+      "known_angles": 18,
+      "mae_degrees": 4.65e-06,
+      "max_error_degrees": 1.628e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "SHOULDER_ABDUCTION",
+      "side": "RIGHT",
+      "image": "1000x1000",
+      "known_angles": 18,
+      "mae_degrees": 3.25e-06,
+      "max_error_degrees": 1.06e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "SHOULDER_ABDUCTION",
+      "side": "RIGHT",
+      "image": "1280x720",
+      "known_angles": 18,
+      "mae_degrees": 4.36e-06,
+      "max_error_degrees": 1.17e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    },
+    {
+      "exercise": "SHOULDER_ABDUCTION",
+      "side": "RIGHT",
+      "image": "720x1280",
+      "known_angles": 18,
+      "mae_degrees": 4.65e-06,
+      "max_error_degrees": 1.628e-05,
+      "expected_reps": 10,
+      "completed_reps": 10
+    }
+  ],
+  "known_angle_cases": 216,
+  "replayed_repetitions": 120,
+  "maximum_mathematical_error_degrees": 1.932e-05
+}

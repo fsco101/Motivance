@@ -1,0 +1,117 @@
+{
+  "generated_at": "2026-10-31T05:43:22.995890+00:00",
+  "build": "assembleDebug + lintDebug + app/core unit tests + connectedDebugAndroidTest: successful with KSP2",
+  "jvm_tests_passed": 48,
+  "android_instrumented_tests_passed": 6,
+  "suites": [
+    {
+      "kind": "jvm",
+      "suite": "CameraDiagnosticsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/core/assessment/build/test-results/test/TEST-CameraDiagnosticsTest.xml"
+    },
+    {
+      "kind": "jvm",
+      "suite": "MovementAssessmentTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/core/assessment/build/test-results/test/TEST-MovementAssessmentTest.xml"
+    },
+    {
+      "kind": "jvm",
+      "suite": "PreviewMappingTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/core/assessment/build/test-results/test/TEST-PreviewMappingTest.xml"
+    },
+    {
+      "kind": "jvm",
+      "suite": "SyntheticEvaluationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/core/assessment/build/test-results/test/TEST-SyntheticEvaluationTest.xml"
+    },
+    {
+      "kind": "jvm",
+      "suite": "com.motivance.data.remote.PrescriptionCacheTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/app/build/test-results/testDebugUnitTest/TEST-com.motivance.data.remote.PrescriptionCacheTest.xml"
+    },
+    {
+      "kind": "jvm",
+      "suite": "com.motivance.data.remote.SupabaseAuthRepositoryTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/app/build/test-results/testDebugUnitTest/TEST-com.motivance.data.remote.SupabaseAuthRepositoryTest.xml"
+    },
+    {
+      "kind": "jvm",
+      "suite": "com.motivance.feature.auth.AuthViewModelTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/app/build/test-results/testDebugUnitTest/TEST-com.motivance.feature.auth.AuthViewModelTest.xml"
+    },
+    {
+      "kind": "android-instrumented",
+      "suite": "com.motivance.data.local.SessionStoreTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source": "android/app/build/outputs/androidTest-results/connected/debug/TEST-Pixel_6(AVD) - 15-_app-.xml"
+    }
+  ],
+  "lint_errors": 0,
+  "lint_warnings": 46,
+  "native_abi_check": "Complete MediaPipe native runtime for: arm64-v8a, armeabi-v7a",
+  "apk_sha256": "c9e24ace05cc4a16814e4c407f71c6746bd766ad4e27a300c0476dc430a11867",
+  "emulator": "Pixel_6/API35, ARM translation, emulator-5554",
+  "backend_checks_passed": 24,
+  "clean_build": {
+    "exit_code": 0,
+    "fresh_source_copy": true,
+    "copied_local_properties": false,
+    "supabase_config_supplied": false,
+    "command": ":app:assembleDebug :app:lintDebug :app:testDebugUnitTest :core:assessment:test --no-daemon",
+    "log": "tmp/sprint-1-clean-pc09zw7b/build.log"
+  },
+  "emulator_smoke_checks": [
+    "Camera permission prompt works; configured laptop webcam opens",
+    "No person: unknown angle/ROM, zero repetitions; Start button disabled",
+    "Pause camera: readable paused state; unknown angle; counts unchanged",
+    "Home/background and return: camera reacquires; no fabricated measurements"
+  ],
+  "emulator_diagnostic_spot_check": {
+    "fps_range": [
+      3.6,
+      3.8
+    ],
+    "p95_inference_ms": 634,
+    "thermal_status": 0,
+    "context": "Empty room laptop webcam forwarded to emulator; host builds running; not a controlled physical-device or end-to-end benchmark",
+    "provisional_phone_p95_gate_ms": 250,
+    "disposition": "Performance concern retained in MOT-12/#13; physical phone profiling required"
+  },
+  "limitations": [
+    "No clinical reference or goniometer measurements",
+    "No physical phone/patient demonstration or therapist approval",
+    "No controlled 15-minute camera performance evaluation",
+    "No source push or remote CI execution; GitHub issue metadata sync only"
+  ]
+}

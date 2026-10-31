@@ -1,0 +1,13 @@
+{
+  "env_ignored": true,
+  "example_trackable": true,
+  "debug_endpoint": "http://10.0.2.2:54321",
+  "compiled_key_role": "anon",
+  "release_cleartext_disabled": true,
+  "debug_network_config_absent_from_release": true,
+  "service_role_key_stored": false,
+  "env_path": "android/.env",
+  "example_path": "android/.env.example",
+  "root_env_absent": true,
+  "relocated_configuration_build_passed": true
+}

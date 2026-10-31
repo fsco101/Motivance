@@ -1,0 +1,313 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Motivance - Exercise Guide</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS with configuration -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#001c3a",
+            "tertiary-fixed": "#ffddb8",
+            "secondary-container": "#86f2e4",
+            "primary-fixed-dim": "#a8c8fc",
+            "primary-container": "#0f3661",
+            "outline": "#737780",
+            "tertiary": "#311c00",
+            "on-secondary-fixed": "#00201d",
+            "surface-container": "#e5eeff",
+            "tertiary-container": "#4e2f00",
+            "primary": "#002042",
+            "outline-variant": "#c3c6d0",
+            "surface-dim": "#cbdbf5",
+            "on-primary-container": "#80a0d1",
+            "secondary-fixed-dim": "#6bd8cb",
+            "inverse-on-surface": "#eaf1ff",
+            "on-secondary-fixed-variant": "#005049",
+            "secondary": "#006a61",
+            "tertiary-fixed-dim": "#ffb95f",
+            "surface-container-high": "#dce9ff",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed-variant": "#254874",
+            "on-surface-variant": "#43474f",
+            "on-secondary-container": "#006f66",
+            "background": "#f8f9ff",
+            "on-error-container": "#93000a",
+            "on-surface": "#0b1c30",
+            "inverse-primary": "#a8c8fc",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-variant": "#d3e4fe",
+            "primary-fixed": "#d4e3ff",
+            "error-container": "#ffdad6",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#dd8d00",
+            "on-tertiary": "#ffffff",
+            "surface": "#f8f9ff",
+            "error": "#ba1a1a",
+            "surface-bright": "#f8f9ff",
+            "surface-container-highest": "#d3e4fe",
+            "secondary-fixed": "#89f5e7",
+            "on-primary": "#ffffff",
+            "inverse-surface": "#213145",
+            "surface-tint": "#3f608d",
+            "on-background": "#0b1c30",
+            "on-error": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "surface-container-lowest": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "margin": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2.25rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem"
+          },
+          "fontFamily": {
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "data-metric": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "data-metric": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex justify-center selection:bg-secondary selection:text-on-secondary">
+<!-- Mobile Screen Container Max Width 430px -->
+<div class="w-full max-w-[440px] bg-background min-h-screen flex flex-col relative pb-32 shadow-2xl">
+<!-- Top App Bar (Task Sub-Screen: Back + Contextual Title + Audio Guide Toggle) -->
+<!-- Task-focused screen suppresses BottomNavBar per destination rule to maintain complete focus on protocol instruction -->
+<header class="sticky top-0 z-40 bg-surface shadow-sm flex items-center justify-between px-margin h-16 transition-transform">
+<button aria-label="Go back to exercises" class="w-12 h-12 flex items-center justify-center rounded-xl text-primary hover:bg-surface-container-high active:scale-[0.98] transition-all" type="button">
+<span class="material-symbols-outlined text-[28px]" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="flex-1 px-3 text-center">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider block"><span class="inline-flex items-center justify-center"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcbSKnK5tqMbKJbs4kzcBO3CIGV5QFTGWCHW1rqfYdBlp54NsXu_eWNKKtcnRm2NwwBKEge5ymkGLdDuNAcoWFf8Dl9CkyRxcg56nLxPRasCwN1JMOWRA7qxua0mxfeoNI5Z3NAAbTDPy2Yt87vcAoUsRIWizvUhw5x9MIVgkQZx2wcfvLi_i3-WwihLDN-lrJsX74fcfrAxUwJyvbZp0ONRifEgtGF1paO5bStoaZ2AzkdSup8g3FWA" alt="Motivance" class="w-6 h-6 rounded-md object-contain inline-block mr-1.5">Motivance • Rehabilitation Protocol</span></span>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary truncate">Elbow Flexion &amp; Extension</h1>
+</div>
+<!-- Audio Guidance Voice Assistant Toggle Button -->
+<button aria-label="Toggle voice guidance" class="w-12 h-12 flex items-center justify-center rounded-xl bg-surface-container-low text-secondary hover:bg-secondary-container active:scale-[0.98] transition-all relative" id="voice-toggle-btn" type="button">
+<span class="material-symbols-outlined text-[24px]" data-icon="volume_up">volume_up</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary"></span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin pt-4 flex flex-col space-y-5">
+<!-- Patient Movement Demonstration Card (Biomechanical Visualizer) -->
+<section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.06)] overflow-hidden">
+<!-- Joint Accent Status Rail -->
+<div class="h-1.5 w-full bg-secondary"></div>
+<div class="p-4">
+<!-- Card Sub-header & Prescribed Chip -->
+<div class="flex items-center justify-between gap-2 mb-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="accessibility_new">accessibility_new</span>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">Biomechanical Sagittal Guide</span>
+</div>
+<!-- Prescribed Badge -->
+<span class="inline-flex items-center px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-secondary-container text-on-secondary-container font-bold shadow-xs">
+              Prescribed: 3 Sets × 10 Reps
+            </span>
+</div>
+<!-- Visual Demonstration Graphic / Simulated Biomechanical Pose Box -->
+<div class="relative w-full h-56 bg-surface-container-low rounded-xl border border-outline-variant/40 flex flex-col items-center justify-center overflow-hidden">
+<!-- Simulated Skeleton Coordinate Grid Overlay -->
+<div class="absolute inset-0 opacity-20 bg-[radial-gradient(#006a61_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<!-- Realistic Patient & Arm Biomechanics Graphic Display -->
+<div class="relative z-10 w-full h-full flex items-center justify-center">
+<img class="w-full h-full object-cover mix-blend-multiply opacity-95" data-alt="Medical illustration and visual demonstration of sagittal arm movement with elbow flexion upward toward shoulder and extension downward. High-key clinical lighting against a clean white and soft teal background with biomechanical tracking dots, angle arcs, and trajectory vectors representing physical therapy precision for an elderly patient." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHhkeslMY_unywtCc3mHVeTYHDULO3Q94JaBj3FS9E8XvUAThPbr0h1PawMr491Ym22a1-_ri1v1Wz-qOfGeZN7XQUJYmmOeKbP0CkW94A8Z95UdB0-2yeihIZrYV815Egq4O6Ub_fGTrYlPF96anE9d08msv80P_vb94NDNFvmeN7nkL_WnrkeMwvk2ALKppIcr8eB-iqGcoEe__RxzTOhomTpf-1Dz_fzacL3guhA69ZI43pxfldgg">
+<!-- Overlay Arc Indicating Target ROM -->
+<div class="absolute bottom-3 left-3 right-3 bg-surface-container-lowest/95 backdrop-blur-md rounded-lg p-2.5 border border-outline-variant/50 shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]" data-icon="rotate_right">rotate_right</span>
+</span>
+<div>
+<span class="text-[10px] text-on-surface-variant font-label-sm uppercase font-bold tracking-wider block">Motion Envelope</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Target: 120°–145° ROM</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 font-label-md text-label-md text-secondary font-bold bg-surface-container-high px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span> Calibrated
+                </span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Target Parameter Summary (Bento Matrix) -->
+<section aria-label="Prescription Parameters" class="grid grid-cols-3 gap-2.5">
+<!-- Parameter 1: Reps -->
+<div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30 text-center shadow-[0_2px_8px_-2px_rgba(15,54,97,0.04)] flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-[22px] mb-1" data-icon="repeat">repeat</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Target Reps</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary mt-0.5">10 <span class="font-body-sm text-body-sm text-on-surface-variant font-normal">/set</span></span>
+</div>
+<!-- Parameter 2: Angle Range -->
+<div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30 text-center shadow-[0_2px_8px_-2px_rgba(15,54,97,0.04)] flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-[22px] mb-1" data-icon="straighten">straighten</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Target Angle</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary mt-0.5">120°–145°</span>
+</div>
+<!-- Parameter 3: Rest Interval -->
+<div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30 text-center shadow-[0_2px_8px_-2px_rgba(15,54,97,0.04)] flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-[22px] mb-1" data-icon="timer">timer</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Rest Interval</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary mt-0.5">60s <span class="font-body-sm text-body-sm text-on-surface-variant font-normal">rest</span></span>
+</div>
+</section>
+<!-- Step-by-Step Guidance Section -->
+<section aria-label="Step by step execution instructions" class="space-y-3">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[24px]" data-icon="format_list_numbered">format_list_numbered</span>
+            How to Perform
+          </h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 Clear Steps</span>
+</div>
+<div class="space-y-2.5">
+<!-- Step 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-[0_2px_10px_-2px_rgba(15,54,97,0.04)] flex items-start gap-3.5">
+<div class="w-9 h-9 rounded-full bg-secondary text-on-secondary font-bold flex items-center justify-center shrink-0 font-label-lg text-label-lg shadow-sm">
+              1
+            </div>
+<div class="flex-1">
+<h3 class="font-label-lg text-label-lg font-bold text-primary mb-0.5">Position &amp; Frame Setup</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-snug">
+                Sit upright or stand facing your device camera (1.5 - 2 meters distance).
+              </p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-[0_2px_10px_-2px_rgba(15,54,97,0.04)] flex items-start gap-3.5">
+<div class="w-9 h-9 rounded-full bg-secondary text-on-secondary font-bold flex items-center justify-center shrink-0 font-label-lg text-label-lg shadow-sm">
+              2
+            </div>
+<div class="flex-1">
+<h3 class="font-label-lg text-label-lg font-bold text-primary mb-0.5">Controlled Flexion</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-snug">
+                Keep your upper arm stationary against your torso while bending the elbow upward.
+              </p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-[0_2px_10px_-2px_rgba(15,54,97,0.04)] flex items-start gap-3.5">
+<div class="w-9 h-9 rounded-full bg-secondary text-on-secondary font-bold flex items-center justify-center shrink-0 font-label-lg text-label-lg shadow-sm">
+              3
+            </div>
+<div class="flex-1">
+<h3 class="font-label-lg text-label-lg font-bold text-primary mb-0.5">Extension &amp; Cadence</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-snug">
+                Slowly lower your forearm back to full extension. Maintain smooth cadence.
+              </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Safety & Clinical Reminder Banner -->
+<section aria-label="Clinical Safety Warning" class="rounded-xl p-4 bg-tertiary-fixed/40 border-l-4 border-on-tertiary-container shadow-xs">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-on-tertiary-container/10 flex items-center justify-center shrink-0 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[24px]" data-icon="shield" data-weight="fill" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<h4 class="font-label-lg text-label-lg font-bold text-tertiary mb-0.5">Safety &amp; Clinical Reminder</h4>
+<p class="font-body-sm text-body-sm text-on-surface leading-relaxed">
+              Stop immediately if you experience sharp pain or dizziness. Consult Dr. Santos if discomfort persists.
+            </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Fixed Bottom Action Area (Elevated 56px reach CTA for ease of motor reach) -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto p-4 bg-surface-container-lowest/90 backdrop-blur-lg border-t border-outline-variant/30 shadow-[0_-8px_24px_rgba(15,54,97,0.08)] z-50">
+<button class="w-full h-14 bg-secondary text-on-secondary rounded-xl font-label-lg text-label-lg font-bold flex items-center justify-center gap-3 shadow-lg shadow-secondary/25 hover:bg-on-secondary-container active:scale-[0.98] transition-all duration-150 ease-out focus:ring-4 focus:ring-secondary-container" id="start-exercise-btn" type="button">
+<span class="material-symbols-outlined text-[26px]" data-icon="videocam">videocam</span>
+<span class="">START EXERCISE</span>
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Interactive Feedback Script -->
+<script>
+    const voiceBtn = document.getElementById('voice-toggle-btn');
+    let isVoiceActive = true;
+    voiceBtn.addEventListener('click', () => {
+      isVoiceActive = !isVoiceActive;
+      const icon = voiceBtn.querySelector('.material-symbols-outlined');
+      const dot = voiceBtn.querySelector('span:last-child');
+      
+      if (isVoiceActive) {
+        icon.textContent = 'volume_up';
+        voiceBtn.classList.remove('bg-surface-container-high', 'text-outline');
+        voiceBtn.classList.add('bg-surface-container-low', 'text-secondary');
+        dot.style.display = 'block';
+      } else {
+        icon.textContent = 'volume_off';
+        voiceBtn.classList.add('bg-surface-container-high', 'text-outline');
+        voiceBtn.classList.remove('bg-surface-container-low', 'text-secondary');
+        dot.style.display = 'none';
+      }
+    });
+
+    const startBtn = document.getElementById('start-exercise-btn');
+    startBtn.addEventListener('click', () => {
+      startBtn.classList.add('scale-[0.97]');
+      setTimeout(() => {
+        startBtn.classList.remove('scale-[0.97]');
+      }, 150);
+    });
+  </script>
+
+
+
+
+
+
+</body></html>

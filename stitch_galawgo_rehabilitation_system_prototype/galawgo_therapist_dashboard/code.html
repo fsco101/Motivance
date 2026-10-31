@@ -1,0 +1,417 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Motivance - Therapist Clinical Portal</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Font: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3f608d",
+            "on-primary": "#ffffff",
+            "surface-container-high": "#dce9ff",
+            "on-primary-container": "#80a0d1",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed": "#001c3a",
+            "secondary": "#006a61",
+            "primary-fixed-dim": "#a8c8fc",
+            "tertiary-fixed": "#ffddb8",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#a8c8fc",
+            "primary-container": "#0f3661",
+            "outline-variant": "#c3c6d0",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-bright": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#4e2f00",
+            "surface": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-surface-variant": "#43474f",
+            "inverse-surface": "#213145",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#d3e4fe",
+            "primary": "#002042",
+            "on-secondary-container": "#006f66",
+            "on-surface": "#0b1c30",
+            "primary-fixed": "#d4e3ff",
+            "surface-container": "#e5eeff",
+            "on-background": "#0b1c30",
+            "on-tertiary-container": "#dd8d00",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-secondary-fixed-variant": "#005049",
+            "secondary-fixed": "#89f5e7",
+            "on-secondary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "on-primary-fixed-variant": "#254874",
+            "surface-dim": "#cbdbf5",
+            "tertiary": "#311c00",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "secondary-container": "#86f2e4",
+            "outline": "#737780",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.25rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-xl": "2.25rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "data-metric": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+            "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700"}],
+            "data-metric": ["36px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "headline-md": ["22px", {"lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+            "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "body-lg": ["17px", {"lineHeight": "26px", "fontWeight": "400"}],
+            "label-lg": ["16px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+            "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+            "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "headline-sm": ["18px", {"lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600"}],
+            "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      line-height: 1;
+    }
+    .fill-icon {
+      font-variation-settings: 'FILL' 1;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-28">
+<!-- TopAppBar (from Shared Components JSON) -->
+<header class="bg-surface dark:bg-inverse-surface shadow-sm dark:shadow-none flex justify-between items-center w-full px-margin h-16 sticky top-0 z-40">
+<div class="flex items-center gap-3">
+<button aria-label="Menu" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-container-high dark:hover:bg-surface-container active:scale-[0.98] transition-transform duration-150 ease-out text-primary dark:text-inverse-primary">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div class="flex items-center"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1MrLyHwmMVfPXtf62se_pGSPeXpSeoo6-x4arg_yKuYAHPTgj98GVSeyDiE4IMPZ1M9sciRQarD_nLAWtQqM8qDkJflDn6cZTOI6SZf-fw0tn8omPdldAj3zPwUmPArFWnpYS29o8XLF7P6ORFMdTboE6UPaX2BIFRY6LSplZsvpNs5dihYF4VRqg2QV4Ud3cpCrjGn8FSV2DByvLaDlVEDyc9Qo6NBWT-J5HL2zJEL4XkOSKYMI3oA" alt="Motivance" class="w-8 h-8 rounded-lg object-contain mr-2 inline-block shadow-sm"><span class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight">Motivance</span></div>
+</div>
+<!-- Right Clustered Actions: Clinician info & Notification -->
+<div class="flex items-center gap-2.5">
+<button aria-label="Clinical Notifications" class="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-container-high dark:hover:bg-surface-container active:scale-[0.98] transition-transform duration-150 ease-out text-on-surface-variant dark:text-outline-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span>
+</button>
+<div class="flex items-center gap-2 pl-1 border-l border-outline-variant/30">
+<div class="relative w-9 h-9 rounded-full overflow-hidden ring-2 ring-primary/20">
+<img class="w-full h-full object-cover" data-alt="A distinguished Filipino physical therapist with short neat hair in a clean clinical coat, soft ambient clinic room lighting with white and deep navy tones, high quality portraiture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhm-uC0M8libK8xzsz6xOg0AX7HOiZfFJVsC2QJvUApSLPMe6Weqhdphn9K-i6xZ67eKl2xoiO186QwWTRpO5wY0A9dtZyniKyqEfG2KxzKzPFAK4exfe6RR3rMb7UOZdVGLSxBdrvS5reyCs3jo2rfjSvA9XIyJt-cpUKwZCwhq1pVgzx4bXK42Kum032IgDBuyd2Lrlls3C_pLAf9MtzZrUy94Yh0DOaUcKTAFbn_UAQRwS0BXIRJw">
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-secondary rounded-full ring-1 ring-surface-container-lowest"></span>
+</div>
+</div>
+</div>
+</header>
+<!-- Doctor Identification Header Strip -->
+<section class="px-margin pt-4 pb-2 flex items-center justify-between">
+<div>
+<div class="flex items-center gap-1.5">
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold">Dr. A. Santos, DPT</h1>
+<span class="material-symbols-outlined text-secondary text-[18px] fill-icon" data-icon="verified" data-weight="fill" title="Verified Clinician">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Chief Tele-Rehabilitation Officer • Active Shift</p>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-secondary-container/40 rounded-full">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-secondary-container">Telemetry Online</span>
+</div>
+</section>
+<!-- Main Content Layout -->
+<main class="flex-1 px-margin space-y- space-lg mt-2 max-w-4xl mx-auto w-full">
+<!-- Clinical Overview Metrics (Bento Grid) -->
+<section>
+<div class="flex items-center justify-between mb-3">
+<h2 class="font-label-lg text-label-lg text-primary uppercase tracking-wider">Clinical Overview</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="sync">sync</span> Live Sync
+        </span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<!-- Metric Card 1: Total Patients -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Total Patients</span>
+<span class="material-symbols-outlined text-[20px] text-primary" data-icon="groups">groups</span>
+</div>
+<div class="font-data-metric text-data-metric text-primary mt-1">32</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="trending_up">trending_up</span> +3 enrolled wk
+          </p>
+</div>
+<!-- Metric Card 2: Active Rehab -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-secondary"></div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Active Rehab</span>
+<span class="material-symbols-outlined text-[20px] text-secondary" data-icon="directions_run">directions_run</span>
+</div>
+<div class="font-data-metric text-data-metric text-primary mt-1">24</div>
+<p class="font-body-sm text-body-sm text-on-secondary-container mt-1 flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span> 75% cohort active
+          </p>
+</div>
+<!-- Metric Card 3: Recent Sessions -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary-container"></div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Recent Sessions</span>
+<span class="material-symbols-outlined text-[20px] text-primary-container" data-icon="schedule">schedule</span>
+</div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-data-metric text-data-metric text-primary">18</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Today</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">6 pending reviews</p>
+</div>
+<!-- Metric Card 4: Avg Adherence -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-secondary"></div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Avg Adherence</span>
+<span class="material-symbols-outlined text-[20px] text-secondary" data-icon="verified_user">verified_user</span>
+</div>
+<div class="font-data-metric text-data-metric text-secondary mt-1">94.2%</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 mt-2 overflow-hidden">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 94.2%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Search & Dynamic Filter Row -->
+<section class="space-y-2.5">
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="search">search</span>
+</span>
+<input class="w-full h-[52px] pl-10 pr-10 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-on-surface placeholder:text-outline font-body-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all" placeholder="Search patient name, condition, or tag..." type="text">
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+</div>
+<!-- Filter Chips -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+<button class="h-9 px-4 rounded-full font-label-md text-label-md bg-primary text-on-primary whitespace-nowrap active:scale-95 transition-transform flex items-center gap-1.5 shadow-sm">
+<span class="">All Patients</span>
+<span class="px-1.5 py-0.5 rounded-full bg-surface-container-lowest/20 text-xs">32</span>
+</button>
+<button class="h-9 px-3.5 rounded-full font-label-md text-label-md bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all whitespace-nowrap flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-error"></span> Needs ROM Review (4)
+        </button>
+<button class="h-9 px-3.5 rounded-full font-label-md text-label-md bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all whitespace-nowrap">
+          Compliant (22)
+        </button>
+<button class="h-9 px-3.5 rounded-full font-label-md text-label-md bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all whitespace-nowrap">
+          Upper Limb
+        </button>
+</div>
+</section>
+<!-- Patient Queue / Patient List Preview -->
+<section class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold">Patient Monitor</h2>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-primary font-label-sm text-label-sm font-bold">Live Stream</span>
+</div>
+<button class="font-label-md text-label-md text-secondary hover:underline flex items-center gap-0.5">
+          View all <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Patient Card 1: Roberto Gomez -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.05)] hover:border-secondary/50 transition-colors">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-start gap-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary font-bold text-headline-sm shrink-0">
+              RG
+            </div>
+<div>
+<div class="flex items-center gap-2 flex-wrap">
+<h3 class="font-label-lg text-label-lg text-primary font-bold">Roberto Gomez</h3>
+<span class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-container text-on-secondary-container font-semibold">Active</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant font-medium mt-0.5">Post-Stroke Left Elbow Rehab</p>
+</div>
+</div>
+<button aria-label="Open Roberto Gomez Profile" class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Latest Session Telemetry Pill -->
+<div class="mt-3.5 pt-3 border-t border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-surface-container-low/60 rounded-xl p-2.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="fitness_center">fitness_center</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Elbow Flexion: <span class="text-secondary font-bold">138° ROM achieved</span></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-xs">Target: 140° • Completed 3 sets × 10 reps</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1 self-end sm:self-auto">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 2h ago
+          </span>
+</div>
+</div>
+<!-- Patient Card 2: Elena Cruz -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.05)] hover:border-secondary/50 transition-colors">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-start gap-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary font-bold text-headline-sm shrink-0">
+              EC
+            </div>
+<div>
+<div class="flex items-center gap-2 flex-wrap">
+<h3 class="font-label-lg text-label-lg text-primary font-bold">Elena Cruz</h3>
+<span class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="warning">warning</span> Needs ROM Review
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant font-medium mt-0.5">Rotator Cuff Recovery</p>
+</div>
+</div>
+<button aria-label="Open Elena Cruz Profile" class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Latest Session Telemetry Pill -->
+<div class="mt-3.5 pt-3 border-t border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-error-container/20 rounded-xl p-2.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[20px]" data-icon="front_hand">front_hand</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Shoulder Abduction: <span class="text-error font-bold">82° ROM</span> (Limit reached)</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-xs">Target: 110° • Mild compensatory neck flexion flagged</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1 self-end sm:self-auto">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 35m ago
+          </span>
+</div>
+</div>
+<!-- Patient Card 3: Mateo Reyes -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 shadow-[0_4px_20px_-2px_rgba(15,54,97,0.05)] hover:border-secondary/50 transition-colors">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-start gap-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary font-bold text-headline-sm shrink-0">
+              MR
+            </div>
+<div>
+<div class="flex items-center gap-2 flex-wrap">
+<h3 class="font-label-lg text-label-lg text-primary font-bold">Mateo Reyes</h3>
+<span class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant font-semibold">Compliant</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant font-medium mt-0.5">ACL Reconstruction</p>
+</div>
+</div>
+<button aria-label="Open Mateo Reyes Profile" class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Latest Session Telemetry Pill -->
+<div class="mt-3.5 pt-3 border-t border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-surface-container-low/60 rounded-xl p-2.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="accessibility_new">accessibility_new</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Knee Extension: <span class="text-secondary font-bold">0° Full Extension</span></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-xs">Protocol: Phase II Quad Sets • 100% adherence score</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1 self-end sm:self-auto">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> Yesterday
+          </span>
+</div>
+</div>
+</section>
+<!-- Quick Clinical Teleconsultation Banner -->
+<section class="bg-primary-container text-on-primary rounded-2xl p-5 shadow-[0_12px_32px_-4px_rgba(15,54,97,0.12)] relative overflow-hidden">
+<div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<span class="px-2 py-0.5 rounded bg-secondary text-on-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider">Tele-Session Ready</span>
+<h4 class="font-headline-sm text-headline-sm text-white font-bold mt-1">Elena Cruz Tele-Call</h4>
+<p class="font-body-sm text-body-sm text-surface-container-highest/80 mt-0.5">Scheduled review of shoulder joint limits &amp; biomechanics video feed</p>
+</div>
+<button class="h-12 px-5 bg-secondary hover:bg-secondary/90 text-white rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-transform shrink-0">
+<span class="material-symbols-outlined text-[20px]" data-icon="video_call">video_call</span>
+          Launch Call
+        </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (from Shared Components JSON) -->
+<!-- Context: Dashboard is active -->
+<nav class="bg-surface-container-lowest dark:bg-inverse-surface shadow-lg dark:shadow-none fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-space-xs">
+<!-- Destination 1: Home (Dashboard - Active State) -->
+<a aria-current="page" class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl min-w-[56px] min-h-[52px] px-3 py-1.5 active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined fill-icon" data-icon="home" data-weight="fill">home</span>
+<span class="font-label-md text-label-md font-semibold">Home</span>
+</a>
+<!-- Destination 2: Exercises -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container text-primary dark:text-inverse-primary active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-label-md text-label-md">Exercises</span>
+</a>
+<!-- Destination 3: Progress -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container text-primary dark:text-inverse-primary active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-label-md text-label-md">Progress</span>
+</a>
+<!-- Destination 4: Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant min-w-[56px] min-h-[52px] px-3 py-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container text-primary dark:text-inverse-primary active:scale-[0.98] transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+
+
+
+
+
+
+
+
+</body></html>
