@@ -28,7 +28,7 @@ import com.motivance.R
     }
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-            Text(stringResource(R.string.app_name),style=MaterialTheme.typography.headlineLarge)
+            com.motivance.navigation.BrandHeader()
             Text(stringResource(if(role==com.motivance.domain.UserRole.THERAPIST) R.string.clinical_portal else R.string.rehabilitation_portal),style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.secondary)
             TextButton(onBack) { Text(stringResource(R.string.choose_role)) }
             Card(Modifier.fillMaxWidth()) {

@@ -95,6 +95,10 @@ def issue_section(s,t,keys):
     text=f"## Sprint function details\n\n{s['title']} — {s['goal']}\n\n{t['description']}\n\nLocal status: **{t['status']}**. Estimate: {t['estimate_points']} points.\n\n"
     text+='\n'.join(f"- **{f['name']}**: {f['description']}" for f in t['functions'])
     text+='\n\nArchitecture, database and Kotlin dependencies: `docs/PLAN.md`.'
+    if t.get('implementation_status'):
+        text+='\n\nImplementation delivery: **'+t['implementation_status']+'**.'
+    if t.get('post_implementation_checks'):
+        text+='\n\n### Deferred post-implementation checks\n\n'+'\n'.join('- '+b for b in t['post_implementation_checks'])
     if t.get('blockers'):
         text+='\n\n### Remaining acceptance work\n\n'+'\n'.join('- '+b for b in t['blockers'])
     text+='\n\nTarget paths: '+', '.join(f'`{p}`' for p in t['target_paths'])

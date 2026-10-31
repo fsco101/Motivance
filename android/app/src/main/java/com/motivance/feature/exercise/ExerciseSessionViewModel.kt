@@ -1,6 +1,7 @@
 package com.motivance.feature.exercise
 
 import android.os.SystemClock
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.motivance.BuildConfig
@@ -8,6 +9,8 @@ import com.motivance.assessment.MovementAssessment
 import com.motivance.data.local.*
 import com.motivance.domain.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.motivance.data.sync.SyncScheduler
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.*
@@ -21,7 +24,7 @@ data class ExerciseSessionState(
     val id:String?=null,val saving:Boolean=false,val saved:Boolean=false,val error:Boolean=false,
     val recoverable:LocalSession?=null,val history:List<LocalSession> = emptyList(),val cached:List<CachedPrescription> = emptyList()
 )
-@HiltViewModel class ExerciseSessionViewModel @Inject constructor(private val store:SessionStore):ViewModel() {
+@HiltViewModel class ExerciseSessionViewModel @Inject constructor(private val store:SessionStore,@ApplicationContext private val context:Context):ViewModel() {
     private val mutable=MutableStateFlow(ExerciseSessionState())
     val state=mutable.asStateFlow()
     private var engine=MovementAssessment(ExerciseRules())
@@ -45,7 +48,7 @@ data class ExerciseSessionState(
         cacheJob=viewModelScope.launch { store.dao.prescriptions(account).collect { rows -> if(owner==account) mutable.value=mutable.value.copy(cached=rows) } }
     }
     fun select(kind:ExerciseKind,side:BodySide) {
-        if(mutable.value.id!=null || mutable.value.saving) return
+        if(mutable.value.id!=null || mutable.value.saving || !mutable.value.rules.demo) return
         val rules=ExerciseRules(kind=kind,side=side)
         engine=MovementAssessment(rules); mutable.value=mutable.value.copy(rules=rules,metrics=engine.snapshot,saved=false,error=false)
     }
@@ -65,10 +68,23 @@ data class ExerciseSessionState(
         val current=mutable.value
         if(!consent || current.saving || current.saved || owner.isBlank() || (current.rules.demo && !BuildConfig.DEBUG)) return
         if(!current.rules.demo && current.cached.none { it.versionId==current.rules.prescriptionVersionId && it.ownerId==owner && it.expiresAt>System.currentTimeMillis() }) return
-        if(!engine.start(SystemClock.uptimeMillis())) return
-        if(current.id==null) { startedAt=System.currentTimeMillis(); mutable.value=current.copy(id=UUID.randomUUID().toString(),error=false) }
-        mutable.value=mutable.value.copy(metrics=engine.snapshot)
-        persist("DRAFT")
+        val account=owner
+        mutable.value=current.copy(saving=true,error=false)
+        viewModelScope.launch {
+            try {
+                val grant=if(current.rules.demo) null else if(current.id==null) store.recordConsent(account,true) else {
+                    val row=store.dao.get(account,current.id)
+                    store.dao.latestConsent(account)?.takeIf {it.event=="granted" && it.id==row?.consentId} ?: error("Consent changed; begin a new session")
+                }
+                if(owner!=account || mutable.value.id!=current.id) return@launch
+                if(!engine.start(SystemClock.uptimeMillis())) return@launch
+                if(current.id==null) {startedAt=maxOf(System.currentTimeMillis(),grant?.occurredAt ?: 0); mutable.value=mutable.value.copy(id=UUID.randomUUID().toString())}
+                mutable.value=mutable.value.copy(metrics=engine.snapshot)
+                persist("DRAFT")
+            } catch(e:CancellationException) {throw e}
+            catch(_:Exception) {if(owner==account) mutable.value=mutable.value.copy(error=true)}
+            finally {if(owner==account) mutable.value=mutable.value.copy(saving=false)}
+        }
     }
     fun interrupt() {
         val metrics=engine.pause(SystemClock.uptimeMillis())
@@ -87,7 +103,10 @@ data class ExerciseSessionState(
         viewModelScope.launch {
             try {
                 writes.withLock { store.save(account,id,captured.rules,captured.metrics,start,status) }
-                if(owner==account && mutable.value.id==id && status=="COMPLETED") mutable.value=mutable.value.copy(saving=false,saved=true,error=false)
+                if(status=="COMPLETED") {
+                    SyncScheduler.schedule(context,account)
+                    if(owner==account && mutable.value.id==id) mutable.value=mutable.value.copy(saving=false,saved=true,error=false)
+                }
             } catch(e: CancellationException) { throw e }
             catch(e: Exception) { if(owner==account && mutable.value.id==id) mutable.value=mutable.value.copy(saving=false,error=true) }
         }

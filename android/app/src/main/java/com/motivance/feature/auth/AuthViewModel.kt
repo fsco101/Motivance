@@ -19,6 +19,15 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
     val state = mutable.asStateFlow()
     private val overviewMutable=MutableStateFlow(OverviewState())
     val overview=overviewMutable.asStateFlow()
+    fun restore() {
+        if(mutable.value.session!=null || mutable.value.busy) return
+        mutable.value=AuthState(busy=true)
+        viewModelScope.launch {
+            try {mutable.value=AuthState(session=auth.restoreSession())}
+            catch(e:CancellationException) {throw e}
+            catch(_:Exception) {mutable.value=AuthState()}
+        }
+    }
     fun loadOverview() {
         val user=mutable.value.session?.userId ?: return
         if(overviewMutable.value.busy) return

@@ -1,0 +1,12 @@
+{
+  "fresh_application_schema": true,
+  "copied_auth_schema_only": true,
+  "copied_accounts": false,
+  "migrations": [
+    "202610310001_foundation.sql",
+    "202611010001_connected_workflow.sql"
+  ],
+  "foundation_sql_tests_passed": 18,
+  "exit_code": 0,
+  "main_local_database_reset": false
+}

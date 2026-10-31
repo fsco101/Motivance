@@ -7,3 +7,4 @@
 - The root README is only a navigation entry point. Keep operational scripts and CI configuration in their normal executable locations.
 - Preserve imported prototype assets and source material unless the user requests changes to them.
 - Keep Android client environment configuration in ignored `android/.env`, with `android/.env.example` as the public template. Do not place service-role keys in the app.
+- Per the user's implementation instruction, therapist and physical-device checks must not block development. Record them in `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md` for later execution, and distinguish deferred checks from executed tests without claiming clinical validation.

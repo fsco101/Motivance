@@ -1,6 +1,8 @@
 # Sprint planning and synchronization
 
-The numbered JSON files contain the authoritative editable backlog for the ten-week Motivance implementation. Each sprint JSON includes goals, a demo, entry/exit criteria, estimates, risks and six mapped issues with function descriptions. Function names describe planned capabilities, not existing application code.
+The numbered JSON files contain the authoritative editable backlog for the ten-week Motivance implementation. Each sprint JSON includes goals, a demo, entry/exit criteria, estimates, risks and six mapped issues with function descriptions. Each function record indicates whether it describes a planned capability or an implemented entry point.
+
+Per the user's implementation instruction, therapist and physical-device checks are deferred to `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md` and must not block development. `implementation_status` records delivered code separately from issue review/acceptance. Keep an unexecuted original acceptance check false, attach its `deferred_to` reference and show it as a post-implementation check; never substitute a synthetic test for a claimed participant/therapist result. Engineering review statuses and GitHub closure rules still require truthful evidence. S2/S3 and delivered S4 issues can be implemented and available to test while their final review records remain open.
 
 ```text
 sprints/

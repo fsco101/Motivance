@@ -7,6 +7,7 @@ compose = "2025.04.01"
 camera = "1.4.2"
 lifecycle = "2.9.0"
 room = "2.8.5"
+work = "2.10.5"
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -34,3 +35,4 @@ junit = { module = "junit:junit", version = "4.13.2" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }

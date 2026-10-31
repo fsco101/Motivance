@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-10-31T07:36:16.932534+00:00",
+  "scope": "S4 MOT-19 history and progress; engineering verification",
+  "app_version": "0.3.0",
+  "schema_changes": false,
+  "jvm_tests_passed": 69,
+  "jvm_suites": [
+    {
+      "suite": "com.motivance.data.remote.ConnectedRepositoryTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.data.remote.HistoryRepositoryTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.data.remote.PrescriptionCacheTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.data.remote.SupabaseAuthRepositoryTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.data.remote.SyncFailuresTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.feature.auth.AuthViewModelTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.feature.rehabilitation.HistoryViewModelTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.domain.HistoryTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "CameraDiagnosticsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "MovementAssessmentTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "PreviewMappingTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "SyntheticEvaluationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "new_history_jvm_tests_passed": 14,
+  "android_instrumented_tests_passed": 15,
+  "history_ui_tests_passed": 3,
+  "local_backend_history_checks_passed": 14,
+  "local_backend_total_connected_checks_passed": 59,
+  "build_lint_passed": true,
+  "lint_counts": {
+    "Warning": 67,
+    "Information": 1
+  },
+  "native_packaging_check_passed": true,
+  "core_module_boundary_check_passed": true,
+  "sprint_json_validation_passed": true,
+  "apk_sha256": "690bffa23eef62fcd2b74016c241b73814f9345bd9f70fbb790fc30f2d04bf01",
+  "evidence": [
+    "docs/validation/sprint-04-android-checks.log",
+    "docs/validation/sprint-04-history-backend-results.json",
+    "docs/validation/ui/sprint-04-history-chart.png"
+  ],
+  "limitations": [
+    "Synthetic data and Android emulator only; physical phone accessibility, therapist terminology review and clinical usefulness remain deferred.",
+    "History charts summarize loaded pages; pending local records appear after synchronization.",
+    "MOT-19 is implemented in review. Other S4 issues and full sprint acceptance remain open."
+  ],
+  "follow_up": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+  "clinical_validation_claimed": false
+}

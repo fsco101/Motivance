@@ -48,7 +48,7 @@
       "github_issue": 2,
       "title": "Approve MVP exercises, device scope and measurement validation protocol",
       "description": "Agree a small exercise set (target two or three, subject to feasibility), required joints, affected side, camera view and ROM conventions. Define reference measurement and recruitment process before implementation.",
-      "status": "blocked",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "CV developer + therapist",
       "estimate_points": 3,
@@ -82,19 +82,25 @@
           "id": "MOT-01-AC1",
           "description": "Therapist reviews each exercise, positioning instructions, allowable parameters and supported form rules; unsupported movements are documented.",
           "passed": false,
-          "evidence": []
+          "evidence": [],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker"
         },
         {
           "id": "MOT-01-AC2",
           "description": "Record minimum device/OS targets and at least a lower-spec and a mid-range physical Android device for testing.",
           "passed": false,
-          "evidence": []
+          "evidence": [],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker"
         },
         {
           "id": "MOT-01-AC3",
           "description": "Document reference instrument/procedure, sample and repetition counts, angle error and repeatability thresholds, exclusion rules and approval owner before collecting validation data; thresholds are not chosen after results.",
           "passed": false,
-          "evidence": []
+          "evidence": [],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker"
         },
         {
           "id": "MOT-01-AC4",
@@ -111,11 +117,12 @@
         "evidence": []
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Therapist approval and actual two-device inventory are required; review docs/validation/SPRINT-01-PROTOCOL.md before collecting evaluation data."
-      ],
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md"
+      ],
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "Therapist approval and actual two-device inventory are required; review docs/validation/SPRINT-01-PROTOCOL.md before collecting evaluation data."
       ]
     },
     {
@@ -387,7 +394,7 @@
       "github_issue": 6,
       "title": "Prototype CameraX and MediaPipe live skeleton on target phones",
       "description": "Build an early camera preview with pose detection and joint/connection overlay. Measure device feasibility before expanding features.",
-      "status": "blocked",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "CV developer",
       "estimate_points": 8,
@@ -424,7 +431,9 @@
           "id": "MOT-05-AC1",
           "description": "Skeleton alignment remains correct across preview scaling, rotation and front-camera mirroring.",
           "passed": false,
-          "evidence": []
+          "evidence": [],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker"
         },
         {
           "id": "MOT-05-AC2",
@@ -438,13 +447,17 @@
           "id": "MOT-05-AC3",
           "description": "Capture FPS, feedback latency, thermal behavior and detection quality on the two target device classes.",
           "passed": false,
-          "evidence": []
+          "evidence": [],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker"
         },
         {
           "id": "MOT-05-AC4",
           "description": "Record a go/no-go decision for each proposed exercise and a fallback scope if tracking is inadequate.",
           "passed": false,
-          "evidence": []
+          "evidence": [],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker"
         }
       ],
       "completion": {
@@ -453,13 +466,14 @@
         "evidence": []
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Diagnostics now report rolling FPS, p95 inference latency and thermal status. Two physical device classes and therapist exercise go/no-go evidence are still required."
-      ],
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
         "docs/validation/EMULATOR-CAMERA-FIX.md",
         "docs/architecture/UI-UX.md"
+      ],
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "Diagnostics now report rolling FPS, p95 inference latency and thermal status. Two physical device classes and therapist exercise go/no-go evidence are still required."
       ]
     },
     {
@@ -502,7 +516,9 @@
           "id": "MOT-06-AC1",
           "description": "Review wireframes with therapist input and identify patient usability risks.",
           "passed": false,
-          "evidence": []
+          "evidence": [],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; not a development blocker"
         },
         {
           "id": "MOT-06-AC2",
@@ -535,13 +551,14 @@
         "evidence": []
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Review the Stitch-derived native flows with a therapist and verify large text, accessibility and terminology on devices."
-      ],
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
         "docs/validation/EMULATOR-CAMERA-FIX.md",
         "docs/architecture/UI-UX.md"
+      ],
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "Review the Stitch-derived native flows with a therapist and verify large text, accessibility and terminology on devices."
       ]
     }
   ],

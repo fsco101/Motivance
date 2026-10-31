@@ -1,5 +1,7 @@
 # Sprint 2 implementation and acceptance evidence
 
+Current delivery update: the user's subsequent instruction defers therapist/physical checks to `POST-IMPLEMENTATION-CHECKLIST.md` rather than blocking implementation. S3 now supplies the connected catalogue/prescription/consent/upload flow, protected sign-in and Room v2; see `SPRINT-03-IMPLEMENTATION.md`. The remaining text preserves the original S2 evidence and historical boundary, not current implementation blockers.
+
 Date: 2026-10-31. Engineering implementation is available for development testing in the local working tree. The debug APK is installed on the emulator; local verification is not a GitHub CI run or a source push. Sprint acceptance remains open: S1 therapist approval, actual phone inventory and reference protocol approvals have not been supplied. No patient accuracy or production readiness is claimed.
 
 ## Implemented paths

@@ -85,7 +85,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -94,7 +96,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -103,7 +107,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -112,7 +118,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         }
       ],
@@ -120,11 +128,14 @@
         "completed_at": null,
         "reviewed_by": null,
         "evidence": [
-          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+          "docs/validation/sprint-03-test-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
+      "implementation_status": "implemented",
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
         "S1/MOT-01 exercise/setup approval and MOT-05 physical phone feasibility evidence remain pending; technical gates are ready for review."
       ]
     },
@@ -173,7 +184,9 @@
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
-            "docs/validation/sprint-02-synthetic-results.json"
+            "docs/validation/sprint-02-synthetic-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -183,7 +196,9 @@
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
-            "docs/validation/sprint-02-synthetic-results.json"
+            "docs/validation/sprint-02-synthetic-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -193,7 +208,9 @@
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
-            "docs/validation/sprint-02-synthetic-results.json"
+            "docs/validation/sprint-02-synthetic-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -201,19 +218,26 @@
           "description": "A first comparison with reference measurements is recorded; model-estimated depth is not presented as ground truth.",
           "passed": false,
           "evidence": [
-            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
-          ]
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; does not block development delivery"
         }
       ],
       "completion": {
         "completed_at": null,
         "reviewed_by": null,
         "evidence": [
-          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+          "docs/validation/sprint-03-test-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
+      "implementation_status": "implemented",
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
         "Matched goniometer/reference comparison with therapist-approved positioning and actual participants is not available (AC4).",
         "S1/MOT-01 and MOT-05 acceptance dependencies remain open."
       ]
@@ -262,7 +286,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -271,7 +297,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -280,7 +308,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -289,7 +319,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         }
       ],
@@ -297,11 +329,14 @@
         "completed_at": null,
         "reviewed_by": null,
         "evidence": [
-          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+          "docs/validation/sprint-03-test-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
+      "implementation_status": "implemented",
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
         "Therapist approval of exercise thresholds, timing/form rules and predecessor acceptance remains open; debug rules are clearly marked demonstrations."
       ]
     },
@@ -351,7 +386,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -360,7 +397,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -368,27 +407,38 @@
           "description": "A patient can start, pause, resume and finish a supported exercise.",
           "passed": false,
           "evidence": [
-            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
-          ]
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; does not block development delivery"
         },
         {
           "id": "MOT-10-AC4",
           "description": "Rotation, backgrounding and permission withdrawal produce safe, recoverable state transitions.",
           "passed": false,
           "evidence": [
-            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
-          ]
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; does not block development delivery"
         }
       ],
       "completion": {
         "completed_at": null,
         "reviewed_by": null,
         "evidence": [
-          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+          "docs/validation/sprint-03-test-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
+      "implementation_status": "implemented",
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
         "Demonstrate prescribed motion with patient/therapist and verify dynamic overlay alignment on target phones.",
         "Complete physical rotation, permission-withdrawal, accessibility and background/recovery matrix; emulator smoke checks are partial evidence.",
         "Required S1/S2 predecessor acceptance remains open."
@@ -443,7 +493,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -452,7 +504,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -461,7 +515,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         },
         {
@@ -470,7 +526,9 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
-            "docs/validation/sprint-02-test-results.json"
+            "docs/validation/sprint-02-test-results.json",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
           ]
         }
       ],
@@ -478,13 +536,15 @@
         "completed_at": null,
         "reviewed_by": null,
         "evidence": [
-          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+          "docs/validation/sprint-03-test-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Technical persistence tests pass; S1/MOT-02 foundation acceptance/review remains open.",
-        "Offline clinical cold start still requires online login because authentication tokens are memory-only; this limitation is documented."
+      "implementation_status": "implemented",
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "Verify protected session restore, expiry, logout and account isolation on target phones; S3 replaces the former memory-only authentication limitation."
       ]
     },
     {
@@ -492,7 +552,7 @@
       "github_issue": 13,
       "title": "Run early ROM accuracy and camera performance evaluation",
       "description": "Execute the initial protocol on the implemented exercise set while correction time remains.",
-      "status": "blocked",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "QA + therapist",
       "estimate_points": 3,
@@ -532,43 +592,62 @@
           "description": "Report angle error, repeatability, repetition accuracy and invalid-tracking rate by exercise and device.",
           "passed": false,
           "evidence": [
-            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
-          ]
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; does not block development delivery"
         },
         {
           "id": "MOT-12-AC2",
           "description": "Record latency and session stability under the defined camera setup and lighting conditions.",
           "passed": false,
           "evidence": [
-            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
-          ]
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; does not block development delivery"
         },
         {
           "id": "MOT-12-AC3",
           "description": "Compare findings with predeclared thresholds and open corrective issues for failures.",
           "passed": false,
           "evidence": [
-            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
-          ]
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; does not block development delivery"
         },
         {
           "id": "MOT-12-AC4",
           "description": "Unreliable exercises are corrected or removed with therapist approval before the connected pilot.",
           "passed": false,
           "evidence": [
-            "docs/validation/SPRINT-02-IMPLEMENTATION.md"
-          ]
+            "docs/validation/SPRINT-02-IMPLEMENTATION.md",
+            "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+            "docs/validation/sprint-03-test-results.json"
+          ],
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Deferred follow-up; does not block development delivery"
         }
       ],
       "completion": {
         "completed_at": null,
         "reviewed_by": null,
         "evidence": [
-          "docs/validation/SPRINT-02-IMPLEMENTATION.md"
+          "docs/validation/SPRINT-03-IMPLEMENTATION.md",
+          "docs/validation/sprint-03-test-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
+      "implementation_status": "implemented",
+      "post_implementation_checks": [
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
         "Therapist protocol approval, reference measurements, participants and two physical phones are unavailable.",
         "An emulator/laptop-webcam empty-room spot check observed p95 inference 634ms under concurrent host build load, above the provisional 250ms phone gate. Profile/resolve on target phones and rerun a controlled 15-minute evaluation before acceptance.",
         "Synthetic geometry/repetition results cannot replace clinical angle-error, human repeatability, tracking-rate or therapist sign-off evidence."
@@ -576,5 +655,7 @@
     }
   ],
   "plan_reference": "docs/PLAN.md",
-  "implementation_note": "Development implementation built on the S1 technical foundation; therapist approval and physical-device acceptance from S1 remain open. See docs/validation/SPRINT-02-IMPLEMENTATION.md."
+  "implementation_note": "S2 measurement/local recovery and S3 connected workflows are implemented; engineering review/issue closure remains separate from delivery. Evidence: docs/validation/SPRINT-03-IMPLEMENTATION.md",
+  "implementation_status": "implemented",
+  "implementation_policy": "Therapist and physical-device checks are deferred post-implementation work per user instruction, not development blockers. Original unexecuted checks remain false with checklist references."
 }

@@ -8,6 +8,7 @@ data class SessionSummary(val id: String, val patientId: String, val startedAt: 
 data class AssignmentSummary(val id: String, val patientId: String)
 data class WorkspaceOverview(val displayName: String = "", val patientIds: List<String> = emptyList(), val sessions: List<SessionSummary> = emptyList(), val assignments: List<AssignmentSummary> = emptyList())
 interface AuthRepository {
+    suspend fun restoreSession():UserSession? = null
     suspend fun signIn(email: String, password: String): UserSession
     suspend fun register(email: String, password: String)
     suspend fun confirmRegistration(email: String, token: String): UserSession

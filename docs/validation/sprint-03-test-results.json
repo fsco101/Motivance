@@ -1,0 +1,115 @@
+{
+  "generated_at": "2026-10-31T07:14:17.944580+00:00",
+  "app_version": "0.3.0",
+  "room_version": 2,
+  "jvm_tests_passed": 55,
+  "jvm_suites": [
+    {
+      "suite": "com.motivance.data.remote.ConnectedRepositoryTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.data.remote.PrescriptionCacheTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.data.remote.SupabaseAuthRepositoryTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.data.remote.SyncFailuresTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.motivance.feature.auth.AuthViewModelTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "CameraDiagnosticsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "MovementAssessmentTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "PreviewMappingTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "SyntheticEvaluationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "android_instrumented_tests_passed": 12,
+  "instrumented_evidence": "docs/validation/sprint-03-instrumented-results.log",
+  "local_backend_api_checks_passed": 45,
+  "fresh_backend_migrations": {
+    "fresh_application_schema": true,
+    "copied_auth_schema_only": true,
+    "copied_accounts": false,
+    "migrations": [
+      "202610310001_foundation.sql",
+      "202611010001_connected_workflow.sql"
+    ],
+    "foundation_sql_tests_passed": 18,
+    "exit_code": 0,
+    "main_local_database_reset": false
+  },
+  "fresh_android_build": {
+    "exit_code": 0,
+    "fresh_source_copy": true,
+    "copied_local_properties": false,
+    "supabase_config_supplied": false,
+    "command": ":app:assembleDebug :app:lintDebug :app:testDebugUnitTest :core:assessment:test --no-daemon",
+    "log": "tmp/sprint-1-clean-_uga6t18/build.log"
+  },
+  "final_build_lint_passed": true,
+  "lint_errors": 0,
+  "lint_warnings": 58,
+  "apk_sha256": "9d38012f9f742f5a67defc7221ed3aef7c1fe0eb47235c156f9cbfe59e951a3e",
+  "manual_emulator_checks": [
+    "Supplied logo renders in native header",
+    "Therapist signs in and patient list loads using explicit profile FK",
+    "Therapist patient detail shows the development prescription version/targets",
+    "Protected sign-in restores after force-stop/relaunch",
+    "Patient signs in and authenticated overview shows own active assignment",
+    "Patient Exercises shows instructions, targets, pinned version, last download and enabled assigned-session action"
+  ],
+  "follow_up": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+  "physical_therapist_checks_block_implementation": false,
+  "clinical_accuracy_claimed": false,
+  "limitations": [
+    "Reference/patient accuracy and physical camera performance are deferred checks",
+    "Privacy requests are tracked; automatic export delivery or clinical-record purge is not implemented",
+    "Remote CI/source publication state is separate from local checks"
+  ],
+  "delivery_build_passed": true
+}
