@@ -151,7 +151,9 @@
           "docs/validation/IMPLEMENTATION-CLOSURE.md",
           "docs/validation/PATIENT-PROFILES.md",
           "docs/validation/patient-profile-results.json",
-          "docs/validation/patient-profile-backend-results.json"
+          "docs/validation/patient-profile-backend-results.json",
+          "docs/validation/FORM-DESIGN-VALIDATION.md",
+          "docs/validation/form-refinement-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -165,7 +167,9 @@
         "docs/validation/sprint-03-backend-results.json",
         "docs/validation/PATIENT-PROFILES.md",
         "docs/validation/patient-profile-results.json",
-        "docs/validation/patient-profile-backend-results.json"
+        "docs/validation/patient-profile-backend-results.json",
+        "docs/validation/FORM-DESIGN-VALIDATION.md",
+        "docs/validation/form-refinement-results.json"
       ]
     },
     {

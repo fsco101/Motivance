@@ -415,4 +415,23 @@
     <string name="profile_password_saved">Password changed.</string>
     <string name="profile_loading">Updating profile&#8230;</string>
     <string name="profile_failed">Unable to complete the request. Check your connection, profile details, username availability or current password, then try again.</string>
+    <string name="profile_first_name">First name</string>
+    <string name="profile_last_name">Last name</string>
+    <string name="form_identity">Personal details</string>
+    <string name="form_identity_help">Use your name as you want it shown to your care team.</string>
+    <string name="form_contact">Contact details</string>
+    <string name="form_contact_help">Help your connected therapist keep your patient profile up to date.</string>
+    <string name="form_account">Your identity in Motivance</string>
+    <string name="form_account_help">Choose a respectful username and an avatar that feels like you.</string>
+    <string name="form_name_error">Enter 1 to 60 letters, with spaces, apostrophes, periods or hyphens.</string>
+    <string name="form_username_error">Use 3 to 30 letters, numbers or underscores.</string>
+    <string name="form_username_blocked">Please choose a respectful username without offensive words.</string>
+    <string name="form_phone_error">Enter 7 to 15 digits. Use + only at the beginning.</string>
+    <string name="form_phone_help">Include your country code, for example +63 912 345 6789.</string>
+    <string name="form_address_error">Enter your address using 5 to 500 characters.</string>
+    <string name="form_choose_date">Choose a date</string>
+    <string name="form_birthdate_help">Choose your birthdate using the calendar. Age updates automatically.</string>
+    <string name="form_clear_dates">Clear dates</string>
+    <string name="form_password_match">Passwords must match.</string>
+    <string name="form_password_length">Use at least 8 characters.</string>
 </resources>

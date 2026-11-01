@@ -453,7 +453,9 @@
           "docs/validation/smtp-connection-results.json",
           "docs/validation/PATIENT-PROFILES.md",
           "docs/validation/patient-profile-results.json",
-          "docs/validation/patient-profile-backend-results.json"
+          "docs/validation/patient-profile-backend-results.json",
+          "docs/validation/FORM-DESIGN-VALIDATION.md",
+          "docs/validation/form-refinement-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -466,7 +468,9 @@
         "docs/validation/smtp-connection-results.json",
         "docs/validation/PATIENT-PROFILES.md",
         "docs/validation/patient-profile-results.json",
-        "docs/validation/patient-profile-backend-results.json"
+        "docs/validation/patient-profile-backend-results.json",
+        "docs/validation/FORM-DESIGN-VALIDATION.md",
+        "docs/validation/form-refinement-results.json"
       ],
       "implementation_status": "implemented"
     },
@@ -676,7 +680,9 @@
           "docs/validation/IMPLEMENTATION-CLOSURE.md",
           "docs/validation/PATIENT-PROFILES.md",
           "docs/validation/patient-profile-results.json",
-          "docs/validation/patient-profile-backend-results.json"
+          "docs/validation/patient-profile-backend-results.json",
+          "docs/validation/FORM-DESIGN-VALIDATION.md",
+          "docs/validation/form-refinement-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -686,7 +692,9 @@
         "docs/validation/sprint-04-history-test-results.json",
         "docs/validation/PATIENT-PROFILES.md",
         "docs/validation/patient-profile-results.json",
-        "docs/validation/patient-profile-backend-results.json"
+        "docs/validation/patient-profile-backend-results.json",
+        "docs/validation/FORM-DESIGN-VALIDATION.md",
+        "docs/validation/form-refinement-results.json"
       ],
       "post_implementation_checks": [
         "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",

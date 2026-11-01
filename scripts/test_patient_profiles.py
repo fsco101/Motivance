@@ -47,7 +47,7 @@ def main():
     if stale:
         ids=','.join("'"+str(uuid.UUID(u))+"'" for u in stale)
         sql(f"begin;set local session_replication_role=replica;delete from public.patient_profiles where user_id in ({ids});delete from public.therapist_patients where therapist_id in ({ids}) or patient_id in ({ids});delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids});delete from public.user_roles where user_id in ({ids});delete from public.patients where id in ({ids});delete from public.profiles where id in ({ids});delete from auth.users where id in ({ids});commit;")
-    details={'username':'p_'+uuid.uuid4().hex[:15],'full_name':'Synthetic Patient','gender':'female','birthdate':'1995-05-04','address':'Synthetic test address','contact':'+639001234567','avatar':'star','consent':True}
+    details={'username':'p_'+uuid.uuid4().hex[:15],'first_name':'Synthetic','last_name':'Patient','gender':'female','birthdate':'1995-05-04','address':'Synthetic test address','contact':'+639001234567','avatar':'star','consent':True}
     try:
         patient,tp,email,password=user(details=details);other,to,_,_=user();therapist,tt,_,_=user('therapist')
         status,rows=api('/rest/v1/patient_profiles?select=*',token=tp)
@@ -64,8 +64,14 @@ def main():
         check(rpc('save_my_profile',{'p_details':dict(details,birthdate='2999-01-01')},tp)[0]>=400,'Future birthdate rejected')
         check(rpc('save_my_profile',{'p_details':dict(details,username='!')},tp)[0]>=400,'Invalid username rejected')
         check(rpc('save_my_profile',{'p_details':details},to)[0]>=400,'Case-insensitive unique username enforced')
+        for bad in ['f_u_c_k','sh1thead','putangina123','pendejo','merde','scheisse','caralho','vaffanculo','kontol','madarchod','siktir']:
+            check(rpc('save_my_profile',{'p_details':dict(details,username=bad)},tp)[0]>=400,'Multilingual username policy rejects '+str(len(checks)))
+        check(rpc('save_my_profile',{'p_details':dict(details,last_name='')},tp)[0]>=400,'Missing last name rejected')
+        check(rpc('save_my_profile',{'p_details':dict(details,contact='++123456789')},tp)[0]>=400,'Malformed phone rejected')
+        for allowed in ['scunthorpe','computation','classical_music']:
+            check(sql("select public.username_allowed('"+allowed+"');")=='t','Legitimate username allowed '+str(len(checks)))
         check(api('/rest/v1/patient_profiles?user_id=eq.'+patient,dict(details,user_id=other),tp,method='PATCH')[0]>=400,'Direct profile mutation denied')
-        updated=dict(details,full_name='Updated Fixture',avatar='heart',address='Changed fixture address',email='forged@example.test',user_id=other,privacy_version='forged')
+        updated=dict(details,first_name='Updated',last_name='Fixture',avatar='heart',address='Changed fixture address',email='forged@example.test',user_id=other,privacy_version='forged')
         check(rpc('save_my_profile',{'p_details':updated},tp)[0] in (200,204),'Owner can update editable profile details')
         _,rows=api('/rest/v1/patient_profiles?select=*',token=tp)
         check(rows[0]['user_id']==patient and rows[0]['avatar']=='heart','RPC ignores forged owner and saves selected avatar')

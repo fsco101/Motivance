@@ -118,7 +118,8 @@ internal fun AuthContent(
                     OutlinedTextField(
                         value = email, onValueChange = { email = it; clearNotice() }, label = { Text(stringResource(R.string.email)) },
                         leadingIcon = { Icon(Icons.Default.Email, null) }, singleLine = true, enabled = !state.busy,
-                        isError = state.notice == AuthNotice.INVALID_EMAIL, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                        isError = state.notice == AuthNotice.INVALID_EMAIL || (email.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()),
+                        supportingText={if(email.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) Text(stringResource(R.string.invalid_email))}, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = if (hasPassword || hasCode) ImeAction.Next else ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { submit() }),
                     )
@@ -127,7 +128,8 @@ internal fun AuthContent(
                         label = { Text(stringResource(if (action == AuthAction.RECOVER) R.string.auth_new_password else R.string.auth_password)) },
                         trailingIcon = { PasswordVisibilityButton(showPassword, !state.busy) { showPassword = it } },
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true, enabled = !state.busy, isError = state.notice == AuthNotice.PASSWORD_REQUIRED,
+                        singleLine = true, enabled = !state.busy, isError = state.notice == AuthNotice.PASSWORD_REQUIRED || (action==AuthAction.REGISTER && password.isNotEmpty() && password.length<8),
+                        supportingText={if(action==AuthAction.REGISTER && password.isNotEmpty() && password.length<8)Text(stringResource(R.string.form_password_length))},
                         modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = if (hasCode) ImeAction.Next else ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { submit() }),

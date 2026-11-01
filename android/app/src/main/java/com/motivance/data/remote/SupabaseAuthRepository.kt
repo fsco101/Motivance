@@ -91,9 +91,9 @@ import java.time.Instant
     }
     override suspend fun signIn(email: String, password: String) = mutex.withLock { accept(call("/auth/v1/token?grant_type=password", JSONObject().put("email",email).put("password",password))) }
     override suspend fun register(email: String, password: String) { call("/auth/v1/signup", JSONObject().put("email",email).put("password",password)) }
-    private fun profileJson(p:PatientProfile)=JSONObject().put("username",p.username.trim()).put("full_name",p.name.trim())
+    private fun profileJson(p:PatientProfile)=JSONObject().put("username",p.username.trim()).put("first_name",p.firstName.trim()).put("last_name",p.lastName.trim())
         .put("gender",p.gender).put("birthdate",p.birthdate).put("address",p.address.trim()).put("contact",p.contact.trim()).put("avatar",p.avatar).put("consent",p.consent)
-    private fun readProfile(j:JSONObject,email:String="")=PatientProfile(j.optString("username"),j.optString("full_name"),j.optString("gender"),j.optString("birthdate"),j.optString("address"),j.optString("contact"),j.optString("avatar","person"),j.optString("consented_at").isNotBlank(),email)
+    private fun readProfile(j:JSONObject,email:String="")=PatientProfile(j.optString("username"),j.optString("full_name"),j.optString("gender"),j.optString("birthdate"),j.optString("address"),j.optString("contact"),j.optString("avatar","person"),j.optString("consented_at").isNotBlank(),email,if(j.isNull("first_name")) j.optString("full_name") else j.optString("first_name"),if(j.isNull("last_name")) "" else j.optString("last_name"))
     override suspend fun registerProfile(email:String,password:String,profile:PatientProfile) {
         require(profile.valid())
         call("/auth/v1/signup",JSONObject().put("email",email).put("password",password).put("data",JSONObject().put("patient_profile",profileJson(profile))))

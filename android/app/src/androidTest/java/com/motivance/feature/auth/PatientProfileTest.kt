@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import java.io.File
@@ -45,9 +46,9 @@ class PatientProfileTest {
         compose.onNodeWithText(fixture.email).assert(hasSetTextAction().not())
         compose.onNodeWithText("@fixture_user").assertExists()
         compose.onNodeWithText(text(R.string.profile_edit)).performScrollTo().performClick()
-        compose.onNodeWithText(text(R.string.profile_name)).performScrollTo().performTextReplacement("Updated Patient")
+        compose.onNodeWithText(text(R.string.profile_first_name)).performScrollTo().performTextReplacement("Updated Patient")
         compose.onNodeWithText(text(R.string.profile_save)).performScrollTo().performClick()
-        compose.waitUntil(10_000) {repository.saved?.name=="Updated Patient"}
+        compose.waitUntil(10_000) {repository.saved?.firstName=="Updated Patient"}
         assertEquals(fixture.email,repository.saved?.email)
     }
     @Test fun passwordChangeRequiresMatchingConfirmation() {
@@ -66,10 +67,25 @@ class PatientProfileTest {
     @Test fun therapistSummaryShowsUsernameAvatarAndDemographics() {
         compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {PatientProfileSummary(fixture)}}}}
         compose.onNodeWithText("@fixture_user").assertExists()
-        compose.onNodeWithText(text(R.string.profile_address)+": "+fixture.address).assertExists()
+        compose.onNodeWithText(fixture.address).assertExists()
         compose.onNodeWithText(text(R.string.profile_female)).assertExists()
         compose.onNodeWithContentDescription(text(R.string.profile_avatar)).assertExists()
         capture("profile-therapist-demographics.png")
+    }
+    @Test fun inlineUsernameValidationAndCalendarCancel() {
+        compose.setContent {MotivanceTheme {Surface {
+            var profile by remember {mutableStateOf(fixture)}
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                ProfileFields(profile,true) {profile=it}
+            }
+        }}}
+        compose.onNodeWithText(text(R.string.profile_username)).performScrollTo().performTextReplacement("f_u_c_k")
+        compose.onNodeWithText(text(R.string.form_username_blocked)).assertExists()
+        compose.onNodeWithText(text(R.string.profile_first_name)).performScrollTo().assertExists()
+        capture("profile-fields-refined.png")
+        compose.onNodeWithContentDescription(text(R.string.profile_birthdate)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.cancel_action)).performClick()
+        compose.onNodeWithText(com.motivance.designsystem.displayDate(fixture.birthdate)).assertExists()
     }
     private inner class Fixture:AuthRepository {
         var saved:PatientProfile?=null;var passwordCalls=0

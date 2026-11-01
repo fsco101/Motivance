@@ -415,4 +415,23 @@
     <string name="profile_password_saved">Nabago ang password.</string>
     <string name="profile_loading">Ina-update ang profile&#8230;</string>
     <string name="profile_failed">Hindi makumpleto ang kahilingan. Suriin ang koneksyon, detalye, username o kasalukuyang password at subukan muli.</string>
+    <string name="profile_first_name">Pangalan</string>
+    <string name="profile_last_name">Apelyido</string>
+    <string name="form_identity">Personal na detalye</string>
+    <string name="form_identity_help">Ilagay ang pangalang nais mong makita ng iyong care team.</string>
+    <string name="form_contact">Detalye sa pakikipag-ugnayan</string>
+    <string name="form_contact_help">Tulungan ang nakakonektang therapist na panatilihing napapanahon ang profile.</string>
+    <string name="form_account">Iyong pagkakakilanlan sa Motivance</string>
+    <string name="form_account_help">Pumili ng magalang na username at avatar na gusto mo.</string>
+    <string name="form_name_error">Maglagay ng 1 hanggang 60 titik, na maaaring may espasyo, kudlit, tuldok o gitling.</string>
+    <string name="form_username_error">Gumamit ng 3 hanggang 30 titik, numero o underscore.</string>
+    <string name="form_username_blocked">Pumili ng magalang na username na walang nakakasakit na salita.</string>
+    <string name="form_phone_error">Maglagay ng 7 hanggang 15 numero. Gamitin ang + sa simula lamang.</string>
+    <string name="form_phone_help">Isama ang country code, halimbawa +63 912 345 6789.</string>
+    <string name="form_address_error">Ilagay ang tirahan gamit ang 5 hanggang 500 character.</string>
+    <string name="form_choose_date">Pumili ng petsa</string>
+    <string name="form_birthdate_help">Piliin ang petsa ng kapanganakan sa kalendaryo. Awtomatikong ina-update ang edad.</string>
+    <string name="form_clear_dates">Alisin ang mga petsa</string>
+    <string name="form_password_match">Dapat magkatugma ang mga password.</string>
+    <string name="form_password_length">Gumamit ng hindi bababa sa 8 character.</string>
 </resources>

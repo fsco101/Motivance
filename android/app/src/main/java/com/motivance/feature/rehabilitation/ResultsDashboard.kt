@@ -58,10 +58,9 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     HistoryChoice(R.string.history_side, listOf("" to stringResource(R.string.history_all_sides),
         "left" to stringResource(R.string.left_side), "right" to stringResource(R.string.right_side),
         "bilateral" to stringResource(R.string.history_bilateral)), side) { side = it }
-    OutlinedTextField(from, { from = it }, label = { Text(stringResource(R.string.history_from)) },
-        singleLine = true, isError = validDates == null, modifier = Modifier.fillMaxWidth())
-    OutlinedTextField(through, { through = it }, label = { Text(stringResource(R.string.history_through)) },
-        singleLine = true, isError = validDates == null, modifier = Modifier.fillMaxWidth())
+    DateInput(R.string.history_from,from) {from=it}
+    DateInput(R.string.history_through,through) {through=it}
+    if(from.isNotBlank() || through.isNotBlank()) TextButton({from="";through=""}) {Text(stringResource(R.string.form_clear_dates))}
     Text(stringResource(R.string.history_date_help), style = MaterialTheme.typography.bodySmall)
     }
     if (validDates == null) Text(stringResource(R.string.history_date_error), color = MaterialTheme.colorScheme.error)

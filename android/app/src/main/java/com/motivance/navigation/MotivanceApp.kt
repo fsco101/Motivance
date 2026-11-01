@@ -293,7 +293,7 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     else data.sessions.forEach { session -> ClinicalCard {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             Icon(Icons.Default.DateRange,null,tint=Teal)
-            Column { Text(session.startedAt.take(10),fontWeight=FontWeight.Bold); Text(stringResource(if(session.status=="completed") R.string.completed_session else R.string.interrupted_session)) }
+            Column { Text(displayDate(session.startedAt.take(10)),fontWeight=FontWeight.Bold); Text(stringResource(if(session.status=="completed") R.string.completed_session else R.string.interrupted_session)) }
         }
     } }
 }
