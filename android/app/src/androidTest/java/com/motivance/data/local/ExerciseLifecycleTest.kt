@@ -2,6 +2,7 @@ package com.motivance.data.local
 
 import androidx.room.Room
 import androidx.room.withTransaction
+import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.motivance.domain.Landmark
@@ -16,10 +17,10 @@ class ExerciseLifecycleTest {
         val context:android.content.Context=ApplicationProvider.getApplicationContext()
         val name="lifecycle-${UUID.randomUUID()}.db"
         val db=Room.databaseBuilder(context,SessionDatabase::class.java,name).addMigrations(SessionMigrations.FROM_1_TO_2).build()
+        val store=SessionStore(db)
+        val vm=ExerciseSessionViewModel(store,context)
         try {
-            val store=SessionStore(db)
             val owner=UUID.randomUUID().toString()
-            val vm=ExerciseSessionViewModel(store,context)
             val main=InstrumentationRegistry.getInstrumentation()
             main.runOnMainSync {vm.configure(owner)}
             delay(200)
@@ -42,7 +43,9 @@ class ExerciseLifecycleTest {
             withTimeout(10000) {while(vm.state.value.saving) delay(20)}
             assertFalse(vm.state.value.metrics.running)
             assertNull(vm.state.value.id)
-            main.runOnMainSync {vm.configure("local-demo")}
-        } finally {db.close();context.deleteDatabase(name)}
+        } finally {
+            vm.viewModelScope.coroutineContext[Job]?.cancelAndJoin()
+            db.close();context.deleteDatabase(name)
+        }
     }
 }

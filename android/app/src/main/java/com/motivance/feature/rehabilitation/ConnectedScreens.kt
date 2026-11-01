@@ -12,6 +12,7 @@ import com.motivance.R
 import com.motivance.data.local.CachedPrescription
 import com.motivance.data.local.ExerciseJson
 import com.motivance.domain.*
+import com.motivance.designsystem.label
 import java.text.DateFormat
 import java.util.Date
 import java.util.UUID
@@ -67,6 +68,7 @@ import java.util.UUID
             Text(stringResource(if(rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction),style=MaterialTheme.typography.titleLarge)
             Text(stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side))
             Text(p.instructions)
+            Text(stringResource(R.string.assigned_focus,stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side),stringResource(rules.focusJoint.label())))
             Text(stringResource(R.string.session_targets,rules.lowDegrees.toInt(),rules.highDegrees.toInt()))
             Text(stringResource(R.string.completed_reps,0,rules.targetRepetitions))
             Text(stringResource(R.string.last_downloaded,if(p.cachedAt>0) DateFormat.getDateTimeInstance().format(Date(p.cachedAt)) else "--"),style=MaterialTheme.typography.bodySmall)
@@ -78,6 +80,10 @@ import java.util.UUID
 }
 
 @Composable fun ColumnScope.PrescriptionForm(state:RehabilitationState,vm:RehabilitationViewModel,patientId:String?,existing:PrescriptionSummary?=null) {
+    PrescriptionEditor(state,patientId,existing,vm::prescribe)
+}
+
+@Composable internal fun ColumnScope.PrescriptionEditor(state:RehabilitationState,patientId:String?,existing:PrescriptionSummary?=null,onPublish:(PrescriptionDraft)->Unit) {
     var patient by rememberSaveable {mutableStateOf(existing?.patientId ?: patientId.orEmpty())}
     var exercise by rememberSaveable {mutableStateOf(existing?.exerciseId ?: "")}
     var side by rememberSaveable {mutableStateOf(existing?.side ?: "left")}
@@ -85,6 +91,7 @@ import java.util.UUID
     var high by rememberSaveable {mutableStateOf(existing?.high?.toString() ?: "90")}
     var reps by rememberSaveable {mutableStateOf(existing?.repetitions?.toString() ?: "5")}
     val parameters=remember(existing) {org.json.JSONObject(existing?.parameters ?: "{}")}
+    var focusJoint by rememberSaveable {mutableStateOf(parameters.optString("focus_joint",""))}
     var minimum by rememberSaveable {mutableStateOf(parameters.optLong("minimum_cycle_ms",600).toString())}
     var maximum by rememberSaveable {mutableStateOf(parameters.optLong("maximum_cycle_ms",30000).toString())}
     var hold by rememberSaveable {mutableStateOf(parameters.optLong("peak_hold_ms",100).toString())}
@@ -98,12 +105,15 @@ import java.util.UUID
     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
         listOf("left" to R.string.left_side,"right" to R.string.right_side).forEach {(value,label) -> FilterChip(side==value,{side=value;changed()},enabled=!state.busy,label={Text(stringResource(label))})}
     }
+    Text(stringResource(R.string.prescription_focus),style=MaterialTheme.typography.titleSmall)
+    Text(stringResource(R.string.prescription_focus_help),style=MaterialTheme.typography.bodySmall)
+    Choice(R.string.prescription_focus,listOf("" to stringResource(R.string.focus_automatic))+BodyJoint.entries.map {it.name to stringResource(it.label())},focusJoint,!state.busy) {focusJoint=it;changed()}
     @Composable fun field(label:Int,value:String,set:(String)->Unit) {OutlinedTextField(value,{set(it);changed()},enabled=!state.busy,label={Text(stringResource(label))},singleLine=true,modifier=Modifier.fillMaxWidth())}
     field(R.string.target_minimum,low) {low=it}; field(R.string.target_maximum,high) {high=it}; field(R.string.target_repetitions,reps) {reps=it}
     field(R.string.minimum_cycle_ms,minimum) {minimum=it}; field(R.string.maximum_cycle_ms,maximum) {maximum=it}; field(R.string.peak_hold_ms,hold) {hold=it}; field(R.string.maximum_trunk_lean,lean) {lean=it}
     val l=low.toDoubleOrNull(); val h=high.toDoubleOrNull(); val r=reps.toIntOrNull(); val min=minimum.toLongOrNull(); val max=maximum.toLongOrNull(); val peak=hold.toLongOrNull(); val trunk=lean.toDoubleOrNull()
     val valid=patient.isNotBlank() && exercise.isNotBlank() && l!=null && h!=null && r!=null && min!=null && max!=null && peak!=null && trunk!=null && runCatching {ExerciseRules(lowDegrees=l,highDegrees=h,targetRepetitions=r,minimumCycleMs=min,maximumCycleMs=max,peakHoldMs=peak,maxTrunkLeanDegrees=trunk); require(min in 100..30000 && max<=300000 && peak<=5000)}.isSuccess
-    Button({vm.prescribe(PrescriptionDraft(assignmentId,requestId,patient,exercise,BodySide.valueOf(side.uppercase()),l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7)))},enabled=valid && !state.busy,modifier=Modifier.fillMaxWidth()) {Text(stringResource(R.string.publish_prescription))}
+    Button({onPublish(PrescriptionDraft(assignmentId,requestId,patient,exercise,BodySide.valueOf(side.uppercase()),l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7),focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it)}))},enabled=valid && !state.busy,modifier=Modifier.fillMaxWidth()) {Text(stringResource(R.string.publish_prescription))}
 }
 
 @Composable private fun Choice(label:Int,options:List<Pair<String,String>>,selected:String,enabled:Boolean,choose:(String)->Unit) {

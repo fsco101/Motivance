@@ -15,6 +15,10 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 
 def run():
+    inspection=subprocess.run(['docker','inspect','supabase_auth_motivance'],capture_output=True,text=True,check=True)
+    environment=dict(value.split('=',1) for value in json.loads(inspection.stdout)[0]['Config']['Env'] if '=' in value)
+    if environment.get('GOTRUE_SMTP_HOST') not in ('supabase_inbucket_motivance','supabase_mailpit_motivance'):
+        raise RuntimeError('Refusing synthetic email tests while real SMTP is active; restart the local capture profile first.')
     result = subprocess.run(['npx.cmd' if __import__('os').name=='nt' else 'npx','--yes','supabase@2.20.12','status','-o','json'],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',check=True)
     status=json.loads(result.stdout)
     base=status['API_URL'].rstrip('/')
@@ -78,9 +82,18 @@ def run():
         created.append((response.get('user') or response)['id'])
         code,_=request('/auth/v1/token?grant_type=password',{'email':email,'password':password})
         check(code>=400,'Unconfirmed account '+suffix+' cannot sign in')
+        if suffix=='a':
+            time.sleep(1.1) # Local capture profile only; real SMTP profiles are refused above.
+            code,_=request('/auth/v1/resend',{'email':email,'type':'signup'})
+            check(code==200,'Confirmation code resend accepted')
         otp=code_for(mailbox)
+        wrong='000000' if otp!='000000' else '111111'
+        code,_=request('/auth/v1/verify',{'email':email,'token':wrong,'type':'signup'})
+        check(code>=400,'Incorrect confirmation code '+suffix+' is rejected')
         code,response=request('/auth/v1/verify',{'email':email,'token':otp,'type':'signup'})
         check(code==200 and bool(response.get('access_token')),'Email confirmation '+suffix+' creates a session')
+        code,_=request('/auth/v1/verify',{'email':email,'token':otp,'type':'signup'})
+        check(code>=400,'Consumed confirmation code '+suffix+' cannot be reused')
         return mailbox,email,password,response
 
     try:
@@ -108,8 +121,13 @@ def run():
         code,_=request('/auth/v1/recover',{'email':email})
         check(code==200,'Recovery request accepted by local mail capture')
         otp=code_for(mailbox,'recovery')
+        wrong='000000' if otp!='000000' else '111111'
+        code,_=request('/auth/v1/verify',{'email':email,'token':wrong,'type':'recovery'})
+        check(code>=400,'Incorrect recovery code is rejected')
         code,recovery=request('/auth/v1/verify',{'email':email,'token':otp,'type':'recovery'})
         check(code==200,'Recovery email code is verified')
+        code,_=request('/auth/v1/verify',{'email':email,'token':otp,'type':'recovery'})
+        check(code>=400,'Consumed recovery code cannot be reused')
         new_password=uuid.uuid4().hex+'Bb!8'
         code,_=request('/auth/v1/user',{'password':new_password},recovery['access_token'],'PUT')
         check(code==200,'Recovery session can set a new password')

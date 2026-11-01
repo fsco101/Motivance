@@ -19,7 +19,7 @@ import com.motivance.data.local.SessionVault
 import java.io.IOException
 import java.time.Instant
 
-/** GoTrue REST adapter. Tokens deliberately remain in memory in the S1 prototype. */
+/** Authenticated GoTrue/PostgREST adapter with protected session persistence. */
 @Singleton class SupabaseAuthRepository internal constructor(
     private val http: OkHttpClient,
     private val baseUrl: String,
@@ -64,7 +64,11 @@ import java.time.Instant
         if (bearer != null) builder.header("Authorization", "Bearer $bearer")
         if (method == "GET") builder.get() else builder.method(method, (body ?: JSONObject()).toString().toRequestBody("application/json".toMediaType()))
         http.newCall(builder.build()).execute().use { response ->
-            if(!response.isSuccessful) throw RemoteFailure(response.code)
+            if(!response.isSuccessful) {
+                val code=runCatching {JSONObject(response.body?.string().orEmpty()).optString("code")}.getOrNull()
+                    ?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
+                throw RemoteFailure(response.code,code)
+            }
             response.body?.string().orEmpty()
         }
     }
@@ -88,11 +92,12 @@ import java.time.Instant
     override suspend fun signIn(email: String, password: String) = mutex.withLock { accept(call("/auth/v1/token?grant_type=password", JSONObject().put("email",email).put("password",password))) }
     override suspend fun register(email: String, password: String) { call("/auth/v1/signup", JSONObject().put("email",email).put("password",password)) }
     override suspend fun confirmRegistration(email: String, token: String) = mutex.withLock {
-        accept(call("/auth/v1/verify", JSONObject().put("email",email).put("token",token).put("type","signup")))
+        accept(call("/auth/v1/verify", JSONObject().put("email",email).put("token",token.trim()).put("type","signup")))
     }
+    override suspend fun resendConfirmation(email:String) {call("/auth/v1/resend",JSONObject().put("type","signup").put("email",email))}
     override suspend fun requestRecovery(email: String) { call("/auth/v1/recover", JSONObject().put("email",email)) }
     override suspend fun recover(email: String, token: String, newPassword: String) = mutex.withLock {
-        val raw = call("/auth/v1/verify", JSONObject().put("email",email).put("token",token).put("type","recovery"))
+        val raw = call("/auth/v1/verify", JSONObject().put("email",email).put("token",token.trim()).put("type","recovery"))
         val recoveryToken = JSONObject(raw).getString("access_token")
         call("/auth/v1/user", JSONObject().put("password",newPassword), recoveryToken, "PUT")
         accept(raw)
@@ -162,7 +167,7 @@ import java.time.Instant
     override suspend fun acceptInvitation(code:String) {authorized {token,_ -> call("/rest/v1/rpc/accept_patient_invitation",JSONObject().put("p_code",code.trim()),token)} }
     override suspend fun revokeLink(patientId:String) {authorized {token,_ -> call("/rest/v1/rpc/revoke_patient_link",JSONObject().put("p_patient",patientId),token)} }
     override suspend fun publishPrescription(draft:PrescriptionDraft) {authorized {token,_ ->
-        val p=JSONObject().put("minimum_cycle_ms",draft.minimumCycleMs).put("maximum_cycle_ms",draft.maximumCycleMs).put("peak_hold_ms",draft.peakHoldMs).put("max_trunk_lean_degrees",draft.maxTrunkLean).put("confidence",draft.confidence)
+        val p=JSONObject().put("minimum_cycle_ms",draft.minimumCycleMs).put("maximum_cycle_ms",draft.maximumCycleMs).put("peak_hold_ms",draft.peakHoldMs).put("max_trunk_lean_degrees",draft.maxTrunkLean).put("confidence",draft.confidence).apply {draft.focusJoint?.let {put("focus_joint",it.name)}}
         val body=JSONObject().put("p_assignment",draft.assignmentId).put("p_version",draft.requestId).put("p_patient",draft.patientId).put("p_exercise",draft.exerciseId).put("p_side",draft.side.name.lowercase()).put("p_low",draft.low).put("p_high",draft.high).put("p_repetitions",draft.repetitions).put("p_parameters",p)
         call("/rest/v1/rpc/publish_prescription",body,token)
     }}

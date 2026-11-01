@@ -69,7 +69,17 @@ class SkeletonPreviewTest {
             }
         }
         compose.onNodeWithText(localized.getString(R.string.skeleton_focus,localized.getString(R.string.right_side),localized.getString(R.string.skeleton_shoulder))).assertExists()
-        compose.onNodeWithText(localized.getString(R.string.skeleton_angle)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(localized.getString(R.string.measured_joint_angle,localized.getString(R.string.skeleton_shoulder))).performScrollTo().assertIsDisplayed()
         capture("shoulder-large-fil")
+    }
+    @Test fun assignedKneeFocusIsDisplayedSeparatelyFromElbowMeasurement() {
+        val frame=image()
+        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+            SkeletonPreview(frame,points,true,ExerciseRules(kind=ExerciseKind.ELBOW_FLEXION,side=BodySide.RIGHT,focusJoint=BodyJoint.KNEE,demo=false,prescriptionVersionId="fixture-prescription"),AssessmentSnapshot(quality=TrackingQuality.READY,angleDegrees=80.0),base.getString(R.string.quality_ready))
+        }}}}
+        compose.onNodeWithText(base.getString(R.string.skeleton_focus,base.getString(R.string.right_side),base.getString(R.string.skeleton_knee))).assertExists()
+        compose.onNodeWithText(base.getString(R.string.measured_joint_angle,base.getString(R.string.skeleton_elbow))).assertExists()
+        compose.onNodeWithText(base.getString(R.string.focus_measurement,base.getString(R.string.skeleton_elbow))).assertExists()
+        capture("prescribed-knee")
     }
 }

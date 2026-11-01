@@ -6,7 +6,7 @@ Prepared for MOT-24 on 2026-11-01. This is an executable preparation checklist, 
 
 Use separate local, staging and production Supabase projects. Keep synthetic accounts and fixtures local. Prefer a project region close to the actual users, subject to the owner's data-location decision. The Android application ID is `com.motivance`; debug adds `.debug`. The current version is 0.3.0 / versionCode 3; increment the versionCode before a subsequent published build.
 
-The only client settings are the project HTTPS URL and public publishable/anon key in ignored `android/.env` or protected CI environment variables. `ANDROID_SUPABASE_URL` overrides `SUPABASE_URL`. Process variables override `local.properties`, which overrides `.env`; remove obsolete settings. Rebuild after any backend change. Never put service-role credentials, SMTP secrets, database passwords or signing passwords into BuildConfig, resources, reports or Git. The public key is not an authorization boundary: RPCs and RLS are.
+The only client settings are the project HTTPS URL and public publishable/anon key in ignored `android/.env` or protected CI environment variables. `ANDROID_SUPABASE_URL` overrides `SUPABASE_URL`. Process variables override `local.properties`, which overrides `.env`; remove obsolete settings. Rebuild after changing the client project URL or public key. SMTP settings alone need no APK rebuild. Never put service-role credentials, SMTP secrets, database passwords or signing passwords into BuildConfig, resources, reports or Git. The public key is not an authorization boundary: RPCs and RLS are.
 
 From the repository root, use the pinned Supabase CLI 2.20.12 for the tested migration path:
 
@@ -17,7 +17,7 @@ npx --yes supabase@2.20.12 db push --dry-run
 npx --yes supabase@2.20.12 db push
 ```
 
-Verify the selected project before executing the final command. Apply the same reviewed migration set to production only after staging acceptance and a recoverable backup. Order is foundation (`202610310001`), connected workflow (`202611010001`), administration (`202611010002`), bilingual catalogue (`202611010003`), then later versioned migrations. Do not run `db reset`, fixture seeding or local integration-test cleanup against a hosted project. A database migration does not automatically copy local email templates or dashboard settings. The migrations include explicitly development-labelled exercise definitions; review the catalogue before any patient pilot.
+Verify the selected project before executing the final command. Apply the same reviewed migration set to production only after staging acceptance and a recoverable backup. Order is foundation (`202610310001`), connected workflow (`202611010001`), administration (`202611010002`), bilingual catalogue (`202611010003`), prescribed focus (`202611010004`), then later versioned migrations. Do not run `db reset`, fixture seeding or local integration-test cleanup against a hosted project. A database migration does not automatically copy local email templates or dashboard settings. The migrations include explicitly development-labelled exercise definitions; review the catalogue before any patient pilot.
 
 Rollback: preserve a pre-change database backup and the previous signed app; favor an additive forward repair. Do not delete migration history or rewrite applied migrations. Historical exercise/prescription/session rows stay immutable. For incompatible writes, stop new collection while restoring a separately verified backup to a recovery project, check RLS/RPCs and record counts, then update the backend endpoint/rebuild as necessary. Never claim a database rollback reverses records already cached on phones. Record the operator, time, incident and integrity checks. A restore drill with synthetic data remains an S5 requirement.
 
@@ -30,6 +30,8 @@ Removing a therapist role revokes its links/assignments and invitations. Disabli
 The owner must approve actual retention, local data handling, encryption needs, request response times and backup expiry. Current `development-v1` disables automatic deletion and requests review after 365 days. Export/delete requests only enter an operator queue. Follow DATA-LIFECYCLE.md; no automated production purge or export-delivery service is claimed. Name the incident/support owner and a private contact before publication.
 
 ## Hosted authentication and monitoring
+
+Use [the Auth email runbook](AUTH-EMAIL.md) for code templates and server-only SMTP setup. Gmail TLS authentication and local Docker SMTP configuration have passed; hosted configuration and inbox acceptance remain pending.
 
 Configure a custom SMTP provider, authenticated sender domain, provider-required DNS records and appropriate rate limits in hosted Supabase Auth. Configure confirmation and recovery templates to display `{{ .Token }}`; the app accepts entered codes and does not implement browser-link callbacks. Verify registration, confirmation, recovery, refresh, logout and delivery to non-team addresses on staging, then smoke-test production. Do not reuse the local mail viewer or the development `localhost` site URL as production settings. Configure a legitimate HTTPS site URL for the actual owner-controlled information site.
 

@@ -1,0 +1,21 @@
+# Prescribed skeleton focus implementation
+
+Reviewed by Codex on 2026-11-01. The focus ring now follows an explicit therapist-selected body part in the patient's immutable prescription, rather than deriving its location only from the elbow/shoulder algorithm. The optional selection supports shoulder, elbow, wrist, hip, knee and ankle, using the prescription's anatomical side. The default remains the exercise's original measurement joint.
+
+The therapist prescription editor exposes the selection and publishes it as `parameters.focus_joint`. Patient assignment cards display the downloaded focus and side. ExerciseRules, JSON cache/checkpoints and outbox payloads pin it through offline use, recovery and upload. A changed therapist selection publishes a new version, preserving a session already pinned to the older version. No patient control edits the assigned focus. Server publication validates the allowlist/type; session ingestion checks agreement with the referenced prescription. Missing focus cannot bypass a nondefault assignment.
+
+BodyJoint supplies explicit anatomical landmark and chain mappings. The renderer highlights that chain and rings its selected landmark using the shared image/mirror transform. Missing/low-confidence focus produces a positioning message and no ring. Focus and measurement are labeled separately: an elbow exercise with a knee visual cue still reports an elbow angle, never a fabricated knee measurement. Additional exercise assessment algorithms are not implemented by this visual feature.
+
+Legacy prescriptions/payloads without focus retain their exercise-specific default. Legacy drafts can complete because immutable rules are compared after optional-field decoding; changing the effective focus still fails. Previously completed queued payloads remain unchanged. Room stays v2; no new table/column, model, API credential or Android library is needed. Migration `202611010004_prescribed_focus.sql` is applied to the local stack; hosted environments must apply it before this app update.
+
+## Executed evidence
+
+- Debug APK/test APK build and lint passed with existing warnings retained.
+- **83 JVM tests** and **31 emulator tests** passed; individual names and counts are recorded in `prescribed-focus-test-results.json`.
+- The therapist editor test selects right-side knee focus and verifies the submitted draft. Renderer tests verify that the assigned knee is labeled separately from elbow evaluation. File-backed tests verify immutable legacy draft continuation and prescribed focus after database close/reopen. Cache/transport tests verify download/JSON roundtrip and request parameters. Pure domain tests verify both anatomical sides for all six parts.
+- **74 real local backend workflow checks** passed, including every focus choice, invalid type/value rejection, patient denial, prescription download, an older knee-focus session uploading after a newer ankle-focus version, tampered/missing focus rejection, and explicit-default upload for old prescriptions.
+- A fresh application-migration replay and **18 SQL policy tests** passed, preserving existing local records. Module boundaries, ARM native packaging, bilingual resource/format parity and critical theme contrast checks passed.
+- The first full emulator run exposed a pre-existing standalone lifecycle-test fixture that left ViewModel work alive after closing its database. Fixture cleanup now cancels/joins the scope first; the full 31-test rerun passed. A transient Windows generated-jar lock was resolved by restarting Gradle and serializing the build.
+- A final targeted knee-focus renderer check passed and its [synthetic mirrored preview](ui/skeleton-prescribed-knee.png) was visually reviewed by Codex. It shows the right knee ring and explicitly labels the angle as elbow. The image is a synthetic renderer fixture, not patient/model accuracy evidence.
+
+Therapist wording, physical alignment, occlusion, TalkBack and phone performance checks remain unexecuted in POST-IMPLEMENTATION-CHECKLIST.md. No clinical validation, new lower-limb measurement capability, hosted deployment or fresh remote CI pass is claimed. See `docs/operations/PRESCRIBED-FOCUS.md` for the operator workflow and compatibility contract.

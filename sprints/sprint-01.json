@@ -423,7 +423,8 @@
             "docs/validation/database-test-results.log",
             "docs/validation/local-auth-results.json",
             "docs/validation/android-test-results.json",
-            "docs/validation/environment-checks.json"
+            "docs/validation/environment-checks.json",
+            "docs/validation/AUTH-EMAIL-IMPLEMENTATION.md"
           ]
         },
         {
@@ -447,7 +448,9 @@
           "docs/validation/SPRINT-01-PROTOCOL.md",
           "docs/validation/sprint-04-history-test-results.json",
           "docs/validation/IMPLEMENTATION-CLOSURE.md",
-          "docs/validation/AUTH-UI-REFINEMENT.md"
+          "docs/validation/AUTH-UI-REFINEMENT.md",
+          "docs/validation/AUTH-EMAIL-IMPLEMENTATION.md",
+          "docs/validation/smtp-connection-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -455,7 +458,9 @@
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
         "docs/validation/SPRINT-01-PROTOCOL.md",
         "docs/validation/sprint-04-history-test-results.json",
-        "docs/validation/AUTH-UI-REFINEMENT.md"
+        "docs/validation/AUTH-UI-REFINEMENT.md",
+        "docs/validation/AUTH-EMAIL-IMPLEMENTATION.md",
+        "docs/validation/smtp-connection-results.json"
       ],
       "implementation_status": "implemented"
     },

@@ -79,6 +79,7 @@ internal fun AuthContent(
     }
     LaunchedEffect(state.notice) {
         if (state.notice == AuthNotice.CONFIRM_EMAIL) action = AuthAction.CONFIRM
+        if (state.notice == AuthNotice.EMAIL_UNCONFIRMED) action = AuthAction.CONFIRM
         if (state.notice == AuthNotice.RECOVERY_SENT) action = AuthAction.RECOVER
     }
     BackHandler(enabled = state.busy || action != AuthAction.SIGN_IN) {
@@ -146,6 +147,12 @@ internal fun AuthContent(
                         }
                         Text(stringResource(if (state.busy) action.busyLabel() else action.label()), textAlign = TextAlign.Center,
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                    }
+                    if(action==AuthAction.CONFIRM || action==AuthAction.RECOVER) {
+                        Text(stringResource(R.string.auth_delivery_help),style=MaterialTheme.typography.bodySmall)
+                        TextButton(onClick={if(!state.busy) {otp="";onSubmit(if(action==AuthAction.CONFIRM) AuthAction.RESEND_CONFIRMATION else AuthAction.REQUEST_RECOVERY,email,"","")}},enabled=!state.busy,modifier=Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.auth_resend_code))
+                        }
                     }
                     if (action == AuthAction.SIGN_IN && role != UserRole.THERAPIST) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
@@ -264,6 +271,7 @@ private fun AuthAction.label() = when (this) {
     AuthAction.REGISTER -> R.string.auth_create_account
     AuthAction.CONFIRM -> R.string.auth_verify_email
     AuthAction.REQUEST_RECOVERY -> R.string.auth_send_code
+    AuthAction.RESEND_CONFIRMATION -> R.string.auth_resend_code
     AuthAction.RECOVER -> R.string.auth_save_password
     AuthAction.REFRESH -> R.string.refresh_session
     AuthAction.SIGN_OUT -> R.string.sign_out
@@ -276,4 +284,8 @@ private fun AuthNotice.label() = when (this) {
     AuthNotice.RECOVERY_SENT -> R.string.recovery_sent_notice
     AuthNotice.REQUEST_FAILED -> R.string.request_failed
     AuthNotice.SESSION_EXPIRED -> R.string.session_expired
+    AuthNotice.EMAIL_UNCONFIRMED -> R.string.auth_unconfirmed
+    AuthNotice.INVALID_CODE -> R.string.auth_invalid_code
+    AuthNotice.RATE_LIMITED -> R.string.auth_rate_limited
+    AuthNotice.PASSWORD_POLICY -> R.string.auth_password_policy
 }

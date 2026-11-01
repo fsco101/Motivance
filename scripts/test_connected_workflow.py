@@ -159,6 +159,25 @@ values(gen_random_uuid(),'{p1}','{version}','2026-01-03T00:00:00Z','2026-01-03T0
         check(rpc('ingest_session',{'p_payload':altered},tp1)[0]>=400,'Recorded thresholds cannot tamper with pinned prescription')
         _,rows=api('/rest/v1/session_measurements?select=session_id&session_id=eq.'+payload['sessionId'],token=tt2)
         check(rows==[],'Unassigned therapist cannot read child measurements directly')
+        focus_assignment=str(uuid.uuid4()); knee_version=None
+        for focus in ['SHOULDER','ELBOW','WRIST','HIP','KNEE','ANKLE']:
+            focus_id=str(uuid.uuid4())
+            focus_params=dict(params,p_assignment=focus_assignment,p_version=focus_id,p_side='right',p_parameters={'focus_joint':focus})
+            check(rpc('publish_prescription',focus_params,tt1)[0]==200,'Therapist prescribes visual focus '+focus)
+            if focus=='KNEE': knee_version=focus_id
+        for invalid_focus in ['HEAD',None,23]:
+            check(rpc('publish_prescription',dict(focus_params,p_version=str(uuid.uuid4()),p_parameters={'focus_joint':invalid_focus}),tt1)[0]>=400,'Unsupported focus value rejected '+str(invalid_focus))
+        check(rpc('publish_prescription',dict(focus_params,p_version=str(uuid.uuid4())),tp1)[0]>=400,'Patient cannot change the therapist focus')
+        code,focus_rows=api('/rest/v1/prescription_versions?select=parameters,side&id=eq.'+knee_version,token=tp1)
+        check(code==200 and focus_rows==[{'parameters':{'focus_joint':'KNEE'},'side':'right'}],'Patient downloads immutable focus and prescribed side')
+        focused=copy.deepcopy(payload);focused['sessionId']=str(uuid.uuid4());focused['rules'].update(prescription=knee_version,side='RIGHT',focusJoint='KNEE')
+        check(rpc('ingest_session',{'p_payload':focused},tp1)[0]==200,'Original knee focus uploads after a newer ankle focus version exists')
+        tampered=copy.deepcopy(focused);tampered['sessionId']=str(uuid.uuid4());tampered['rules']['focusJoint']='WRIST'
+        check(rpc('ingest_session',{'p_payload':tampered},tp1)[0]>=400,'Session cannot replace the prescribed focus')
+        tampered['rules'].pop('focusJoint')
+        check(rpc('ingest_session',{'p_payload':tampered},tp1)[0]>=400,'Missing focus cannot bypass a nondefault prescription')
+        explicit_legacy=copy.deepcopy(payload);explicit_legacy['sessionId']=str(uuid.uuid4());explicit_legacy['rules']['focusJoint']='ELBOW'
+        check(rpc('ingest_session',{'p_payload':explicit_legacy},tp1)[0]==200,'New app can upload an explicit default focus for an older prescription')
         wid=str(uuid.uuid4()); withdrawal=dict(consent,p_id=wid,p_event='withdrawn',p_occurred_at=datetime.fromtimestamp((now-5000)/1000,timezone.utc).isoformat())
         check(rpc('record_consent',withdrawal,tp1)[0]==200,'Consent withdrawal recorded')
         after=copy.deepcopy(payload); after.update(sessionId=str(uuid.uuid4()),startedAt=now-4000,endedAt=now-1000)

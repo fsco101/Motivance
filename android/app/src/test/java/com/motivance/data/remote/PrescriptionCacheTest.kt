@@ -7,6 +7,20 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PrescriptionCacheTest {
+    @Test fun therapistFocusSurvivesDownloadAndRuleSerializationWithoutChangingExercise() {
+        val rows=fixture()
+        rows.getJSONObject(0).getJSONArray("prescription_versions").getJSONObject(0).put("parameters",org.json.JSONObject().put("focus_joint","KNEE"))
+        val rules=ExerciseJson.rules(PrescriptionCache.decode("patient",rows,100).single().rulesJson)
+        assertEquals(BodyJoint.KNEE,rules.focusJoint);assertEquals(ExerciseKind.ELBOW_FLEXION,rules.kind)
+        assertEquals(rules,ExerciseJson.rules(ExerciseJson.rules(rules)))
+        rows.getJSONObject(0).getJSONArray("prescription_versions").getJSONObject(0).getJSONObject("parameters").put("focus_joint","UNSUPPORTED")
+        assertTrue(PrescriptionCache.decode("patient",rows,100).isEmpty())
+    }
+    @Test fun oldRulesWithoutAFocusRetainTheirOriginalExerciseJoint() {
+        val old=org.json.JSONObject(ExerciseJson.rules(ExerciseRules(kind=ExerciseKind.SHOULDER_ABDUCTION)))
+        old.remove("focusJoint")
+        assertEquals(BodyJoint.SHOULDER,ExerciseJson.rules(old.toString()).focusJoint)
+    }
     @Test fun bothAuthoredInstructionLanguagesRemainAvailableOffline() {
         val rows=fixture()
         rows.getJSONObject(0).getJSONArray("prescription_versions").getJSONObject(0).getJSONObject("exercise_versions").getJSONObject("definition").put("instructions_fil","Panatilihing nakikita ang siko.")

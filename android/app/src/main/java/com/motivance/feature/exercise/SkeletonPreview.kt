@@ -24,13 +24,14 @@ import androidx.compose.ui.unit.dp
 import com.motivance.R
 import com.motivance.assessment.PreviewMapping
 import com.motivance.domain.*
+import com.motivance.designsystem.label
 
 private val PreviewNavy=Color(0xFF002042)
 private val FocusMint=Color(0xFF86F2E4)
 private val CautionAmber=Color(0xFFFFD09A)
 private val BodyInk=Color(0xFFC5D8ED)
 private val Bones=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,12 to 24,
-    23 to 24,23 to 25,25 to 27,24 to 26,26 to 28,27 to 29,29 to 31,27 to 31,28 to 30,30 to 32,28 to 32)
+    23 to 24,23 to 25,25 to 27,24 to 26,26 to 28,27 to 29,29 to 31,27 to 31,28 to 30,30 to 32,28 to 32,15 to 19,16 to 20)
 
 /** Presentation only: uses the camera's exact FIT_CENTER/mirror transform and no inferred joints. */
 @Composable internal fun SkeletonPreview(
@@ -41,13 +42,14 @@ private val Bones=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,1
     val caution=metrics.quality==TrackingQuality.TRUNK_LEAN
     val focus=if(caution) CautionAmber else FocusMint
     val side=stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)
-    val joint=stringResource(if(rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.skeleton_elbow else R.string.skeleton_shoulder)
+    val joint=stringResource(rules.focusJoint.label())
+    val measurementJoint=stringResource(rules.kind.measurementJoint.label())
     val focusLabel=stringResource(R.string.skeleton_focus,side,joint)
     val description=stringResource(R.string.skeleton_description,focusLabel)
-    val primary=if(rules.side==BodySide.LEFT) 11 else 12
-    val chain=if(rules.kind==ExerciseKind.ELBOW_FLEXION) listOf(primary,primary+2,primary+4) else listOf(primary+12,primary,primary+2)
-    val selectedJoint=chain[1]
+    val chain=rules.focusJoint.chain(rules.side)
+    val selectedJoint=rules.focusJoint.landmark(rules.side)
     val showBody=bitmap!=null && metrics.quality !in setOf(TrackingQuality.MULTIPLE_PEOPLE,TrackingQuality.NO_PERSON,TrackingQuality.PAUSED)
+    val focusVisible=points.getOrNull(selectedJoint)?.let {it.x.isFinite() && it.y.isFinite() && it.visibility.isFinite() && it.visibility>=rules.confidence && it.x in 0f..1f && it.y in 0f..1f}==true
     val angle=metrics.angleDegrees?.takeIf {ready && bitmap!=null && it.isFinite()}?.let {"%.1f°".format(it)} ?: "—"
 
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PreviewNavy)
@@ -59,6 +61,8 @@ private val Bones=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,1
                     color=BodyInk,style=MaterialTheme.typography.labelMedium)
             }
             Text(focusLabel,color=Color.White,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
+            if(rules.focusJoint!=rules.kind.measurementJoint) Text(stringResource(R.string.focus_measurement,measurementJoint),color=BodyInk,style=MaterialTheme.typography.bodySmall)
+            if(showBody && !focusVisible) Text(stringResource(R.string.focus_not_visible),color=CautionAmber,style=MaterialTheme.typography.bodySmall)
         }
         Box(Modifier.fillMaxWidth().heightIn(max=440.dp).aspectRatio(4f/5f)
             .semantics {contentDescription=description},contentAlignment=Alignment.Center) {
@@ -124,7 +128,7 @@ private val Bones=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,1
             }
             // These are measured values, not a tracking-confidence or exercise-quality score.
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                MetricTile(stringResource(R.string.skeleton_angle),angle,Modifier.weight(1f))
+                MetricTile(stringResource(R.string.measured_joint_angle,measurementJoint),angle,Modifier.weight(1f))
                 MetricTile(stringResource(R.string.skeleton_reps),"${metrics.completed} / ${rules.targetRepetitions}",Modifier.weight(1f))
             }
             Text(stringResource(R.string.skeleton_legend),color=BodyInk,style=MaterialTheme.typography.labelSmall)

@@ -6,7 +6,8 @@
     "202610310001_foundation.sql",
     "202611010001_connected_workflow.sql",
     "202611010002_administration.sql",
-    "202611010003_localized_catalogue.sql"
+    "202611010003_localized_catalogue.sql",
+    "202611010004_prescribed_focus.sql"
   ],
   "foundation_sql_tests_passed": 18,
   "exit_code": 0,

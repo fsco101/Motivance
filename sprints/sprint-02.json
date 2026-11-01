@@ -326,7 +326,8 @@
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ]
         },
         {
@@ -337,7 +338,8 @@
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ]
         },
         {
@@ -348,7 +350,8 @@
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ]
         },
         {
@@ -359,7 +362,8 @@
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ]
         }
       ],
@@ -372,7 +376,8 @@
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/SPRINT-02-IMPLEMENTATION.md",
           "docs/validation/sprint-04-history-test-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -384,7 +389,8 @@
       "implementation_evidence": [
         "docs/validation/SPRINT-02-IMPLEMENTATION.md",
         "docs/validation/sprint-04-history-test-results.json"
-      ]
+      ],
+      "implementation_note": " Live assessment verification confirms demo/prescribed counting after consent/Start, non-counting preview/pause, and durable results. Controls/status/phase guidance now precede the skeleton. Physical reproduction of the reported phone issue remains unexecuted; no threshold or quality gate was weakened."
     },
     {
       "id": "MOT-10",
@@ -435,7 +441,9 @@
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
             "docs/validation/sprint-03-test-results.json",
-            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ]
         },
         {
@@ -447,7 +455,9 @@
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
             "docs/validation/sprint-03-test-results.json",
-            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ]
         },
         {
@@ -461,7 +471,9 @@
             "docs/validation/sprint-04-history-test-results.json",
             "docs/validation/IMPLEMENTATION-CLOSURE.md",
             "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
-            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ],
           "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
           "disposition": "Deferred follow-up; does not block development delivery",
@@ -479,7 +491,9 @@
             "docs/validation/sprint-04-history-test-results.json",
             "docs/validation/IMPLEMENTATION-CLOSURE.md",
             "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
-            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md",
+            "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
           ],
           "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
           "disposition": "Deferred follow-up; does not block development delivery",
@@ -497,7 +511,9 @@
           "docs/validation/SPRINT-02-IMPLEMENTATION.md",
           "docs/validation/sprint-04-history-test-results.json",
           "docs/validation/IMPLEMENTATION-CLOSURE.md",
-          "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
+          "docs/validation/SKELETON-OVERLAY-REFINEMENT.md",
+          "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md",
+          "docs/validation/LIVE-ASSESSMENT-VERIFICATION.md"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -512,7 +528,7 @@
         "docs/validation/SPRINT-02-IMPLEMENTATION.md",
         "docs/validation/sprint-04-history-test-results.json"
       ],
-      "implementation_note": "SkeletonPreview visual refinement adds a focused anatomical chain, high-contrast joint rendering, explicit tracking status and angle/repetition tiles using the existing bitmap transform. Scoped build/lint and three emulator checks passed; physical/human checks retain their original deferred state."
+      "implementation_note": "Therapist-selected visual focus is pinned by immutable prescription/side through patient display, offline cache/recovery and upload; ingestion rejects focus tampering. Legacy defaults and queued payloads are preserved. See docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md. Existing physical/therapist deferrals remain unexecuted. Live assessment verification confirms demo/prescribed counting after consent/Start, non-counting preview/pause, and durable results. Controls/status/phase guidance now precede the skeleton. Physical reproduction of the reported phone issue remains unexecuted; no threshold or quality gate was weakened."
     },
     {
       "id": "MOT-11",

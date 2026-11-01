@@ -203,7 +203,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -212,7 +213,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -221,7 +223,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -230,7 +233,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         }
       ],
@@ -242,7 +246,8 @@
           "docs/validation/SPRINT-03-IMPLEMENTATION.md",
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/sprint-03-backend-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -254,7 +259,8 @@
         "docs/validation/SPRINT-03-IMPLEMENTATION.md",
         "docs/validation/sprint-03-test-results.json",
         "docs/validation/sprint-03-backend-results.json"
-      ]
+      ],
+      "implementation_note": "Therapist-selected visual focus is pinned by immutable prescription/side through patient display, offline cache/recovery and upload; ingestion rejects focus tampering. Legacy defaults and queued payloads are preserved. See docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md. Existing physical/therapist deferrals remain unexecuted."
     },
     {
       "id": "MOT-15",
@@ -301,7 +307,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -310,7 +317,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -319,7 +327,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -328,7 +337,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         }
       ],
@@ -340,7 +350,8 @@
           "docs/validation/SPRINT-03-IMPLEMENTATION.md",
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/sprint-03-backend-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -352,7 +363,8 @@
         "docs/validation/SPRINT-03-IMPLEMENTATION.md",
         "docs/validation/sprint-03-test-results.json",
         "docs/validation/sprint-03-backend-results.json"
-      ]
+      ],
+      "implementation_note": "Therapist-selected visual focus is pinned by immutable prescription/side through patient display, offline cache/recovery and upload; ingestion rejects focus tampering. Legacy defaults and queued payloads are preserved. See docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md. Existing physical/therapist deferrals remain unexecuted."
     },
     {
       "id": "MOT-16",
@@ -399,7 +411,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -408,7 +421,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -417,7 +431,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -426,7 +441,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         },
         {
@@ -435,7 +451,8 @@
           "passed": true,
           "evidence": [
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
           ]
         }
       ],
@@ -447,7 +464,8 @@
           "docs/validation/SPRINT-03-IMPLEMENTATION.md",
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/sprint-03-backend-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -459,7 +477,8 @@
         "docs/validation/SPRINT-03-IMPLEMENTATION.md",
         "docs/validation/sprint-03-test-results.json",
         "docs/validation/sprint-03-backend-results.json"
-      ]
+      ],
+      "implementation_note": "Therapist-selected visual focus is pinned by immutable prescription/side through patient display, offline cache/recovery and upload; ingestion rejects focus tampering. Legacy defaults and queued payloads are preserved. See docs/validation/PRESCRIBED-FOCUS-IMPLEMENTATION.md. Existing physical/therapist deferrals remain unexecuted."
     },
     {
       "id": "MOT-17",

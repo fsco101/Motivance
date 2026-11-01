@@ -83,6 +83,24 @@ class AuthScreenTest {
         button(R.string.auth_verify_email).performScrollTo().performClick()
         assertEquals(listOf(AuthAction.CONFIRM, "patient@example.test", "", "123456"), submissions.last())
     }
+    @Test fun unconfirmedSignInOffersConfirmationResend() {
+        display()
+        compose.onNodeWithText(text(R.string.email)).performTextInput("patient@example.test")
+        compose.runOnIdle {state.value=AuthState(notice=AuthNotice.EMAIL_UNCONFIRMED)}
+        compose.onNodeWithText(text(R.string.auth_confirm_heading)).performScrollTo().assertIsDisplayed()
+        button(R.string.auth_resend_code).performScrollTo().performClick()
+        assertEquals(listOf(AuthAction.RESEND_CONFIRMATION,"patient@example.test","",""),submissions.single())
+        button(R.string.auth_resend_code).assertIsNotEnabled()
+    }
+    @Test fun recoveryResendDoesNotSubmitNewPasswordOrOldCode() {
+        display()
+        compose.onNodeWithText(text(R.string.email)).performTextInput("patient@example.test")
+        compose.runOnIdle {state.value=AuthState(notice=AuthNotice.RECOVERY_SENT)}
+        compose.onNodeWithText(text(R.string.auth_new_password)).performScrollTo().performTextInput("replacement")
+        compose.onNodeWithText(text(R.string.auth_email_code)).performScrollTo().performTextInput("123456")
+        button(R.string.auth_resend_code).performScrollTo().performClick()
+        assertEquals(listOf(AuthAction.REQUEST_RECOVERY,"patient@example.test","",""),submissions.single())
+    }
     @Test fun recoveryHasDistinctCodeAndNewPasswordSteps() {
         display()
         button(R.string.auth_forgot_password).performScrollTo().performClick()

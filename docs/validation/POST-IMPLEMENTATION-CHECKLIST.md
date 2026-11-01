@@ -47,6 +47,8 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Record processed FPS, median/p95 inference latency, total feedback latency, memory, battery and thermal state. Compare with the provisional median <=150ms / p95 <=250ms gate. The earlier emulator/laptop-webcam p95 of 634ms is a profiling concern, not a measured phone limit.
 - [ ] Confirm quality gates, overlay alignment and repetition timing still work after any GPU/resolution/preview optimization.
 - [ ] Review the development retention policy: automatic deletion is disabled, records are reviewed after 365 days, and deletion/export requests require a trusted operator. Set actual retention, request turnaround, account deletion and backup expiry in the deployment runbook before collecting pilot data.
+- [x] Apply the Gmail sender to local Docker Auth and verify TLS authentication and runtime settings. See `docs/validation/smtp-connection-results.json`. No inbox delivery is claimed; hosted setup is separate.
+- [ ] Verify signup delivery to an authorized Gmail inbox, confirmation/resend, unconfirmed sign-in rejection, reset/resend, invalid/expired-code handling, throttling, old-password rejection and new-password sign-in. See `docs/operations/AUTH-EMAIL.md`; local capture, SMTP login and emulator tests do not establish inbox deliverability.
 - [ ] Exercise hosted email delivery, production RLS/RPC permissions, protected token restore, signed-release installation, backup restore and incident ownership. Do not copy local fixtures or local passwords into production.
 
 ## History and progress follow-up
@@ -56,6 +58,10 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Check chart descriptions, filter labels, session cards, large fonts and load-older controls with TalkBack on the supported physical phones. Automated emulator rendering does not establish physical accessibility or clinical usefulness.
 
 ## Sprint 4 follow-up
+
+- [ ] Reproduce the reported non-incrementing repetitions on the user's actual phone: record APK/build, selected exercise/side, preview versus Recording status, consent/Start action, tracking message, observed angle sequence and targets. Automated synthetic tests do not establish the specific cause of this physical-device report. Use `docs/operations/LIVE-ASSESSMENT-TROUBLESHOOTING.md` and keep the result unexecuted until observed.
+
+- [ ] On physical phones, verify therapist-selected shoulder/elbow/wrist/hip/knee/ankle rings on each prescribed side, including mirror/rotation, low confidence and occlusion. Confirm users understand the distinction between the visual focus and the exercise joint actually measured. These focus options do not establish additional supported exercise algorithms.
 
 - [ ] Review the administrator workspace on physical phones: account enable/disable, grant/revoke staff, link/revoke and catalogue version publication. Confirm identity/custody for the initial trusted admin; never create admin access through signup metadata.
 - [ ] Review all English/Filipino terminology with the therapist and representative phone users. Automated resource/format parity, contrast calculations and a double-font emulator test do not establish human comprehension or TalkBack usability.

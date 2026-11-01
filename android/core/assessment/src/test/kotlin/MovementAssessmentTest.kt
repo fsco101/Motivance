@@ -5,6 +5,25 @@ import org.junit.Test
 import kotlin.math.*
 
 class MovementAssessmentTest {
+    @Test fun visiblePreviewDoesNotCountUntilMeasurementStarts() {
+        val r=Replay(MovementAssessment(ExerciseRules()))
+        repeat(6) {r.frame(pose(10.0))}
+        repeat(2) {cycle(r)}
+        assertEquals(TrackingQuality.READY,r.engine.snapshot.quality)
+        assertNotNull(r.engine.snapshot.angleDegrees)
+        assertFalse(r.engine.snapshot.running);assertEquals(0,r.engine.snapshot.completed)
+        assertTrue(r.engine.start(r.time));cycle(r)
+        assertEquals(1,r.engine.snapshot.completed)
+    }
+    @Test fun completeRepetitionsWorkForDemoAndPrescribedExercisesOnBothSides() {
+        for(kind in ExerciseKind.entries) for(side in BodySide.entries) for(demo in listOf(true,false)) {
+            val r=ready(ExerciseRules(kind=kind,side=side,demo=demo,prescriptionVersionId=if(demo) null else "fixture-prescription"))
+            listOf(10.0,10.0,40.0,60.0,100.0,100.0,100.0,70.0,40.0,10.0,10.0).forEach {
+                r.frame(pose(it,side,kind==ExerciseKind.SHOULDER_ABDUCTION))
+            }
+            assertEquals("$kind/$side/demo=$demo",1,r.engine.snapshot.completed)
+        }
+    }
     @Test fun prolongedSyntheticSessionAndRepeatedInterruptionsPreserveCounts() {
         val r=ready()
         repeat(1600) {index ->

@@ -3,6 +3,18 @@ package com.motivance.domain
 enum class ExerciseKind { ELBOW_FLEXION, SHOULDER_ABDUCTION }
 enum class BodySide { LEFT, RIGHT }
 
+/** Visual focus only; adding a focus does not implement a new movement assessment. */
+enum class BodyJoint(private val leftPoint:Int,private val leftChain:List<Int>) {
+    SHOULDER(11,listOf(23,11,13)), ELBOW(13,listOf(11,13,15)), WRIST(15,listOf(13,15,19)),
+    HIP(23,listOf(11,23,25)), KNEE(25,listOf(23,25,27)), ANKLE(27,listOf(25,27,31));
+    fun landmark(side:BodySide)=leftPoint+if(side==BodySide.RIGHT) 1 else 0
+    fun chain(side:BodySide)=leftChain.map {it+if(side==BodySide.RIGHT) 1 else 0}
+}
+val ExerciseKind.measurementJoint:BodyJoint get()=when(this) {
+    ExerciseKind.ELBOW_FLEXION -> BodyJoint.ELBOW
+    ExerciseKind.SHOULDER_ABDUCTION -> BodyJoint.SHOULDER
+}
+
 /** Immutable parameters pinned for one session. Demo rules are never a prescription. */
 data class ExerciseRules(
     val kind: ExerciseKind = ExerciseKind.ELBOW_FLEXION,
@@ -19,7 +31,8 @@ data class ExerciseRules(
     val maxSpeedDegreesPerSecond: Double = 600.0,
     val version: String = "demo-v1",
     val prescriptionVersionId: String? = null,
-    val demo: Boolean = true
+    val demo: Boolean = true,
+    val focusJoint: BodyJoint = kind.measurementJoint
 ) {
     init {
         require(lowDegrees.isFinite() && highDegrees.isFinite() && lowDegrees>=0 && highDegrees<=180 && highDegrees>lowDegrees+10)

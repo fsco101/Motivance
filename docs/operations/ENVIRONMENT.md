@@ -46,7 +46,7 @@ Repeat the reverse command after reconnecting/restarting the phone. Docker and t
 
 - **Patient/therapist email and password:** enter them in the app. Local generated credentials are in ignored `docs/operations/local-test-accounts.json`; they are not BuildConfig fields.
 - **Service-role/secret API key, database password/connection string:** trusted backend/administrator tools only. The local seed and integration scripts obtain the local service key in memory through the CLI and refuse nonlocal endpoints. They do not save that key in Android configuration.
-- **SMTP credentials:** configure hosted Auth email through Supabase's server settings/secrets. The local stack captures email in the local mail viewer at port 54324.
+- **SMTP credentials:** server/operator configuration belongs in ignored `supabase/.env`, using `supabase/.env.example`, or hosted Auth settings. See [verification/reset and SMTP setup](AUTH-EMAIL.md). The default local stack captures email at port 54324.
 - **Signing passwords/keystore:** separate protected release tooling, never an app BuildConfig value.
 - **Access/refresh tokens:** managed at runtime in an Android Keystore-encrypted, backup-excluded session file; the user does not add these to `.env`.
 

@@ -5,7 +5,7 @@ data class CatalogueExercise(val id:String,val name:String,val algorithm:String,
 data class PrescriptionSummary(val assignmentId:String,val versionId:String,val patientId:String,val exerciseId:String,val version:Int,val side:String,val low:Double,val high:Double,val repetitions:Int,val parameters:String="{}")
 data class PrivacyRequest(val id:String,val kind:String,val status:String)
 data class RehabWorkspace(val patients:List<LinkedPatient> = emptyList(),val catalogue:List<CatalogueExercise> = emptyList(),val prescriptions:List<PrescriptionSummary> = emptyList(),val requests:List<PrivacyRequest> = emptyList())
-data class PrescriptionDraft(val assignmentId:String,val requestId:String,val patientId:String,val exerciseId:String,val side:BodySide,val low:Double,val high:Double,val repetitions:Int,val minimumCycleMs:Long=600,val maximumCycleMs:Long=30000,val peakHoldMs:Long=100,val maxTrunkLean:Double=20.0,val confidence:Double=.7)
+data class PrescriptionDraft(val assignmentId:String,val requestId:String,val patientId:String,val exerciseId:String,val side:BodySide,val low:Double,val high:Double,val repetitions:Int,val minimumCycleMs:Long=600,val maximumCycleMs:Long=30000,val peakHoldMs:Long=100,val maxTrunkLean:Double=20.0,val confidence:Double=.7,val focusJoint:BodyJoint?=null)
 interface RehabilitationRepository {
     suspend fun loadWorkspace():RehabWorkspace
     suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?=null):HistoryPage
@@ -19,7 +19,7 @@ interface RehabilitationRepository {
 }
 
 /** HTTP status only; raw server payloads and credentials never reach screens/logs. */
-class RemoteFailure(val status:Int):Exception("Request failed ($status)") {
+class RemoteFailure(val status:Int,val code:String?=null):Exception("Request failed ($status)") {
     val authenticationRequired get()=status==401
     val retryable get()=status==408 || status==429 || status>=500
 }

@@ -164,6 +164,8 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             TextButton({context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}) { Text(stringResource(R.string.open_app_settings)) }
         }
         error?.let { Text(stringResource(it)) }
+        MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
+            {session.start(consent || exercise.id!=null)},{session.interrupt()},stringResource(exercise.metrics.quality.label()))
         val shown=display
         SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()))
         Text(stringResource(R.string.session_metrics,exercise.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",exercise.metrics.incomplete,exercise.metrics.durationMs/1000),style=MaterialTheme.typography.bodySmall)
@@ -178,15 +180,11 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             OutlinedButton({front=!front; display=null; error=null},modifier=Modifier.weight(1f)) { Text(stringResource(R.string.switch_camera)) }
             OutlinedButton({if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f),enabled=!exercise.saving) { Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera)) }
         }
-        if(exercise.id==null) Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
-            val consentLabel=stringResource(if(exercise.rules.demo) R.string.local_metrics_consent else R.string.sync_metrics_consent)
-            Checkbox(consent,{consent=it},modifier=Modifier.semantics {contentDescription=consentLabel}); Text(consentLabel,style=MaterialTheme.typography.bodySmall)
-        }
         if(exercise.recoverable!=null && exercise.id==null) TextButton({session.restore()}) { Text(stringResource(R.string.recover_interrupted)) }
         if(exercise.saved) {
             Text(stringResource(R.string.session_saved_local))
             OutlinedButton({session.newSession(); consent=false}) {Text(stringResource(R.string.new_session))}
-        } else if(!exercise.metrics.running) Button({session.start(consent || exercise.id!=null)},enabled=exercise.metrics.quality==TrackingQuality.READY && !paused && !exercise.saving && (consent || exercise.id!=null) && (if(exercise.rules.demo) BuildConfig.DEBUG else exercise.cached.any {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}),modifier=Modifier.fillMaxWidth()) { Text(stringResource(if(exercise.id==null) R.string.start_measurement else R.string.resume_measurement)) }
+        }
         if(exercise.error) Text(stringResource(R.string.local_save_failed),color=MaterialTheme.colorScheme.error)
         if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
         if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({session.newSession();consent=false},enabled=!exercise.saving) {Text(stringResource(R.string.new_session))}

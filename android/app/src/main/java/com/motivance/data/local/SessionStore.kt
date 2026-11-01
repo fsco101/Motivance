@@ -21,7 +21,7 @@ import org.json.JSONObject
         database.withTransaction {
             val old=dao.get(owner,id)
             if(old?.status=="COMPLETED") return@withTransaction
-            check(old==null || (old.rulesJson==ExerciseJson.rules(rules) && old.startedAt==startedAt)) { "Session prescription is immutable" }
+            check(old==null || (ExerciseJson.rules(old.rulesJson)==rules && old.startedAt==startedAt)) { "Session prescription is immutable" }
             // IDs are global: never overwrite another account's record on collision.
             val conflict=database.openHelper.readableDatabase.query("SELECT ownerId FROM local_sessions WHERE id=?",arrayOf(id)).use { it.moveToFirst() && it.getString(0)!=owner }
             check(!conflict)
