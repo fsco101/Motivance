@@ -13,6 +13,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.motivance.R
+import com.motivance.designsystem.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import com.motivance.domain.*
 import java.time.Instant
 import java.time.LocalDate
@@ -41,9 +44,13 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     LaunchedEffect(owner, query) { if (query != null) vm.show(query) }
     val rows = if (state.owner == owner && state.query == query && query != null) state.rows else emptyList()
 
+    var filtersExpanded by rememberSaveable(owner,patientId) {mutableStateOf(false)}
+    ClinicalCard {
     Text(stringResource(R.string.history_filters), style = MaterialTheme.typography.titleLarge)
     if (patientId == null) HistoryChoice(R.string.select_patient,
         workspace.patients.filter { it.id != owner }.map { it.id to it.name.ifBlank { it.id.take(8) } }, patient) { patient = it }
+    TextButton({filtersExpanded=!filtersExpanded}) {Text(stringResource(if(filtersExpanded) R.string.ui_hide_filters else R.string.ui_show_filters)); Icon(Icons.Default.KeyboardArrowDown,null)}
+    if(filtersExpanded) {
     val exercises = (workspace.catalogue.map { it.id to it.name } + rows.mapNotNull { it.prescription }
         .map { it.exerciseVersionId to it.exerciseName }).distinctBy { it.first }
     HistoryChoice(R.string.select_exercise, listOf("" to stringResource(R.string.history_all_exercises)) +
@@ -56,22 +63,24 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     OutlinedTextField(through, { through = it }, label = { Text(stringResource(R.string.history_through)) },
         singleLine = true, isError = validDates == null, modifier = Modifier.fillMaxWidth())
     Text(stringResource(R.string.history_date_help), style = MaterialTheme.typography.bodySmall)
+    }
     if (validDates == null) Text(stringResource(R.string.history_date_error), color = MaterialTheme.colorScheme.error)
+    }
     if (query == null) {
         if (patient.isBlank()) Text(stringResource(R.string.history_choose_patient))
         return
     }
     val current = state.owner == owner && state.query == query
-    if (current && state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-    OutlinedButton({ vm.refresh() }, enabled = current && !state.loading) { Text(stringResource(R.string.history_refresh)) }
-    if (current && state.failed) Text(stringResource(R.string.history_failed), color = MaterialTheme.colorScheme.error)
+    if (current && state.loading) LoadingNotice(if(state.loaded) R.string.ui_loading_older else R.string.ui_loading_history)
+    ActionButton(R.string.history_refresh,{vm.refresh()},outlined=true,enabled=current && !state.loading)
+    if (current && state.failed) FeedbackNotice(R.string.history_failed,error=true,retry={vm.refresh()})
     if (!current || !state.loaded) return
     Text(stringResource(R.string.history_loaded, rows.size), style = MaterialTheme.typography.bodySmall)
-    if (rows.isEmpty()) Text(stringResource(R.string.history_empty))
+    if (rows.isEmpty()) EmptyState(R.string.no_sessions,R.string.history_empty)
     else {
         Text(stringResource(R.string.history_comparability), style = MaterialTheme.typography.bodySmall)
         rehabilitationProgress(rows).forEach { series ->
-            Card(Modifier.fillMaxWidth()) {
+            Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ExerciseHeading(series.prescription)
                     Text(stringResource(R.string.history_series, series.key.metric, series.key.model, series.key.algorithm),
@@ -88,7 +97,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
         }
         Text(stringResource(R.string.synced_results), style = MaterialTheme.typography.titleLarge)
         rows.forEach { SessionResult(it) }
-        if (state.next != null) Button({ vm.loadOlder() }, enabled = !state.loading) { Text(stringResource(R.string.history_older)) }
+        if (state.next != null) ActionButton(R.string.history_older,{vm.loadOlder()},busy=state.loading,busyLabel=R.string.ui_loading_older)
         else Text(stringResource(R.string.history_end), style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -96,7 +105,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
 @Composable private fun HistoryChoice(label: Int, options: List<Pair<String, String>>, selected: String, choose: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        OutlinedButton({ expanded = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+        OutlinedButton({ expanded = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), shape=MaterialTheme.shapes.small) {
             Text(stringResource(R.string.history_filter_value, stringResource(label),
                 options.firstOrNull { it.first == selected }?.second ?: stringResource(R.string.history_select)))
         }
@@ -118,7 +127,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
 }
 
 @Composable private fun SessionResult(s: HistoricalSession) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(date(s.startedAt), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(when (s.resultStatus) {
@@ -144,7 +153,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
 
 @Composable private fun TrendChart(values: List<Double?>, title: Int, unit: Int) {
     val maximum = maxOf(1.0, values.filterNotNull().maxOrNull() ?: 1.0)
-    val color = MaterialTheme.colorScheme.primary
+    val color = MaterialTheme.colorScheme.secondary
     val axis = MaterialTheme.colorScheme.outline
     val description = stringResource(R.string.history_chart_accessibility, stringResource(title), values.count { it != null }, stringResource(unit))
     Text(stringResource(title), style = MaterialTheme.typography.titleSmall)

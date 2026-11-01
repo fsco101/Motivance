@@ -1,0 +1,28 @@
+{
+  "reviewed_at": "2026-11-01T08:29:08.198908+00:00",
+  "reviewed_by": "Codex engineering review",
+  "build_passed": true,
+  "lint_errors": 0,
+  "lint_warnings": 88,
+  "backend_checks": 20,
+  "fresh_migration_foundation_checks": 18,
+  "ui_tests": 15,
+  "ui_failures": 0,
+  "resources_per_locale": 414,
+  "profile_avatars": "Bundled person, star and heart choices",
+  "limitations": [
+    "Local migration only; hosted environment requires applying migration.",
+    "Physical device, TalkBack, human wording and therapist review deferred.",
+    "Screenshots and integration users are synthetic."
+  ],
+  "app_unit_tests": {
+    "tests": 53,
+    "failures": 0,
+    "errors": 0
+  },
+  "domain_unit_tests": {
+    "tests": 11,
+    "failures": 0,
+    "errors": 0
+  }
+}

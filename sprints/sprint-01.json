@@ -450,7 +450,10 @@
           "docs/validation/IMPLEMENTATION-CLOSURE.md",
           "docs/validation/AUTH-UI-REFINEMENT.md",
           "docs/validation/AUTH-EMAIL-IMPLEMENTATION.md",
-          "docs/validation/smtp-connection-results.json"
+          "docs/validation/smtp-connection-results.json",
+          "docs/validation/PATIENT-PROFILES.md",
+          "docs/validation/patient-profile-results.json",
+          "docs/validation/patient-profile-backend-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -460,7 +463,10 @@
         "docs/validation/sprint-04-history-test-results.json",
         "docs/validation/AUTH-UI-REFINEMENT.md",
         "docs/validation/AUTH-EMAIL-IMPLEMENTATION.md",
-        "docs/validation/smtp-connection-results.json"
+        "docs/validation/smtp-connection-results.json",
+        "docs/validation/PATIENT-PROFILES.md",
+        "docs/validation/patient-profile-results.json",
+        "docs/validation/patient-profile-backend-results.json"
       ],
       "implementation_status": "implemented"
     },
@@ -667,14 +673,20 @@
           "docs/validation/SPRINT-01-IMPLEMENTATION.md",
           "docs/validation/SPRINT-01-PROTOCOL.md",
           "docs/validation/sprint-04-history-test-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/PATIENT-PROFILES.md",
+          "docs/validation/patient-profile-results.json",
+          "docs/validation/patient-profile-backend-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
         "docs/validation/SPRINT-01-PROTOCOL.md",
-        "docs/validation/sprint-04-history-test-results.json"
+        "docs/validation/sprint-04-history-test-results.json",
+        "docs/validation/PATIENT-PROFILES.md",
+        "docs/validation/patient-profile-results.json",
+        "docs/validation/patient-profile-backend-results.json"
       ],
       "post_implementation_checks": [
         "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",

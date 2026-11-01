@@ -148,7 +148,10 @@
           "docs/validation/SPRINT-03-IMPLEMENTATION.md",
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/sprint-03-backend-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/PATIENT-PROFILES.md",
+          "docs/validation/patient-profile-results.json",
+          "docs/validation/patient-profile-backend-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -159,7 +162,10 @@
       "implementation_evidence": [
         "docs/validation/SPRINT-03-IMPLEMENTATION.md",
         "docs/validation/sprint-03-test-results.json",
-        "docs/validation/sprint-03-backend-results.json"
+        "docs/validation/sprint-03-backend-results.json",
+        "docs/validation/PATIENT-PROFILES.md",
+        "docs/validation/patient-profile-results.json",
+        "docs/validation/patient-profile-backend-results.json"
       ]
     },
     {
@@ -571,7 +577,10 @@
           "docs/validation/SPRINT-03-IMPLEMENTATION.md",
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/sprint-03-backend-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/PATIENT-PROFILES.md",
+          "docs/validation/patient-profile-results.json",
+          "docs/validation/patient-profile-backend-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -582,7 +591,10 @@
       "implementation_evidence": [
         "docs/validation/SPRINT-03-IMPLEMENTATION.md",
         "docs/validation/sprint-03-test-results.json",
-        "docs/validation/sprint-03-backend-results.json"
+        "docs/validation/sprint-03-backend-results.json",
+        "docs/validation/PATIENT-PROFILES.md",
+        "docs/validation/patient-profile-results.json",
+        "docs/validation/patient-profile-backend-results.json"
       ]
     },
     {
@@ -678,7 +690,10 @@
           "docs/validation/SPRINT-03-IMPLEMENTATION.md",
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/sprint-03-backend-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/PATIENT-PROFILES.md",
+          "docs/validation/patient-profile-results.json",
+          "docs/validation/patient-profile-backend-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -689,7 +704,10 @@
       "implementation_evidence": [
         "docs/validation/SPRINT-03-IMPLEMENTATION.md",
         "docs/validation/sprint-03-test-results.json",
-        "docs/validation/sprint-03-backend-results.json"
+        "docs/validation/sprint-03-backend-results.json",
+        "docs/validation/PATIENT-PROFILES.md",
+        "docs/validation/patient-profile-results.json",
+        "docs/validation/patient-profile-backend-results.json"
       ]
     }
   ],

@@ -24,7 +24,7 @@ def main():
         values=[int(color[i:i+2],16)/255 for i in (0,2,4)]
         values=[v/12.92 if v<=.04045 else ((v+.055)/1.055)**2.4 for v in values]
         return sum(a*b for a,b in zip(values,[.2126,.7152,.0722]))
-    pairs=[('002042','FFFFFF'),('006A61','FFFFFF'),('0B1C30','F8F9FF'),('43474F','E5EEFF'),('006A61','D6F7F0')]
+    pairs=[('002042','FFFFFF'),('006A61','FFFFFF'),('0B1C30','F8F9FF'),('526174','E5EEFF'),('006A61','D6F7F0'),('002042','86F2E4'),('D6E6EE','104C60')]
     contrasts=[]
     for fg,bg in pairs:
         a,b=sorted([luminance(fg),luminance(bg)])

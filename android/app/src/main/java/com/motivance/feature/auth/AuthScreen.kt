@@ -46,7 +46,7 @@ import com.motivance.domain.UserRole
 @Composable
 fun AuthScreen(viewModel: AuthViewModel, openCamera: () -> Unit, role: UserRole? = null, onBack: () -> Unit = {}) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AuthContent(state, role, viewModel::act, viewModel::clearNotice, openCamera, onBack)
+    AuthContent(state, role, viewModel::act, viewModel::clearNotice, openCamera, onBack,viewModel::registerProfile)
 }
 
 @Composable
@@ -57,6 +57,8 @@ internal fun AuthContent(
     clearNotice: () -> Unit,
     openCamera: () -> Unit,
     onBack: () -> Unit,
+    onRegister: ((String,String,com.motivance.domain.PatientProfile)->Unit)? = null,
+    initialProfile: com.motivance.domain.PatientProfile = com.motivance.domain.PatientProfile(),
 ) {
     var action by rememberSaveable { mutableStateOf(AuthAction.SIGN_IN) }
     var email by rememberSaveable { mutableStateOf("") }
@@ -64,6 +66,7 @@ internal fun AuthContent(
     var password by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var profile by remember {mutableStateOf(initialProfile)}
     val focus = LocalFocusManager.current
     fun changeAction(next: AuthAction) {
         focus.clearFocus()
@@ -72,7 +75,7 @@ internal fun AuthContent(
         action = next
     }
     fun submit() {
-        if (!state.busy) { focus.clearFocus(); onSubmit(action, email, password, otp) }
+        if (!state.busy) { focus.clearFocus(); if(action==AuthAction.REGISTER) {if(profile.valid() && password.length>=8) {if(onRegister!=null)onRegister(email,password,profile) else onSubmit(action,email,password,otp)}} else onSubmit(action, email, password, otp) }
     }
     LaunchedEffect(state.session?.userId, action) {
         password = ""; otp = ""; showPassword = false
@@ -101,7 +104,7 @@ internal fun AuthContent(
             }
             Column(Modifier.widthIn(max = 480.dp).fillMaxWidth().padding(top = 28.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Surface(color = MaterialTheme.colorScheme.secondary.copy(alpha = .08f), shape = CircleShape) {
-                    Text(stringResource(if (role == UserRole.THERAPIST) R.string.clinical_portal else R.string.rehabilitation_portal),
+                    Text(stringResource(when(role) {UserRole.THERAPIST->R.string.clinical_portal;UserRole.ADMIN->R.string.admin_title;else->R.string.rehabilitation_portal}),
                         Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 }
@@ -138,14 +141,19 @@ internal fun AuthContent(
                     if (action == AuthAction.SIGN_IN) TextButton(
                         onClick = { changeAction(AuthAction.REQUEST_RECOVERY) }, enabled = !state.busy, modifier = Modifier.align(Alignment.End),
                     ) { Text(stringResource(R.string.auth_forgot_password)) }
+                    if(action==AuthAction.REGISTER) {
+                        ProfileFields(profile,!state.busy) {profile=it}
+                        PrivacyAgreement(profile.consent,!state.busy) {profile=profile.copy(consent=it)}
+                        Text(stringResource(R.string.profile_validation),style=MaterialTheme.typography.bodySmall)
+                    }
                     state.notice?.let { AuthNoticeCard(it) }
-                    Button(onClick = { submit() }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                    Button(onClick = { submit() }, enabled = !state.busy && (action!=AuthAction.REGISTER || (profile.valid() && password.length>=8)), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                         shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(16.dp)) {
                         if (state.busy) {
                             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
                             Spacer(Modifier.width(12.dp))
                         }
-                        Text(stringResource(if (state.busy) action.busyLabel() else action.label()), textAlign = TextAlign.Center,
+                        Text(stringResource(if (state.busy) (state.activeAction ?: action).busyLabel() else action.label()), textAlign = TextAlign.Center,
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                     }
                     if(action==AuthAction.CONFIRM || action==AuthAction.RECOVER) {
@@ -154,7 +162,7 @@ internal fun AuthContent(
                             Text(stringResource(R.string.auth_resend_code))
                         }
                     }
-                    if (action == AuthAction.SIGN_IN && role != UserRole.THERAPIST) {
+                    if (action == AuthAction.SIGN_IN && role != UserRole.THERAPIST && role != UserRole.ADMIN) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
                         Text(stringResource(R.string.auth_new_here), Modifier.fillMaxWidth(), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
                         OutlinedButton(onClick = { changeAction(AuthAction.REGISTER) }, enabled = !state.busy,
@@ -263,8 +271,10 @@ private fun AuthAction.busyLabel() = when (this) {
     AuthAction.REGISTER -> R.string.auth_creating_account
     AuthAction.CONFIRM -> R.string.auth_verifying
     AuthAction.REQUEST_RECOVERY -> R.string.auth_sending_code
+    AuthAction.RESEND_CONFIRMATION -> R.string.auth_sending_code
+    AuthAction.SIGN_OUT -> R.string.ui_signing_out
+    AuthAction.REFRESH -> R.string.ui_refreshing_session
     AuthAction.RECOVER -> R.string.auth_updating_password
-    else -> R.string.auth_restoring
 }
 private fun AuthAction.label() = when (this) {
     AuthAction.SIGN_IN -> R.string.sign_in

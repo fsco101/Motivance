@@ -32,6 +32,33 @@ class SupabaseAuthRepositoryTest {
             .body((if(verifyFailed) verificationError!! else responseBody).toResponseBody("application/json".toMediaType())).build()
     }.build()
     private fun repository()=SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture-key")
+    @Test fun signupSendsValidatedDetailsAndConsent()=runBlocking {
+        val profile=com.motivance.domain.PatientProfile("patient_one","Test Patient","female","1995-01-01","Test address","09001234567","star",true)
+        repository().registerProfile("a@example.test","fixture-password",profile)
+        val buffer=okio.Buffer();requests.single().body!!.writeTo(buffer)
+        val data=JSONObject(buffer.readUtf8()).getJSONObject("data").getJSONObject("patient_profile")
+        assertTrue(data.getBoolean("consent"));assertEquals("star",data.getString("avatar"))
+        requests.clear()
+        assertTrue(runCatching {repository().registerProfile("a@example.test","fixture-password",profile.copy(consent=false))}.isFailure)
+        assertTrue(requests.isEmpty())
+    }
+    @Test fun incorrectCurrentPasswordNeverReachesPasswordUpdate()=runBlocking {
+        val seen=mutableListOf<Request>();var signingIn=true
+        val http=OkHttpClient.Builder().addInterceptor {chain ->
+            val r=chain.request();seen+=r
+            val rejected=!signingIn && r.url.queryParameter("grant_type")=="password"
+            val body=when(r.url.encodedPath) {
+                "/rest/v1/user_roles" -> "[{\"role\":\"patient\"}]"
+                "/auth/v1/user" -> "{\"email\":\"a@example.test\"}"
+                else -> session
+            }
+            Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(if(rejected)400 else 200).message("Fixture").body(body.toResponseBody("application/json".toMediaType())).build()
+        }.build()
+        val repo=SupabaseAuthRepository(http,"https://fixture.invalid","public-fixture")
+        repo.signIn("a@example.test","old-password");signingIn=false
+        assertTrue(runCatching {repo.changePassword("wrong-password","new-password")}.isFailure)
+        assertFalse(seen.any {it.method=="PUT"})
+    }
     @Test fun resendUsesSignupEmailAndNoPasswordOrToken()=runBlocking {
         repository().resendConfirmation("patient@example.test")
         val request=requests.single()

@@ -91,6 +91,27 @@ import java.time.Instant
     }
     override suspend fun signIn(email: String, password: String) = mutex.withLock { accept(call("/auth/v1/token?grant_type=password", JSONObject().put("email",email).put("password",password))) }
     override suspend fun register(email: String, password: String) { call("/auth/v1/signup", JSONObject().put("email",email).put("password",password)) }
+    private fun profileJson(p:PatientProfile)=JSONObject().put("username",p.username.trim()).put("full_name",p.name.trim())
+        .put("gender",p.gender).put("birthdate",p.birthdate).put("address",p.address.trim()).put("contact",p.contact.trim()).put("avatar",p.avatar).put("consent",p.consent)
+    private fun readProfile(j:JSONObject,email:String="")=PatientProfile(j.optString("username"),j.optString("full_name"),j.optString("gender"),j.optString("birthdate"),j.optString("address"),j.optString("contact"),j.optString("avatar","person"),j.optString("consented_at").isNotBlank(),email)
+    override suspend fun registerProfile(email:String,password:String,profile:PatientProfile) {
+        require(profile.valid())
+        call("/auth/v1/signup",JSONObject().put("email",email).put("password",password).put("data",JSONObject().put("patient_profile",profileJson(profile))))
+    }
+    override suspend fun loadProfile()=authorized {token,id ->
+        val user=JSONObject(call("/auth/v1/user",null,token,"GET"))
+        val rows=JSONArray(call("/rest/v1/patient_profiles?select=*&user_id=eq.$id",null,token,"GET"))
+        if(rows.length()>0) readProfile(rows.getJSONObject(0),user.getString("email")) else PatientProfile(email=user.getString("email"))
+    }
+    override suspend fun saveProfile(profile:PatientProfile) {require(profile.valid());authorized {token,_ -> call("/rest/v1/rpc/save_my_profile",JSONObject().put("p_details",profileJson(profile)),token)} }
+    override suspend fun changePassword(currentPassword:String,newPassword:String) {require(newPassword.length>=8 && currentPassword!=newPassword);authorized {token,id ->
+        val email=JSONObject(call("/auth/v1/user",null,token,"GET")).getString("email")
+        val verified=call("/auth/v1/token?grant_type=password",JSONObject().put("email",email).put("password",currentPassword))
+        require(JSONObject(verified).getJSONObject("user").getString("id")==id)
+        call("/auth/v1/user",JSONObject().put("password",newPassword),JSONObject(verified).getString("access_token"),"PUT")
+        accept(verified)
+        Unit
+    } }
     override suspend fun confirmRegistration(email: String, token: String) = mutex.withLock {
         accept(call("/auth/v1/verify", JSONObject().put("email",email).put("token",token.trim()).put("type","signup")))
     }
@@ -132,12 +153,14 @@ import java.time.Instant
     }
     override suspend fun loadWorkspace()=authorized { token,_ ->
         val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name)",null,token,"GET"))
+        val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))
+        val profileById=(0 until details.length()).map {details.getJSONObject(it)}.associate {it.getString("user_id") to readProfile(it)}
         val catalogue=JSONArray(call("/rest/v1/exercise_versions?select=id,algorithm_key,definition&published=eq.true",null,token,"GET"))
         val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)&active=eq.true",null,token,"GET"))
         val requests=JSONArray(call("/rest/v1/data_requests?select=id,kind,status&order=created_at.desc",null,token,"GET"))
         fun <T> rows(a:JSONArray,convert:(JSONObject)->T)=(0 until a.length()).map {convert(a.getJSONObject(it))}
         RehabWorkspace(
-            rows(patients) {LinkedPatient(it.getString("id"),it.optJSONObject("profiles")?.optString("display_name").orEmpty())},
+            rows(patients) {LinkedPatient(it.getString("id"),it.optJSONObject("profiles")?.optString("display_name").orEmpty(),profileById[it.getString("id")])},
             rows(catalogue) {val d=it.getJSONObject("definition"); CatalogueExercise(it.getString("id"),d.optString("name",it.getString("algorithm_key")),it.getString("algorithm_key"),d.optString("instructions_en"))}.filter {it.algorithm in setOf("elbow-flexion-v1","shoulder-abduction-v1")},
             rows(assignments) {a -> val v=a.getJSONArray("prescription_versions"); if(v.length()==0) null else {
                 val p=(0 until v.length()).map {v.getJSONObject(it)}.maxBy {it.getInt("version")}

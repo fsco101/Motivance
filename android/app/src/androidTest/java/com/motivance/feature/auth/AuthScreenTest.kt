@@ -38,7 +38,7 @@ class AuthScreenTest {
                 AuthContent(state.value, role, { action, email, password, code ->
                     submissions += listOf(action, email, password, code)
                     state.value = AuthState(busy = true)
-                }, { state.value = state.value.copy(notice = null) }, {}, {})
+                }, { state.value = state.value.copy(notice = null) }, {}, {},initialProfile=com.motivance.domain.PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567","person",true))
             } }
         }
     }
@@ -73,7 +73,7 @@ class AuthScreenTest {
         compose.onNodeWithText(text(R.string.auth_signup_heading)).performScrollTo()
         compose.onNode(hasText(text(R.string.auth_password)) and hasSetTextAction()).assertTextContains("", substring = false)
         capture("signup")
-        compose.onNodeWithText(text(R.string.auth_password)).performTextInput("new-password")
+        compose.onNodeWithText(text(R.string.auth_password)).performScrollTo().performTextInput("new-password")
         button(R.string.auth_create_account).performScrollTo().performClick()
         assertEquals(listOf(AuthAction.REGISTER, "patient@example.test", "new-password", ""), submissions.single())
         compose.runOnIdle { state.value = AuthState(notice = AuthNotice.CONFIRM_EMAIL) }

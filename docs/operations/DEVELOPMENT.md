@@ -27,6 +27,12 @@ cd android
 
 Linux/CI uses `bash ./gradlew` with the same tasks. The debug package is `com.motivance.debug`; the APK is `android/app/build/outputs/apk/debug/app-debug.apk`. A backend-free build can open the local skeleton feasibility screen. It cannot authenticate until configured. Do not put service-role credentials, passwords or signing keys into configuration or source control.
 
+## App missing from the emulator after tests
+
+Connected instrumentation tests can uninstall `com.motivance.debug` during cleanup. On 2026-11-01, the emulator had no Motivance package installed, and the connected-test `utp.0.log` recorded uninstalling both the application and test package. The launcher activity remained correctly declared. Running `:app:installDebug` succeeded, and launching `com.motivance.debug/com.motivance.MainActivity` returned `Status: ok`; the running app was also visually verified on the Pixel 6 / Android 15 emulator.
+
+To reinstall after tests, select the **app** run configuration and the intended device in Android Studio, then click **Run**. Alternatively, from `android/`, run `.\gradlew.bat :app:installDebug`. Select the same emulator you intend to use; installation on an emulator does not install the application on a physical phone. This does not change SMTP settings.
+
 ## Backend
 
 For persistent local development logins, run `python scripts/seed_local_accounts.py` from the repository root. It creates confirmed `therapist@motivance.test` and `patient@motivance.test` accounts, assigns their exact roles through trusted local provisioning and links the demo patient to the therapist. Generated passwords are stored only in ignored `docs/operations/local-test-accounts.json`; the script prints no passwords or privileged keys. Reruns reuse these fixture accounts/passwords and refuse to overwrite an unrelated existing account. A local database reset removes the accounts; rerun this script afterward. The original draft catalogue remains unpublished. S3 adds two usable development exercise definitions; `--with-prescription` optionally creates one demonstration elbow assignment without overwriting an existing program. This is not a clinical-approval record.

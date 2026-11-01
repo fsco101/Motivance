@@ -1,6 +1,6 @@
 package com.motivance.domain
 
-data class LinkedPatient(val id:String,val name:String)
+data class LinkedPatient(val id:String,val name:String,val profile:PatientProfile?=null)
 data class CatalogueExercise(val id:String,val name:String,val algorithm:String,val instructions:String)
 data class PrescriptionSummary(val assignmentId:String,val versionId:String,val patientId:String,val exerciseId:String,val version:Int,val side:String,val low:Double,val high:Double,val repetitions:Int,val parameters:String="{}")
 data class PrivacyRequest(val id:String,val kind:String,val status:String)

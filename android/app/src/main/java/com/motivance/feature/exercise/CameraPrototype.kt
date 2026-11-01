@@ -36,6 +36,8 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.motivance.R
+import com.motivance.designsystem.ActionButton
+import com.motivance.designsystem.FeedbackNotice
 import com.motivance.assessment.CameraDiagnostics
 import com.motivance.assessment.PerformancePolicy
 import androidx.compose.ui.semantics.*
@@ -185,10 +187,11 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             Text(stringResource(R.string.session_saved_local))
             OutlinedButton({session.newSession(); consent=false}) {Text(stringResource(R.string.new_session))}
         }
-        if(exercise.error) Text(stringResource(R.string.local_save_failed),color=MaterialTheme.colorScheme.error)
+        if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
         if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
         if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({session.newSession();consent=false},enabled=!exercise.saving) {Text(stringResource(R.string.new_session))}
-        Button({if(exercise.id!=null && !exercise.saved) {exitRequested=true; session.finish()} else onBack()},enabled=!exercise.saving,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp),shape=RoundedCornerShape(12.dp)) { Text(stringResource(if(exercise.saving) R.string.saving_session else if(exercise.id!=null && !exercise.saved) R.string.finish_save_session else R.string.finish_camera)) }
+        ActionButton(if(exercise.id!=null && !exercise.saved) R.string.finish_save_session else R.string.finish_camera,
+            {if(exercise.id!=null && !exercise.saved) {exitRequested=true; session.finish()} else onBack()},busy=exercise.saving,busyLabel=R.string.saving_session)
     }
 }
 

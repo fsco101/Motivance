@@ -63,7 +63,9 @@
       "docs/validation/sprint-04-implementation-test-results.json",
       "docs/validation/sprint-03-backend-results.json",
       "docs/validation/sprint-04-admin-backend-results.json",
-      "docs/operations/PRODUCTION-READINESS.md"
+      "docs/operations/PRODUCTION-READINESS.md",
+      "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+      "docs/validation/workspace-ui-results.json"
     ],
     "acceptance_basis": "engineering-implementation"
   },
@@ -156,7 +158,9 @@
           "docs/validation/SPRINT-04-HISTORY.md",
           "docs/validation/sprint-04-history-test-results.json",
           "docs/validation/sprint-04-history-backend-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+          "docs/validation/workspace-ui-results.json"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -166,7 +170,9 @@
       ],
       "implementation_evidence": [
         "docs/validation/SPRINT-04-HISTORY.md",
-        "docs/validation/sprint-04-history-test-results.json"
+        "docs/validation/sprint-04-history-test-results.json",
+        "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+        "docs/validation/workspace-ui-results.json"
       ]
     },
     {
@@ -256,7 +262,9 @@
         "evidence": [
           "docs/validation/SPRINT-04-IMPLEMENTATION.md",
           "docs/validation/sprint-04-implementation-test-results.json",
-          "docs/validation/sprint-04-admin-backend-results.json"
+          "docs/validation/sprint-04-admin-backend-results.json",
+          "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+          "docs/validation/workspace-ui-results.json"
         ],
         "acceptance_basis": "engineering-implementation"
       },
@@ -265,7 +273,9 @@
       "implementation_evidence": [
         "docs/validation/SPRINT-04-IMPLEMENTATION.md",
         "docs/validation/sprint-04-implementation-test-results.json",
-        "docs/validation/sprint-04-admin-backend-results.json"
+        "docs/validation/sprint-04-admin-backend-results.json",
+        "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+        "docs/validation/workspace-ui-results.json"
       ]
     },
     {
@@ -366,7 +376,12 @@
         "evidence": [
           "docs/validation/SPRINT-04-IMPLEMENTATION.md",
           "docs/validation/sprint-04-implementation-test-results.json",
-          "docs/validation/sprint-04-resource-checks.json"
+          "docs/validation/sprint-04-resource-checks.json",
+          "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+          "docs/validation/workspace-ui-results.json",
+          "docs/validation/PATIENT-PROFILES.md",
+          "docs/validation/patient-profile-results.json",
+          "docs/validation/patient-profile-backend-results.json"
         ],
         "acceptance_basis": "engineering-implementation"
       },
@@ -375,7 +390,12 @@
       "implementation_evidence": [
         "docs/validation/SPRINT-04-IMPLEMENTATION.md",
         "docs/validation/sprint-04-implementation-test-results.json",
-        "docs/validation/sprint-04-resource-checks.json"
+        "docs/validation/sprint-04-resource-checks.json",
+        "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+        "docs/validation/workspace-ui-results.json",
+        "docs/validation/PATIENT-PROFILES.md",
+        "docs/validation/patient-profile-results.json",
+        "docs/validation/patient-profile-backend-results.json"
       ]
     },
     {
@@ -584,7 +604,12 @@
           "docs/validation/SPRINT-04-IMPLEMENTATION.md",
           "docs/validation/sprint-04-implementation-test-results.json",
           "docs/validation/sprint-03-backend-results.json",
-          "docs/validation/sprint-04-admin-backend-results.json"
+          "docs/validation/sprint-04-admin-backend-results.json",
+          "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+          "docs/validation/workspace-ui-results.json",
+          "docs/validation/PATIENT-PROFILES.md",
+          "docs/validation/patient-profile-results.json",
+          "docs/validation/patient-profile-backend-results.json"
         ],
         "acceptance_basis": "engineering-implementation"
       },
@@ -595,7 +620,12 @@
         "docs/validation/SPRINT-04-IMPLEMENTATION.md",
         "docs/validation/sprint-04-implementation-test-results.json",
         "docs/validation/sprint-03-backend-results.json",
-        "docs/validation/sprint-04-admin-backend-results.json"
+        "docs/validation/sprint-04-admin-backend-results.json",
+        "docs/validation/WORKSPACE-UI-REFINEMENT.md",
+        "docs/validation/workspace-ui-results.json",
+        "docs/validation/PATIENT-PROFILES.md",
+        "docs/validation/patient-profile-results.json",
+        "docs/validation/patient-profile-backend-results.json"
       ]
     },
     {

@@ -39,6 +39,20 @@ class AdministrationViewModelTest {
         assertTrue(vm.state.value.failed);assertTrue(vm.state.value.data.accounts.isEmpty())
         remote.failure=false;vm.refresh();advanceUntilIdle();assertFalse(vm.state.value.failed)
     }
+    @Test fun mutationLoadingStaysVisibleUntilDirectoryRefreshCompletes()=runTest {
+        val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin")
+        val gate=CompletableDeferred<AdminWorkspace>();remote.wait=gate
+        vm.account("patient",false);runCurrent()
+        assertTrue(vm.state.value.busy)
+        assertEquals(AdminAction.ACCOUNT,vm.state.value.activeAction)
+        assertFalse(vm.state.value.updated)
+        vm.account("patient",false)
+        assertEquals(1,remote.changed.size)
+        gate.complete(remote.page);advanceUntilIdle()
+        assertFalse(vm.state.value.busy)
+        assertNull(vm.state.value.activeAction)
+        assertTrue(vm.state.value.updated)
+    }
     @Test fun paginationDeduplicatesAndRepeatedClickWhileBusyDoesNotRepeatChange()=runTest {
         val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin");vm.refresh();advanceUntilIdle()
         remote.page=remote.page.copy(accounts=remote.page.accounts+AdminAccount("b","Other",true,emptySet()),next=null)

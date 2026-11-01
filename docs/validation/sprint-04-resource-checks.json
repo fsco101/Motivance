@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-01T06:38:41.726745+00:00",
-  "strings_per_locale": 348,
+  "generated_at": "2026-11-01T08:24:41.883948+00:00",
+  "strings_per_locale": 414,
   "format_parity": true,
   "critical_contrasts": [
     {
@@ -19,14 +19,24 @@
       "contrast_ratio": 16.34
     },
     {
-      "foreground": "43474F",
+      "foreground": "526174",
       "background": "E5EEFF",
-      "contrast_ratio": 7.99
+      "contrast_ratio": 5.42
     },
     {
       "foreground": "006A61",
       "background": "D6F7F0",
       "contrast_ratio": 5.7
+    },
+    {
+      "foreground": "002042",
+      "background": "86F2E4",
+      "contrast_ratio": 12.32
+    },
+    {
+      "foreground": "D6E6EE",
+      "background": "104C60",
+      "contrast_ratio": 7.38
     }
   ],
   "limitations": [

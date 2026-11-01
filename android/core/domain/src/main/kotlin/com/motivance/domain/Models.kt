@@ -11,6 +11,10 @@ interface AuthRepository {
     suspend fun restoreSession():UserSession? = null
     suspend fun signIn(email: String, password: String): UserSession
     suspend fun register(email: String, password: String)
+    suspend fun registerProfile(email:String,password:String,profile:PatientProfile) {throw UnsupportedOperationException()}
+    suspend fun loadProfile():PatientProfile {throw UnsupportedOperationException()}
+    suspend fun saveProfile(profile:PatientProfile) {throw UnsupportedOperationException()}
+    suspend fun changePassword(currentPassword:String,newPassword:String) {throw UnsupportedOperationException()}
     suspend fun confirmRegistration(email: String, token: String): UserSession
     suspend fun resendConfirmation(email:String) {throw UnsupportedOperationException("Confirmation resend is unavailable")}
     suspend fun requestRecovery(email: String)

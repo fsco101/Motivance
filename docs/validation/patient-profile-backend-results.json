@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-11-01T08:20:08.363577+00:00",
+  "passed": true,
+  "checks": [
+    "Signup trigger saves detailed profile and consent",
+    "Consent has server-controlled policy version and timestamp",
+    "Unrelated patient cannot read profile",
+    "Unassigned therapist cannot read profile",
+    "Anonymous cannot read profiles",
+    "Linked therapist can read demographic details and avatar",
+    "Missing privacy agreement rejected",
+    "Future birthdate rejected",
+    "Invalid username rejected",
+    "Case-insensitive unique username enforced",
+    "Direct profile mutation denied",
+    "Owner can update editable profile details",
+    "RPC ignores forged owner and saves selected avatar",
+    "Profile edit preserves original consent evidence",
+    "Profile save cannot change sign-in email",
+    "Internal writer cannot be invoked by app users",
+    "Revoked therapist immediately loses profile access",
+    "Authenticated password change supported",
+    "Old password rejected after change",
+    "New password signs in"
+  ],
+  "fixtures": "Synthetic local users only; no messages sent"
+}

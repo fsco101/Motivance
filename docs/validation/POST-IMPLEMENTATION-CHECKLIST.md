@@ -9,10 +9,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Open `android/`, sync Gradle with JDK 17, and run the debug `app` on the intended phone.
 - [ ] Confirm the supplied Motivance logo appears on the launcher and landing/auth/dashboard headers; check a circular and a rounded-square launcher mask.
 - [ ] Check readable contrast, 48dp touch targets, English/Filipino copy, large fonts and TalkBack. Check form validation and scrolling with the keyboard visible.
+- [ ] Review the refined patient/therapist home cards, parent-screen Back controls, administrator sections, expandable filters/timing fields, and operation-specific loading/error announcements on physical phones with representative users in both languages. Emulator evidence is recorded in `WORKSPACE-UI-REFINEMENT.md`; therapist wording, TalkBack and physical-device usability remain unexecuted.
 - [ ] Review the refined loading/login/signup/recovery screens on physical phones: TalkBack password visibility labels and loading/error announcements, keyboard Next/Done, rotation with credentials cleared, and patient/therapist wording. Emulator screenshots and synthetic flow tests are recorded in `AUTH-UI-REFINEMENT.md`; these physical and human checks remain unexecuted.
 - [ ] Verify emulator/USB-phone/hosted URL selection using `docs/operations/ENVIRONMENT.md`. Test the two local accounts; no privileged key should exist in the APK.
 
 ## Therapist-to-patient workflow
+
+- [ ] Review the detailed signup/privacy agreement and profile editing with representative users in both languages: age derived from birthdate, immutable email, avatar choice, current-password verification and connected-therapist demographic visibility. Review privacy wording, consent comprehension and any minor/guardian procedures with the deployment owner before live enrollment. These human/physical checks remain unexecuted; automated profile checks are separate engineering evidence.
 
 - [ ] Therapist creates an invitation for an email without entering a patient password. Patient registers/confirms that email, accepts the shared code and appears in the therapist's list. A mismatched email and expired invitation must fail.
 - [ ] Create left/right elbow-flexion and shoulder-abduction prescriptions, including low/high targets, repetitions, cycle timing, hold and visible trunk-lean threshold.
