@@ -33,6 +33,7 @@ data class ExerciseSessionState(
     private var lastCheckpoint=0L
     private var observeJob:Job?=null
     private var cacheJob:Job?=null
+    private var lifecycleRevision=0L
     private val writes=Mutex()
     fun configure(account:String) {
         if(owner==account) return
@@ -69,6 +70,7 @@ data class ExerciseSessionState(
         if(!consent || current.saving || current.saved || owner.isBlank() || (current.rules.demo && !BuildConfig.DEBUG)) return
         if(!current.rules.demo && current.cached.none { it.versionId==current.rules.prescriptionVersionId && it.ownerId==owner && it.expiresAt>System.currentTimeMillis() }) return
         val account=owner
+        val revision=lifecycleRevision
         mutable.value=current.copy(saving=true,error=false)
         viewModelScope.launch {
             try {
@@ -76,7 +78,7 @@ data class ExerciseSessionState(
                     val row=store.dao.get(account,current.id)
                     store.dao.latestConsent(account)?.takeIf {it.event=="granted" && it.id==row?.consentId} ?: error("Consent changed; begin a new session")
                 }
-                if(owner!=account || mutable.value.id!=current.id) return@launch
+                if(owner!=account || mutable.value.id!=current.id || revision!=lifecycleRevision) return@launch
                 if(!engine.start(SystemClock.uptimeMillis())) return@launch
                 if(current.id==null) {startedAt=maxOf(System.currentTimeMillis(),grant?.occurredAt ?: 0); mutable.value=mutable.value.copy(id=UUID.randomUUID().toString())}
                 mutable.value=mutable.value.copy(metrics=engine.snapshot)
@@ -87,11 +89,13 @@ data class ExerciseSessionState(
         }
     }
     fun interrupt() {
+        lifecycleRevision++
         val metrics=engine.pause(SystemClock.uptimeMillis())
         mutable.value=mutable.value.copy(metrics=metrics)
         if(mutable.value.id!=null && !mutable.value.saved && !mutable.value.saving) persist("INTERRUPTED")
     }
     fun finish() {
+        lifecycleRevision++
         if(mutable.value.id==null || mutable.value.saving || mutable.value.saved) return
         val metrics=engine.pause(SystemClock.uptimeMillis())
         mutable.value=mutable.value.copy(metrics=metrics,saving=true,error=false)

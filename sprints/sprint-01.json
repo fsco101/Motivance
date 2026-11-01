@@ -4,7 +4,7 @@
   "title": "S1 - Foundations and camera feasibility",
   "description": "Weeks 1-2. Exit: therapist-approved exercise scope and validation protocol; runnable Android shell, schema and access foundation; live skeleton demonstrated on target phones. Stop and re-scope unsupported exercises if feasibility fails.",
   "goal": "Prove the technical approach before committing to the exercise scope.",
-  "status": "in-progress",
+  "status": "completed",
   "weeks": {
     "start": 1,
     "end": 2
@@ -18,22 +18,28 @@
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/SPRINT-01-CI-RECONCILIATION.md",
+        "https://github.com/fsco101/Motivance/actions/runs/41185945720",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist and physical-device checks are deferred and do not block engineering implementation.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "Deferred therapist/physical demo; engineering implementation and CI verified separately."
     },
     {
       "description": "Demonstrate a correctly aligned skeleton on two device classes and review the agreed exercise and validation protocol.",
       "passed": false,
       "evidence": [
-        "docs/validation/SPRINT-01-IMPLEMENTATION.md",
-        "docs/validation/SPRINT-01-PROTOCOL.md",
-        "docs/validation/sprint-04-history-test-results.json",
-        "docs/validation/IMPLEMENTATION-CLOSURE.md",
+        "docs/validation/SPRINT-01-CI-RECONCILIATION.md",
+        "https://github.com/fsco101/Motivance/actions/runs/41185945720",
         "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
       ],
       "non_blocking": true,
-      "deferral_authority": "User instruction: therapist/physical checks are deferred and implemented work/solved GitHub issues must be closed.",
+      "deferral_authority": "User instruction: therapist and physical-device checks are deferred and do not block engineering implementation.",
       "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
-      "disposition": "Deferred physical/demo verification remains unexecuted; engineering delivery is evidenced separately."
+      "disposition": "Deferred therapist/physical demo; engineering implementation and CI verified separately."
     }
   ],
   "demo": "Demonstrate a correctly aligned skeleton on two device classes and review the agreed exercise and validation protocol.",
@@ -48,9 +54,14 @@
   },
   "total_estimate_points": 29,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-01T05:19:15.729082+00:00",
+    "reviewed_by": "Codex",
+    "evidence": [
+      "docs/validation/SPRINT-01-CI-RECONCILIATION.md",
+      "https://github.com/fsco101/Motivance/actions/runs/41185945720",
+      "docs/validation/IMPLEMENTATION-CLOSURE.md"
+    ],
+    "acceptance_basis": "engineering-implementation"
   },
   "issues": [
     {
@@ -173,7 +184,7 @@
       "github_issue": 3,
       "title": "Create Android modules, dependency injection and continuous integration",
       "description": "Bootstrap Kotlin/Compose with three Gradle modules (:app, :core:domain, :core:assessment), feature packages, Hilt, pinned toolchain and dependency catalogue as specified in docs/PLAN.md. Configure build variants and CI.",
-      "status": "in-progress",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Android developer",
       "estimate_points": 5,
@@ -223,10 +234,10 @@
         {
           "id": "MOT-02-AC3",
           "description": "CI runs build, lint and domain tests; secrets and signing files are excluded from version control.",
-          "passed": false,
+          "passed": true,
           "evidence": [
-            "docs/validation/IMPLEMENTATION-CLOSURE.md",
-            "https://github.com/fsco101/Motivance/actions/runs/41183483387"
+            "docs/validation/SPRINT-01-CI-RECONCILIATION.md",
+            "https://github.com/fsco101/Motivance/actions/runs/41185945720"
           ]
         },
         {
@@ -239,14 +250,16 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-01T05:19:15.729082+00:00",
+        "reviewed_by": "Codex",
+        "evidence": [
+          "docs/validation/SPRINT-01-CI-RECONCILIATION.md",
+          "https://github.com/fsco101/Motivance/actions/runs/41185945720"
+        ],
+        "acceptance_basis": "engineering-implementation"
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Remote Android CI failed during SDK setup: https://github.com/fsco101/Motivance/actions/runs/41183483387. Local workflow fix replaces retired tools package with platform-tools; publish and obtain a passing remote run before closing MOT-02/S1."
-      ],
+      "blockers": [],
       "implementation_evidence": [
         "docs/validation/SPRINT-01-IMPLEMENTATION.md",
         "docs/validation/SPRINT-01-PROTOCOL.md",

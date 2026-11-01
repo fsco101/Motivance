@@ -1,5 +1,11 @@
 # Android development setup
 
+S4 adds the Administrator sign-in portal and server-controlled account/role/link/catalogue operations. The first administrator must be provisioned through a trusted SQL operation for a verified existing account; ordinary registration creates only a patient. Sign in through Administrator, open Administration, and confirm changes before submission. New catalogue instructions require both English and Filipino and append a version; existing prescriptions stay pinned. The app's administrative operations use the public client configuration and signed-in JWT, never a service-role key. `python scripts/test_administration.py` verifies real local Auth/PostgREST with disposable synthetic accounts and preserves existing development records.
+
+Choose English or Filipino on the landing screen or in Profile. The non-sensitive preference survives restart. Bilingual catalogue instructions retain both authored languages in the offline cache; legacy English-only versions remain unchanged. Admins can publish new bilingual versions. Representative terminology and physical accessibility review remain deferred. `python scripts/check_resources.py` verifies resource/format parity and critical text contrast; emulator tests cover a prescribed start control at double font size.
+
+S4 pauses on severe thermal status and displays an advisory after sustained slow processing. Neither is a clinical device-eligibility certification. Interruption invalidates a pending Start, and camera callbacks after disposal/backgrounding cannot update measurements. The checked-in synthetic prolonged-session tests cover bounded state and counts, not physical heat/battery/accuracy. See [production preparation](PRODUCTION-READINESS.md) for environment, migration, signing and distribution steps; no hosted release is created by the local checks.
+
 Open `android/` in Android Studio. The pinned baseline is JDK 17, Gradle 8.11.1, AGP 8.9.1, Kotlin 2.1.20, KSP 2.1.20-1.0.32, Hilt 2.56.1, Compose BOM 2025.04.01, CameraX 1.4.2, MediaPipe 0.10.21, Room 2.8.5 and WorkManager 2.10.5. Versions are in the Gradle catalogue. Install Android platform 35 and build tools 35.0.0; minimum device API is 26.
 
 Start the local stack from the repository root, then create the ignored environment file:
@@ -82,3 +88,5 @@ npx --yes supabase@2.20.12 test db
 ```
 
 The first command uses four disposable local users and cleans only those fixtures; the existing demo accounts/program are preserved. Android instrumented tests add file-backed migration, lost-acknowledgement/offline sync, owner isolation and Keystore checks. All generated reports belong in `docs/validation/`.
+
+For the optional native `CameraLifecycleTest`, use a camera source that actually supplies frames. On the headless test host the saved webcam0 setting supplied none; cold-booting the AVD with `-camera-back emulated -camera-front emulated -no-snapshot-load` passes the native smoke test without changing its saved camera preferences. Synthetic emulator imagery does not test patient tracking accuracy.

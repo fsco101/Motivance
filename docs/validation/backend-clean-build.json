@@ -4,7 +4,9 @@
   "copied_accounts": false,
   "migrations": [
     "202610310001_foundation.sql",
-    "202611010001_connected_workflow.sql"
+    "202611010001_connected_workflow.sql",
+    "202611010002_administration.sql",
+    "202611010003_localized_catalogue.sql"
   ],
   "foundation_sql_tests_passed": 18,
   "exit_code": 0,

@@ -1,5 +1,7 @@
 # Engineering implementation closure review
 
+S4 reconciliation on 2026-11-01: the historical CI failure below was superseded by successful main runs 41185945720 (Android) and 41185945737 (database). MOT-02 and S1 are now closed; see SPRINT-01-CI-RECONCILIATION.md. S4 delivery is recorded separately in SPRINT-04-IMPLEMENTATION.md. The original review below is retained as historical evidence.
+
 The user instructed Codex to always close implemented sprint milestones and solved GitHub issues. This review reconciles existing engineering delivery evidence with that standing instruction. Sprint JSON remains the editable status authority; this report records the evidence review and its limits rather than duplicating the backlog.
 
 ## Evidence reviewed

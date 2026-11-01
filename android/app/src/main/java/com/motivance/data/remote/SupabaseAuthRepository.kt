@@ -27,7 +27,7 @@ import java.time.Instant
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null
-) : AuthRepository, RehabilitationRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -140,6 +140,21 @@ import java.time.Instant
             }}.filterNotNull(),
             rows(requests) {PrivacyRequest(it.getString("id"),it.getString("kind"),it.getString("status"))})
     }
+    override suspend fun loadAdministration(after:String?)=authorized {token,_ ->
+        val accounts=JSONArray(call("/rest/v1/rpc/admin_accounts",JSONObject().put("p_after",after ?: JSONObject.NULL),token))
+        val links=JSONArray(call("/rest/v1/therapist_patients?select=therapist_id,patient_id,active&order=therapist_id,patient_id&limit=500",null,token,"GET"))
+        val exercises=JSONArray(call("/rest/v1/exercises?select=id,code,active,exercise_versions(version,definition)&order=code&limit=100",null,token,"GET"))
+        val rows=(0 until minOf(accounts.length(),50)).map {val a=accounts.getJSONObject(it);val r=a.getJSONArray("roles"); AdminAccount(a.getString("id"),a.getString("display_name"),a.getBoolean("active"),(0 until r.length()).map {r.getString(it)}.toSet())}
+        AdminWorkspace(rows,(0 until links.length()).map {val l=links.getJSONObject(it);AdminLink(l.getString("therapist_id"),l.getString("patient_id"),l.getBoolean("active"))},
+            (0 until exercises.length()).map {val e=exercises.getJSONObject(it);val v=e.getJSONArray("exercise_versions");val latest=(0 until v.length()).map {v.getJSONObject(it)}.maxByOrNull {it.getInt("version")};val d=latest?.getJSONObject("definition")
+                AdminExercise(e.getString("id"),e.getString("code"),e.getBoolean("active"),latest?.getInt("version") ?: 0,d?.optString("name").orEmpty(),d?.optString("instructions_en").orEmpty(),d?.optString("instructions_fil").orEmpty())},
+            if(accounts.length()>50) rows.last().id else null)
+    }
+    override suspend fun setAccount(user:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_account",JSONObject().put("p_user",user).put("p_active",active),t)}}
+    override suspend fun setRole(user:String,role:String,granted:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_role",JSONObject().put("p_user",user).put("p_role",role).put("p_granted",granted),t)}}
+    override suspend fun setLink(therapist:String,patient:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_link",JSONObject().put("p_therapist",therapist).put("p_patient",patient).put("p_active",active),t)}}
+    override suspend fun setExercise(exercise:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_exercise",JSONObject().put("p_exercise",exercise).put("p_active",active),t)}}
+    override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_publish_exercise",JSONObject().put("p_exercise",exercise).put("p_name",name).put("p_english",english).put("p_filipino",filipino),t)}}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }

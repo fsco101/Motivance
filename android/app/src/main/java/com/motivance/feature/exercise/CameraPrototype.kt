@@ -47,6 +47,8 @@ import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.motivance.R
 import com.motivance.assessment.PreviewMapping
 import com.motivance.assessment.CameraDiagnostics
+import com.motivance.assessment.PerformancePolicy
+import androidx.compose.ui.semantics.*
 import com.motivance.domain.Landmark
 import com.motivance.domain.*
 import com.motivance.BuildConfig
@@ -71,12 +73,12 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
     var paused by remember { mutableStateOf(false) }
     var display by remember { mutableStateOf<DisplayFrame?>(null) }
     var error by remember { mutableStateOf<Int?>(null) }
-    var active by remember { mutableStateOf(lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) }
+    var active by remember { mutableStateOf(lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
     var diagnostics by remember { mutableStateOf<CameraDiagnostics.Snapshot?>(null) }
     var thermalStatus by remember { mutableStateOf(-1) }
     DisposableEffect(lifecycle) {
         val observer=LifecycleEventObserver { _, event ->
-            active=lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+            active=lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
             if(event==Lifecycle.Event.ON_RESUME) permission=ContextCompat.checkSelfPermission(context,Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED
             if(!active) { display=null; session.interrupt() }
         }
@@ -87,6 +89,7 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
         val executor=Executors.newSingleThreadExecutor()
         val disposed=AtomicBoolean(false)
         val runtimeFailed=AtomicBoolean(false)
+        val awaitingUi=AtomicBoolean(false)
         val main=ContextCompat.getMainExecutor(context)
         val future=ProcessCameraProvider.getInstance(context)
         var provider: ProcessCameraProvider?=null
@@ -100,11 +103,12 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
                 analysis=useCase
                 useCase.setAnalyzer(executor) { image ->
                     try {
-                        if(!disposed.get() && !runtimeFailed.get()) {
+                        if(!disposed.get() && !runtimeFailed.get() && !awaitingUi.get()) {
                             if(detector==null) detector=PoseLandmarker.createFromOptions(context,PoseLandmarker.PoseLandmarkerOptions.builder().setBaseOptions(BaseOptions.builder().setModelAssetPath("models/pose_landmarker_lite.task").build()).setRunningMode(RunningMode.VIDEO).setNumPoses(2).build())
                             val source=image.toBitmap()
                             val matrix=Matrix().apply { postRotate(image.imageInfo.rotationDegrees.toFloat()) }
                             val upright=Bitmap.createBitmap(source,0,0,source.width,source.height,matrix,true)
+                            if(source!==upright) source.recycle()
                             val start=SystemClock.uptimeMillis()
                             // MPImage.close() recycles its bitmap. Keep the displayed bitmap independent.
                             val mpImage=BitmapImageBuilder(upright.copy(Bitmap.Config.ARGB_8888,false)).build()
@@ -113,11 +117,19 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
                             val points=people.firstOrNull().orEmpty()
                             val frame=DisplayFrame(upright,points,SystemClock.uptimeMillis()-start)
                             val snapshot=meter.record(start,frame.latency)
-                            main.execute { if(!disposed.get()) {
-                                display=frame; diagnostics=snapshot; error=null
-                                session.frame(people,upright.width,upright.height,start)
-                                thermalStatus=if(Build.VERSION.SDK_INT>=29) context.getSystemService(PowerManager::class.java).currentThermalStatus else -1
-                            } }
+                            awaitingUi.set(true)
+                            main.execute {
+                                try {
+                                    if(!disposed.get() && active && !paused) {
+                                        thermalStatus=if(Build.VERSION.SDK_INT>=29) context.getSystemService(PowerManager::class.java).currentThermalStatus else -1
+                                        if(PerformancePolicy.shouldPause(thermalStatus)) {
+                                            session.interrupt(); paused=true; display=null; error=R.string.camera_thermal_pause
+                                            upright.recycle()
+                                        } else if(SystemClock.uptimeMillis()-start>1000) {session.interrupt();upright.recycle()}
+                                        else {display=frame;diagnostics=snapshot;error=null;session.frame(people,upright.width,upright.height,start)}
+                                    } else upright.recycle()
+                                } finally {awaitingUi.set(false)}
+                            }
                         }
                     } catch(e: LinkageError) {
                         runtimeFailed.set(true)
@@ -165,7 +177,7 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
         error?.let { Text(stringResource(it)) }
         val shown=display
         Surface(color=Color(0xFFD6F7F0),shape=RoundedCornerShape(16.dp)) {
-            Text(stringResource(exercise.metrics.quality.label()),Modifier.padding(12.dp),color=Color(0xFF006A61))
+            Text(stringResource(exercise.metrics.quality.label()),Modifier.padding(12.dp).semantics {liveRegion=LiveRegionMode.Polite},color=Color(0xFF006A61))
         }
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
             Text(stringResource(R.string.measured_angle,exercise.metrics.angleDegrees?.let {"%.1f".format(it)} ?: "--"))
@@ -176,6 +188,7 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
         if(exercise.metrics.feedback!=RepFeedback.NONE) Text(stringResource(exercise.metrics.feedback.label()),color=MaterialTheme.colorScheme.secondary)
         if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height))
         diagnostics?.let { Text(stringResource(R.string.diagnostics_summary,"%.1f".format(it.fps),it.p95LatencyMs,thermalStatus),style=MaterialTheme.typography.labelSmall) }
+        if(diagnostics?.let {PerformancePolicy.slow(it)}==true) Text(stringResource(R.string.camera_slow_warning))
         Canvas(Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(24.dp)).background(Color(0xFF002042)).border(2.dp,Color(0xFF43474F),RoundedCornerShape(24.dp))) {
             if(size.width<=0f || size.height<=0f) return@Canvas
             shown?.let { frame ->
@@ -197,7 +210,8 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
             OutlinedButton({if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f),enabled=!exercise.saving) { Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera)) }
         }
         if(exercise.id==null) Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
-            Checkbox(consent,{consent=it}); Text(stringResource(if(exercise.rules.demo) R.string.local_metrics_consent else R.string.sync_metrics_consent),style=MaterialTheme.typography.bodySmall)
+            val consentLabel=stringResource(if(exercise.rules.demo) R.string.local_metrics_consent else R.string.sync_metrics_consent)
+            Checkbox(consent,{consent=it},modifier=Modifier.semantics {contentDescription=consentLabel}); Text(consentLabel,style=MaterialTheme.typography.bodySmall)
         }
         if(exercise.recoverable!=null && exercise.id==null) TextButton({session.restore()}) { Text(stringResource(R.string.recover_interrupted)) }
         if(exercise.saved) {

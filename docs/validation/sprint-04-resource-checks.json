@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-11-01T05:37:54.913899+00:00",
+  "strings_per_locale": 316,
+  "format_parity": true,
+  "critical_contrasts": [
+    {
+      "foreground": "002042",
+      "background": "FFFFFF",
+      "contrast_ratio": 16.34
+    },
+    {
+      "foreground": "006A61",
+      "background": "FFFFFF",
+      "contrast_ratio": 6.49
+    },
+    {
+      "foreground": "0B1C30",
+      "background": "F8F9FF",
+      "contrast_ratio": 16.34
+    },
+    {
+      "foreground": "43474F",
+      "background": "E5EEFF",
+      "contrast_ratio": 7.99
+    },
+    {
+      "foreground": "006A61",
+      "background": "D6F7F0",
+      "contrast_ratio": 5.7
+    }
+  ],
+  "limitations": [
+    "Translation wording and TalkBack comprehension require deferred human review. Automated coverage does not establish linguistic or clinical approval."
+  ]
+}

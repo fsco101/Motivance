@@ -1,9 +1,9 @@
 name: Database migration and access checks
 on:
   push:
-    paths: ['supabase/**', 'scripts/test_local_auth.py', '.github/workflows/database-ci.yml']
+    paths: ['supabase/**', 'scripts/test_local_auth.py', 'scripts/test_connected_workflow.py', 'scripts/test_administration.py', '.github/workflows/database-ci.yml']
   pull_request:
-    paths: ['supabase/**', 'scripts/test_local_auth.py', '.github/workflows/database-ci.yml']
+    paths: ['supabase/**', 'scripts/test_local_auth.py', 'scripts/test_connected_workflow.py', 'scripts/test_administration.py', '.github/workflows/database-ci.yml']
 permissions:
   contents: read
 jobs:
@@ -18,5 +18,7 @@ jobs:
       - run: supabase db reset
       - run: supabase test db
       - run: python scripts/test_local_auth.py
+      - run: python scripts/test_connected_workflow.py
+      - run: python scripts/test_administration.py
       - if: always()
         run: supabase stop --no-backup

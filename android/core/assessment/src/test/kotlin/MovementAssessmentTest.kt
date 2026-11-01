@@ -5,6 +5,21 @@ import org.junit.Test
 import kotlin.math.*
 
 class MovementAssessmentTest {
+    @Test fun prolongedSyntheticSessionAndRepeatedInterruptionsPreserveCounts() {
+        val r=ready()
+        repeat(1600) {index ->
+            cycle(r)
+            if(index%100==0) {
+                r.engine.pause(r.time)
+                val count=r.engine.snapshot.completed
+                repeat(6) {r.frame(pose(10.0))}
+                assertEquals(count,r.engine.snapshot.completed)
+                assertTrue(r.engine.start(r.time))
+            }
+        }
+        assertEquals(1600,r.engine.snapshot.completed)
+        assertTrue(r.engine.snapshot.durationMs>=1_700_000)
+    }
     private fun pose(angle:Double,side:BodySide=BodySide.LEFT,shoulder:Boolean=false):List<Landmark> {
         val points=MutableList(33) { Landmark(.5f,.5f,1f) }
         val s=if(side==BodySide.LEFT) 11 else 12

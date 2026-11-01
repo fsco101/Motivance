@@ -21,8 +21,12 @@ object PrescriptionCache {
         val convention=if(kind==ExerciseKind.ELBOW_FLEXION) "2d_flexion_degrees" else "2d_abduction_degrees"
         if(definition.optString("measurement_convention")!=convention) return@mapNotNull null
         val side=when(version.getString("side")) { "left" -> BodySide.LEFT; "right" -> BodySide.RIGHT; else -> return@mapNotNull null }
-        val instructions=definition.optString("instructions_en").ifBlank {definition.optJSONObject("instructions")?.optString("en").orEmpty()}
-        if(instructions.isBlank()) return@mapNotNull null
+        val english=definition.optString("instructions_en").ifBlank {definition.optJSONObject("instructions")?.optString("en").orEmpty()}
+        if(english.isBlank()) return@mapNotNull null
+        // Keep both authored translations in the same immutable cached text, available offline
+        // even after a language change. Legacy English-only versions remain identifiable as such.
+        val filipino=definition.optString("instructions_fil")
+        val instructions=if(filipino.isBlank()) english else "English:\n$english\n\nFilipino:\n$filipino"
         val parameters=version.optJSONObject("parameters") ?: org.json.JSONObject()
         val rules=runCatching {ExerciseRules(kind=kind,side=side,lowDegrees=version.getDouble("minimum_degrees"),highDegrees=version.getDouble("maximum_degrees"),targetRepetitions=version.getInt("target_repetitions"),confidence=parameters.optDouble("confidence",.7).toFloat(),minimumCycleMs=parameters.optLong("minimum_cycle_ms",600),maximumCycleMs=parameters.optLong("maximum_cycle_ms",30000),peakHoldMs=parameters.optLong("peak_hold_ms",100),maxTrunkLeanDegrees=parameters.optDouble("max_trunk_lean_degrees",20.0),version=exercise.getString("id"),prescriptionVersionId=version.getString("id"),demo=false)}.getOrNull() ?: return@mapNotNull null
         CachedPrescription(owner,version.getString("id"),assignment.getString("id"),owner,ExerciseJson.rules(rules),instructions,now+24*60*60*1000,now)

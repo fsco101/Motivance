@@ -55,6 +55,15 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Review separate prescription charts against de-identified reference records. Check original targets, limited/invalid/interrupted gaps, tracking quality and units, and verify that estimates are not interpreted as clinical improvement.
 - [ ] Check chart descriptions, filter labels, session cards, large fonts and load-older controls with TalkBack on the supported physical phones. Automated emulator rendering does not establish physical accessibility or clinical usefulness.
 
+## Sprint 4 follow-up
+
+- [ ] Review the administrator workspace on physical phones: account enable/disable, grant/revoke staff, link/revoke and catalogue version publication. Confirm identity/custody for the initial trusted admin; never create admin access through signup metadata.
+- [ ] Review all English/Filipino terminology with the therapist and representative phone users. Automated resource/format parity, contrast calculations and a double-font emulator test do not establish human comprehension or TalkBack usability.
+- [ ] Measure task completion, setup mistakes and feedback comprehension for assigned exercise start/finish, history review and recovery. Record participants, protocol and observed difficulties without identifying patient images.
+- [ ] Exercise severe-heat pause/cooling/retry and longer sessions on both physical device classes. Bounded synthetic 30-minute diagnostics and simulated movement tests do not measure phone memory, camera accuracy, battery or thermal performance.
+- [ ] Complete the owner-dependent items in `docs/operations/PRODUCTION-READINESS.md`: account verification/testing schedule, signing custody, actual retention/backup expiry, privacy notice/deletion URL, model distribution terms and production support ownership.
+- [ ] Before Play release, upgrade the tested target/compile SDK tuple for current API-36 submission requirements and verify native 16 KB page compatibility. Preparation documentation does not satisfy these S5 release checks.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

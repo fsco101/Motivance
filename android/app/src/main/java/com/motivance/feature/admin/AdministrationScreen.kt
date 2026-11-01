@@ -1,0 +1,60 @@
+package com.motivance.feature.admin
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.motivance.R
+
+@Composable fun ColumnScope.AdministrationScreen(vm:AdministrationViewModel) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.owner) {vm.refresh()}
+    var confirm by remember {mutableStateOf<(() -> Unit)?>(null)}
+    Text(stringResource(R.string.admin_title),style=MaterialTheme.typography.headlineMedium)
+    Text(stringResource(R.string.admin_scope))
+    if(state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+    if(state.failed) Text(stringResource(R.string.connected_failed),color=MaterialTheme.colorScheme.error)
+    OutlinedButton({vm.refresh()},enabled=!state.busy) {Text(stringResource(R.string.retry))}
+    Text(stringResource(R.string.admin_accounts),style=MaterialTheme.typography.titleLarge)
+    state.data.accounts.forEach {account -> Card(Modifier.fillMaxWidth()) {Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        Text(account.name.ifBlank {account.id},style=MaterialTheme.typography.titleMedium)
+        Text(account.id)
+        Text(stringResource(if(account.active) R.string.admin_active else R.string.admin_disabled))
+        if(account.id!=state.owner) {
+            OutlinedButton({confirm={vm.account(account.id,!account.active)}},enabled=!state.busy) {Text(stringResource(if(account.active) R.string.admin_disable else R.string.admin_enable))}
+            listOf("therapist" to R.string.role_therapist,"admin" to R.string.role_admin).forEach {(role,label) ->
+                val roleLabel=stringResource(label)
+                Row {Checkbox(role in account.roles,{granted -> confirm={vm.role(account.id,role,granted)}},enabled=!state.busy && account.active,modifier=Modifier.semantics {contentDescription=roleLabel});Text(roleLabel,Modifier.padding(top=12.dp))}
+            }
+        }
+    }}}
+    if(state.data.next!=null) OutlinedButton({vm.older()},enabled=!state.busy) {Text(stringResource(R.string.admin_more))}
+    Text(stringResource(R.string.admin_links),style=MaterialTheme.typography.titleLarge)
+    Text(stringResource(R.string.admin_link_help))
+    var therapist by remember {mutableStateOf("")};var patient by remember {mutableStateOf("")}
+    OutlinedTextField(therapist,{therapist=it},label={Text(stringResource(R.string.admin_therapist_id))},modifier=Modifier.fillMaxWidth())
+    OutlinedTextField(patient,{patient=it},label={Text(stringResource(R.string.admin_patient_id))},modifier=Modifier.fillMaxWidth())
+    val valid=runCatching {java.util.UUID.fromString(therapist);java.util.UUID.fromString(patient)}.isSuccess
+    Button({confirm={vm.link(therapist,patient,true)}},enabled=valid && !state.busy) {Text(stringResource(R.string.admin_link))}
+    state.data.links.forEach {link ->
+        Text("${link.therapist} → ${link.patient}")
+        OutlinedButton({confirm={vm.link(link.therapist,link.patient,!link.active)}},enabled=!state.busy) {Text(stringResource(if(link.active) R.string.admin_unlink else R.string.admin_link))}
+    }
+    Text(stringResource(R.string.admin_catalogue),style=MaterialTheme.typography.titleLarge)
+    state.data.exercises.forEach {exercise -> key(exercise.id,exercise.version) {
+        var name by remember {mutableStateOf(exercise.name)};var en by remember {mutableStateOf(exercise.english)};var fil by remember {mutableStateOf(exercise.filipino)}
+        Card(Modifier.fillMaxWidth()) {Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+            Text("${exercise.code} · v${exercise.version}")
+            OutlinedTextField(name,{name=it},label={Text(stringResource(R.string.admin_name))},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(en,{en=it},label={Text(stringResource(R.string.admin_instructions_en))},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(fil,{fil=it},label={Text(stringResource(R.string.admin_instructions_fil))},modifier=Modifier.fillMaxWidth())
+            Button({confirm={vm.publish(exercise.id,name,en,fil)}},enabled=!state.busy && name.isNotBlank() && name.length<=120 && en.isNotBlank() && en.length<=4000 && fil.isNotBlank() && fil.length<=4000) {Text(stringResource(R.string.admin_publish))}
+            OutlinedButton({confirm={vm.exercise(exercise.id,!exercise.active)}},enabled=!state.busy) {Text(stringResource(if(exercise.active) R.string.admin_deactivate else R.string.admin_activate))}
+        }}
+    }}
+    if(confirm!=null) AlertDialog(onDismissRequest={confirm=null},title={Text(stringResource(R.string.confirm_action))},text={Text(stringResource(R.string.admin_confirm))},confirmButton={TextButton({val action=confirm;confirm=null;action?.invoke()}) {Text(stringResource(R.string.confirm_action))}},dismissButton={TextButton({confirm=null}) {Text(stringResource(R.string.cancel_action))}})
+}

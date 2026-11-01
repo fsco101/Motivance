@@ -8,5 +8,6 @@ Project documents live in [docs/](docs/PLAN.md). Sprint planning JSON stays in [
 - [Sprint synchronization guide](docs/SPRINTS.md)
 - [Android and database development setup](docs/operations/DEVELOPMENT.md)
 - [Required Android environment values](docs/operations/ENVIRONMENT.md)
+- [Production preparation and distribution](docs/operations/PRODUCTION-READINESS.md)
 - [Post-implementation device and therapist checklist](docs/validation/POST-IMPLEMENTATION-CHECKLIST.md)
 - [GitHub delivery tracker](https://github.com/fsco101/Motivance/issues/1)

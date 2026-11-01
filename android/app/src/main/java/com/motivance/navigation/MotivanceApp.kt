@@ -30,6 +30,8 @@ import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.data.local.ExerciseJson
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.motivance.feature.rehabilitation.*
+import com.motivance.feature.admin.*
+import com.motivance.designsystem.LanguagePicker
 
 private val Navy=Color(0xFF002042)
 private val Teal=Color(0xFF006A61)
@@ -42,6 +44,8 @@ private val Teal=Color(0xFF006A61)
     val rehabilitation:RehabilitationViewModel=viewModel()
     val connected by rehabilitation.state.collectAsStateWithLifecycle()
     val history:HistoryViewModel=viewModel()
+    val administration:AdministrationViewModel=viewModel()
+    LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
     LaunchedEffect(Unit) {vm.restore()}
     LaunchedEffect(auth.session?.userId) {
         exercise.configure(auth.session?.userId ?: "local-demo")
@@ -108,6 +112,9 @@ private val Teal=Color(0xFF006A61)
                 }
                 "PROFILE" -> {
                     SectionTitle(R.string.nav_profile,R.string.account_and_access)
+                    LanguagePicker()
+                    auth.session?.roles?.filter {it!=actualRole}?.forEach {allowed -> OutlinedButton({selectedRole=allowed.name;route="HOME"}) {Text(stringResource(allowed.title()))}}
+                    if(actualRole==UserRole.ADMIN) PrimaryAction(R.string.admin_title) {route="ADMIN"}
                     ClinicalCard {
                         Text(overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account),style=MaterialTheme.typography.headlineSmall)
                         Text(stringResource(actualRole.title()),color=Teal)
@@ -133,10 +140,12 @@ private val Teal=Color(0xFF006A61)
                         connected.outbox.firstOrNull {it.sessionId==row.id}?.let {Text(syncLabel(it.state))}
                     } }
                 }
+                "ADMIN" -> if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
                 "PATIENTS" -> {
                     SectionTitle(R.string.patient_management,R.string.assigned_patients_only)
                     ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
-                    PatientManagement(connected,rehabilitation) {selectedPatient=it; route="PATIENT_DETAIL"}
+                    if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
+                    else PatientManagement(connected,rehabilitation) {selectedPatient=it; route="PATIENT_DETAIL"}
                 }
                 "PATIENT_DETAIL" -> {
                     Text(connected.workspace.patients.firstOrNull {it.id==selectedPatient}?.name.orEmpty(),style=MaterialTheme.typography.headlineMedium)
@@ -186,7 +195,8 @@ private val Teal=Color(0xFF006A61)
                         }
                     }
                     MetricRow(if(actualRole==UserRole.PATIENT) R.string.active_assignments else R.string.total_patients,if(actualRole==UserRole.PATIENT) overview.data?.assignments?.size?.toString() ?: "—" else overview.data?.patientIds?.size?.toString() ?: "—",R.string.recent_sessions,overview.data?.sessions?.size?.toString() ?: "—")
-                    if(actualRole!=UserRole.PATIENT) PrimaryAction(R.string.patient_management) {route="PATIENTS"}
+                    if(actualRole==UserRole.ADMIN) PrimaryAction(R.string.admin_title) {route="ADMIN"}
+                    else if(actualRole==UserRole.THERAPIST) PrimaryAction(R.string.patient_management) {route="PATIENTS"}
                     ClinicalCard {
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text(stringResource(R.string.camera_check),style=MaterialTheme.typography.titleLarge); Icon(Icons.Default.PlayArrow,null,tint=Teal) }
                         Text(stringResource(R.string.single_camera_description))
@@ -209,6 +219,8 @@ private val Teal=Color(0xFF006A61)
             Text(stringResource(R.string.select_access_portal),style=MaterialTheme.typography.labelLarge)
             RoleCard(UserRole.THERAPIST,R.string.clinical_portal,R.string.therapist_description,R.string.enter_therapist,Navy,onRole)
             RoleCard(UserRole.PATIENT,R.string.rehabilitation_portal,R.string.patient_description,R.string.continue_patient,Teal,onRole)
+            TextButton({onRole(UserRole.ADMIN)}) {Text(stringResource(R.string.admin_sign_in))}
+            LanguagePicker()
             OutlinedButton(onCamera,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp)) { Icon(Icons.Default.PlayArrow,null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.try_camera)) }
             Text(stringResource(R.string.research_prototype),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }

@@ -7,6 +7,14 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PrescriptionCacheTest {
+    @Test fun bothAuthoredInstructionLanguagesRemainAvailableOffline() {
+        val rows=fixture()
+        rows.getJSONObject(0).getJSONArray("prescription_versions").getJSONObject(0).getJSONObject("exercise_versions").getJSONObject("definition").put("instructions_fil","Panatilihing nakikita ang siko.")
+        val cached=PrescriptionCache.decode("patient",rows,100).single()
+        assertTrue(cached.instructions.contains("Fixture instruction"))
+        assertTrue(cached.instructions.contains("Panatilihing nakikita ang siko."))
+        assertEquals("version1",ExerciseJson.rules(cached.rulesJson).prescriptionVersionId)
+    }
     private fun fixture(owner:String="patient",algorithm:String="elbow-flexion-v1")=JSONArray("""[{"id":"assignment","patient_id":"$owner","prescription_versions":[{"id":"version1","version":1,"side":"left","minimum_degrees":20,"maximum_degrees":90,"target_repetitions":5,"exercise_versions":{"id":"exercise-v1","algorithm_key":"$algorithm","definition":{"measurement_convention":"2d_flexion_degrees","instructions_en":"Fixture instruction"}}}]}]""")
     @Test fun recognizedPrescriptionRetainsImmutableVersionAndInstructions() {
         val result=PrescriptionCache.decode("patient",fixture(),100).single()
