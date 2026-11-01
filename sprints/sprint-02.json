@@ -434,7 +434,8 @@
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
           ]
         },
         {
@@ -445,7 +446,8 @@
             "docs/validation/SPRINT-02-IMPLEMENTATION.md",
             "docs/validation/sprint-02-test-results.json",
             "docs/validation/SPRINT-03-IMPLEMENTATION.md",
-            "docs/validation/sprint-03-test-results.json"
+            "docs/validation/sprint-03-test-results.json",
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
           ]
         },
         {
@@ -458,7 +460,8 @@
             "docs/validation/sprint-03-test-results.json",
             "docs/validation/sprint-04-history-test-results.json",
             "docs/validation/IMPLEMENTATION-CLOSURE.md",
-            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
           ],
           "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
           "disposition": "Deferred follow-up; does not block development delivery",
@@ -475,7 +478,8 @@
             "docs/validation/sprint-03-test-results.json",
             "docs/validation/sprint-04-history-test-results.json",
             "docs/validation/IMPLEMENTATION-CLOSURE.md",
-            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
           ],
           "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
           "disposition": "Deferred follow-up; does not block development delivery",
@@ -492,7 +496,8 @@
           "docs/validation/sprint-03-test-results.json",
           "docs/validation/SPRINT-02-IMPLEMENTATION.md",
           "docs/validation/sprint-04-history-test-results.json",
-          "docs/validation/IMPLEMENTATION-CLOSURE.md"
+          "docs/validation/IMPLEMENTATION-CLOSURE.md",
+          "docs/validation/SKELETON-OVERLAY-REFINEMENT.md"
         ]
       },
       "plan_reference": "docs/PLAN.md",
@@ -506,7 +511,8 @@
       "implementation_evidence": [
         "docs/validation/SPRINT-02-IMPLEMENTATION.md",
         "docs/validation/sprint-04-history-test-results.json"
-      ]
+      ],
+      "implementation_note": "SkeletonPreview visual refinement adds a focused anatomical chain, high-contrast joint rendering, explicit tracking status and angle/repetition tiles using the existing bitmap transform. Scoped build/lint and three emulator checks passed; physical/human checks retain their original deferred state."
     },
     {
       "id": "MOT-11",

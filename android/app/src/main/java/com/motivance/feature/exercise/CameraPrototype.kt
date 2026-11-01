@@ -14,9 +14,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,13 +21,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -45,7 +36,6 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.motivance.R
-import com.motivance.assessment.PreviewMapping
 import com.motivance.assessment.CameraDiagnostics
 import com.motivance.assessment.PerformancePolicy
 import androidx.compose.ui.semantics.*
@@ -56,7 +46,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, val latency: Long)
-private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,12 to 24,23 to 24,23 to 25,25 to 27,24 to 26,26 to 28,27 to 29,29 to 31,28 to 30,30 to 32)
 
 /** Deliberately renders the same upright bitmap used for inference: no independent preview crop. */
 @Composable fun CameraPrototype(ownerId:String="local-demo",onBack: () -> Unit) {
@@ -176,35 +165,15 @@ private val connections=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 t
         }
         error?.let { Text(stringResource(it)) }
         val shown=display
-        Surface(color=Color(0xFFD6F7F0),shape=RoundedCornerShape(16.dp)) {
-            Text(stringResource(exercise.metrics.quality.label()),Modifier.padding(12.dp).semantics {liveRegion=LiveRegionMode.Polite},color=Color(0xFF006A61))
-        }
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.measured_angle,exercise.metrics.angleDegrees?.let {"%.1f".format(it)} ?: "--"))
-            Text(stringResource(R.string.completed_reps,exercise.metrics.completed,exercise.rules.targetRepetitions))
-        }
+        SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()))
         Text(stringResource(R.string.session_metrics,exercise.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",exercise.metrics.incomplete,exercise.metrics.durationMs/1000),style=MaterialTheme.typography.bodySmall)
         Text(stringResource(R.string.session_targets,exercise.rules.lowDegrees.toInt(),exercise.rules.highDegrees.toInt()),style=MaterialTheme.typography.bodySmall)
         if(exercise.metrics.feedback!=RepFeedback.NONE) Text(stringResource(exercise.metrics.feedback.label()),color=MaterialTheme.colorScheme.secondary)
-        if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height))
-        diagnostics?.let { Text(stringResource(R.string.diagnostics_summary,"%.1f".format(it.fps),it.p95LatencyMs,thermalStatus),style=MaterialTheme.typography.labelSmall) }
-        if(diagnostics?.let {PerformancePolicy.slow(it)}==true) Text(stringResource(R.string.camera_slow_warning))
-        Canvas(Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(24.dp)).background(Color(0xFF002042)).border(2.dp,Color(0xFF43474F),RoundedCornerShape(24.dp))) {
-            if(size.width<=0f || size.height<=0f) return@Canvas
-            shown?.let { frame ->
-                val transform=PreviewMapping(frame.bitmap.width,frame.bitmap.height,size.width,size.height,front)
-                drawIntoCanvas { canvas ->
-                    canvas.nativeCanvas.save()
-                    if(front) { canvas.nativeCanvas.translate(size.width,0f); canvas.nativeCanvas.scale(-1f,1f) }
-                    canvas.nativeCanvas.drawBitmap(frame.bitmap,null,android.graphics.RectF(transform.left,transform.top,transform.left+transform.width,transform.top+transform.height),null)
-                    canvas.nativeCanvas.restore()
-                }
-                connections.forEach { (a,b) -> if(a<frame.points.size && b<frame.points.size && frame.points[a].visibility>=.5f && frame.points[b].visibility>=.5f) {
-                    val p=transform.map(frame.points[a]); val q=transform.map(frame.points[b]); drawLine(Color.Green,Offset(p.first,p.second),Offset(q.first,q.second),5f)
-                } }
-                frame.points.filter { it.visibility>=.5f }.forEach { val p=transform.map(it); drawCircle(Color.Yellow,7f,Offset(p.first,p.second)) }
-            }
+        if(BuildConfig.DEBUG) {
+            if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height),style=MaterialTheme.typography.labelSmall)
+            diagnostics?.let {Text(stringResource(R.string.diagnostics_summary,"%.1f".format(it.fps),it.p95LatencyMs,thermalStatus),style=MaterialTheme.typography.labelSmall)}
         }
+        if(diagnostics?.let {PerformancePolicy.slow(it)}==true) Text(stringResource(R.string.camera_slow_warning))
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             OutlinedButton({front=!front; display=null; error=null},modifier=Modifier.weight(1f)) { Text(stringResource(R.string.switch_camera)) }
             OutlinedButton({if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f),enabled=!exercise.saving) { Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera)) }

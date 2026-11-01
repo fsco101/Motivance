@@ -315,4 +315,14 @@
     <string name="language_label">Wika ng application</string>
     <string name="camera_thermal_pause">Masyadong mainit ang telepono para sa tuloy-tuloy na pagsubaybay. Naka-pause ang camera at pagsukat. Palamigin muna bago magpatuloy.</string>
     <string name="camera_slow_warning">Mabagal ang pagsubaybay. Isara ang ibang app at suriin ang init ng telepono. Hindi ito klinikal na resulta ng pagiging karapat-dapat.</string>
+    <string name="skeleton_elbow">Siko</string>
+    <string name="skeleton_shoulder">Balikat</string>
+    <string name="skeleton_focus">%1$s · Pokus sa %2$s</string>
+    <string name="skeleton_description">Camera preview na may mga nakikitang kasukasuan. %1$s. Tinutukoy ng naka-highlight na mga kasukasuan ang napiling ehersisyo; hindi nito pinatutunayang tama ang paggalaw.</string>
+    <string name="skeleton_live">LIVE NA CAMERA</string>
+    <string name="skeleton_waiting">CAMERA PREVIEW</string>
+    <string name="skeleton_position">Panatilihing nakikita ang mga kailangang kasukasuan. Lalabas ang balangkas kapag may pagsubaybay.</string>
+    <string name="skeleton_angle">Anggulo ng kasukasuan</string>
+    <string name="skeleton_reps">Mga pag-ulit</string>
+    <string name="skeleton_legend">Naka-highlight: kasukasuan sa ehersisyo · Mapusyaw: ibang nakikitang kasukasuan</string>
 </resources>

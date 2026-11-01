@@ -315,4 +315,14 @@
     <string name="language_label">Application language</string>
     <string name="camera_thermal_pause">The phone is too warm for sustained tracking. Camera and measurement are paused. Let it cool, then resume.</string>
     <string name="camera_slow_warning">Tracking is slow. Close other apps and check device temperature. This warning is not a clinical eligibility result.</string>
+    <string name="skeleton_elbow">Elbow</string>
+    <string name="skeleton_shoulder">Shoulder</string>
+    <string name="skeleton_focus">%1$s · %2$s focus</string>
+    <string name="skeleton_description">Camera preview with visible body landmarks. %1$s. Highlighted joints identify the selected exercise; they do not certify correct movement.</string>
+    <string name="skeleton_live">LIVE CAMERA</string>
+    <string name="skeleton_waiting">CAMERA PREVIEW</string>
+    <string name="skeleton_position">Keep the required joints visible. Your skeleton appears when tracking is available.</string>
+    <string name="skeleton_angle">Joint angle</string>
+    <string name="skeleton_reps">Repetitions</string>
+    <string name="skeleton_legend">Highlighted: exercise joints · Muted: other visible joints</string>
 </resources>
