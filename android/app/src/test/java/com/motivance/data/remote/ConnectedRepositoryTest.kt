@@ -9,6 +9,25 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ConnectedRepositoryTest {
+    @Test fun prescribedFocusIsSentInsideTheVersionedParameters()=runBlocking {
+        var parameters:org.json.JSONObject?=null
+        val client=OkHttpClient.Builder().addInterceptor {chain ->
+            val request=chain.request();val path=request.url.encodedPath
+            val body=when {
+                path.endsWith("user_roles") -> """[{"role":"therapist"}]"""
+                path.endsWith("publish_prescription") -> {
+                    val buffer=okio.Buffer();request.body!!.writeTo(buffer)
+                    parameters=org.json.JSONObject(buffer.readUtf8()).getJSONObject("p_parameters");"\"version\""
+                }
+                else -> """{"access_token":"fixture-access","refresh_token":"fixture-refresh","user":{"id":"fixture-owner"}}"""
+            }
+            Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("fixture").body(body.toResponseBody("application/json".toMediaType())).build()
+        }.build()
+        val repo=SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture")
+        repo.signIn("fixture@example.test","fixture-password")
+        repo.publishPrescription(com.motivance.domain.PrescriptionDraft("assignment","version","patient","exercise",com.motivance.domain.BodySide.RIGHT,20.0,90.0,5,focusJoint=com.motivance.domain.BodyJoint.KNEE))
+        assertEquals("KNEE",parameters!!.getString("focus_joint"))
+    }
     @Test fun expiredUploadTokenRefreshesOnceAndRetriesTheSameSession()=runBlocking {
         val requests=mutableListOf<Request>(); var uploads=0
         val client=OkHttpClient.Builder().addInterceptor {chain ->

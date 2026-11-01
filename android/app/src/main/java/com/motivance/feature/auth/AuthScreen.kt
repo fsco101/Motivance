@@ -46,7 +46,7 @@ import com.motivance.domain.UserRole
 @Composable
 fun AuthScreen(viewModel: AuthViewModel, openCamera: () -> Unit, role: UserRole? = null, onBack: () -> Unit = {}) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AuthContent(state, role, viewModel::act, viewModel::clearNotice, openCamera, onBack)
+    AuthContent(state, role, viewModel::act, viewModel::clearNotice, openCamera, onBack,viewModel::registerProfile)
 }
 
 @Composable
@@ -57,6 +57,8 @@ internal fun AuthContent(
     clearNotice: () -> Unit,
     openCamera: () -> Unit,
     onBack: () -> Unit,
+    onRegister: ((String,String,com.motivance.domain.PatientProfile)->Unit)? = null,
+    initialProfile: com.motivance.domain.PatientProfile = com.motivance.domain.PatientProfile(),
 ) {
     var action by rememberSaveable { mutableStateOf(AuthAction.SIGN_IN) }
     var email by rememberSaveable { mutableStateOf("") }
@@ -64,6 +66,7 @@ internal fun AuthContent(
     var password by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var profile by remember {mutableStateOf(initialProfile)}
     val focus = LocalFocusManager.current
     fun changeAction(next: AuthAction) {
         focus.clearFocus()
@@ -72,13 +75,14 @@ internal fun AuthContent(
         action = next
     }
     fun submit() {
-        if (!state.busy) { focus.clearFocus(); onSubmit(action, email, password, otp) }
+        if (!state.busy) { focus.clearFocus(); if(action==AuthAction.REGISTER) {if(profile.valid() && password.length>=8) {if(onRegister!=null)onRegister(email,password,profile) else onSubmit(action,email,password,otp)}} else onSubmit(action, email, password, otp) }
     }
     LaunchedEffect(state.session?.userId, action) {
         password = ""; otp = ""; showPassword = false
     }
     LaunchedEffect(state.notice) {
         if (state.notice == AuthNotice.CONFIRM_EMAIL) action = AuthAction.CONFIRM
+        if (state.notice == AuthNotice.EMAIL_UNCONFIRMED) action = AuthAction.CONFIRM
         if (state.notice == AuthNotice.RECOVERY_SENT) action = AuthAction.RECOVER
     }
     BackHandler(enabled = state.busy || action != AuthAction.SIGN_IN) {
@@ -100,7 +104,7 @@ internal fun AuthContent(
             }
             Column(Modifier.widthIn(max = 480.dp).fillMaxWidth().padding(top = 28.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Surface(color = MaterialTheme.colorScheme.secondary.copy(alpha = .08f), shape = CircleShape) {
-                    Text(stringResource(if (role == UserRole.THERAPIST) R.string.clinical_portal else R.string.rehabilitation_portal),
+                    Text(stringResource(when(role) {UserRole.THERAPIST->R.string.clinical_portal;UserRole.ADMIN->R.string.admin_title;else->R.string.rehabilitation_portal}),
                         Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 }
@@ -114,7 +118,8 @@ internal fun AuthContent(
                     OutlinedTextField(
                         value = email, onValueChange = { email = it; clearNotice() }, label = { Text(stringResource(R.string.email)) },
                         leadingIcon = { Icon(Icons.Default.Email, null) }, singleLine = true, enabled = !state.busy,
-                        isError = state.notice == AuthNotice.INVALID_EMAIL, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                        isError = state.notice == AuthNotice.INVALID_EMAIL || (email.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()),
+                        supportingText={if(email.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) Text(stringResource(R.string.invalid_email))}, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = if (hasPassword || hasCode) ImeAction.Next else ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { submit() }),
                     )
@@ -123,7 +128,8 @@ internal fun AuthContent(
                         label = { Text(stringResource(if (action == AuthAction.RECOVER) R.string.auth_new_password else R.string.auth_password)) },
                         trailingIcon = { PasswordVisibilityButton(showPassword, !state.busy) { showPassword = it } },
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true, enabled = !state.busy, isError = state.notice == AuthNotice.PASSWORD_REQUIRED,
+                        singleLine = true, enabled = !state.busy, isError = state.notice == AuthNotice.PASSWORD_REQUIRED || (action==AuthAction.REGISTER && password.isNotEmpty() && password.length<8),
+                        supportingText={if(action==AuthAction.REGISTER && password.isNotEmpty() && password.length<8)Text(stringResource(R.string.form_password_length))},
                         modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = if (hasCode) ImeAction.Next else ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { submit() }),
@@ -137,17 +143,28 @@ internal fun AuthContent(
                     if (action == AuthAction.SIGN_IN) TextButton(
                         onClick = { changeAction(AuthAction.REQUEST_RECOVERY) }, enabled = !state.busy, modifier = Modifier.align(Alignment.End),
                     ) { Text(stringResource(R.string.auth_forgot_password)) }
+                    if(action==AuthAction.REGISTER) {
+                        ProfileFields(profile,!state.busy) {profile=it}
+                        PrivacyAgreement(profile.consent,!state.busy) {profile=profile.copy(consent=it)}
+                        Text(stringResource(R.string.profile_validation),style=MaterialTheme.typography.bodySmall)
+                    }
                     state.notice?.let { AuthNoticeCard(it) }
-                    Button(onClick = { submit() }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                    Button(onClick = { submit() }, enabled = !state.busy && (action!=AuthAction.REGISTER || (profile.valid() && password.length>=8)), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                         shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(16.dp)) {
                         if (state.busy) {
                             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
                             Spacer(Modifier.width(12.dp))
                         }
-                        Text(stringResource(if (state.busy) action.busyLabel() else action.label()), textAlign = TextAlign.Center,
+                        Text(stringResource(if (state.busy) (state.activeAction ?: action).busyLabel() else action.label()), textAlign = TextAlign.Center,
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                     }
-                    if (action == AuthAction.SIGN_IN && role != UserRole.THERAPIST) {
+                    if(action==AuthAction.CONFIRM || action==AuthAction.RECOVER) {
+                        Text(stringResource(R.string.auth_delivery_help),style=MaterialTheme.typography.bodySmall)
+                        TextButton(onClick={if(!state.busy) {otp="";onSubmit(if(action==AuthAction.CONFIRM) AuthAction.RESEND_CONFIRMATION else AuthAction.REQUEST_RECOVERY,email,"","")}},enabled=!state.busy,modifier=Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.auth_resend_code))
+                        }
+                    }
+                    if (action == AuthAction.SIGN_IN && role != UserRole.THERAPIST && role != UserRole.ADMIN) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
                         Text(stringResource(R.string.auth_new_here), Modifier.fillMaxWidth(), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
                         OutlinedButton(onClick = { changeAction(AuthAction.REGISTER) }, enabled = !state.busy,
@@ -256,14 +273,17 @@ private fun AuthAction.busyLabel() = when (this) {
     AuthAction.REGISTER -> R.string.auth_creating_account
     AuthAction.CONFIRM -> R.string.auth_verifying
     AuthAction.REQUEST_RECOVERY -> R.string.auth_sending_code
+    AuthAction.RESEND_CONFIRMATION -> R.string.auth_sending_code
+    AuthAction.SIGN_OUT -> R.string.ui_signing_out
+    AuthAction.REFRESH -> R.string.ui_refreshing_session
     AuthAction.RECOVER -> R.string.auth_updating_password
-    else -> R.string.auth_restoring
 }
 private fun AuthAction.label() = when (this) {
     AuthAction.SIGN_IN -> R.string.sign_in
     AuthAction.REGISTER -> R.string.auth_create_account
     AuthAction.CONFIRM -> R.string.auth_verify_email
     AuthAction.REQUEST_RECOVERY -> R.string.auth_send_code
+    AuthAction.RESEND_CONFIRMATION -> R.string.auth_resend_code
     AuthAction.RECOVER -> R.string.auth_save_password
     AuthAction.REFRESH -> R.string.refresh_session
     AuthAction.SIGN_OUT -> R.string.sign_out
@@ -276,4 +296,8 @@ private fun AuthNotice.label() = when (this) {
     AuthNotice.RECOVERY_SENT -> R.string.recovery_sent_notice
     AuthNotice.REQUEST_FAILED -> R.string.request_failed
     AuthNotice.SESSION_EXPIRED -> R.string.session_expired
+    AuthNotice.EMAIL_UNCONFIRMED -> R.string.auth_unconfirmed
+    AuthNotice.INVALID_CODE -> R.string.auth_invalid_code
+    AuthNotice.RATE_LIMITED -> R.string.auth_rate_limited
+    AuthNotice.PASSWORD_POLICY -> R.string.auth_password_policy
 }

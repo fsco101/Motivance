@@ -1,0 +1,19 @@
+{
+  "reviewed_at": "2026-11-01T08:48:28.085062+00:00",
+  "reviewed_by": "Codex",
+  "build_passed": true,
+  "app_unit_tests": 53,
+  "domain_unit_tests": 13,
+  "ui_tests": 16,
+  "failures": 0,
+  "backend_checks": 36,
+  "fresh_schema_checks": 18,
+  "lint_errors": 0,
+  "lint_warnings": 90,
+  "resources_per_locale": 433,
+  "limitations": [
+    "Curated multilingual username policy is not exhaustive.",
+    "Legacy full names preserved; split requires confirmation on edit.",
+    "Physical-device and human wording reviews deferred."
+  ]
+}

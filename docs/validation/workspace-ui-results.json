@@ -1,0 +1,59 @@
+{
+  "reviewed_at": "2026-11-01T07:48:48.575911+00:00",
+  "reviewed_by": "Codex engineering review",
+  "build": {
+    "command": ":app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest",
+    "passed": true,
+    "jdk": "17.0.17"
+  },
+  "unit_tests": {
+    "tests": 51,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 88,
+    "note": "Existing dependency, locale packaging and other advisory warnings remain; no lint errors."
+  },
+  "emulator_tests": {
+    "tests": 22,
+    "failures": 0,
+    "classes": [
+      "WorkspaceUiTest",
+      "AuthScreenTest",
+      "AdministrationScreenTest",
+      "ResultsDashboardTest",
+      "AccessibilityTest",
+      "PrescribedFocusTest",
+      "LiveAssessmentTest"
+    ],
+    "device": "Pixel_6 AVD, Android 15 / API 35",
+    "log": "docs/validation/ui-refinement/instrumentation.txt"
+  },
+  "final_resource_fix_recheck": {
+    "tests": 5,
+    "failures": 0,
+    "class": "WorkspaceUiTest",
+    "log": "docs/validation/ui-refinement/final-instrumentation.txt",
+    "scope": "Final loading text and visible progress track"
+  },
+  "resources": {
+    "strings_per_locale": 382,
+    "format_parity": true,
+    "contrast_pairs_passed": 7
+  },
+  "module_boundaries": "passed",
+  "screenshots": [
+    "docs/validation/ui-refinement/landing.png",
+    "docs/validation/ui-refinement/patient.png",
+    "docs/validation/ui-refinement/loading.png",
+    "docs/validation/ui-refinement/large-text.png"
+  ],
+  "limitations": [
+    "Screenshots use synthetic Compose fixtures, not live patient data.",
+    "Physical-device, TalkBack and therapist/representative-user wording reviews are deferred, not executed.",
+    "Emulator evidence does not establish clinical validation."
+  ]
+}

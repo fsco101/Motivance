@@ -7,11 +7,14 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.*
 import org.junit.Test
 import com.motivance.domain.UserRole
+import com.motivance.domain.RemoteFailure
+import org.json.JSONObject
 
 class SupabaseAuthRepositoryTest {
     private val requests=mutableListOf<Request>()
     private var failRefresh=false
     private var failLogout=false
+    private var verificationError:String?=null
     private val session="""{"access_token":"test-access","refresh_token":"test-refresh","user":{"id":"test-user"}}"""
     private val client=OkHttpClient.Builder().addInterceptor { chain ->
         val request=chain.request(); requests.add(request)
@@ -23,11 +26,63 @@ class SupabaseAuthRepositoryTest {
             "/rest/v1/exercise_assignments" -> """[{"id":"assignment","patient_id":"test-user"}]"""
             else -> if(roles) """[{"role":"patient"}]""" else session
         }
-        val failed=(failRefresh && request.url.query?.contains("refresh_token")==true) || (failLogout && request.url.encodedPath=="/auth/v1/logout")
+        val verifyFailed=verificationError!=null && request.url.encodedPath=="/auth/v1/verify"
+        val failed=verifyFailed || (failRefresh && request.url.query?.contains("refresh_token")==true) || (failLogout && request.url.encodedPath=="/auth/v1/logout")
         Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(if(failed) 401 else 200).message("Fixture")
-            .body(responseBody.toResponseBody("application/json".toMediaType())).build()
+            .body((if(verifyFailed) verificationError!! else responseBody).toResponseBody("application/json".toMediaType())).build()
     }.build()
     private fun repository()=SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture-key")
+    @Test fun signupSendsValidatedDetailsAndConsent()=runBlocking {
+        val profile=com.motivance.domain.PatientProfile("patient_one","Test Patient","female","1995-01-01","Test address","09001234567","star",true)
+        repository().registerProfile("a@example.test","fixture-password",profile)
+        val buffer=okio.Buffer();requests.single().body!!.writeTo(buffer)
+        val data=JSONObject(buffer.readUtf8()).getJSONObject("data").getJSONObject("patient_profile")
+        assertTrue(data.getBoolean("consent"));assertEquals("star",data.getString("avatar"))
+        requests.clear()
+        assertTrue(runCatching {repository().registerProfile("a@example.test","fixture-password",profile.copy(consent=false))}.isFailure)
+        assertTrue(requests.isEmpty())
+    }
+    @Test fun incorrectCurrentPasswordNeverReachesPasswordUpdate()=runBlocking {
+        val seen=mutableListOf<Request>();var signingIn=true
+        val http=OkHttpClient.Builder().addInterceptor {chain ->
+            val r=chain.request();seen+=r
+            val rejected=!signingIn && r.url.queryParameter("grant_type")=="password"
+            val body=when(r.url.encodedPath) {
+                "/rest/v1/user_roles" -> "[{\"role\":\"patient\"}]"
+                "/auth/v1/user" -> "{\"email\":\"a@example.test\"}"
+                else -> session
+            }
+            Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(if(rejected)400 else 200).message("Fixture").body(body.toResponseBody("application/json".toMediaType())).build()
+        }.build()
+        val repo=SupabaseAuthRepository(http,"https://fixture.invalid","public-fixture")
+        repo.signIn("a@example.test","old-password");signingIn=false
+        assertTrue(runCatching {repo.changePassword("wrong-password","new-password")}.isFailure)
+        assertFalse(seen.any {it.method=="PUT"})
+    }
+    @Test fun resendUsesSignupEmailAndNoPasswordOrToken()=runBlocking {
+        repository().resendConfirmation("patient@example.test")
+        val request=requests.single()
+        assertEquals("/auth/v1/resend",request.url.encodedPath)
+        val buffer=okio.Buffer();request.body!!.writeTo(buffer)
+        val payload=JSONObject(buffer.readUtf8())
+        assertEquals("signup",payload.getString("type"))
+        assertEquals("patient@example.test",payload.getString("email"))
+        assertEquals(2,payload.length())
+        assertNull(request.header("Authorization"))
+    }
+    @Test fun invalidRecoveryCodeCannotChangePasswordAndOnlySafeCodeEscapes()=runBlocking {
+        verificationError="""{"code":"otp_expired","msg":"sensitive provider detail"}"""
+        val failure=runCatching {repository().recover("patient@example.test","bad-code","new-password")}.exceptionOrNull() as RemoteFailure
+        assertEquals("otp_expired",failure.code)
+        assertFalse(failure.toString().contains("sensitive"))
+        assertEquals(listOf("/auth/v1/verify"),requests.map {it.url.encodedPath})
+    }
+    @Test fun unknownBackendCodeAndPayloadAreDiscarded()=runBlocking {
+        verificationError="""{"code":"private-token-value","msg":"sensitive provider detail"}"""
+        val failure=runCatching {repository().confirmRegistration("patient@example.test","123456")}.exceptionOrNull() as RemoteFailure
+        assertNull(failure.code)
+        assertFalse(failure.toString().contains("private-token-value"))
+    }
     @Test fun dashboardUsesAuthenticatedApiAndExcludesOwnPatientProfileFromStaffCount()=runBlocking {
         val repo=repository(); repo.signIn("a@example.test","password")
         val result=repo.loadOverview()

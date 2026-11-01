@@ -38,7 +38,7 @@ class AuthScreenTest {
                 AuthContent(state.value, role, { action, email, password, code ->
                     submissions += listOf(action, email, password, code)
                     state.value = AuthState(busy = true)
-                }, { state.value = state.value.copy(notice = null) }, {}, {})
+                }, { state.value = state.value.copy(notice = null) }, {}, {},initialProfile=com.motivance.domain.PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567","person",true))
             } }
         }
     }
@@ -73,7 +73,7 @@ class AuthScreenTest {
         compose.onNodeWithText(text(R.string.auth_signup_heading)).performScrollTo()
         compose.onNode(hasText(text(R.string.auth_password)) and hasSetTextAction()).assertTextContains("", substring = false)
         capture("signup")
-        compose.onNodeWithText(text(R.string.auth_password)).performTextInput("new-password")
+        compose.onNodeWithText(text(R.string.auth_password)).performScrollTo().performTextInput("new-password")
         button(R.string.auth_create_account).performScrollTo().performClick()
         assertEquals(listOf(AuthAction.REGISTER, "patient@example.test", "new-password", ""), submissions.single())
         compose.runOnIdle { state.value = AuthState(notice = AuthNotice.CONFIRM_EMAIL) }
@@ -82,6 +82,24 @@ class AuthScreenTest {
         compose.onNodeWithText(text(R.string.auth_email_code)).performTextInput("123456")
         button(R.string.auth_verify_email).performScrollTo().performClick()
         assertEquals(listOf(AuthAction.CONFIRM, "patient@example.test", "", "123456"), submissions.last())
+    }
+    @Test fun unconfirmedSignInOffersConfirmationResend() {
+        display()
+        compose.onNodeWithText(text(R.string.email)).performTextInput("patient@example.test")
+        compose.runOnIdle {state.value=AuthState(notice=AuthNotice.EMAIL_UNCONFIRMED)}
+        compose.onNodeWithText(text(R.string.auth_confirm_heading)).performScrollTo().assertIsDisplayed()
+        button(R.string.auth_resend_code).performScrollTo().performClick()
+        assertEquals(listOf(AuthAction.RESEND_CONFIRMATION,"patient@example.test","",""),submissions.single())
+        button(R.string.auth_resend_code).assertIsNotEnabled()
+    }
+    @Test fun recoveryResendDoesNotSubmitNewPasswordOrOldCode() {
+        display()
+        compose.onNodeWithText(text(R.string.email)).performTextInput("patient@example.test")
+        compose.runOnIdle {state.value=AuthState(notice=AuthNotice.RECOVERY_SENT)}
+        compose.onNodeWithText(text(R.string.auth_new_password)).performScrollTo().performTextInput("replacement")
+        compose.onNodeWithText(text(R.string.auth_email_code)).performScrollTo().performTextInput("123456")
+        button(R.string.auth_resend_code).performScrollTo().performClick()
+        assertEquals(listOf(AuthAction.REQUEST_RECOVERY,"patient@example.test","",""),submissions.single())
     }
     @Test fun recoveryHasDistinctCodeAndNewPasswordSteps() {
         display()

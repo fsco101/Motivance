@@ -9,10 +9,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Open `android/`, sync Gradle with JDK 17, and run the debug `app` on the intended phone.
 - [ ] Confirm the supplied Motivance logo appears on the launcher and landing/auth/dashboard headers; check a circular and a rounded-square launcher mask.
 - [ ] Check readable contrast, 48dp touch targets, English/Filipino copy, large fonts and TalkBack. Check form validation and scrolling with the keyboard visible.
+- [ ] Review the refined patient/therapist home cards, parent-screen Back controls, administrator sections, expandable filters/timing fields, and operation-specific loading/error announcements on physical phones with representative users in both languages. Emulator evidence is recorded in `WORKSPACE-UI-REFINEMENT.md`; therapist wording, TalkBack and physical-device usability remain unexecuted.
 - [ ] Review the refined loading/login/signup/recovery screens on physical phones: TalkBack password visibility labels and loading/error announcements, keyboard Next/Done, rotation with credentials cleared, and patient/therapist wording. Emulator screenshots and synthetic flow tests are recorded in `AUTH-UI-REFINEMENT.md`; these physical and human checks remain unexecuted.
 - [ ] Verify emulator/USB-phone/hosted URL selection using `docs/operations/ENVIRONMENT.md`. Test the two local accounts; no privileged key should exist in the APK.
 
 ## Therapist-to-patient workflow
+
+- [ ] Review the detailed signup/privacy agreement and profile editing with representative users in both languages: age derived from birthdate, immutable email, avatar choice, current-password verification and connected-therapist demographic visibility. Review privacy wording, consent comprehension and any minor/guardian procedures with the deployment owner before live enrollment. These human/physical checks remain unexecuted; automated profile checks are separate engineering evidence.
 
 - [ ] Therapist creates an invitation for an email without entering a patient password. Patient registers/confirms that email, accepts the shared code and appears in the therapist's list. A mismatched email and expired invitation must fail.
 - [ ] Create left/right elbow-flexion and shoulder-abduction prescriptions, including low/high targets, repetitions, cycle timing, hold and visible trunk-lean threshold.
@@ -47,6 +50,8 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Record processed FPS, median/p95 inference latency, total feedback latency, memory, battery and thermal state. Compare with the provisional median <=150ms / p95 <=250ms gate. The earlier emulator/laptop-webcam p95 of 634ms is a profiling concern, not a measured phone limit.
 - [ ] Confirm quality gates, overlay alignment and repetition timing still work after any GPU/resolution/preview optimization.
 - [ ] Review the development retention policy: automatic deletion is disabled, records are reviewed after 365 days, and deletion/export requests require a trusted operator. Set actual retention, request turnaround, account deletion and backup expiry in the deployment runbook before collecting pilot data.
+- [x] Apply the Gmail sender to local Docker Auth and verify TLS authentication and runtime settings. See `docs/validation/smtp-connection-results.json`. No inbox delivery is claimed; hosted setup is separate.
+- [ ] Verify signup delivery to an authorized Gmail inbox, confirmation/resend, unconfirmed sign-in rejection, reset/resend, invalid/expired-code handling, throttling, old-password rejection and new-password sign-in. See `docs/operations/AUTH-EMAIL.md`; local capture, SMTP login and emulator tests do not establish inbox deliverability.
 - [ ] Exercise hosted email delivery, production RLS/RPC permissions, protected token restore, signed-release installation, backup restore and incident ownership. Do not copy local fixtures or local passwords into production.
 
 ## History and progress follow-up
@@ -54,6 +59,19 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Therapist and patient review Progress in both languages, including exercise-version/side/date filters and patient selection. Check UTC date wording and clinical terminology comprehension.
 - [ ] Review separate prescription charts against de-identified reference records. Check original targets, limited/invalid/interrupted gaps, tracking quality and units, and verify that estimates are not interpreted as clinical improvement.
 - [ ] Check chart descriptions, filter labels, session cards, large fonts and load-older controls with TalkBack on the supported physical phones. Automated emulator rendering does not establish physical accessibility or clinical usefulness.
+
+## Sprint 4 follow-up
+
+- [ ] Reproduce the reported non-incrementing repetitions on the user's actual phone: record APK/build, selected exercise/side, preview versus Recording status, consent/Start action, tracking message, observed angle sequence and targets. Automated synthetic tests do not establish the specific cause of this physical-device report. Use `docs/operations/LIVE-ASSESSMENT-TROUBLESHOOTING.md` and keep the result unexecuted until observed.
+
+- [ ] On physical phones, verify therapist-selected shoulder/elbow/wrist/hip/knee/ankle rings on each prescribed side, including mirror/rotation, low confidence and occlusion. Confirm users understand the distinction between the visual focus and the exercise joint actually measured. These focus options do not establish additional supported exercise algorithms.
+
+- [ ] Review the administrator workspace on physical phones: account enable/disable, grant/revoke staff, link/revoke and catalogue version publication. Confirm identity/custody for the initial trusted admin; never create admin access through signup metadata.
+- [ ] Review all English/Filipino terminology with the therapist and representative phone users. Automated resource/format parity, contrast calculations and a double-font emulator test do not establish human comprehension or TalkBack usability.
+- [ ] Measure task completion, setup mistakes and feedback comprehension for assigned exercise start/finish, history review and recovery. Record participants, protocol and observed difficulties without identifying patient images.
+- [ ] Exercise severe-heat pause/cooling/retry and longer sessions on both physical device classes. Bounded synthetic 30-minute diagnostics and simulated movement tests do not measure phone memory, camera accuracy, battery or thermal performance.
+- [ ] Complete the owner-dependent items in `docs/operations/PRODUCTION-READINESS.md`: account verification/testing schedule, signing custody, actual retention/backup expiry, privacy notice/deletion URL, model distribution terms and production support ownership.
+- [ ] Before Play release, upgrade the tested target/compile SDK tuple for current API-36 submission requirements and verify native 16 KB page compatibility. Preparation documentation does not satisfy these S5 release checks.
 
 ## Recording results
 

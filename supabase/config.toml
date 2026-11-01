@@ -21,12 +21,14 @@ enable_signup = true
 [auth.email]
 enable_signup = true
 enable_confirmations = true
+otp_length = 6
+otp_expiry = 600
 max_frequency = "1s"
 [auth.email.template.confirmation]
 subject = "Confirm your Motivance account"
 content_path = "./supabase/templates/confirmation.html"
 [auth.email.template.recovery]
-subject = "Recover your Motivance account"
+subject = "Reset your Motivance password"
 content_path = "./supabase/templates/recovery.html"
 [analytics]
 enabled = false

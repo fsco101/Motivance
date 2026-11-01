@@ -1,6 +1,7 @@
 package com.motivance.di
 import com.motivance.domain.AuthRepository
 import com.motivance.domain.RehabilitationRepository
+import com.motivance.domain.AdministrationRepository
 import com.motivance.data.remote.SupabaseAuthRepository
 import dagger.Binds
 import dagger.Module
@@ -11,4 +12,5 @@ import javax.inject.Singleton
 abstract class AppModule {
     @Binds @Singleton abstract fun auth(impl: SupabaseAuthRepository): AuthRepository
     @Binds @Singleton abstract fun rehabilitation(impl: SupabaseAuthRepository): RehabilitationRepository
+    @Binds @Singleton abstract fun administration(impl: SupabaseAuthRepository): AdministrationRepository
 }

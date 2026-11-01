@@ -1,0 +1,54 @@
+{
+  "recorded_at": "2026-11-01T06:57:07.473969+00:00",
+  "reviewer": "Codex engineering review",
+  "jvm": {
+    "app": {
+      "tests": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "domain": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "auth_ui_emulator": {
+    "device": "Pixel 6 AVD / Android 15",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "local_auth": {
+    "checks_passed": 31,
+    "environment": "isolated local Supabase; email captured locally"
+  },
+  "smtp_configuration_unit_tests": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "external_requests": "mocked"
+  },
+  "build": {
+    "debug_apk": "passed",
+    "instrumentation_apk": "passed",
+    "lint_debug": "passed"
+  },
+  "active_auth": {
+    "confirmation_required": true,
+    "otp_digits": 6,
+    "otp_expiry_seconds": 600,
+    "delivery": "Gmail SMTP on local Docker Auth; inbox delivery not tested"
+  },
+  "pending": [
+    "Hosted configuration application/read-back",
+    "Gmail inbox delivery",
+    "Actual OTP expiry timing and provider throttling",
+    "Physical-device transport"
+  ],
+  "smtp_runtime_verified_at": "2026-11-01T07:02:49.774548+00:00",
+  "smtp_connection_evidence": "docs/validation/smtp-connection-results.json"
+}

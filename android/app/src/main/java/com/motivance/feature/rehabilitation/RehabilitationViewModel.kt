@@ -14,7 +14,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=RehabWorkspace(),val busy:Boolean=false,val failed:Boolean=false,val notice:Boolean=false,val invitation:String?=null,val outbox:List<OutboxEntry> = emptyList(),val consents:List<LocalConsent> = emptyList())
+enum class RehabAction { REFRESH, INVITE, ACCEPT, REVOKE, PRESCRIBE, SYNC, WITHDRAW, EXPORT, DELETE }
+
+data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=RehabWorkspace(),val busy:Boolean=false,val activeAction:RehabAction?=null,val completedAction:RehabAction?=null,val failed:Boolean=false,val notice:Boolean=false,val invitation:String?=null,val outbox:List<OutboxEntry> = emptyList(),val consents:List<LocalConsent> = emptyList())
 
 @HiltViewModel class RehabilitationViewModel @Inject constructor(private val repository:RehabilitationRepository,private val store:SessionStore,@ApplicationContext private val context:Context):ViewModel() {
     private val mutable=MutableStateFlow(RehabilitationState())
@@ -34,38 +36,38 @@ data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=
         SyncScheduler.schedule(context,owner)
         refresh()
     }
-    private fun perform(refresh:Boolean=true,block:suspend ()->Unit) {
+    private fun perform(kind:RehabAction=RehabAction.REFRESH,refresh:Boolean=true,block:suspend ()->Unit) {
         val owner=mutable.value.owner
         if(owner.isBlank() || mutable.value.busy) return
-        mutable.value=mutable.value.copy(busy=true,failed=false,notice=false)
+        mutable.value=mutable.value.copy(busy=true,activeAction=kind,completedAction=null,failed=false,notice=false)
         action=viewModelScope.launch {
             try {
                 block()
                 val data=if(refresh) repository.loadWorkspace() else null
-                if(mutable.value.owner==owner) mutable.value=mutable.value.copy(workspace=data ?: mutable.value.workspace,notice=true)
+                if(mutable.value.owner==owner) mutable.value=mutable.value.copy(workspace=data ?: mutable.value.workspace,notice=true,completedAction=kind)
             } catch(e:CancellationException) {throw e}
-            catch(_:Exception) {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(failed=true)}
-            finally {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(busy=false)}
+            catch(_:Exception) {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(failed=true,workspace=RehabWorkspace())}
+            finally {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(busy=false,activeAction=null)}
         }
     }
     fun refresh()=perform { }
-    fun invite(email:String)=perform(false) {
+    fun invite(email:String)=perform(RehabAction.INVITE,false) {
         require(email.trim().matches(Regex("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")))
         val owner=mutable.value.owner; val code=repository.invitePatient(email)
         if(mutable.value.owner==owner) mutable.value=mutable.value.copy(invitation=code)
     }
-    fun accept(code:String)=perform {require(code.trim().matches(Regex("[a-fA-F0-9]{48}"))); repository.acceptInvitation(code)}
-    fun revoke(patient:String)=perform {repository.revokeLink(patient)}
-    fun prescribe(draft:PrescriptionDraft)=perform {
+    fun accept(code:String)=perform(RehabAction.ACCEPT) {require(code.trim().matches(Regex("[a-fA-F0-9]{48}"))); repository.acceptInvitation(code)}
+    fun revoke(patient:String)=perform(RehabAction.REVOKE) {repository.revokeLink(patient)}
+    fun prescribe(draft:PrescriptionDraft)=perform(RehabAction.PRESCRIBE) {
         ExerciseRules(side=draft.side,lowDegrees=draft.low,highDegrees=draft.high,targetRepetitions=draft.repetitions,minimumCycleMs=draft.minimumCycleMs,maximumCycleMs=draft.maximumCycleMs,peakHoldMs=draft.peakHoldMs,maxTrunkLeanDegrees=draft.maxTrunkLean,confidence=draft.confidence.toFloat())
         repository.publishPrescription(draft)
     }
-    fun synchronize()=perform(false) {
+    fun synchronize()=perform(RehabAction.SYNC,false) {
         val owner=mutable.value.owner
         store.dao.retryFailed(owner); store.dao.retryConsents(owner); SyncScheduler.schedule(context,owner)
     }
-    fun withdraw()=perform(false) {val owner=mutable.value.owner; store.recordConsent(owner,false); SyncScheduler.schedule(context,owner)}
-    fun request(kind:String)=perform {
+    fun withdraw()=perform(RehabAction.WITHDRAW,false) {val owner=mutable.value.owner; store.recordConsent(owner,false); SyncScheduler.schedule(context,owner)}
+    fun request(kind:String)=perform(if(kind=="export") RehabAction.EXPORT else RehabAction.DELETE) {
         require(kind in setOf("export","delete"))
         repository.requestPatientData(privacyIds.getOrPut(kind) {UUID.randomUUID().toString()},kind)
     }

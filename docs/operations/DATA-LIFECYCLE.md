@@ -12,6 +12,8 @@ No app feature stores raw camera frames, video, or per-frame pose sequences. SQL
 
 ## Retention policy
 
+Detailed profiles use a separate `system-purpose-v1` agreement explaining account management, rehabilitation tracking and connected-therapist profiling. Explicit consent is required before writing demographics; the server records its version/time and preserves them during edits. This is separate from movement-summary grants/withdrawals. Legacy accounts have no inferred demographic-consent record. Detailed profile data is held in `patient_profiles`, not in Room or token storage. A verified export/deletion review must include username, name, gender, birthdate, address, contact, avatar and consent evidence from this table, alongside Auth identity and existing rehabilitation records. Revoking a therapist link removes future database reads of demographics.
+
 `public.retention_policy` contains the explicit engineering default `development-v1`: **automatic deletion disabled, review after 365 days**. It is a review interval, not a claim of an approved clinical/legal retention period or an automatic purge job. No production policy is inferred from a user's device clock. Local unsynchronized results are retained until reviewed; resetting/uninstalling the development app or deleting its data removes its local database.
 
 Before pilot data collection, the deployment owner must set actual live/local retention, request response time, account deletion, encryption and backup expiry in the deployment policy. This follow-up is recorded in `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md`; it does not block implementing or testing the development workflow.

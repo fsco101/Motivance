@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase:android.content.Context) {super.attachBaseContext(com.motivance.designsystem.AppLanguage.wrap(newBase))}
     private val auth: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

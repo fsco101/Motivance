@@ -67,11 +67,13 @@ class ResultsDashboardTest {
         }
     }
 
-    @Test fun invalidDatesHidePriorResultsAndShowAnActionableError() {
+    @Test fun datePickerCancelPreservesResults() {
         display(listOf(row()))
-        compose.onNodeWithText(text(R.string.history_from)).performTextInput("2026-02-30")
-        compose.onNodeWithText(text(R.string.history_date_error)).assertExists()
-        compose.onNodeWithText(text(R.string.history_completed)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.ui_show_filters)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.history_from)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.cancel_action)).performClick()
+        compose.onNodeWithText(text(R.string.history_date_error)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.history_completed)).assertExists()
     }
 
     private class FixtureRepository(private val rows: List<HistoricalSession>) : RehabilitationRepository {

@@ -15,6 +15,25 @@ import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class SessionStoreTest {
+    @Test fun legacyDraftCanCompleteButItsEffectiveFocusCannotBeChanged()=runBlocking {
+        val id=UUID.randomUUID().toString()
+        store.save(owner,id,rules,metrics,100,"DRAFT")
+        val old=org.json.JSONObject(store.dao.get(owner,id)!!.rulesJson).apply {remove("focusJoint")}.toString()
+        db.openHelper.writableDatabase.execSQL("UPDATE local_sessions SET rulesJson=? WHERE id=?",arrayOf(old,id))
+        assertTrue(runCatching {store.save(owner,id,rules.copy(focusJoint=BodyJoint.WRIST),metrics,100,"COMPLETED")}.isFailure)
+        store.save(owner,id,rules,metrics,100,"COMPLETED")
+        assertEquals("ELBOW",org.json.JSONObject(store.dao.outbox(owner).single().payloadJson).getJSONObject("rules").getString("focusJoint"))
+    }
+    @Test fun therapistSelectedFocusStaysPinnedThroughDatabaseReopen()=runBlocking {
+        val prescribed=rules.copy(demo=false,prescriptionVersionId=UUID.randomUUID().toString(),side=BodySide.RIGHT,focusJoint=BodyJoint.KNEE)
+        val grant=store.recordConsent(owner,true);val id=UUID.randomUUID().toString()
+        store.save(owner,id,prescribed,metrics,grant.occurredAt,"DRAFT")
+        db.close();open();store.recover(owner)
+        val recovered=ExerciseJson.rules(store.dao.get(owner,id)!!.rulesJson)
+        assertEquals(BodyJoint.KNEE,recovered.focusJoint);assertEquals(BodySide.RIGHT,recovered.side)
+        store.save(owner,id,recovered,metrics,grant.occurredAt,"COMPLETED")
+        assertEquals("KNEE",org.json.JSONObject(store.dao.outbox(owner).single().payloadJson).getJSONObject("rules").getString("focusJoint"))
+    }
     private lateinit var context:Context
     private lateinit var db:SessionDatabase
     private lateinit var store:SessionStore

@@ -4,6 +4,7 @@ import com.motivance.domain.AuthRepository
 import com.motivance.domain.UserRole
 import com.motivance.domain.UserSession
 import com.motivance.domain.WorkspaceOverview
+import com.motivance.domain.RemoteFailure
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -124,6 +125,29 @@ class AuthViewModelTest {
         assertEquals(repository.session,vm.state.value.session)
     }
 
+    @Test fun resendTrimsEmailAndNeverPublishesSession()=runTest(dispatcher) {
+        val vm=AuthViewModel(repository)
+        vm.act(AuthAction.RESEND_CONFIRMATION,"  a@example.test  "); advanceUntilIdle()
+        assertEquals("a@example.test",repository.resentEmail)
+        assertEquals(AuthNotice.CONFIRM_EMAIL,vm.state.value.notice)
+        assertNull(vm.state.value.session)
+    }
+    @Test fun authFailuresHaveActionableSafeNotices()=runTest(dispatcher) {
+        val vm=AuthViewModel(repository)
+        for((failure,notice) in listOf(
+            RemoteFailure(400,"email_not_confirmed") to AuthNotice.EMAIL_UNCONFIRMED,
+            RemoteFailure(403,"otp_expired") to AuthNotice.INVALID_CODE,
+            RemoteFailure(429) to AuthNotice.RATE_LIMITED,
+            RemoteFailure(422,"weak_password") to AuthNotice.PASSWORD_POLICY
+        )) {
+            repository.signInFailure=failure
+            vm.act(AuthAction.SIGN_IN,"a@example.test","password"); advanceUntilIdle()
+            assertEquals(notice,vm.state.value.notice)
+            assertNull(vm.state.value.session)
+            assertFalse(vm.state.value.busy)
+        }
+    }
+
     private class FakeAuth : AuthRepository {
         val session=UserSession("fixture",setOf(UserRole.PATIENT))
         var calls=0
@@ -134,11 +158,15 @@ class AuthViewModelTest {
         var overviewGate: CompletableDeferred<WorkspaceOverview>?=null
         var failRefresh=false
         var failSignIn=false
+        var signInFailure:Exception?=null
+        var resentEmail:String?=null
         override suspend fun signIn(email:String,password:String):UserSession {
             calls++; if(failSignIn) error("sensitive backend detail")
+            signInFailure?.let {throw it}
             return signInGate?.await() ?: session
         }
         override suspend fun register(email:String,password:String) { calls++ }
+        override suspend fun resendConfirmation(email:String) {calls++;resentEmail=email}
         override suspend fun confirmRegistration(email:String,token:String):UserSession { calls++; return session }
         override suspend fun requestRecovery(email:String) { calls++ }
         override suspend fun recover(email:String,token:String,newPassword:String):UserSession { calls++; return session }

@@ -1,9 +1,9 @@
 name: Android checks
 on:
   push:
-    paths: ['android/**', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', '.github/workflows/android-ci.yml']
+    paths: ['android/**', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', 'scripts/check_resources.py', '.github/workflows/android-ci.yml']
   pull_request:
-    paths: ['android/**', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', '.github/workflows/android-ci.yml']
+    paths: ['android/**', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', 'scripts/check_resources.py', '.github/workflows/android-ci.yml']
 permissions:
   contents: read
 jobs:
@@ -20,6 +20,7 @@ jobs:
           packages: platform-tools
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - run: python scripts/check_module_boundaries.py
+      - run: python scripts/check_resources.py
       - run: bash ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug :app:testDebugUnitTest :core:domain:test :core:assessment:test --no-daemon
         working-directory: android
       - run: python scripts/check_apk_native_libraries.py

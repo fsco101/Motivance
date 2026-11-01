@@ -1,0 +1,23 @@
+{
+  "verified_at": "2026-11-01T07:02:49.774548+00:00",
+  "target": "local Docker Supabase Auth",
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": 587,
+  "smtp_tls_authentication": "passed",
+  "running_configuration_checks": {
+    "auth_container_running": true,
+    "smtp_host_matches": true,
+    "smtp_port_matches": true,
+    "smtp_user_matches": true,
+    "smtp_password_matches": true,
+    "smtp_sender_matches": true,
+    "confirmation_required": true,
+    "otp_digits_correct": true,
+    "otp_expiry_correct": true,
+    "capture_config_restored": true,
+    "android_smtp_fields_removed": true
+  },
+  "real_message_sent": false,
+  "inbox_delivery": "not tested",
+  "credential_values_recorded": false
+}
