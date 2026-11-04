@@ -2,6 +2,7 @@ package com.motivance.designsystem
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
@@ -71,10 +72,18 @@ import com.motivance.R
     }
 }
 
-@Composable fun EmptyState(title: Int, description: Int) {
-    ClinicalCard {
-        Icon(Icons.Default.Info, null, tint=MaterialTheme.colorScheme.secondary, modifier=Modifier.size(28.dp))
-        Text(stringResource(title), style=MaterialTheme.typography.titleMedium)
-        Text(stringResource(description), color=MaterialTheme.colorScheme.onSurfaceVariant)
+@Composable fun EmptyState(title: Int, description: Int, action: (@Composable () -> Unit)? = null) {
+    Surface(Modifier.fillMaxWidth(), color=MaterialTheme.colorScheme.surfaceContainerLow, shape=MaterialTheme.shapes.large,
+        border=BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        Column(Modifier.padding(horizontal=24.dp, vertical=28.dp), horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            Surface(shape=CircleShape, color=MaterialTheme.colorScheme.secondary.copy(alpha=.1f), modifier=Modifier.size(52.dp)) {
+                Box(contentAlignment=Alignment.Center) { Icon(Icons.Default.Info, null, tint=MaterialTheme.colorScheme.secondary, modifier=Modifier.size(26.dp)) }
+            }
+            Text(stringResource(title), style=MaterialTheme.typography.titleMedium, textAlign=TextAlign.Center)
+            Text(stringResource(description), style=MaterialTheme.typography.bodyMedium, textAlign=TextAlign.Center,
+                color=MaterialTheme.colorScheme.onSurfaceVariant)
+            action?.invoke()
+        }
     }
 }

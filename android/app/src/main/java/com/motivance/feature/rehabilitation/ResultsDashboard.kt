@@ -79,8 +79,8 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     else {
         Text(stringResource(R.string.history_comparability), style = MaterialTheme.typography.bodySmall)
         rehabilitationProgress(rows).forEach { series ->
-            Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(Modifier.fillMaxWidth(),color=MaterialTheme.colorScheme.surface,shape=MaterialTheme.shapes.large,border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ExerciseHeading(series.prescription)
                     Text(stringResource(R.string.history_series, series.key.metric, series.key.model, series.key.algorithm),
                         style = MaterialTheme.typography.bodySmall)
@@ -126,8 +126,8 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
 }
 
 @Composable private fun SessionResult(s: HistoricalSession) {
-    Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Surface(Modifier.fillMaxWidth(),color=MaterialTheme.colorScheme.surface,shape=MaterialTheme.shapes.large,border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(date(s.startedAt), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(when (s.resultStatus) {
                 HistoryStatus.COMPLETED -> R.string.history_completed

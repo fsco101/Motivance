@@ -1,27 +1,45 @@
 package com.motivance.feature.rehabilitation
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.motivance.R
-import com.motivance.feature.auth.ProfileAvatar
 import com.motivance.data.local.CachedPrescription
 import com.motivance.data.local.ExerciseJson
-import com.motivance.domain.*
 import com.motivance.designsystem.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.Alignment
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import com.motivance.domain.*
+import com.motivance.feature.auth.ProfileAvatar
 import java.text.DateFormat
 import java.util.Date
+import java.util.Locale
 import java.util.UUID
+import kotlin.math.cos
+import kotlin.math.sin
 
 internal fun RehabAction.loadingLabel()=when(this) {
     RehabAction.REFRESH -> R.string.ui_loading_workspace
@@ -34,6 +52,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
     RehabAction.EXPORT, RehabAction.DELETE -> R.string.ui_submitting_request
 }
 
+/** Workspace status notices plus a compact refresh action, so the page content stays the visual focus. */
 @Composable fun ConnectedStatus(state:RehabilitationState,refresh:()->Unit) {
     when {
         state.busy -> LoadingNotice(state.activeAction?.loadingLabel() ?: R.string.ui_loading_workspace)
@@ -46,111 +65,369 @@ internal fun RehabAction.loadingLabel()=when(this) {
             else -> R.string.ui_changes_saved
         })
     }
-    if(!state.failed) ActionButton(R.string.refresh_connected,refresh,outlined=true,enabled=!state.busy,
-        busy=state.activeAction==RehabAction.REFRESH,busyLabel=R.string.ui_loading_workspace)
+    if(!state.failed) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+        TextButton(refresh,enabled=!state.busy,modifier=Modifier.heightIn(min=48.dp)) {
+            Icon(Icons.Default.Refresh,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.refresh_connected))
+        }
+    }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Therapist: patient list
+// ---------------------------------------------------------------------------------------------
 
 @Composable fun ColumnScope.PatientManagement(state:RehabilitationState,vm:RehabilitationViewModel,open:(String)->Unit) {
     var email by rememberSaveable {mutableStateOf("")}
     var revoke by remember {mutableStateOf<LinkedPatient?>(null)}
     var inviting by rememberSaveable {mutableStateOf(false)}
-    ActionButton(R.string.invite_patient,{inviting=!inviting},outlined=true,enabled=!state.busy)
-    if(inviting) ClinicalCard {
-    Text(stringResource(R.string.invite_patient),style=MaterialTheme.typography.titleLarge)
-    Text(stringResource(R.string.invitation_help))
-    OutlinedTextField(email,{email=it},label={Text(stringResource(R.string.email))},singleLine=true,enabled=!state.busy,modifier=Modifier.fillMaxWidth(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Email))
-    ActionButton(R.string.create_invitation,{vm.invite(email)},enabled=!state.busy && email.isNotBlank(),busy=state.activeAction==RehabAction.INVITE,busyLabel=R.string.ui_creating_invitation)
-    state.invitation?.let {code ->
-        Text(stringResource(R.string.invitation_share))
-        SelectionContainer {Text(code,style=MaterialTheme.typography.bodyMedium)}
-    }
+    ClinicalCard {
+        val toggle=stringResource(if(inviting) R.string.ui_collapse else R.string.ui_expand)
+        Row(Modifier.fillMaxWidth().clickable(enabled=!state.busy,onClickLabel=toggle,role=Role.Button) {inviting=!inviting},
+            verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+            IconBadge(Icons.Default.Email)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.invite_patient),style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.ui_invite_summary),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Default.KeyboardArrowDown,null,Modifier.rotate(if(inviting) 180f else 0f),tint=MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if(inviting) {
+            Text(stringResource(R.string.invitation_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedTextField(email,{email=it},label={Text(stringResource(R.string.email))},singleLine=true,enabled=!state.busy,
+                leadingIcon={Icon(Icons.Default.Email,null)},shape=RoundedCornerShape(12.dp),
+                modifier=Modifier.fillMaxWidth(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Email))
+            ActionButton(R.string.create_invitation,{vm.invite(email)},enabled=!state.busy && email.isNotBlank(),busy=state.activeAction==RehabAction.INVITE,busyLabel=R.string.ui_creating_invitation)
+            state.invitation?.let {code ->
+                Surface(color=MaterialTheme.colorScheme.secondaryContainer.copy(alpha=.3f),shape=MaterialTheme.shapes.medium) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.invitation_share),style=MaterialTheme.typography.bodySmall)
+                        SelectionContainer {Text(code,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold,color=MaterialTheme.colorScheme.primary)}
+                    }
+                }
+            }
+        }
     }
     val patients=state.workspace.patients.filter {it.id!=state.owner}
-    if(patients.isEmpty() && !state.busy && !state.failed) EmptyState(R.string.nav_patients,R.string.no_patients_detail)
-    patients.forEach {patient -> Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
-        Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            patient.profile?.let {ProfileAvatar(it);Text("@"+it.username,style=MaterialTheme.typography.titleMedium);Text(stringResource(R.string.profile_age,it.age?.toString() ?: "--"))}
-            Text(patient.name.ifBlank {patient.id.take(8)},style=MaterialTheme.typography.titleMedium)
-            OutlinedButton({open(patient.id)},enabled=!state.busy) {Text(stringResource(R.string.patient_history_and_prescribe))}
-            TextButton({revoke=patient},enabled=!state.busy) {Text(stringResource(R.string.revoke_patient_access))}
+    SectionHeading(R.string.nav_patients) {if(patients.isNotEmpty()) StatusPill(patients.size.toString(),PillTone.PRIMARY)}
+    if(patients.isEmpty() && !state.busy && !state.failed) EmptyState(R.string.no_patients,R.string.no_patients_detail)
+    patients.forEach {patient ->
+        val plans=state.workspace.prescriptions.count {it.patientId==patient.id}
+        PatientCard(patient,plans,!state.busy,{open(patient.id)}) {revoke=patient}
+    }
+    revoke?.let {patient -> AlertDialog(onDismissRequest={revoke=null},icon={Icon(Icons.Default.Warning,null)},
+        title={Text(stringResource(R.string.revoke_patient_access))},text={Text(stringResource(R.string.revoke_confirmation))},
+        confirmButton={TextButton({vm.revoke(patient.id); revoke=null},colors=ButtonDefaults.textButtonColors(contentColor=MaterialTheme.colorScheme.error)) {Text(stringResource(R.string.confirm_action))}},
+        dismissButton={TextButton({revoke=null}) {Text(stringResource(R.string.cancel_action))}}) }
+}
+
+@Composable private fun PatientCard(patient:LinkedPatient,plans:Int,enabled:Boolean,open:()->Unit,revoke:()->Unit) {
+    var menu by remember {mutableStateOf(false)}
+    ClinicalCard {
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+            patient.profile?.let {ProfileAvatar(it)} ?: IconBadge(Icons.Default.Person,size=60)
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
+                Text(patient.name.ifBlank {patient.id.take(8)},style=MaterialTheme.typography.titleMedium)
+                patient.profile?.let {
+                    Text("@"+it.username+" · "+stringResource(R.string.profile_age,it.age?.toString() ?: "--"),
+                        style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Box {
+                IconButton({menu=true},enabled=enabled) {Icon(Icons.Default.MoreVert,stringResource(R.string.ui_more_actions))}
+                DropdownMenu(menu,{menu=false}) {
+                    DropdownMenuItem(text={Text(stringResource(R.string.revoke_patient_access),color=MaterialTheme.colorScheme.error)},
+                        leadingIcon={Icon(Icons.Default.Delete,null,tint=MaterialTheme.colorScheme.error)},onClick={menu=false;revoke()})
+                }
+            }
         }
-    } }
-    revoke?.let {patient -> AlertDialog(onDismissRequest={revoke=null},title={Text(stringResource(R.string.revoke_patient_access))},text={Text(stringResource(R.string.revoke_confirmation))},confirmButton={TextButton({vm.revoke(patient.id); revoke=null}) {Text(stringResource(R.string.confirm_action))}},dismissButton={TextButton({revoke=null}) {Text(stringResource(R.string.cancel_action))}}) }
+        StatusPill(stringResource(R.string.ui_plan_count,plans),if(plans>0) PillTone.POSITIVE else PillTone.NEUTRAL,Icons.AutoMirrored.Filled.List)
+        Button(open,enabled=enabled,modifier=Modifier.fillMaxWidth().heightIn(min=52.dp),shape=MaterialTheme.shapes.medium) {
+            Text(stringResource(R.string.patient_history_and_prescribe),modifier=Modifier.weight(1f,fill=false))
+            Spacer(Modifier.width(8.dp)); Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight,null)
+        }
+    }
+}
+
+/** One assigned exercise on the therapist's patient page. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable fun AssignedPrescriptionCard(p:PrescriptionSummary,exercise:CatalogueExercise?,enabled:Boolean,onEdit:()->Unit) {
+    val focus=runCatching {org.json.JSONObject(p.parameters).optString("focus_joint","")}.getOrDefault("").takeIf {it.isNotBlank()}
+        ?.let {runCatching {BodyJoint.valueOf(it)}.getOrNull()}
+    ClinicalCard {
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+            ExerciseGlyph(exercise?.algorithm)
+            Column(Modifier.weight(1f)) {
+                Text(exercise?.name ?: stringResource(R.string.history_unknown_exercise),style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(if(p.side=="right") R.string.right_side else R.string.left_side),style=MaterialTheme.typography.bodySmall,
+                    color=MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            StatusPill(stringResource(R.string.ui_version_label,p.version),PillTone.PRIMARY)
+        }
+        FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+            StatusPill(stringResource(R.string.ui_range_value,degrees(p.low),degrees(p.high)),PillTone.POSITIVE)
+            StatusPill(stringResource(R.string.ui_reps_value,p.repetitions),PillTone.POSITIVE)
+            StatusPill(stringResource(R.string.ui_focus_value,stringResource(focus?.label() ?: R.string.focus_automatic)))
+        }
+        OutlinedButton(onEdit,enabled=enabled,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {
+            Icon(Icons.Default.Edit,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.edit_prescription))
+        }
+    }
 }
 
 @Composable fun PatientInvitation(state:RehabilitationState,vm:RehabilitationViewModel) {
     var code by remember {mutableStateOf("")}
-    Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.join_therapist),style=MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.join_therapist_help))
-        OutlinedTextField(code,{code=it},label={Text(stringResource(R.string.invitation_code))},singleLine=true,enabled=!state.busy,modifier=Modifier.fillMaxWidth())
+    ClinicalCard {
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+            IconBadge(Icons.Default.Person)
+            Text(stringResource(R.string.join_therapist),style=MaterialTheme.typography.titleMedium,modifier=Modifier.weight(1f))
+        }
+        Text(stringResource(R.string.join_therapist_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedTextField(code,{code=it},label={Text(stringResource(R.string.invitation_code))},singleLine=true,enabled=!state.busy,
+            shape=RoundedCornerShape(12.dp),modifier=Modifier.fillMaxWidth())
         ActionButton(R.string.accept_invitation,{vm.accept(code)},enabled=!state.busy && code.isNotBlank(),busy=state.activeAction==RehabAction.ACCEPT,busyLabel=R.string.ui_connecting_therapist)
-    } }
+    }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Patient: downloaded assignments
+// ---------------------------------------------------------------------------------------------
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable fun ColumnScope.CachedAssignments(prescriptions:List<CachedPrescription>,unavailable:Boolean=false,loading:Boolean=false,start:(CachedPrescription)->Unit) {
-    Text(stringResource(R.string.assignment_cache_policy),style=MaterialTheme.typography.bodySmall)
-    if(unavailable) Text(stringResource(R.string.assignment_unavailable),color=MaterialTheme.colorScheme.error)
+    if(unavailable) FeedbackNotice(R.string.assignment_unavailable,error=true)
     if(prescriptions.isEmpty() && !loading) EmptyState(R.string.no_assignments,R.string.no_assignments_detail)
     prescriptions.forEach {p ->
         val rules=ExerciseJson.rules(p.rulesJson)
         val valid=p.expiresAt>System.currentTimeMillis()
-        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(if(rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction),style=MaterialTheme.typography.titleLarge)
-            Text(stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side))
-            Text(p.instructions)
-            Text(stringResource(R.string.assigned_focus,stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side),stringResource(rules.focusJoint.label())))
-            Text(stringResource(R.string.session_targets,rules.lowDegrees.toInt(),rules.highDegrees.toInt()))
-            Text(stringResource(R.string.completed_reps,0,rules.targetRepetitions))
-            Text(stringResource(R.string.last_downloaded,if(p.cachedAt>0) DateFormat.getDateTimeInstance().format(Date(p.cachedAt)) else "--"),style=MaterialTheme.typography.bodySmall)
-            Text(stringResource(R.string.pinned_version,p.versionId.take(8)),style=MaterialTheme.typography.labelSmall)
-            if(!valid) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
+        val side=stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)
+        ClinicalCard {
+            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+                ExerciseGlyph(if(rules.kind==ExerciseKind.ELBOW_FLEXION) "elbow-flexion-v1" else "shoulder-abduction-v1")
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(if(rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction),style=MaterialTheme.typography.titleLarge)
+                    Text(side,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if(!valid) StatusPill(stringResource(R.string.ui_expired),PillTone.ATTENTION)
+            }
+            if(p.instructions.isNotBlank()) Text(p.instructions,style=MaterialTheme.typography.bodyMedium)
+            FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                StatusPill(stringResource(R.string.ui_range_value,degrees(rules.lowDegrees),degrees(rules.highDegrees)),PillTone.POSITIVE)
+                StatusPill(stringResource(R.string.ui_reps_value,rules.targetRepetitions),PillTone.POSITIVE)
+            }
+            Text(stringResource(R.string.assigned_focus,side,stringResource(rules.focusJoint.label())),style=MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.session_targets,rules.lowDegrees.toInt(),rules.highDegrees.toInt()),style=MaterialTheme.typography.bodySmall,
+                color=MaterialTheme.colorScheme.onSurfaceVariant)
+            HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+            Text(stringResource(R.string.last_downloaded,if(p.cachedAt>0) DateFormat.getDateTimeInstance().format(Date(p.cachedAt)) else "--"),
+                style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.pinned_version,p.versionId.take(8)),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            if(!valid) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error,style=MaterialTheme.typography.bodySmall)
             ActionButton(R.string.start_assigned_exercise,{start(p)},enabled=valid && p.instructions.isNotBlank())
-        } }
+        }
     }
+    Text(stringResource(R.string.assignment_cache_policy),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
 }
+
+// ---------------------------------------------------------------------------------------------
+// Therapist: exercise assignment editor
+// ---------------------------------------------------------------------------------------------
 
 @Composable fun ColumnScope.PrescriptionForm(state:RehabilitationState,vm:RehabilitationViewModel,patientId:String?,existing:PrescriptionSummary?=null) {
     PrescriptionEditor(state,patientId,existing,vm::prescribe)
 }
 
+/**
+ * Exercise assignment split into numbered steps (exercise, side and focus, targets, timing) and a
+ * review card that summarises exactly what the publish button will send.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun ColumnScope.PrescriptionEditor(state:RehabilitationState,patientId:String?,existing:PrescriptionSummary?=null,onPublish:(PrescriptionDraft)->Unit) {
     var patient by rememberSaveable {mutableStateOf(existing?.patientId ?: patientId.orEmpty())}
     var exercise by rememberSaveable {mutableStateOf(existing?.exerciseId ?: "")}
     var side by rememberSaveable {mutableStateOf(existing?.side ?: "left")}
-    var low by rememberSaveable {mutableStateOf(existing?.low?.toString() ?: "20")}
-    var high by rememberSaveable {mutableStateOf(existing?.high?.toString() ?: "90")}
+    var low by rememberSaveable {mutableStateOf(existing?.low?.let(::degrees) ?: "20")}
+    var high by rememberSaveable {mutableStateOf(existing?.high?.let(::degrees) ?: "90")}
     var reps by rememberSaveable {mutableStateOf(existing?.repetitions?.toString() ?: "5")}
     val parameters=remember(existing) {org.json.JSONObject(existing?.parameters ?: "{}")}
     var focusJoint by rememberSaveable {mutableStateOf(parameters.optString("focus_joint",""))}
     var minimum by rememberSaveable {mutableStateOf(parameters.optLong("minimum_cycle_ms",600).toString())}
     var maximum by rememberSaveable {mutableStateOf(parameters.optLong("maximum_cycle_ms",30000).toString())}
     var hold by rememberSaveable {mutableStateOf(parameters.optLong("peak_hold_ms",100).toString())}
-    var lean by rememberSaveable {mutableStateOf(parameters.optDouble("max_trunk_lean_degrees",20.0).toString())}
+    var lean by rememberSaveable {mutableStateOf(parameters.optDouble("max_trunk_lean_degrees",20.0).let(::degrees))}
     var requestId by rememberSaveable {mutableStateOf(UUID.randomUUID().toString())}
     val assignmentId=rememberSaveable {existing?.assignmentId ?: UUID.randomUUID().toString()}
-    fun changed() {requestId=UUID.randomUUID().toString()}
-    Text(stringResource(R.string.prescription_version_help))
-    Choice(R.string.select_patient,state.workspace.patients.filter {it.id!=state.owner}.map {it.id to it.name.ifBlank {it.id.take(8)}},patient,!state.busy && existing==null) {patient=it; changed()}
-    Choice(R.string.select_exercise,state.workspace.catalogue.map {it.id to it.name},exercise,!state.busy) {exercise=it; changed()}
-    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-        listOf("left" to R.string.left_side,"right" to R.string.right_side).forEach {(value,label) -> FilterChip(side==value,{side=value;changed()},enabled=!state.busy,label={Text(stringResource(label))})}
-    }
-    Text(stringResource(R.string.prescription_focus),style=MaterialTheme.typography.titleSmall)
-    Text(stringResource(R.string.prescription_focus_help),style=MaterialTheme.typography.bodySmall)
-    Choice(R.string.prescription_focus,listOf("" to stringResource(R.string.focus_automatic))+BodyJoint.entries.map {it.name to stringResource(it.label())},focusJoint,!state.busy) {focusJoint=it;changed()}
-    @Composable fun field(label:Int,value:String,set:(String)->Unit) {OutlinedTextField(value,{set(it);changed()},enabled=!state.busy,label={Text(stringResource(label))},singleLine=true,modifier=Modifier.fillMaxWidth(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))}
-    field(R.string.target_minimum,low) {low=it}; field(R.string.target_maximum,high) {high=it}; field(R.string.target_repetitions,reps) {reps=it}
     var advanced by rememberSaveable {mutableStateOf(false)}
-    TextButton({advanced=!advanced}) {Text(stringResource(if(advanced) R.string.ui_hide_timing else R.string.ui_show_timing))}
-    if(advanced) {
-    field(R.string.minimum_cycle_ms,minimum) {minimum=it}; field(R.string.maximum_cycle_ms,maximum) {maximum=it}; field(R.string.peak_hold_ms,hold) {hold=it}; field(R.string.maximum_trunk_lean,lean) {lean=it}
-    }
+    fun changed() {requestId=UUID.randomUUID().toString()}
+    val enabled=!state.busy
+    val patients=state.workspace.patients.filter {it.id!=state.owner}
+    val chosenPatient=patients.firstOrNull {it.id==patient}
+    val chosenExercise=state.workspace.catalogue.firstOrNull {it.id==exercise}
+
     val l=low.toDoubleOrNull(); val h=high.toDoubleOrNull(); val r=reps.toIntOrNull(); val min=minimum.toLongOrNull(); val max=maximum.toLongOrNull(); val peak=hold.toLongOrNull(); val trunk=lean.toDoubleOrNull()
-    val valid=patient.isNotBlank() && exercise.isNotBlank() && l!=null && h!=null && r!=null && min!=null && max!=null && peak!=null && trunk!=null && runCatching {ExerciseRules(lowDegrees=l,highDegrees=h,targetRepetitions=r,minimumCycleMs=min,maximumCycleMs=max,peakHoldMs=peak,maxTrunkLeanDegrees=trunk); require(min in 100..30000 && max<=300000 && peak<=5000)}.isSuccess
-    ActionButton(R.string.publish_prescription,{onPublish(PrescriptionDraft(assignmentId,requestId,patient,exercise,BodySide.valueOf(side.uppercase()),l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7),focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it)}))},enabled=valid && !state.busy,busy=state.activeAction==RehabAction.PRESCRIBE,busyLabel=R.string.ui_publishing_prescription)
-    if(state.completedAction==RehabAction.PRESCRIBE && state.notice) FeedbackNotice(R.string.ui_prescription_published)
-    if(state.failed && !state.busy) FeedbackNotice(R.string.connected_failed,error=true)
+    val rangeValid=l!=null && h!=null && l.isFinite() && h.isFinite() && l>=0 && h<=180 && h>l+10
+    val repsValid=r!=null && r in 1..1000
+    val timingValid=min!=null && max!=null && peak!=null && trunk!=null && min in 100..30000 && max>min && max<=300000 && peak in 0..5000 && trunk.isFinite() && trunk in 0.0..90.0
+    val valid=patient.isNotBlank() && exercise.isNotBlank() && rangeValid && repsValid && timingValid && runCatching {
+        ExerciseRules(lowDegrees=l!!,highDegrees=h!!,targetRepetitions=r!!,minimumCycleMs=min!!,maximumCycleMs=max!!,peakHoldMs=peak!!,maxTrunkLeanDegrees=trunk!!)
+    }.isSuccess
+
+    // Who and which version this assignment applies to.
+    AssignmentContext(chosenPatient?.name?.ifBlank {null} ?: patient.take(8).ifBlank {null},chosenPatient?.profile,existing)
+    if(existing==null && patientId==null) ClinicalCard {
+        Choice(R.string.select_patient,patients.map {it.id to it.name.ifBlank {it.id.take(8)}},patient,enabled) {patient=it; changed()}
+    }
+
+    StepCard(1,R.string.select_exercise,R.string.ui_step_exercise_help,complete=chosenExercise!=null) {
+        if(state.workspace.catalogue.isEmpty()) Text(stringResource(R.string.ui_no_catalogue),style=MaterialTheme.typography.bodyMedium,
+            color=MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.selectableGroup(),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            state.workspace.catalogue.forEach {item ->
+                SelectionTile(exercise==item.id,{exercise=item.id; changed()},item.name,Modifier.fillMaxWidth(),
+                    description=item.instructions.ifBlank {null},enabled=enabled,leading={ExerciseGlyph(item.algorithm)})
+            }
+        }
+    }
+
+    StepCard(2,R.string.ui_step_side,R.string.ui_step_side_help,complete=true) {
+        Row(Modifier.fillMaxWidth().selectableGroup(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+            listOf("left" to R.string.left_side,"right" to R.string.right_side).forEach {(value,label) ->
+                SelectionTile(side==value,{side=value; changed()},stringResource(label),Modifier.weight(1f),enabled=enabled)
+            }
+        }
+        Text(stringResource(R.string.prescription_focus),style=MaterialTheme.typography.labelLarge,modifier=Modifier.padding(top=4.dp))
+        FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+            (listOf("" to R.string.focus_automatic)+BodyJoint.entries.map {it.name to it.label()}).forEach {(value,label) ->
+                val selected=focusJoint==value
+                FilterChip(selected,{focusJoint=value; changed()},enabled=enabled,label={Text(stringResource(label))},
+                    leadingIcon=if(selected) {{Icon(Icons.Default.Check,null,Modifier.size(18.dp))}} else null)
+            }
+        }
+        Text(stringResource(R.string.prescription_focus_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+
+    StepCard(3,R.string.ui_step_targets,R.string.ui_step_targets_help,complete=rangeValid && repsValid) {
+        val arcDescription=stringResource(R.string.ui_range_preview,low.ifBlank {"--"},high.ifBlank {"--"})
+        Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally) {
+            Column(Modifier.widthIn(max=340.dp).fillMaxWidth()) {
+                RangeArc(l.takeIf {rangeValid},h.takeIf {rangeValid},arcDescription)
+                Row(Modifier.fillMaxWidth().clearAndSetSemantics {},verticalAlignment=Alignment.CenterVertically) {
+                    Text("0°",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if(rangeValid) stringResource(R.string.ui_range_value,degrees(l!!),degrees(h!!)) else "--",Modifier.weight(1f),
+                        style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold,color=MaterialTheme.colorScheme.primary,textAlign=TextAlign.Center)
+                    Text("180°",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            NumberField(R.string.ui_return_angle,low,"°",!rangeValid,enabled,Modifier.weight(1f)) {low=it; changed()}
+            NumberField(R.string.ui_reach_angle,high,"°",!rangeValid,enabled,Modifier.weight(1f)) {high=it; changed()}
+        }
+        Text(stringResource(if(rangeValid) R.string.ui_range_help else R.string.ui_range_error),style=MaterialTheme.typography.bodySmall,
+            color=if(rangeValid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
+        RepetitionStepper(reps,repsValid,enabled) {reps=it; changed()}
+        if(!repsValid) Text(stringResource(R.string.ui_reps_error),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
+    }
+
+    ClinicalCard {
+        val toggle=stringResource(if(advanced) R.string.ui_hide_timing else R.string.ui_show_timing)
+        Row(Modifier.fillMaxWidth().clickable(onClickLabel=toggle,role=Role.Button) {advanced=!advanced},
+            verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            IconBadge(Icons.Default.Settings,MaterialTheme.colorScheme.primary,40)
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.ui_timing_title),style=MaterialTheme.typography.titleMedium,color=MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.ui_timing_summary,minimum.ifBlank {"--"},maximum.ifBlank {"--"},hold.ifBlank {"--"},lean.ifBlank {"--"}),
+                    style=MaterialTheme.typography.bodySmall,color=if(timingValid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
+            }
+            Icon(Icons.Default.KeyboardArrowDown,null,Modifier.rotate(if(advanced) 180f else 0f),tint=MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if(advanced) {
+            NumberField(R.string.minimum_cycle_ms,minimum,"ms",min==null || min !in 100..30000,enabled,Modifier.fillMaxWidth(),KeyboardType.Number) {minimum=it; changed()}
+            NumberField(R.string.maximum_cycle_ms,maximum,"ms",max==null || min==null || max<=min || max>300000,enabled,Modifier.fillMaxWidth(),KeyboardType.Number) {maximum=it; changed()}
+            NumberField(R.string.peak_hold_ms,hold,"ms",peak==null || peak !in 0..5000,enabled,Modifier.fillMaxWidth(),KeyboardType.Number) {hold=it; changed()}
+            NumberField(R.string.maximum_trunk_lean,lean,"°",trunk==null || trunk !in 0.0..90.0,enabled,Modifier.fillMaxWidth()) {lean=it; changed()}
+        }
+        if(!timingValid) Text(stringResource(R.string.ui_timing_error),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
+    }
+
+    ClinicalCard(accent=MaterialTheme.colorScheme.secondary) {
+        Text(stringResource(R.string.ui_review_title),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold,
+            color=MaterialTheme.colorScheme.primary,modifier=Modifier.semantics {heading()})
+        val sideText=stringResource(if(side=="right") R.string.right_side else R.string.left_side)
+        val focusText=stringResource(focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it).label()} ?: R.string.focus_automatic)
+        DetailRow(stringResource(R.string.ui_review_patient),chosenPatient?.name?.ifBlank {null} ?: patient.take(8).ifBlank {"—"})
+        DetailRow(stringResource(R.string.ui_review_exercise),chosenExercise?.name ?: "—")
+        DetailRow(stringResource(R.string.ui_review_side),"$sideText · $focusText")
+        DetailRow(stringResource(R.string.ui_review_targets),
+            if(rangeValid && repsValid) stringResource(R.string.ui_review_targets_value,degrees(l!!),degrees(h!!),r!!) else "—")
+        Surface(color=MaterialTheme.colorScheme.surfaceContainerLow,shape=MaterialTheme.shapes.small) {
+            Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                Icon(Icons.Default.Info,null,Modifier.size(18.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if(existing!=null) stringResource(R.string.ui_assign_next_version,existing.version+1) else stringResource(R.string.prescription_version_help),
+                    style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        if(!valid) Text(stringResource(R.string.ui_review_incomplete),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
+        ActionButton(R.string.publish_prescription,{onPublish(PrescriptionDraft(assignmentId,requestId,patient,exercise,BodySide.valueOf(side.uppercase()),l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7),focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it)}))},enabled=valid && !state.busy,busy=state.activeAction==RehabAction.PRESCRIBE,busyLabel=R.string.ui_publishing_prescription)
+        if(state.completedAction==RehabAction.PRESCRIBE && state.notice) FeedbackNotice(R.string.ui_prescription_published)
+        if(state.failed && !state.busy) FeedbackNotice(R.string.connected_failed,error=true)
+    }
+}
+
+@Composable private fun AssignmentContext(name:String?,profile:PatientProfile?,existing:PrescriptionSummary?) {
+    Surface(Modifier.fillMaxWidth(),shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.primary,contentColor=MaterialTheme.colorScheme.onPrimary) {
+        Row(Modifier.padding(20.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+            if(profile!=null) ProfileAvatar(profile) else IconBadge(Icons.Default.Person,MaterialTheme.colorScheme.secondaryContainer,52)
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.assigned_patient),style=MaterialTheme.typography.labelMedium,color=Color(0xFFB9CCE0))
+                Text(name ?: "—",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.SemiBold)
+                profile?.let {Text("@"+it.username,style=MaterialTheme.typography.bodySmall,color=Color(0xFFD6E6EE))}
+            }
+            Surface(shape=RoundedCornerShape(50),color=MaterialTheme.colorScheme.secondaryContainer,contentColor=MaterialTheme.colorScheme.onSecondaryContainer) {
+                Text(if(existing!=null) stringResource(R.string.ui_assign_editing,existing.version) else stringResource(R.string.ui_assign_new),
+                    Modifier.padding(horizontal=12.dp,vertical=6.dp),style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+@Composable private fun NumberField(label:Int,value:String,suffix:String,error:Boolean,enabled:Boolean,modifier:Modifier,
+    type:KeyboardType=KeyboardType.Decimal,set:(String)->Unit) {
+    OutlinedTextField(value,{set(it.filter {c -> c.isDigit() || c=='.'})},modifier,enabled=enabled,label={Text(stringResource(label))},
+        suffix={Text(suffix)},isError=error,singleLine=true,shape=RoundedCornerShape(12.dp),
+        keyboardOptions=KeyboardOptions(keyboardType=type))
+}
+
+@Composable private fun RepetitionStepper(reps:String,valid:Boolean,enabled:Boolean,set:(String)->Unit) {
+    val current=reps.toIntOrNull()
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+        val decrease=stringResource(R.string.ui_decrease)
+        FilledTonalIconButton({set(((current ?: 2)-1).coerceIn(1,1000).toString())},enabled=enabled && (current ?: 0)>1,
+            modifier=Modifier.size(52.dp).semantics {contentDescription=decrease}) {Text("−",style=MaterialTheme.typography.titleLarge)}
+        OutlinedTextField(reps,{set(it.filter(Char::isDigit).take(4))},Modifier.weight(1f),enabled=enabled,
+            label={Text(stringResource(R.string.target_repetitions))},isError=!valid,singleLine=true,shape=RoundedCornerShape(12.dp),
+            textStyle=MaterialTheme.typography.titleMedium.copy(textAlign=TextAlign.Center),
+            keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
+        FilledTonalIconButton({set(((current ?: 0)+1).coerceIn(1,1000).toString())},enabled=enabled && (current ?: 0)<1000,
+            modifier=Modifier.size(52.dp)) {Icon(Icons.Default.Add,stringResource(R.string.ui_increase))}
+    }
+}
+
+/** Small drawn limb-angle icon: upper segment plus a moving segment at the exercise's typical angle. */
+@Composable internal fun ExerciseGlyph(algorithm:String?) {
+    val tint=MaterialTheme.colorScheme.secondary
+    val open=when {algorithm?.startsWith("shoulder")==true -> 90f; algorithm?.startsWith("elbow")==true -> 45f; else -> 65f}
+    Surface(color=tint.copy(alpha=.1f),shape=RoundedCornerShape(14.dp),modifier=Modifier.size(44.dp)) {
+        Canvas(Modifier.padding(9.dp).fillMaxSize()) {
+            val joint=Offset(size.width*.32f,size.height*.78f)
+            val length=size.height*.66f
+            val radians=Math.toRadians((-90.0+open))
+            val end=Offset(joint.x+length*cos(radians).toFloat(),joint.y+length*sin(radians).toFloat())
+            drawArc(tint.copy(alpha=.45f),-90f,open,false,Offset(joint.x-length*.42f,joint.y-length*.42f),Size(length*.84f,length*.84f),style=Stroke(2.dp.toPx()))
+            drawLine(tint,joint,Offset(joint.x,joint.y-length),3.dp.toPx(),StrokeCap.Round)
+            drawLine(tint,joint,end,3.dp.toPx(),StrokeCap.Round)
+            drawCircle(tint,3.5.dp.toPx(),joint)
+        }
+    }
 }
 
 @Composable private fun Choice(label:Int,options:List<Pair<String,String>>,selected:String,enabled:Boolean,choose:(String)->Unit) {
@@ -167,22 +444,40 @@ internal fun RehabAction.loadingLabel()=when(this) {
     }
 }
 
+private fun degrees(value:Double):String=if(value==Math.floor(value) && !value.isInfinite()) value.toLong().toString() else String.format(Locale.US,"%.1f",value)
+
+// ---------------------------------------------------------------------------------------------
+// Sync and privacy
+// ---------------------------------------------------------------------------------------------
+
 @Composable fun ColumnScope.SyncAndPrivacy(state:RehabilitationState,vm:RehabilitationViewModel,patient:Boolean,onWithdraw:()->Unit) {
     ClinicalCard {
-    Text(stringResource(R.string.synchronization),style=MaterialTheme.typography.titleLarge)
-    ActionButton(R.string.sync_now,{vm.synchronize()},enabled=!state.busy,busy=state.activeAction==RehabAction.SYNC,busyLabel=R.string.ui_preparing_sync)
-    if(state.outbox.isEmpty()) Text(stringResource(R.string.ui_no_pending_uploads),color=MaterialTheme.colorScheme.onSurfaceVariant)
-    state.outbox.forEach {item -> Text(stringResource(R.string.sync_item,item.sessionId.take(8),syncLabel(item.state))) }
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+            IconBadge(Icons.Default.Refresh)
+            Text(stringResource(R.string.synchronization),style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))
+        }
+        if(state.outbox.isEmpty()) Text(stringResource(R.string.ui_no_pending_uploads),color=MaterialTheme.colorScheme.onSurfaceVariant)
+        state.outbox.forEach {item -> Text(stringResource(R.string.sync_item,item.sessionId.take(8),syncLabel(item.state)),style=MaterialTheme.typography.bodySmall) }
+        ActionButton(R.string.sync_now,{vm.synchronize()},enabled=!state.busy,busy=state.activeAction==RehabAction.SYNC,busyLabel=R.string.ui_preparing_sync)
     }
     if(patient) ClinicalCard {
-        Text(stringResource(R.string.ui_privacy_title),style=MaterialTheme.typography.titleLarge)
-        Text(stringResource(R.string.consent_policy),style=MaterialTheme.typography.bodySmall)
-        state.consents.firstOrNull()?.let {Text(stringResource(if(it.event=="granted") R.string.consent_granted else R.string.consent_withdrawn)); Text(syncLabel(it.state))}
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+            IconBadge(Icons.Default.Lock,MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.ui_privacy_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))
+        }
+        Text(stringResource(R.string.consent_policy),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        state.consents.firstOrNull()?.let {
+            Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                StatusPill(stringResource(if(it.event=="granted") R.string.consent_granted else R.string.consent_withdrawn),if(it.event=="granted") PillTone.POSITIVE else PillTone.NEUTRAL)
+                StatusPill(syncLabel(it.state))
+            }
+        }
         ActionButton(R.string.withdraw_consent,onWithdraw,outlined=true,enabled=!state.busy,busy=state.activeAction==RehabAction.WITHDRAW,busyLabel=R.string.ui_withdrawing_consent)
-        Text(stringResource(R.string.privacy_request_help),style=MaterialTheme.typography.bodySmall)
+        HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+        Text(stringResource(R.string.privacy_request_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         ActionButton(R.string.request_export,{vm.request("export")},outlined=true,enabled=!state.busy,busy=state.activeAction==RehabAction.EXPORT,busyLabel=R.string.ui_submitting_request)
         ActionButton(R.string.request_deletion,{vm.request("delete")},outlined=true,enabled=!state.busy,busy=state.activeAction==RehabAction.DELETE,busyLabel=R.string.ui_submitting_request)
-        state.workspace.requests.forEach {Text(stringResource(if(it.kind=="export") R.string.request_export else R.string.request_deletion)+": "+stringResource(when(it.status) {"fulfilled"->R.string.request_fulfilled; "declined"->R.string.request_declined; else->R.string.request_pending}))}
+        state.workspace.requests.forEach {Text(stringResource(if(it.kind=="export") R.string.request_export else R.string.request_deletion)+": "+stringResource(when(it.status) {"fulfilled"->R.string.request_fulfilled; "declined"->R.string.request_declined; else->R.string.request_pending}),style=MaterialTheme.typography.bodySmall)}
     }
 }
 
