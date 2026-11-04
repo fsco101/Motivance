@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-01T08:43:53.035194+00:00",
+  "generated_at": "2026-11-04T15:55:53.053407+00:00",
   "passed": true,
   "checks": [
     "Signup trigger saves detailed profile and consent",

@@ -26,7 +26,8 @@ import java.time.Instant
     private val publicKey: String,
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
     private val cache:SessionStore?=null,
-    private val vault:SessionVault?=null
+    private val vault:SessionVault?=null,
+    private val cloudinaryApi:String=CLOUDINARY_API,
 ) : AuthRepository, RehabilitationRepository, AdministrationRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
@@ -92,8 +93,8 @@ import java.time.Instant
     override suspend fun signIn(email: String, password: String) = mutex.withLock { accept(call("/auth/v1/token?grant_type=password", JSONObject().put("email",email).put("password",password))) }
     override suspend fun register(email: String, password: String) { call("/auth/v1/signup", JSONObject().put("email",email).put("password",password)) }
     private fun profileJson(p:PatientProfile)=JSONObject().put("username",p.username.trim()).put("first_name",p.firstName.trim()).put("last_name",p.lastName.trim())
-        .put("gender",p.gender).put("birthdate",p.birthdate).put("address",p.address.trim()).put("contact",p.contact.trim()).put("avatar",p.avatar).put("consent",p.consent)
-    private fun readProfile(j:JSONObject,email:String="")=PatientProfile(j.optString("username"),j.optString("full_name"),j.optString("gender"),j.optString("birthdate"),j.optString("address"),j.optString("contact"),j.optString("avatar","person"),j.optString("consented_at").isNotBlank(),email,if(j.isNull("first_name")) j.optString("full_name") else j.optString("first_name"),if(j.isNull("last_name")) "" else j.optString("last_name"))
+        .put("gender",p.gender).put("birthdate",p.birthdate).put("address",p.address.trim()).put("contact",p.contact.trim()).put("consent",p.consent)
+    private fun readProfile(j:JSONObject,email:String="")=PatientProfile(j.optString("username"),j.optString("full_name"),j.optString("gender"),j.optString("birthdate"),j.optString("address"),j.optString("contact"),null,j.optString("consented_at").isNotBlank(),email,if(j.isNull("first_name")) j.optString("full_name") else j.optString("first_name"),if(j.isNull("last_name")) "" else j.optString("last_name"))
     override suspend fun registerProfile(email:String,password:String,profile:PatientProfile) {
         require(profile.valid())
         call("/auth/v1/signup",JSONObject().put("email",email).put("password",password).put("data",JSONObject().put("patient_profile",profileJson(profile))))
@@ -101,9 +102,37 @@ import java.time.Instant
     override suspend fun loadProfile()=authorized {token,id ->
         val user=JSONObject(call("/auth/v1/user",null,token,"GET"))
         val rows=JSONArray(call("/rest/v1/patient_profiles?select=*&user_id=eq.$id",null,token,"GET"))
-        if(rows.length()>0) readProfile(rows.getJSONObject(0),user.getString("email")) else PatientProfile(email=user.getString("email"))
+        val account=JSONArray(call("/rest/v1/profiles?select=photo_url&id=eq.$id",null,token,"GET"))
+        val photo=if(account.length()>0) account.getJSONObject(0).text("photo_url") else null
+        (if(rows.length()>0) readProfile(rows.getJSONObject(0),user.getString("email")) else PatientProfile(email=user.getString("email"))).copy(photoUrl=photo)
     }
     override suspend fun saveProfile(profile:PatientProfile) {require(profile.valid());authorized {token,_ -> call("/rest/v1/rpc/save_my_profile",JSONObject().put("p_details",profileJson(profile)),token)} }
+    override suspend fun uploadProfilePhoto(jpeg:ByteArray):String {
+        require(jpeg.isNotEmpty() && jpeg.size<=MAX_PHOTO_BYTES)
+        // 1. The database issues a signature bound to a server-chosen public ID; the API secret never leaves Vault.
+        val ticket=authorized {token,_ -> JSONObject(call("/rest/v1/rpc/profile_photo_upload",JSONObject(),token))}
+        val cloud=ticket.getString("cloud_name");val publicId=ticket.getString("public_id")
+        check(cloud.matches(Regex("[A-Za-z0-9_-]{1,64}")) && publicId.matches(Regex("motivance/avatars/[0-9a-f-]{36}/[0-9a-f]{32}")))
+        // 2. Upload straight to Cloudinary, outside the session lock so other requests are not blocked.
+        val form=MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("file","profile.jpg",jpeg.toRequestBody("image/jpeg".toMediaType()))
+            .addFormDataPart("api_key",ticket.getString("api_key")).addFormDataPart("timestamp",ticket.getLong("timestamp").toString())
+            .addFormDataPart("public_id",publicId).addFormDataPart("signature",ticket.getString("signature")).build()
+        val uploaded=withContext(Dispatchers.IO) {
+            http.newCall(Request.Builder().url("${cloudinaryApi.trimEnd('/')}/v1_1/$cloud/image/upload").post(form).build()).execute().use {response ->
+                if(!response.isSuccessful) throw RemoteFailure(response.code,"photo_upload")
+                JSONObject(response.body?.string().orEmpty())
+            }
+        }
+        check(uploaded.getString("public_id")==publicId)
+        // 3. The database verifies Cloudinary's response signature before saving the photo.
+        return authorized {token,_ ->
+            val raw=call("/rest/v1/rpc/set_my_profile_photo",JSONObject().put("p_public_id",publicId).put("p_version",uploaded.getLong("version"))
+                .put("p_signature",uploaded.getString("signature")),token)
+            JSONArray("[$raw]").getString(0)
+        }
+    }
+    override suspend fun removeProfilePhoto() {authorized {token,_ -> call("/rest/v1/rpc/clear_my_profile_photo",JSONObject(),token)}}
     override suspend fun changePassword(currentPassword:String,newPassword:String) {require(newPassword.length>=8 && currentPassword!=newPassword);authorized {token,id ->
         val email=JSONObject(call("/auth/v1/user",null,token,"GET")).getString("email")
         val verified=call("/auth/v1/token?grant_type=password",JSONObject().put("email",email).put("password",currentPassword))
@@ -152,7 +181,7 @@ import java.time.Instant
         )
     }
     override suspend fun loadWorkspace()=authorized { token,_ ->
-        val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name)",null,token,"GET"))
+        val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name,photo_url)",null,token,"GET"))
         val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))
         val profileById=(0 until details.length()).map {details.getJSONObject(it)}.associate {it.getString("user_id") to readProfile(it)}
         val catalogue=JSONArray(call("/rest/v1/exercise_versions?select=id,algorithm_key,definition&published=eq.true",null,token,"GET"))
@@ -160,7 +189,8 @@ import java.time.Instant
         val requests=JSONArray(call("/rest/v1/data_requests?select=id,kind,status&order=created_at.desc",null,token,"GET"))
         fun <T> rows(a:JSONArray,convert:(JSONObject)->T)=(0 until a.length()).map {convert(a.getJSONObject(it))}
         RehabWorkspace(
-            rows(patients) {LinkedPatient(it.getString("id"),it.optJSONObject("profiles")?.optString("display_name").orEmpty(),profileById[it.getString("id")])},
+            rows(patients) {val account=it.optJSONObject("profiles");val photo=account?.text("photo_url")
+                LinkedPatient(it.getString("id"),account?.optString("display_name").orEmpty(),profileById[it.getString("id")]?.copy(photoUrl=photo),photo)},
             rows(catalogue) {val d=it.getJSONObject("definition"); CatalogueExercise(it.getString("id"),d.optString("name",it.getString("algorithm_key")),it.getString("algorithm_key"),d.optString("instructions_en"))}.filter {it.algorithm in setOf("elbow-flexion-v1","shoulder-abduction-v1")},
             rows(assignments) {a -> val v=a.getJSONArray("prescription_versions"); if(v.length()==0) null else {
                 val p=(0 until v.length()).map {v.getJSONObject(it)}.maxBy {it.getInt("version")}
@@ -168,15 +198,33 @@ import java.time.Instant
             }}.filterNotNull(),
             rows(requests) {PrivacyRequest(it.getString("id"),it.getString("kind"),it.getString("status"))})
     }
-    override suspend fun loadAdministration(after:String?)=authorized {token,_ ->
-        val accounts=JSONArray(call("/rest/v1/rpc/admin_accounts",JSONObject().put("p_after",after ?: JSONObject.NULL),token))
-        val links=JSONArray(call("/rest/v1/therapist_patients?select=therapist_id,patient_id,active&order=therapist_id,patient_id&limit=500",null,token,"GET"))
-        val exercises=JSONArray(call("/rest/v1/exercises?select=id,code,active,exercise_versions(version,definition)&order=code&limit=100",null,token,"GET"))
-        val rows=(0 until minOf(accounts.length(),50)).map {val a=accounts.getJSONObject(it);val r=a.getJSONArray("roles"); AdminAccount(a.getString("id"),a.getString("display_name"),a.getBoolean("active"),(0 until r.length()).map {r.getString(it)}.toSet())}
-        AdminWorkspace(rows,(0 until links.length()).map {val l=links.getJSONObject(it);AdminLink(l.getString("therapist_id"),l.getString("patient_id"),l.getBoolean("active"))},
+    override suspend fun loadAdministration(after:String?,search:String?)=authorized {token,_ ->
+        val query=search?.trim()?.takeIf {it.isNotEmpty()}
+        val accounts=JSONArray(call("/rest/v1/rpc/admin_accounts",JSONObject().put("p_after",after ?: JSONObject.NULL).put("p_search",query ?: JSONObject.NULL),token))
+        val links=JSONArray(call("/rest/v1/rpc/admin_links",JSONObject(),token))
+        val exercises=JSONArray(call("/rest/v1/exercises?select=id,code,active,exercise_versions(version,algorithm_key,definition)&order=code&limit=100",null,token,"GET"))
+        val summary=JSONObject(call("/rest/v1/rpc/admin_summary",JSONObject(),token))
+        val activity=auditPage(JSONArray(call("/rest/v1/rpc/admin_activity",JSONObject(),token)))
+        val rows=(0 until minOf(accounts.length(),ADMIN_PAGE)).map {val a=accounts.getJSONObject(it);val r=a.getJSONArray("roles")
+            AdminAccount(a.getString("id"),a.optString("display_name"),a.getBoolean("active"),(0 until r.length()).map {r.getString(it)}.toSet(),
+                a.text("email").orEmpty(),a.text("username"),a.text("created_at"),a.text("last_sign_in_at"),a.text("photo_url"))}
+        AdminWorkspace(rows,(0 until links.length()).map {val l=links.getJSONObject(it)
+                AdminLink(l.getString("therapist_id"),l.getString("patient_id"),l.getBoolean("active"),l.text("therapist_name").orEmpty(),l.text("patient_name").orEmpty())},
             (0 until exercises.length()).map {val e=exercises.getJSONObject(it);val v=e.getJSONArray("exercise_versions");val latest=(0 until v.length()).map {v.getJSONObject(it)}.maxByOrNull {it.getInt("version")};val d=latest?.getJSONObject("definition")
-                AdminExercise(e.getString("id"),e.getString("code"),e.getBoolean("active"),latest?.getInt("version") ?: 0,d?.optString("name").orEmpty(),d?.optString("instructions_en").orEmpty(),d?.optString("instructions_fil").orEmpty())},
-            if(accounts.length()>50) rows.last().id else null)
+                AdminExercise(e.getString("id"),e.getString("code"),e.getBoolean("active"),latest?.getInt("version") ?: 0,d?.optString("name").orEmpty(),d?.optString("instructions_en").orEmpty(),d?.optString("instructions_fil").orEmpty(),latest?.text("algorithm_key").orEmpty())},
+            if(accounts.length()>ADMIN_PAGE) rows.last().id else null,
+            AdminSummary(summary.optInt("accounts"),summary.optInt("disabled"),summary.optInt("patients"),summary.optInt("therapists"),summary.optInt("admins"),
+                summary.optInt("active_links"),summary.optInt("unlinked_patients"),summary.optInt("exercises"),summary.optInt("active_exercises"),
+                summary.optInt("sessions_week"),summary.optInt("pending_requests")),
+            activity.events,activity.next)
+    }
+    override suspend fun clearPhoto(user:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_clear_photo",JSONObject().put("p_user",user),t)}}
+    override suspend fun loadActivity(before:Long)=authorized {token,_ -> auditPage(JSONArray(call("/rest/v1/rpc/admin_activity",JSONObject().put("p_before",before),token)))}
+    private fun auditPage(rows:JSONArray):AuditPage {
+        val events=(0 until minOf(rows.length(),ACTIVITY_PAGE)).map {val e=rows.getJSONObject(it)
+            AuditEvent(e.getLong("id"),e.getString("action"),e.getString("target_type"),e.getString("target_id"),e.getString("recorded_at"),
+                e.text("actor_id"),e.text("actor_name").orEmpty(),e.text("target_name").orEmpty(),e.text("related_name").orEmpty())}
+        return AuditPage(events,if(rows.length()>ACTIVITY_PAGE) events.last().id else null)
     }
     override suspend fun setAccount(user:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_account",JSONObject().put("p_user",user).put("p_active",active),t)}}
     override suspend fun setRole(user:String,role:String,granted:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_role",JSONObject().put("p_user",user).put("p_role",role).put("p_granted",granted),t)}}
@@ -203,3 +251,9 @@ import java.time.Instant
         check(result.getString("sessionId")==JSONObject(payload).getString("sessionId"))
     }}
 }
+
+private const val CLOUDINARY_API="https://api.cloudinary.com"
+private const val ADMIN_PAGE=50
+private const val ACTIVITY_PAGE=30
+/** JSON null and missing keys both read as null; org.json's optString would return the text "null". */
+private fun JSONObject.text(key:String):String?=if(isNull(key)) null else getString(key)

@@ -39,6 +39,7 @@ def main():
         assert code==200
         uid=str(uuid.UUID(data['id']));users.append(uid)
         if role!='patient': sql(f"insert into public.user_roles(user_id,role) values('{uid}','{role}');")
+        sql(f"update public.profiles set display_name='S4 Fixture {len(users)} {role}' where id='{uid}';")
         code,data=api('/auth/v1/token?grant_type=password',{'email':email,'password':password});assert code==200
         return uid,data['access_token']
     try:
@@ -49,7 +50,8 @@ def main():
           'admin_set_role':{'p_user':other,'p_role':'admin','p_granted':True},
           'admin_set_link':{'p_therapist':therapist,'p_patient':patient,'p_active':True},
           'admin_set_exercise':{'p_exercise':exercise,'p_active':False},
-          'admin_publish_exercise':{'p_exercise':exercise,'p_name':'Fixture','p_english':'Fixture','p_filipino':'Fixture'}}
+          'admin_publish_exercise':{'p_exercise':exercise,'p_name':'Fixture','p_english':'Fixture','p_filipino':'Fixture'},
+          'admin_summary':{}, 'admin_links':{}, 'admin_activity':{}}
         for name,body in operations.items():
             for label,token in [('anonymous',None),('patient',tp),('therapist',tt)]:
                 check(rpc(name,body,token)[0]>=400,label+' denied '+name)
@@ -58,15 +60,35 @@ def main():
         code,accounts=rpc('admin_accounts',{},ta)
         check(code==200 and {admin,therapist,patient,other}.issubset({a['id'] for a in accounts}),'Admin reads account directory')
         check([a['id'] for a in accounts]==sorted(a['id'] for a in accounts),'Account directory has deterministic UUID order')
+        emails={a['id']:a['email'] for a in accounts}
+        check(emails.get(patient,'').startswith('motivance-s4-') and all('created_at' in a and 'last_sign_in_at' in a for a in accounts),'Directory includes sign-in email and account dates')
+        code,found=rpc('admin_accounts',{'p_search':emails[patient][13:30].upper()},ta)
+        check(code==200 and [a['id'] for a in found]==[patient],'Directory search matches email case-insensitively')
+        check(rpc('admin_accounts',{'p_search':'%'},ta)[1]==[] and rpc('admin_accounts',{'p_search':'_'},ta)[1]==[],'Directory search treats LIKE wildcards literally')
+        check(rpc('admin_accounts',{'p_search':'x'*101},ta)[0]>=400,'Overlong directory search rejected')
+        code,summary=rpc('admin_summary',{},ta)
+        check(code==200 and {'accounts','disabled','patients','therapists','admins','active_links','unlinked_patients','exercises','active_exercises','sessions_week','pending_requests'}<=set(summary),'Admin reads whole-system overview counts')
         _,page=rpc('admin_accounts',{'p_after':patient},ta)
         check(all(a['id']>patient for a in page),'Account cursor excludes preceding records')
         check(rpc('admin_set_account',{'p_user':admin,'p_active':False},ta)[0]>=400,'Admin cannot disable own account')
         check(rpc('admin_set_role',{'p_user':admin,'p_role':'admin','p_granted':False},ta)[0]>=400,'Admin cannot remove own administrator role')
         check(rpc('admin_set_role',{'p_user':other,'p_role':'unknown','p_granted':True},ta)[0]>=400,'Unknown roles rejected')
         check(rpc('admin_set_role',{'p_user':other,'p_role':'therapist','p_granted':True},ta)[0] in (200,204),'Admin grants trusted therapist role')
+        unlinked=rpc('admin_summary',{},ta)[1]['unlinked_patients']
         check(rpc('admin_set_link',{'p_therapist':other,'p_patient':patient,'p_active':True},ta)[0] in (200,204),'Admin activates therapist patient link')
         code,rows=api('/rest/v1/patients?select=id&id=eq.'+patient,token=to)
         check(code==200 and len(rows)==1,'Existing JWT observes newly granted server role')
+        code,links=rpc('admin_links',{},ta)
+        check(code==200 and any(l['therapist_id']==other and l['patient_id']==patient and l['active'] and 'therapist_name' in l and 'patient_name' in l for l in links),'Admin reads named therapist patient links')
+        check(rpc('admin_summary',{},ta)[1]['unlinked_patients']==unlinked-1,'Overview counts a newly linked patient as covered')
+        code,events=rpc('admin_activity',{},ta)
+        check(code==200 and [e['id'] for e in events]==sorted((e['id'] for e in events),reverse=True) and len(events)<=31,'Activity feed is newest first with one lookahead')
+        check(any(e['target_type']=='therapist_patients' and e['target_id']==other+':'+patient and e['target_name']=='S4 Fixture 4 patient' and e['related_name']=='S4 Fixture 3 patient' for e in events),'Activity feed shows the new link with both names')
+        check(any(e['target_type']=='user_roles' and e['target_id']==other and e['target_name']=='S4 Fixture 4 patient' and e['actor_name']=='S4 Fixture 1 admin' for e in events),'Activity feed resolves actor and account target names')
+        code,found=rpc('admin_accounts',{'p_search':'s4 fixture 3'},ta)
+        check(code==200 and [a['id'] for a in found]==[patient],'Directory search matches display name')
+        _,older=rpc('admin_activity',{'p_before':events[0]['id']},ta)
+        check(all(e['id']<events[0]['id'] for e in older),'Activity cursor excludes newer events')
         check(rpc('admin_set_link',{'p_therapist':patient,'p_patient':therapist,'p_active':True},ta)[0]>=400,'Non therapist link rejected')
         # A fixture catalogue entry avoids changing the actual development catalogue.
         sql(f"insert into public.exercises(id,code,active) values('{exercise}','s4-{exercise}',true); insert into public.exercise_versions(exercise_id,version,algorithm_key,definition,published) select '{exercise}',1,algorithm_key,definition,true from public.exercise_versions where id='21000000-0000-0000-0000-000000000001';")

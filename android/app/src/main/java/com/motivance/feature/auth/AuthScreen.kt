@@ -230,8 +230,19 @@ fun AuthLoadingScreen() {
     }
 }
 
+/** Plain mist ground with one oversized, faint motion arc behind the top of the page. */
 @Composable private fun AuthBackground(content: @Composable BoxScope.() -> Unit) {
-    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFFEAF5F3), MaterialTheme.colorScheme.background, Color(0xFFF0F4FC)))), content = content)
+    val arc = MaterialTheme.colorScheme.primary.copy(alpha = .07f)
+    val band = MaterialTheme.colorScheme.secondary.copy(alpha = .09f)
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Canvas(Modifier.fillMaxWidth().height(320.dp)) {
+            val stroke = 36.dp.toPx(); val d = size.width * 1.1f
+            val topLeft = Offset(size.width * .35f, -d * .45f)
+            drawArc(arc, 100f, 240f, false, topLeft, androidx.compose.ui.geometry.Size(d, d), style = Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+            drawArc(band, 150f, 70f, false, topLeft, androidx.compose.ui.geometry.Size(d, d), style = Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+        }
+        content()
+    }
 }
 
 @Composable private fun AuthBrand(modifier: Modifier = Modifier) {

@@ -1,6 +1,8 @@
 package com.motivance.feature.exercise
 
 import android.graphics.Bitmap
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -36,13 +39,15 @@ import androidx.compose.ui.unit.sp
 import com.motivance.R
 import com.motivance.assessment.*
 import com.motivance.domain.*
+import com.motivance.designsystem.Motion
 import com.motivance.designsystem.label
 
-private val PreviewNavy=Color(0xFF002042)
-private val PanelNavy=Color(0xFF123454)
-private val FocusMint=Color(0xFF86F2E4)
-private val CautionAmber=Color(0xFFFFD09A)
-private val BodyInk=Color(0xFFC5D8ED)
+private val PreviewNavy=Motion.Night
+private val PanelNavy=Motion.NightPanel
+private val FocusMint=Motion.SproutBright
+private val CautionAmber=Motion.NightCaution
+private val BodyInk=Motion.NightInk
+private val Shade=Color(0xCC021418)
 private val Bones=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,12 to 24,
     23 to 24,23 to 25,25 to 27,24 to 26,26 to 28,27 to 29,29 to 31,27 to 31,28 to 30,30 to 32,28 to 32,15 to 19,16 to 20)
 
@@ -55,7 +60,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
  */
 @Composable internal fun SkeletonPreview(
     bitmap:Bitmap?, points:List<Landmark>, mirrored:Boolean, rules:ExerciseRules,
-    metrics:AssessmentSnapshot, qualityLabel:String, modifier:Modifier=Modifier,
+    metrics:AssessmentSnapshot, qualityLabel:String, modifier:Modifier=Modifier, details:Boolean=true,
 ) {
     val ready=metrics.quality==TrackingQuality.READY
     val caution=metrics.quality==TrackingQuality.TRUNK_LEAN
@@ -82,10 +87,12 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
     val measurer=rememberTextMeasurer()
 
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PreviewNavy)
-        .border(1.dp,Color(0xFF315171),RoundedCornerShape(24.dp))) {
+        .border(1.dp,Motion.NightLine,RoundedCornerShape(24.dp))) {
         Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                Canvas(Modifier.size(7.dp)) {drawCircle(if(bitmap!=null) FocusMint else BodyInk)}
+                val live by rememberInfiniteTransition(label="live").animateFloat(1f,.3f,
+                    infiniteRepeatable(tween(1100,easing=FastOutSlowInEasing),RepeatMode.Reverse),label="live-dot")
+                Canvas(Modifier.size(8.dp).alpha(if(bitmap!=null) live else 1f)) {drawCircle(if(bitmap!=null) FocusMint else BodyInk)}
                 Text(stringResource(if(bitmap!=null) R.string.skeleton_live else R.string.skeleton_waiting),
                     color=BodyInk,style=MaterialTheme.typography.labelMedium)
             }
@@ -123,7 +130,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
                             val measuring=protractor!=null && !selected && measured.any {(x,y) -> (x==a && y==b) || (x==b && y==a)}
                             val color=when {selected -> focus; measuring -> Color.White.copy(alpha=.9f); else -> BodyInk.copy(alpha=.65f)}
                             val width=if(selected) 4.dp.toPx() else if(measuring) 3.dp.toPx() else 2.dp.toPx()
-                            drawLine(Color(0xCC001326),position(a),position(b),width+3.dp.toPx(),StrokeCap.Round)
+                            drawLine(Shade,position(a),position(b),width+3.dp.toPx(),StrokeCap.Round)
                             drawLine(color,position(a),position(b),width,StrokeCap.Round)
                         }}
                         // Only body landmarks and a small nose marker; no busy face/hand mesh.
@@ -151,41 +158,64 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
             }
             if(bitmap==null) Column(Modifier.padding(32.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(12.dp)) {
                 Icon(Icons.Default.Person,null,tint=BodyInk.copy(alpha=.55f),modifier=Modifier.size(52.dp))
-                Text(stringResource(if(metrics.quality==TrackingQuality.PAUSED) R.string.camera_paused else R.string.skeleton_position),color=BodyInk,style=MaterialTheme.typography.bodyMedium)
+                Text(stringResource(if(metrics.quality==TrackingQuality.PAUSED) R.string.camera_paused else R.string.skeleton_position),color=BodyInk,
+                    style=MaterialTheme.typography.bodyMedium,textAlign=TextAlign.Center)
+            }
+            val chip by animateColorAsState(when {caution -> Color(0xE64A3410); ready -> Color(0xE6103C2A); else -> Color(0xE6132F38)},label="quality")
+            Row(Modifier.align(Alignment.BottomCenter).padding(12.dp).clip(RoundedCornerShape(50)).background(chip)
+                .padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                Canvas(Modifier.size(8.dp)) {drawCircle(if(caution) CautionAmber else if(ready) FocusMint else BodyInk)}
+                Text(qualityLabel,Modifier.semantics {liveRegion=LiveRegionMode.Polite},
+                    color=if(caution) CautionAmber else Color.White,style=MaterialTheme.typography.labelLarge)
             }
         }
         Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            Surface(color=if(ready) Color(0xFF103C43) else Color(0xFF20354C),shape=RoundedCornerShape(12.dp)) {
-                Text(qualityLabel,Modifier.padding(12.dp).semantics {liveRegion=LiveRegionMode.Polite},
-                    color=if(caution) CautionAmber else Color.White,style=MaterialTheme.typography.bodyMedium)
-            }
             // These are measured values, not a tracking-confidence or exercise-quality score.
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                 MetricTile(stringResource(R.string.measured_joint_angle,measurementJoint),degrees(liveAngle),Modifier.weight(1f))
-                MetricTile(stringResource(R.string.skeleton_reps),"${metrics.completed} / ${rules.targetRepetitions}",Modifier.weight(1f))
+                MetricTile(stringResource(R.string.skeleton_reps),"${metrics.completed} / ${rules.targetRepetitions}",Modifier.weight(1f),
+                    accent=metrics.completed>0,animate=true)
             }
-            AngleGauge(rules,metrics,liveAngle,guide,measurementJoint)
-            RepetitionSteps(rules,guide)
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                MetricTile(stringResource(R.string.calc_session_rom),degrees(metrics.romDegrees),Modifier.weight(1f))
-                MetricTile(stringResource(R.string.calc_not_counted),metrics.incomplete.toString(),Modifier.weight(1f))
-            }
-            Text(stringResource(R.string.calc_rule_summary,measurementJoint,rules.lowDegrees.toInt(),rules.highDegrees.toInt(),
-                rules.peakHoldMs.toInt(),"%.1f".format(rules.minimumCycleMs/1000.0),"%.0f".format(rules.maximumCycleMs/1000.0)),
-                color=Color.White,style=MaterialTheme.typography.bodySmall)
-            Text(if(rules.demo) stringResource(R.string.calc_source_demo) else stringResource(R.string.calc_source_prescribed,rules.version),
-                color=if(rules.demo) CautionAmber else FocusMint,style=MaterialTheme.typography.labelSmall)
-            Text(stringResource(R.string.skeleton_legend),color=BodyInk,style=MaterialTheme.typography.labelSmall)
-            Text(stringResource(R.string.calc_legend),color=BodyInk,style=MaterialTheme.typography.labelSmall)
+            if(details) CalculationContent(rules,metrics,liveAngle,guide,measurementJoint)
         }
     }
+}
+
+/**
+ * The live calculation behind the count (gauge, rule steps, session range and legends). The session screen
+ * places it below the controls so Start and Pause stay next to the camera image.
+ */
+@Composable internal fun SessionCalculations(hasFrame:Boolean,rules:ExerciseRules,metrics:AssessmentSnapshot,modifier:Modifier=Modifier) {
+    val liveAngle=metrics.angleDegrees?.takeIf {metrics.quality==TrackingQuality.READY && hasFrame && it.isFinite()}
+    val guide=RepetitionGuide.of(rules,if(hasFrame) metrics else metrics.copy(angleDegrees=null))
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PreviewNavy).border(1.dp,Motion.NightLine,RoundedCornerShape(24.dp))
+        .padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.how_reps_counted),color=Color.White,style=MaterialTheme.typography.titleMedium,modifier=Modifier.semantics {heading()})
+        CalculationContent(rules,metrics,liveAngle,guide,stringResource(rules.kind.measurementJoint.label()))
+    }
+}
+
+@Composable private fun CalculationContent(rules:ExerciseRules,metrics:AssessmentSnapshot,liveAngle:Double?,guide:RepetitionGuide,measurementJoint:String) {
+    AngleGauge(rules,metrics,liveAngle,guide,measurementJoint)
+    RepetitionSteps(rules,guide)
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+        MetricTile(stringResource(R.string.calc_session_rom),degrees(metrics.romDegrees),Modifier.weight(1f))
+        MetricTile(stringResource(R.string.calc_not_counted),metrics.incomplete.toString(),Modifier.weight(1f))
+    }
+    Text(stringResource(R.string.calc_rule_summary,measurementJoint,rules.lowDegrees.toInt(),rules.highDegrees.toInt(),
+        rules.peakHoldMs.toInt(),"%.1f".format(rules.minimumCycleMs/1000.0),"%.0f".format(rules.maximumCycleMs/1000.0)),
+        color=Color.White,style=MaterialTheme.typography.bodySmall)
+    Text(if(rules.demo) stringResource(R.string.calc_source_demo) else stringResource(R.string.calc_source_prescribed,rules.version),
+        color=if(rules.demo) CautionAmber else FocusMint,style=MaterialTheme.typography.labelSmall)
+    Text(stringResource(R.string.skeleton_legend),color=BodyInk,style=MaterialTheme.typography.labelSmall)
+    Text(stringResource(R.string.calc_legend),color=BodyInk,style=MaterialTheme.typography.labelSmall)
 }
 
 /** Protractor at the measured joint: dashed 0° reference, start/target zones, threshold ticks and live arc. */
 private fun DrawScope.drawProtractor(p:Protractor,mapping:PreviewMapping,rules:ExerciseRules,angle:Double?,measurer:TextMeasurer) {
     fun o(point:FramePoint)=mapping.map(point.landmark()).let {Offset(it.first,it.second)}
     fun polyline(list:List<FramePoint>)=Path().apply {list.firstOrNull()?.let {val s=o(it);moveTo(s.x,s.y)};list.drop(1).forEach {val q=o(it);lineTo(q.x,q.y)}}
-    val shadow=Color(0xCC001326)
+    val shadow=Shade
     val vertex=o(p.vertex)
     drawLine(shadow,vertex,o(p.referenceEnd),3.5.dp.toPx(),StrokeCap.Round)
     drawLine(Color.White.copy(alpha=.8f),vertex,o(p.referenceEnd),1.5.dp.toPx(),StrokeCap.Round,
@@ -229,7 +259,7 @@ private fun DrawScope.drawProtractor(p:Protractor,mapping:PreviewMapping,rules:E
         Canvas(Modifier.fillMaxWidth().height(28.dp)) {
             fun x(d:Double)=(d.coerceIn(0.0,180.0)/180.0*size.width).toFloat()
             val top=size.height*.3f; val h=size.height*.4f; val radius=CornerRadius(h/2)
-            drawRoundRect(Color(0xFF0A2843),Offset(0f,top),Size(size.width,h),radius)
+            drawRoundRect(Color(0xFF041A1F),Offset(0f,top),Size(size.width,h),radius)
             drawRoundRect(BodyInk.copy(alpha=.35f),Offset(0f,top),Size(x(rules.lowDegrees),h),radius)
             drawRoundRect(FocusMint.copy(alpha=.45f),Offset(x(rules.highDegrees),top),Size(size.width-x(rules.highDegrees),h),radius)
             range?.let {(min,max) -> drawLine(Color.White.copy(alpha=.75f),Offset(x(min),top-3.dp.toPx()),Offset(x(max),top-3.dp.toPx()),2.dp.toPx(),StrokeCap.Round)}
@@ -278,9 +308,14 @@ private fun DrawScope.drawProtractor(p:Protractor,mapping:PreviewMapping,rules:E
     }
 }
 
-@Composable private fun MetricTile(label:String,value:String,modifier:Modifier) {
-    Column(modifier.clip(RoundedCornerShape(12.dp)).background(PanelNavy).padding(12.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+/** A live reading. [animate] rolls the value upward when it changes, for counts rather than per-frame angles. */
+@Composable private fun MetricTile(label:String,value:String,modifier:Modifier,accent:Boolean=false,animate:Boolean=false) {
+    Column(modifier.clip(RoundedCornerShape(16.dp)).background(PanelNavy).padding(14.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
         Text(label,color=BodyInk,style=MaterialTheme.typography.labelMedium)
-        Text(value,color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+        val style=MaterialTheme.typography.headlineMedium
+        val color=if(accent) FocusMint else Color.White
+        if(animate) AnimatedContent(value,transitionSpec={(slideInVertically {it}+fadeIn()) togetherWith (slideOutVertically {-it}+fadeOut())},label="metric") {
+            Text(it,color=color,style=style)
+        } else Text(value,color=color,style=style)
     }
 }

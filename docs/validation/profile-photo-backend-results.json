@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-11-04T15:55:47.371775+00:00",
+  "checks_passed": 28,
+  "checks": [
+    "Unconfigured uploads report service unavailable",
+    "Anonymous cannot request an upload signature",
+    "Anonymous cannot save a photo",
+    "Active user receives an upload ticket",
+    "Ticket never contains the API secret",
+    "Public ID is server chosen inside the caller folder",
+    "Upload signature matches Cloudinary request signing",
+    "Ticket timestamp is current",
+    "Forged response signature rejected",
+    "Another user cannot claim this upload",
+    "Rejected attempts leave no photo",
+    "Verified upload is saved as a delivery URL",
+    "An upload cannot be applied twice",
+    "Owner reads own photo",
+    "Unrelated patient cannot read the photo",
+    "Unlinked therapist cannot read the photo",
+    "Linked therapist reads the photo through the patient list embed",
+    "Owner cannot write the photo column directly",
+    "SHA-256 response signatures are accepted",
+    "Replaced photo is marked for Cloudinary cleanup",
+    "Administrator directory includes the photo",
+    "Therapist cannot use photo moderation",
+    "Administrator removes a photo",
+    "Moderated photo is cleared",
+    "Photo moderation is audited with the administrator as actor",
+    "Owner removes own photo",
+    "Upload tickets are limited to ten per hour",
+    "Photo changes are audited"
+  ],
+  "environment": "real local Auth/PostgREST; disposable users; temporary fixture Vault secrets",
+  "limitations": [
+    "Cloudinary was not contacted; signatures follow the documented Cloudinary algorithm."
+  ]
+}

@@ -15,7 +15,9 @@ Solved implementation issues and implemented sprint milestones may close while t
 
 ## Therapist-to-patient workflow
 
-- [ ] Review the detailed signup/privacy agreement and profile editing with representative users in both languages: age derived from birthdate, immutable email, avatar choice, current-password verification and connected-therapist demographic visibility. Review privacy wording, consent comprehension and any minor/guardian procedures with the deployment owner before live enrollment. These human/physical checks remain unexecuted; automated profile checks are separate engineering evidence.
+- [ ] Review the detailed signup/privacy agreement and profile editing with representative users in both languages: age derived from birthdate, immutable email, profile photo upload, current-password verification and connected-therapist demographic visibility. Review privacy wording, consent comprehension and any minor/guardian procedures with the deployment owner before live enrollment. These human/physical checks remain unexecuted; automated profile checks are separate engineering evidence.
+- [ ] Configure a real Cloudinary account with `scripts/configure_cloudinary.py --check --apply`. Then, on a physical phone, upload, replace and remove a profile photo. Confirm a linked therapist and an administrator see it, an unrelated account does not, and an administrator can remove it. Run `scripts/cleanup_profile_photos.py --apply` and confirm the retired asset is gone from the Cloudinary Media Library. Engineering tests used simulated Cloudinary responses only (`PROFILE-PHOTOS.md`).
+- [ ] Have the deployment owner review whether the `system-purpose-v1` privacy agreement needs a new version that names profile photos and Cloudinary as an image processor. The app currently shows a just-in-time notice on the photo card and leaves the agreement text unchanged.
 - [ ] With representative patients on physical phones, in both languages, review the 4-step signup flow from `SIGNUP-STEPPED-FLOW.md`:
   - The step progress is understood, and Back/Edit return to the right place without losing entries.
   - The errors shown after Continue are clear.
@@ -82,11 +84,19 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] On physical phones, verify therapist-selected shoulder/elbow/wrist/hip/knee/ankle rings on each prescribed side, including mirror/rotation, low confidence and occlusion. Confirm users understand the distinction between the visual focus and the exercise joint actually measured. These focus options do not establish additional supported exercise algorithms.
 
 - [ ] Review the administrator workspace on physical phones: account enable/disable, grant/revoke staff, link/revoke and catalogue version publication. Confirm identity/custody for the initial trusted admin; never create admin access through signup metadata.
+- [ ] On physical phones in both languages, review the redesigned administrator workspace (2026-11-04): overview counts and attention items, directory search and filters, account ID copy, role switches, link pickers (including pasted IDs), catalogue editor counters and the activity feed. Have a Filipino speaker review the new administrator wording, and check TalkBack on the role switches, chips and confirmation dialogs. Emulator evidence only is recorded in `ADMIN-WORKSPACE-REDESIGN.md`.
 - [ ] Review all English/Filipino terminology with the therapist and representative phone users. Automated resource/format parity, contrast calculations and a double-font emulator test do not establish human comprehension or TalkBack usability.
 - [ ] Measure task completion, setup mistakes and feedback comprehension for assigned exercise start/finish, history review and recovery. Record participants, protocol and observed difficulties without identifying patient images.
 - [ ] Exercise severe-heat pause/cooling/retry and longer sessions on both physical device classes. Bounded synthetic 30-minute diagnostics and simulated movement tests do not measure phone memory, camera accuracy, battery or thermal performance.
 - [ ] Complete the owner-dependent items in `docs/operations/PRODUCTION-READINESS.md`: account verification/testing schedule, signing custody, actual retention/backup expiry, privacy notice/deletion URL, model distribution terms and production support ownership.
 - [ ] Before Play release, upgrade the tested target/compile SDK tuple for current API-36 submission requirements and verify native 16 KB page compatibility. Preparation documentation does not satisfy these S5 release checks.
+
+## Motion arc redesign follow-up (2026-11-05)
+
+- [ ] On both physical phone classes, check that repetition, start, copy and save haptics are noticeable but not startling, and that a counted repetition is felt during movement. Emulator runs cannot exercise vibration.
+- [ ] Have therapists drag the prescription range arc with real fingers: 5° snapping, 15° minimum span, accidental page scrolling, and parity with the typed angle fields. Check the arc and typed fields with TalkBack.
+- [ ] Confirm that patients and therapists discover pull-to-refresh, or use the Refresh button, on Home, Exercises, Patients, Progress and Profile. Check that the dark session stage and its light status-bar icons restore correctly after leaving the camera.
+- [ ] Have a Filipino speaker review the new copy (greeting, Today card, weekly strip, copy code, show/hide details, drag help, counting heading). Have a therapist confirm the Today card and "of 7 days" weekly wording do not imply adherence targets. Evidence so far is emulator-only: `MOTION-ARC-REDESIGN.md`.
 
 ## Recording results
 
