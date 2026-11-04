@@ -15,3 +15,7 @@ android/local.properties
 supabase/.temp/
 supabase/.branches/
 docs/operations/local-test-accounts.json
+
+# Local tooling output and imported prototype material
+graphify-out/
+stitch_galawgo_rehabilitation_system_prototype/
