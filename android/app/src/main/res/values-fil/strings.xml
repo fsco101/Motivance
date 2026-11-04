@@ -434,4 +434,19 @@
     <string name="form_clear_dates">Alisin ang mga petsa</string>
     <string name="form_password_match">Dapat magkatugma ang mga password.</string>
     <string name="form_password_length">Gumamit ng hindi bababa sa 8 character.</string>
+    <string name="calc_gauge_title">Anggulo kumpara sa mga limitasyon ng therapist</string>
+    <string name="calc_progress">%1$d%% patungo sa target</string>
+    <string name="calc_start_zone">Panimulang sona ≤ %1$d°</string>
+    <string name="calc_target_zone">Target na sona ≥ %1$d°</string>
+    <string name="calc_gauge_description">Panukat ng anggulo ng %1$s. Kasalukuyan: %2$s. Panimulang sona hanggang %3$d degrees, target mula %4$d degrees. Saklaw sa sesyon: %5$s.</string>
+    <string name="calc_step_start">Simula</string>
+    <string name="calc_step_reach">Abutin</string>
+    <string name="calc_step_hold">Hawakan</string>
+    <string name="calc_step_return">Bumalik</string>
+    <string name="calc_session_rom">ROM sa sesyon</string>
+    <string name="calc_not_counted">Hindi nabilang</string>
+    <string name="calc_rule_summary">Nabibilang ang isang pag-ulit kapag ang anggulo ng %1$s ay nagsimula sa %2$d° o mas mababa, umabot sa %3$d° o mas mataas, nanatili roon nang %4$d ms, at bumalik sa %2$d° o mas mababa sa loob ng %5$s–%6$s s.</string>
+    <string name="calc_source_prescribed">Mga limitasyon mula sa reseta ng therapist %1$s</string>
+    <string name="calc_source_demo">Mga demo na limitasyon · hindi reseta ng therapist</string>
+    <string name="calc_legend">Putol-putol na linya: 0° na batayan · Arko: sinukat na anggulo · Abong guhit: panimulang sona · Mint na guhit: target na sona</string>
 </resources>

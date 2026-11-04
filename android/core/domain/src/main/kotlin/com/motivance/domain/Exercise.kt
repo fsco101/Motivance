@@ -61,7 +61,9 @@ data class AssessmentSnapshot(
     val phase: MovementPhase = MovementPhase.SEEKING_START,
     val feedback: RepFeedback = RepFeedback.NONE,
     val running: Boolean = false,
-    val failureReasons: Map<RepFeedback,Int> = emptyMap()
+    val failureReasons: Map<RepFeedback,Int> = emptyMap(),
+    /** Time spent at or above the high threshold in the current attempt. Live-only; not persisted. */
+    val holdElapsedMs: Long = 0
 ) {
     val romDegrees: Double? get()=if(minimumDegrees!=null && maximumDegrees!=null) maximumDegrees-minimumDegrees else null
 }

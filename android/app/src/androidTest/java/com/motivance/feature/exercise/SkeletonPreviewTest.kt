@@ -82,4 +82,21 @@ class SkeletonPreviewTest {
         compose.onNodeWithText(base.getString(R.string.focus_measurement,base.getString(R.string.skeleton_elbow))).assertExists()
         capture("prescribed-knee")
     }
+    @Test fun calculationOverlayShowsTherapistThresholdsHoldAndSessionRange() {
+        val rules=ExerciseRules(lowDegrees=25.0,highDegrees=75.0,targetRepetitions=8,peakHoldMs=400,demo=false,prescriptionVersionId="fixture-prescription",version="v3")
+        val frame=image()
+        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+            SkeletonPreview(frame,points,false,rules,AssessmentSnapshot(quality=TrackingQuality.READY,angleDegrees=80.0,minimumDegrees=12.0,
+                maximumDegrees=82.0,completed=2,incomplete=1,running=true,phase=MovementPhase.MOVING,holdElapsedMs=200),base.getString(R.string.quality_ready))
+        }}}}
+        compose.onNodeWithText(base.getString(R.string.calc_start_zone,25)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(base.getString(R.string.calc_target_zone,75)).assertExists()
+        compose.onNodeWithText(base.getString(R.string.calc_progress,100)).assertExists()
+        compose.onNodeWithText("70.0°").assertExists()
+        compose.onNodeWithText("2 / 8").assertExists()
+        compose.onNodeWithText("400 ms").assertExists()
+        compose.onNodeWithText(base.getString(R.string.calc_rule_summary,base.getString(R.string.skeleton_elbow),25,75,400,"0.6","30")).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(base.getString(R.string.calc_source_prescribed,"v3")).assertExists()
+        capture("calculation-overlay")
+    }
 }
