@@ -35,6 +35,19 @@ class PatientProfileTest {
         assertFalse(valid.copy(birthdate=LocalDate.now().plusDays(1).toString()).valid())
         assertFalse(valid.copy(birthdate=LocalDate.now().minusYears(121).toString()).valid())
     }
+    @Test fun signupStepChecksPartitionTheFullValidation() {
+        assertTrue(valid.personalValid);assertTrue(valid.contactValid)
+        // Each step only fails on its own fields, so the flow can block exactly the step that needs fixing.
+        listOf(valid.copy(firstName=""),valid.copy(birthdate="not-a-date"),valid.copy(gender="")).forEach {
+            assertFalse(it.personalValid);assertTrue(it.contactValid);assertFalse(it.valid())
+        }
+        listOf(valid.copy(address="abc"),valid.copy(contact="12"),valid.copy(username="f_u_c_k"),valid.copy(avatar="robot")).forEach {
+            assertTrue(it.personalValid);assertFalse(it.contactValid);assertFalse(it.valid())
+        }
+        // Consent belongs to the review step only.
+        val unconsented=valid.copy(consent=false)
+        assertTrue(unconsented.personalValid && unconsented.contactValid);assertFalse(unconsented.valid())
+    }
     @Test fun ageIsDerivedFromBirthday() {
         assertEquals(25,valid.copy(birthdate=LocalDate.now().minusYears(25).toString()).age)
         assertEquals(24,valid.copy(birthdate=LocalDate.now().minusYears(25).plusDays(1).toString()).age)

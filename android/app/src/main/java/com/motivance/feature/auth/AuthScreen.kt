@@ -66,20 +66,32 @@ internal fun AuthContent(
     var password by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var confirmation by remember { mutableStateOf("") }
+    var signupStep by remember { mutableStateOf(SignupStep.ACCOUNT) }
     var profile by remember {mutableStateOf(initialProfile)}
     val focus = LocalFocusManager.current
+    val scroll = rememberScrollState()
     fun changeAction(next: AuthAction) {
         focus.clearFocus()
-        password = ""; otp = ""; showPassword = false
+        password = ""; otp = ""; confirmation = ""; showPassword = false
+        if (next == AuthAction.REGISTER) signupStep = SignupStep.ACCOUNT
         clearNotice()
         action = next
     }
     fun submit() {
-        if (!state.busy) { focus.clearFocus(); if(action==AuthAction.REGISTER) {if(profile.valid() && password.length>=8) {if(onRegister!=null)onRegister(email,password,profile) else onSubmit(action,email,password,otp)}} else onSubmit(action, email, password, otp) }
+        if (state.busy) return
+        focus.clearFocus()
+        if (action == AuthAction.REGISTER) {
+            if (signupAccountValid(email, password, confirmation) && profile.valid()) {
+                if (onRegister != null) onRegister(email.trim(), password, profile) else onSubmit(action, email.trim(), password, otp)
+            }
+        } else onSubmit(action, email, password, otp)
     }
     LaunchedEffect(state.session?.userId, action) {
-        password = ""; otp = ""; showPassword = false
+        password = ""; otp = ""; confirmation = ""; showPassword = false
     }
+    // Each signup step starts at the top so its heading and first field are in view.
+    LaunchedEffect(signupStep) { if (action == AuthAction.REGISTER) scroll.animateScrollTo(0) }
     LaunchedEffect(state.notice) {
         if (state.notice == AuthNotice.CONFIRM_EMAIL) action = AuthAction.CONFIRM
         if (state.notice == AuthNotice.EMAIL_UNCONFIRMED) action = AuthAction.CONFIRM
@@ -92,7 +104,7 @@ internal fun AuthContent(
     val hasCode = action in setOf(AuthAction.CONFIRM, AuthAction.RECOVER)
     AuthBackground {
         Column(
-            Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp),
+            Modifier.fillMaxSize().imePadding().verticalScroll(scroll).padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.widthIn(max = 480.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -108,12 +120,21 @@ internal fun AuthContent(
                         Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 }
-                Text(stringResource(action.heading()), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text(stringResource(action.description(role)), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // After the first signup step the step header carries the context, so the hero stays out of the way.
+                if (action != AuthAction.REGISTER || signupStep == SignupStep.ACCOUNT) {
+                    Text(stringResource(action.heading()), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(action.description(role)), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             Surface(Modifier.widthIn(max = 480.dp).fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = Color.White,
                 shadowElevation = 3.dp, border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = .06f))) {
                 Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (action == AuthAction.REGISTER) SignupFlow(
+                        signupStep, { clearNotice(); signupStep = it },
+                        email, { email = it; clearNotice() }, password, { password = it; clearNotice() },
+                        confirmation, { confirmation = it }, profile, { profile = it; clearNotice() },
+                        state.busy, (state.activeAction ?: action).busyLabel(), { submit() },
+                    ) { state.notice?.let { AuthNoticeCard(it) } } else {
                     Text(stringResource(action.label()), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     OutlinedTextField(
                         value = email, onValueChange = { email = it; clearNotice() }, label = { Text(stringResource(R.string.email)) },
@@ -128,8 +149,7 @@ internal fun AuthContent(
                         label = { Text(stringResource(if (action == AuthAction.RECOVER) R.string.auth_new_password else R.string.auth_password)) },
                         trailingIcon = { PasswordVisibilityButton(showPassword, !state.busy) { showPassword = it } },
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true, enabled = !state.busy, isError = state.notice == AuthNotice.PASSWORD_REQUIRED || (action==AuthAction.REGISTER && password.isNotEmpty() && password.length<8),
-                        supportingText={if(action==AuthAction.REGISTER && password.isNotEmpty() && password.length<8)Text(stringResource(R.string.form_password_length))},
+                        singleLine = true, enabled = !state.busy, isError = state.notice == AuthNotice.PASSWORD_REQUIRED,
                         modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = if (hasCode) ImeAction.Next else ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { submit() }),
@@ -143,13 +163,8 @@ internal fun AuthContent(
                     if (action == AuthAction.SIGN_IN) TextButton(
                         onClick = { changeAction(AuthAction.REQUEST_RECOVERY) }, enabled = !state.busy, modifier = Modifier.align(Alignment.End),
                     ) { Text(stringResource(R.string.auth_forgot_password)) }
-                    if(action==AuthAction.REGISTER) {
-                        ProfileFields(profile,!state.busy) {profile=it}
-                        PrivacyAgreement(profile.consent,!state.busy) {profile=profile.copy(consent=it)}
-                        Text(stringResource(R.string.profile_validation),style=MaterialTheme.typography.bodySmall)
-                    }
                     state.notice?.let { AuthNoticeCard(it) }
-                    Button(onClick = { submit() }, enabled = !state.busy && (action!=AuthAction.REGISTER || (profile.valid() && password.length>=8)), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                    Button(onClick = { submit() }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                         shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(16.dp)) {
                         if (state.busy) {
                             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
@@ -171,6 +186,7 @@ internal fun AuthContent(
                             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), shape = RoundedCornerShape(14.dp)) {
                             Text(stringResource(R.string.auth_create_account), textAlign = TextAlign.Center)
                         }
+                    }
                     }
                     if (action != AuthAction.SIGN_IN) TextButton(onClick = { changeAction(AuthAction.SIGN_IN) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.back_to_sign_in), textAlign = TextAlign.Center)
@@ -225,7 +241,7 @@ fun AuthLoadingScreen() {
     }
 }
 
-@Composable private fun PasswordVisibilityButton(visible: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
+@Composable internal fun PasswordVisibilityButton(visible: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
     val label = stringResource(if (visible) R.string.auth_hide_password else R.string.auth_show_password)
     IconToggleButton(checked = visible, onCheckedChange = onChange, enabled = enabled,
         modifier = Modifier.semantics { contentDescription = label }) {

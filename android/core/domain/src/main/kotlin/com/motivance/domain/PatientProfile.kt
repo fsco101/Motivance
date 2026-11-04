@@ -6,12 +6,19 @@ import java.time.Period
 data class PatientProfile(val username:String="",val name:String="",val gender:String="",val birthdate:String="",val address:String="",val contact:String="",val avatar:String="person",val consent:Boolean=false,val email:String="",val firstName:String=name.substringBefore(" "),val lastName:String=name.substringAfter(" ","")) {
     val age:Int? get()=runCatching {Period.between(LocalDate.parse(birthdate),LocalDate.now()).years}.getOrNull()
     val displayName:String get()=listOf(firstName.trim(),lastName.trim()).filter {it.isNotEmpty()}.joinToString(" ")
-    fun valid():Boolean = UsernamePolicy.allowed(username) && validName(firstName) && validName(lastName) &&
-        gender in setOf("female","male","nonbinary","prefer_not_to_say") &&
-        runCatching {val date=LocalDate.parse(birthdate);date<=LocalDate.now() && date>=LocalDate.now().minusYears(120)}.getOrDefault(false) &&
-        address.trim().length in 5..500 && validContact(contact) &&
-        avatar in setOf("person","star","heart") && consent
+    /** Name, birthdate and gender: the signup "personal details" step. */
+    val personalValid:Boolean get()=validName(firstName) && validName(lastName) && validBirthdate(birthdate) && gender in GENDERS
+    /** Address, contact number, username and avatar: the signup "contact and username" step. */
+    val contactValid:Boolean get()=validAddress(address) && validContact(contact) && UsernamePolicy.allowed(username) && avatar in AVATARS
+    fun valid():Boolean = personalValid && contactValid && consent
+    companion object {
+        val GENDERS=setOf("female","male","nonbinary","prefer_not_to_say")
+        val AVATARS=setOf("person","star","heart")
+    }
 }
+
+fun validBirthdate(value:String)=runCatching {val date=LocalDate.parse(value);date<=LocalDate.now() && date>=LocalDate.now().minusYears(120)}.getOrDefault(false)
+fun validAddress(value:String)=value.trim().length in 5..500
 
 fun validName(value:String)=value.trim().length in 1..60 && value.trim().matches(Regex("[\\p{L}\\p{M}]+(?:[ .\u2019'-][\\p{L}\\p{M}]+)*\\.?"))
 fun validContact(value:String)=value.matches(Regex("\\+?[0-9 ()-]{7,25}")) && value.count {it.isDigit()} in 7..15

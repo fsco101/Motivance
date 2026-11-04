@@ -1,6 +1,17 @@
 package com.motivance.feature.auth
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.shape.CircleShape
@@ -33,50 +44,97 @@ import kotlinx.coroutines.flow.*
 
 @Composable fun ProfileAvatar(p:PatientProfile) {
     Surface(shape=CircleShape,color=MaterialTheme.colorScheme.secondaryContainer) {
-        Icon(when(p.avatar) {"star"->Icons.Default.Star;"heart"->Icons.Default.Favorite;else->Icons.Default.Person},
+        Icon(avatarIcon(p.avatar),
             stringResource(R.string.profile_avatar),modifier=Modifier.padding(14.dp).size(32.dp),tint=MaterialTheme.colorScheme.secondary)
     }
 }
 
+/**
+ * One profile text field. Errors appear after the field is edited or left, or immediately when
+ * [showErrors] is set (for example after an attempt to continue past an incomplete signup step).
+ */
+@Composable private fun ProfileTextField(
+    label:Int,value:String,error:Int?,enabled:Boolean,showErrors:Boolean,
+    type:KeyboardType=KeyboardType.Text,help:Int?=null,capitalization:KeyboardCapitalization=KeyboardCapitalization.None,
+    multiline:Boolean=false,leading:ImageVector?=null,onValue:(String)->Unit,
+) {
+    var touched by remember {mutableStateOf(false)}
+    var focused by remember {mutableStateOf(false)}
+    val showError=error!=null && (touched || value.isNotEmpty() || showErrors)
+    OutlinedTextField(value,{touched=true;onValue(it)},enabled=enabled,label={Text(stringResource(label))},
+        leadingIcon=leading?.takeIf {fieldIconsFit()}?.let {icon -> {Icon(icon,null)}},
+        isError=showError,supportingText={if(showError)Text(stringResource(error!!)) else if(help!=null)Text(stringResource(help))},
+        modifier=Modifier.fillMaxWidth().onFocusChanged {if(focused && !it.isFocused)touched=true;focused=it.isFocused},
+        shape=RoundedCornerShape(12.dp),singleLine=!multiline,minLines=if(multiline) 2 else 1,maxLines=if(multiline) 4 else 1,
+        keyboardOptions=KeyboardOptions(keyboardType=type,capitalization=capitalization,imeAction=if(multiline) ImeAction.Default else ImeAction.Next))
+}
+
+@Composable private fun FormSection(title:Int,description:Int) {
+    HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+    Text(stringResource(title),style=MaterialTheme.typography.titleMedium,color=MaterialTheme.colorScheme.primary)
+    Text(stringResource(description),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** First/last name, birthdate with derived age, and gender. */
 @OptIn(ExperimentalLayoutApi::class)
-@Composable fun ColumnScope.ProfileFields(p:PatientProfile,enabled:Boolean,onChange:(PatientProfile)->Unit) {
-    @Composable fun section(title:Int,description:Int) {
-        HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-        Text(stringResource(title),style=MaterialTheme.typography.titleMedium,color=MaterialTheme.colorScheme.primary)
-        Text(stringResource(description),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    @Composable fun field(label:Int,value:String,error:Int?,type:KeyboardType=KeyboardType.Text,help:Int?=null,change:(String)->PatientProfile) {
-        var touched by remember {mutableStateOf(false)}
-        var focused by remember {mutableStateOf(false)}
-        val showError=error!=null && (touched || value.isNotEmpty())
-        OutlinedTextField(value,{touched=true;onChange(change(it))},enabled=enabled,label={Text(stringResource(label))},
-            isError=showError,supportingText={if(showError)Text(stringResource(error!!)) else if(help!=null)Text(stringResource(help))},
-            modifier=Modifier.fillMaxWidth().onFocusChanged {if(focused && !it.isFocused)touched=true;focused=it.isFocused},
-            shape=MaterialTheme.shapes.small,keyboardOptions=KeyboardOptions(keyboardType=type),singleLine=label!=R.string.profile_address)
-    }
-    section(R.string.form_identity,R.string.form_identity_help)
-    field(R.string.profile_first_name,p.firstName,if(validName(p.firstName))null else R.string.form_name_error) {p.copy(firstName=it)}
-    field(R.string.profile_last_name,p.lastName,if(validName(p.lastName))null else R.string.form_name_error) {p.copy(lastName=it)}
+@Composable fun ColumnScope.PersonalFields(p:PatientProfile,enabled:Boolean,showErrors:Boolean=false,onChange:(PatientProfile)->Unit) {
+    ProfileTextField(R.string.profile_first_name,p.firstName,if(validName(p.firstName))null else R.string.form_name_error,enabled,showErrors,
+        capitalization=KeyboardCapitalization.Words) {onChange(p.copy(firstName=it))}
+    ProfileTextField(R.string.profile_last_name,p.lastName,if(validName(p.lastName))null else R.string.form_name_error,enabled,showErrors,
+        capitalization=KeyboardCapitalization.Words) {onChange(p.copy(lastName=it))}
     DateInput(R.string.profile_birthdate,p.birthdate,enabled=enabled,birthdate=true) {onChange(p.copy(birthdate=it))}
-    if(p.age!=null) SuggestionChip(onClick={},label={Text(stringResource(R.string.profile_age,p.age.toString()))})
+    if(p.age!=null) Text(stringResource(R.string.profile_age,p.age.toString()),style=MaterialTheme.typography.titleSmall,
+        color=MaterialTheme.colorScheme.secondary,modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
+    else if(showErrors) Text(stringResource(R.string.form_birthdate_required),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
     Text(stringResource(R.string.profile_gender),style=MaterialTheme.typography.labelLarge)
-    FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+    FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
         listOf("female" to R.string.profile_female,"male" to R.string.profile_male,"nonbinary" to R.string.profile_nonbinary,"prefer_not_to_say" to R.string.profile_private).forEach {(key,label)->
-            FilterChip(p.gender==key,{onChange(p.copy(gender=key))},enabled=enabled,label={Text(stringResource(label))})
+            FilterChip(p.gender==key,{onChange(p.copy(gender=key))},enabled=enabled,label={Text(stringResource(label))},
+                leadingIcon=if(p.gender==key) {{Icon(Icons.Default.Check,null,Modifier.size(18.dp))}} else null)
         }
     }
-    section(R.string.form_contact,R.string.form_contact_help)
-    field(R.string.profile_address,p.address,if(p.address.trim().length in 5..500)null else R.string.form_address_error) {p.copy(address=it)}
-    field(R.string.profile_contact,p.contact,if(validContact(p.contact))null else R.string.form_phone_error,KeyboardType.Phone, R.string.form_phone_help) {p.copy(contact=it)}
-    section(R.string.form_account,R.string.form_account_help)
-    field(R.string.profile_username,p.username,when {UsernamePolicy.blocked(p.username)->R.string.form_username_blocked;!UsernamePolicy.allowed(p.username)->R.string.form_username_error;else->null},help=R.string.profile_username_help) {p.copy(username=it)}
+    if(showErrors && p.gender !in PatientProfile.GENDERS) Text(stringResource(R.string.form_gender_required),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
+}
+
+/** Address and contact number. */
+@Composable fun ColumnScope.ContactFields(p:PatientProfile,enabled:Boolean,showErrors:Boolean=false,onChange:(PatientProfile)->Unit) {
+    ProfileTextField(R.string.profile_address,p.address,if(validAddress(p.address))null else R.string.form_address_error,enabled,showErrors,
+        capitalization=KeyboardCapitalization.Words,multiline=true) {onChange(p.copy(address=it))}
+    ProfileTextField(R.string.profile_contact,p.contact,if(validContact(p.contact))null else R.string.form_phone_error,enabled,showErrors,
+        KeyboardType.Phone,R.string.form_phone_help,leading=Icons.Default.Phone) {onChange(p.copy(contact=it))}
+}
+
+/** Username and a selectable avatar tile row (the tiles are the preview). */
+@Composable fun ColumnScope.IdentityFields(p:PatientProfile,enabled:Boolean,showErrors:Boolean=false,onChange:(PatientProfile)->Unit) {
+    ProfileTextField(R.string.profile_username,p.username,when {UsernamePolicy.blocked(p.username)->R.string.form_username_blocked;!UsernamePolicy.allowed(p.username)->R.string.form_username_error;else->null},
+        enabled,showErrors,KeyboardType.Ascii,R.string.profile_username_help,leading=Icons.Default.AccountCircle) {onChange(p.copy(username=it.trim()))}
     Text(stringResource(R.string.profile_avatar),style=MaterialTheme.typography.labelLarge)
-    FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+    Row(Modifier.fillMaxWidth().selectableGroup(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
         listOf("person" to R.string.profile_person,"star" to R.string.profile_star,"heart" to R.string.profile_heart).forEach {(key,label)->
-            FilterChip(p.avatar==key,{onChange(p.copy(avatar=key))},enabled=enabled,label={Text(stringResource(label))})
+            val selected=p.avatar==key
+            Surface(Modifier.weight(1f).selectable(selected,enabled=enabled,role=Role.RadioButton) {onChange(p.copy(avatar=key))},
+                shape=RoundedCornerShape(14.dp),
+                color=if(selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                border=BorderStroke(if(selected) 2.dp else 1.dp,if(selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant)) {
+                Column(Modifier.padding(vertical=12.dp,horizontal=4.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(6.dp)) {
+                    Icon(avatarIcon(key),null,Modifier.size(30.dp),tint=MaterialTheme.colorScheme.secondary)
+                    Text(stringResource(label),style=MaterialTheme.typography.labelLarge,textAlign=TextAlign.Center)
+                }
+            }
         }
     }
-    ProfileAvatar(p)
+}
+
+private fun avatarIcon(key:String)=when(key) {"star"->Icons.Default.Star;"heart"->Icons.Default.Favorite;else->Icons.Default.Person}
+
+/** All profile fields in one column, used by the profile editor. */
+@Composable fun ColumnScope.ProfileFields(p:PatientProfile,enabled:Boolean,onChange:(PatientProfile)->Unit) {
+    FormSection(R.string.form_identity,R.string.form_identity_help)
+    PersonalFields(p,enabled,onChange=onChange)
+    FormSection(R.string.form_contact,R.string.form_contact_help)
+    ContactFields(p,enabled,onChange=onChange)
+    FormSection(R.string.form_account,R.string.form_account_help)
+    IdentityFields(p,enabled,onChange=onChange)
 }
 
 @Composable fun PrivacyAgreement(accepted:Boolean,enabled:Boolean,onChange:(Boolean)->Unit) {
