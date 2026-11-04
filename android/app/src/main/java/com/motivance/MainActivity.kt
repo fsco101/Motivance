@@ -32,9 +32,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MotivanceTheme {
-                Surface(Modifier.fillMaxSize()) {
-                    Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                        MotivanceApp(auth)
+                val stage=androidx.compose.runtime.remember {mutableStateOf<androidx.compose.ui.graphics.Color?>(null)}
+                androidx.compose.runtime.CompositionLocalProvider(com.motivance.designsystem.LocalStageColor provides stage) {
+                    Surface(Modifier.fillMaxSize(),color=stage.value ?: androidx.compose.material3.MaterialTheme.colorScheme.background) {
+                        Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+                            MotivanceApp(auth)
+                        }
                     }
                 }
             }

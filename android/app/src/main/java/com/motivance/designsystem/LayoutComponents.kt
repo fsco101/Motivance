@@ -1,6 +1,17 @@
 package com.motivance.designsystem
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.roundToInt
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
@@ -29,10 +40,10 @@ import kotlin.math.sin
 /** Page title block shared by every workspace screen. */
 @Composable fun PageHeader(title: Int, subtitle: Int? = null, eyebrow: String? = null) {
     Column(Modifier.fillMaxWidth().padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (eyebrow != null) Text(eyebrow.uppercase(), style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
-        Text(stringResource(title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary, modifier = Modifier.semantics { heading() })
+        if (eyebrow != null) Text(eyebrow, style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(stringResource(title), style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.semantics { heading() })
         if (subtitle != null) Text(stringResource(subtitle), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -41,8 +52,8 @@ import kotlin.math.sin
 /** A smaller heading that introduces a group of cards, with an optional trailing action. */
 @Composable fun SectionHeading(title: Int, trailing: (@Composable () -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(stringResource(title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f).semantics { heading() })
+        Text(stringResource(title), style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f).semantics { heading() })
         trailing?.invoke()
     }
 }
@@ -67,7 +78,7 @@ enum class PillTone { NEUTRAL, POSITIVE, ATTENTION, PRIMARY }
 }
 
 /** Rounded tinted square holding an icon; used to anchor cards and list rows. */
-@Composable fun IconBadge(icon: ImageVector, tint: Color = MaterialTheme.colorScheme.secondary, size: Int = 44) {
+@Composable fun IconBadge(icon: ImageVector, tint: Color = MaterialTheme.colorScheme.primary, size: Int = 44) {
     Surface(color = tint.copy(alpha = .1f), shape = RoundedCornerShape(14.dp), modifier = Modifier.size(size.dp)) {
         Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size((size * .55f).dp)) }
     }
@@ -81,11 +92,13 @@ enum class PillTone { NEUTRAL, POSITIVE, ATTENTION, PRIMARY }
     selected: Boolean, onClick: () -> Unit, title: String, modifier: Modifier = Modifier,
     description: String? = null, enabled: Boolean = true, leading: (@Composable () -> Unit)? = null,
 ) {
-    val border = if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant
+    val haptics = rememberHaptics()
+    val border by animateColorAsState(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, label = "border")
+    val fill by animateColorAsState(if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = .45f) else MaterialTheme.colorScheme.surface, label = "fill")
     Surface(
-        modifier.selectable(selected, enabled = enabled, role = Role.RadioButton, onClick = onClick),
+        modifier.selectable(selected, enabled = enabled, role = Role.RadioButton, onClick = { if (!selected) haptics.tick(); onClick() }),
         shape = MaterialTheme.shapes.medium,
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .28f) else MaterialTheme.colorScheme.surface,
+        color = fill,
         border = BorderStroke(if (selected) 2.dp else 1.dp, border),
     ) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp).heightIn(min = 28.dp),
@@ -97,7 +110,7 @@ enum class PillTone { NEUTRAL, POSITIVE, ATTENTION, PRIMARY }
                 if (description != null) Text(description, style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
-            if (selected) Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(22.dp))
+            if (selected) Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
             else Spacer(Modifier.size(22.dp))
         }
     }
@@ -109,15 +122,15 @@ enum class PillTone { NEUTRAL, POSITIVE, ATTENTION, PRIMARY }
     ClinicalCard {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(shape = CircleShape, modifier = Modifier.size(32.dp),
-                color = if (complete) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primaryContainer,
-                contentColor = if (complete) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onPrimaryContainer) {
+                color = if (complete) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = if (complete) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant) {
                 Box(contentAlignment = Alignment.Center) {
                     if (complete) Icon(Icons.Default.CheckCircle, null, Modifier.size(20.dp))
                     else Text(number.toString(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 }
             }
-            Text(stringResource(title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f).semantics { heading() })
+            Text(stringResource(title), style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f).semantics { heading() })
         }
         if (help != null) Text(stringResource(help), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -135,14 +148,47 @@ enum class PillTone { NEUTRAL, POSITIVE, ATTENTION, PRIMARY }
 
 /**
  * Semicircular protractor showing the 0–180° joint range with the prescribed band highlighted.
- * Values outside the valid range are clamped for drawing only.
+ * Values outside the valid range are clamped for drawing only. When [onChange] is set, either end of the
+ * band can be dragged; ends snap to 5° and stay at least 15° apart, so a drag never produces a range the
+ * form would reject. The typed fields remain the precise and accessible way to set exact values.
  */
-@Composable fun RangeArc(low: Double?, high: Double?, description: String, modifier: Modifier = Modifier) {
+@Composable fun RangeArc(low: Double?, high: Double?, description: String, modifier: Modifier = Modifier,
+    onChange: ((Double, Double) -> Unit)? = null) {
     val track = MaterialTheme.colorScheme.surfaceContainerHigh
     val band = MaterialTheme.colorScheme.secondary
     val tick = MaterialTheme.colorScheme.outline
     val marker = MaterialTheme.colorScheme.primary
-    Canvas(modifier.fillMaxWidth().aspectRatio(2.1f).semantics { contentDescription = description }) {
+    val haptics = rememberHaptics()
+    val current by rememberUpdatedState(low to high)
+    val change by rememberUpdatedState(onChange)
+    var dragging by remember { mutableStateOf<Boolean?>(null) } // true = high end, false = low end
+    val gesture = if (onChange == null) Modifier else Modifier.pointerInput(Unit) {
+        fun degreesAt(position: Offset): Double {
+            val stroke = 18.dp.toPx()
+            val cx = size.width / 2f; val cy = size.height - stroke / 2
+            var d = Math.toDegrees(atan2((position.y - cy).toDouble(), (position.x - cx).toDouble())) - 180.0
+            d = ((d % 360) + 360) % 360
+            if (d > 180) d = if (d > 270) 0.0 else 180.0
+            return d
+        }
+        detectDragGestures(
+            onDragStart = { start ->
+                val (l, h) = current
+                val at = degreesAt(start)
+                if (l != null && h != null) dragging = abs(at - h) <= abs(at - l)
+            },
+            onDragEnd = { dragging = null }, onDragCancel = { dragging = null },
+        ) { pointer, _ ->
+            pointer.consume()
+            val (l, h) = current
+            val isHigh = dragging ?: return@detectDragGestures
+            if (l == null || h == null) return@detectDragGestures
+            val snapped = (degreesAt(pointer.position) / 5).roundToInt() * 5.0
+            val next = if (isHigh) l to snapped.coerceIn(minOf(l + 15, 180.0), 180.0) else snapped.coerceIn(0.0, maxOf(h - 15, 0.0)) to h
+            if (next != l to h) { haptics.tick(); change?.invoke(next.first, next.second) }
+        }
+    }
+    Canvas(modifier.fillMaxWidth().aspectRatio(2.1f).then(gesture).semantics { contentDescription = description }) {
         val stroke = 18.dp.toPx()
         val radius = minOf(size.width / 2, size.height) - stroke
         val center = Offset(size.width / 2, size.height - stroke / 2)
@@ -159,9 +205,13 @@ enum class PillTone { NEUTRAL, POSITIVE, ATTENTION, PRIMARY }
         if (low != null && high != null && high > low) {
             val from = low.coerceIn(0.0, 180.0); val to = high.coerceIn(0.0, 180.0)
             drawArc(band, 180f + from.toFloat(), (to - from).toFloat(), false, topLeft, arc, style = Stroke(stroke, cap = StrokeCap.Butt))
-            listOf(from, to).forEach {
-                drawLine(marker, center, point(it, radius - stroke * 1.4f), 3.dp.toPx(), StrokeCap.Round)
-                drawCircle(marker, stroke * .42f, point(it, radius))
+            listOf(from to false, to to true).forEach { (value, isHigh) ->
+                drawLine(marker, center, point(value, radius - stroke * 1.4f), 3.dp.toPx(), StrokeCap.Round)
+                if (onChange != null) {
+                    val r = stroke * (if (dragging == isHigh) .9f else .72f)
+                    drawCircle(Color.White, r, point(value, radius))
+                    drawCircle(marker, r, point(value, radius), style = Stroke(3.dp.toPx()))
+                } else drawCircle(marker, stroke * .42f, point(value, radius))
             }
         }
         drawCircle(marker, 6.dp.toPx(), center)

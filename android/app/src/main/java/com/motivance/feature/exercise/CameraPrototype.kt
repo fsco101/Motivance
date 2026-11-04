@@ -14,7 +14,17 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.compose.animation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
@@ -36,8 +46,7 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.motivance.R
-import com.motivance.designsystem.ActionButton
-import com.motivance.designsystem.FeedbackNotice
+import com.motivance.designsystem.*
 import com.motivance.assessment.CameraDiagnostics
 import com.motivance.assessment.PerformancePolicy
 import androidx.compose.ui.semantics.*
@@ -137,60 +146,98 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             executor.execute { detector?.close() }; executor.shutdown()
         }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.motivance_logo),null,Modifier.size(36.dp))
-            Text(stringResource(R.string.camera_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))
+    // A counted repetition is confirmed by touch as well as by the number, so the patient can keep their eyes on the movement.
+    val haptics=rememberHaptics()
+    var lastCount by remember {mutableIntStateOf(exercise.metrics.completed)}
+    LaunchedEffect(exercise.metrics.completed) {
+        if(exercise.metrics.completed>lastCount && exercise.metrics.running) haptics.confirm()
+        lastCount=exercise.metrics.completed
+    }
+    LaunchedEffect(exercise.metrics.feedback) {if(exercise.metrics.feedback==RepFeedback.TARGET_REACHED) haptics.tick()}
+    val exerciseName=stringResource(if(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction)
+    DarkStage()
+    SessionTheme {
+    Column(Modifier.fillMaxSize().background(Motion.Night).verticalScroll(rememberScrollState()).padding(horizontal=16.dp,vertical=12.dp),
+        verticalArrangement=Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            Image(painterResource(R.drawable.motivance_logo),null,Modifier.size(32.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.camera_title),style=MaterialTheme.typography.labelMedium,color=Motion.NightInk)
+                Text(exerciseName,style=MaterialTheme.typography.titleLarge,color=Color.White,modifier=Modifier.semantics {heading()})
+            }
+            StatusPill(stringResource(if(exercise.rules.demo) R.string.calc_source_demo_short else R.string.calc_source_prescribed_short),
+                if(exercise.rules.demo) PillTone.NEUTRAL else PillTone.POSITIVE)
         }
-        Text(stringResource(if(exercise.rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall)
-        Text(stringResource(R.string.camera_setup),style=MaterialTheme.typography.bodySmall)
         if(exercise.id==null) {
             if(exercise.rules.demo) {
-            Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                FilterChip(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION,{session.select(ExerciseKind.ELBOW_FLEXION,exercise.rules.side)},label={Text(stringResource(R.string.elbow_flexion))})
-                FilterChip(exercise.rules.kind==ExerciseKind.SHOULDER_ABDUCTION,{session.select(ExerciseKind.SHOULDER_ABDUCTION,exercise.rules.side)},label={Text(stringResource(R.string.shoulder_abduction))})
-            }
-            Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                BodySide.entries.forEach { side -> FilterChip(exercise.rules.side==side,{session.select(exercise.rules.kind,side)},label={Text(stringResource(if(side==BodySide.LEFT) R.string.left_side else R.string.right_side))}) }
-            }
+                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                    FilterChip(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION,{haptics.tick();session.select(ExerciseKind.ELBOW_FLEXION,exercise.rules.side)},label={Text(stringResource(R.string.elbow_flexion))})
+                    FilterChip(exercise.rules.kind==ExerciseKind.SHOULDER_ABDUCTION,{haptics.tick();session.select(ExerciseKind.SHOULDER_ABDUCTION,exercise.rules.side)},label={Text(stringResource(R.string.shoulder_abduction))})
+                }
+                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                    BodySide.entries.forEach { side -> FilterChip(exercise.rules.side==side,{haptics.tick();session.select(exercise.rules.kind,side)},label={Text(stringResource(if(side==BodySide.LEFT) R.string.left_side else R.string.right_side))}) }
+                }
             }
             exercise.cached.filter {it.expiresAt>System.currentTimeMillis()}.forEach { cached ->
-                OutlinedButton({session.usePrescription(cached)}) { Text(stringResource(R.string.use_cached_prescription)) }
+                OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.use_cached_prescription)) }
             }
         }
-        exercise.cached.firstOrNull { it.versionId==exercise.rules.prescriptionVersionId }?.let {
-            Text(it.instructions,style=MaterialTheme.typography.bodyMedium)
+        if(!permission) Surface(shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.surface) {
+            Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.camera_privacy),style=MaterialTheme.typography.bodyMedium,color=Motion.NightInk)
+                Button({launcher.launch(Manifest.permission.CAMERA)},Modifier.fillMaxWidth().heightIn(min=52.dp)) { Text(stringResource(R.string.allow_camera)) }
+                TextButton({context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.open_app_settings)) }
+            }
         }
-        if(!permission) {
-            Button({launcher.launch(Manifest.permission.CAMERA)}) { Text(stringResource(R.string.allow_camera)) }
-            TextButton({context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}) { Text(stringResource(R.string.open_app_settings)) }
-        }
-        error?.let { Text(stringResource(it)) }
-        MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
-            {session.start(consent || exercise.id!=null)},{session.interrupt()},stringResource(exercise.metrics.quality.label()))
+        error?.let { FeedbackNotice(it,error=true) }
         val shown=display
-        SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()))
-        Text(stringResource(R.string.session_metrics,exercise.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",exercise.metrics.incomplete,exercise.metrics.durationMs/1000),style=MaterialTheme.typography.bodySmall)
-        if(exercise.metrics.feedback!=RepFeedback.NONE) Text(stringResource(exercise.metrics.feedback.label()),color=MaterialTheme.colorScheme.secondary)
+        SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()),details=false)
+        AnimatedVisibility(exercise.metrics.feedback!=RepFeedback.NONE,enter=fadeIn()+expandVertically(),exit=fadeOut()+shrinkVertically()) {
+            val positive=exercise.metrics.feedback==RepFeedback.TARGET_REACHED || exercise.metrics.feedback==RepFeedback.COMPLETE
+            Surface(shape=MaterialTheme.shapes.medium,color=if(positive) MaterialTheme.colorScheme.secondaryContainer else Color(0xFF4A3410)) {
+                Row(Modifier.fillMaxWidth().padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Icon(if(positive) Icons.Default.CheckCircle else Icons.Default.Info,null,tint=if(positive) Motion.SproutBright else Motion.NightCaution)
+                    Text(stringResource(exercise.metrics.feedback.label()),style=MaterialTheme.typography.titleSmall,color=Color.White,
+                        modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
+                }
+            }
+        }
+        MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
+            {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.interrupt()})
+        SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
+        exercise.cached.firstOrNull { it.versionId==exercise.rules.prescriptionVersionId }?.let {
+            Text(it.instructions,style=MaterialTheme.typography.bodyMedium,color=Color.White)
+        }
+        Text(stringResource(if(exercise.rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+        Text(stringResource(R.string.camera_setup),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+        Text(stringResource(R.string.session_metrics,exercise.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",exercise.metrics.incomplete,exercise.metrics.durationMs/1000),
+            style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
         if(BuildConfig.DEBUG) {
-            if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height),style=MaterialTheme.typography.labelSmall)
-            diagnostics?.let {Text(stringResource(R.string.diagnostics_summary,"%.1f".format(it.fps),it.p95LatencyMs,thermalStatus),style=MaterialTheme.typography.labelSmall)}
+            if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height),style=MaterialTheme.typography.labelSmall,color=Motion.NightInk)
+            diagnostics?.let {Text(stringResource(R.string.diagnostics_summary,"%.1f".format(it.fps),it.p95LatencyMs,thermalStatus),style=MaterialTheme.typography.labelSmall,color=Motion.NightInk)}
         }
-        if(diagnostics?.let {PerformancePolicy.slow(it)}==true) Text(stringResource(R.string.camera_slow_warning))
+        if(diagnostics?.let {PerformancePolicy.slow(it)}==true) FeedbackNotice(R.string.camera_slow_warning,error=true)
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            OutlinedButton({front=!front; display=null; error=null},modifier=Modifier.weight(1f)) { Text(stringResource(R.string.switch_camera)) }
-            OutlinedButton({if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f),enabled=!exercise.saving) { Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera)) }
+            OutlinedButton({haptics.tick();front=!front; display=null; error=null},modifier=Modifier.weight(1f).heightIn(min=52.dp),shape=MaterialTheme.shapes.medium) {
+                Icon(Icons.Default.Refresh,null,Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.switch_camera),textAlign=TextAlign.Center)
+            }
+            OutlinedButton({haptics.tick();if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f).heightIn(min=52.dp),enabled=!exercise.saving,shape=MaterialTheme.shapes.medium) {
+                Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera),textAlign=TextAlign.Center)
+            }
         }
-        if(exercise.recoverable!=null && exercise.id==null) TextButton({session.restore()}) { Text(stringResource(R.string.recover_interrupted)) }
+        if(exercise.recoverable!=null && exercise.id==null) TextButton({session.restore()},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.recover_interrupted)) }
         if(exercise.saved) {
-            Text(stringResource(R.string.session_saved_local))
-            OutlinedButton({session.newSession(); consent=false}) {Text(stringResource(R.string.new_session))}
+            FeedbackNotice(R.string.session_saved_local)
+            OutlinedButton({session.newSession(); consent=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
         }
         if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
         if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
-        if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({session.newSession();consent=false},enabled=!exercise.saving) {Text(stringResource(R.string.new_session))}
+        if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({session.newSession();consent=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
         ActionButton(if(exercise.id!=null && !exercise.saved) R.string.finish_save_session else R.string.finish_camera,
-            {if(exercise.id!=null && !exercise.saved) {exitRequested=true; session.finish()} else onBack()},busy=exercise.saving,busyLabel=R.string.saving_session)
+            {if(exercise.id!=null && !exercise.saved) {exitRequested=true; session.finish()} else onBack()},busy=exercise.saving,busyLabel=R.string.saving_session,
+            outlined=!(exercise.id!=null && !exercise.saved))
+        Spacer(Modifier.height(8.dp))
+    }
     }
 }
 

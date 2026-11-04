@@ -1,8 +1,6 @@
 # Native UI and UX specification
 
-Use `stitch_galawgo_rehabilitation_system_prototype/` as the design basis, including `kinetic_clinical_precision/DESIGN.md`, role selection, camera positioning and real-time assessment. Preserve imported files unchanged. Use Motivance branding in Kotlin Compose; do not package HTML/Tailwind or sample patient data into the application.
-
-S1 translates the navy (#002042), teal (#006A61), pale blue surfaces (#F8F9FF), readable type hierarchy and generous spacing into a native theme. Primary controls are at least 56dp high; large font settings must not clip labels. Cards should use 16-24dp radii and inputs 8dp. Typography currently uses Android's accessible system fallback; bundling Plus Jakarta Sans needs its licence and font files reviewed first. Do not fetch fonts at runtime to start an exercise.
+The Stitch prototype in `stitch_galawgo_rehabilitation_system_prototype/` is preserved unchanged as historical reference material, but it is no longer the visual basis. From 2026-11-05 the user directed that its design be disregarded; the current visual system is the Motivance "motion arc" system described in [Motion arc design system](#motion-arc-design-system-2026-11-05). Do not package HTML/Tailwind or sample patient data into the application. Sections below that mention navy/teal tokens or the Stitch reference describe the earlier implementation history.
 
 The native implementation now includes the reference's role-selection composition (branded header, introduction, stacked clinician/patient cards and portal actions), card-based patient/therapist home screens, bottom navigation, patient list, exercise list, progress and profile layouts, prescription form layout, camera positioning checklist, live preview controls and camera-check completion. Header/system bars respect safe drawing insets. The shared body color and pale-blue surfaces follow the clinical design tokens.
 
@@ -93,3 +91,28 @@ Therapist prescriptions now expose a Skeleton focus body part selector. Patient 
 The live camera panel is now rendered by SkeletonPreview: navy framing, high-contrast rounded bones, muted contextual joints, a mint active-limb chain and a ring at the selected elbow/shoulder. Body and image share the same letterbox/mirror mapping. A text heading identifies anatomical side/joint; status and angle/repetition tiles sit below the image. The overlay hides ambiguous/absent/paused skeletons, hides unreliable angles, and never treats a highlighted joint as proof of correct form. English/Filipino copy and wrapping/scrolling support large text. Evidence and synthetic renderer screenshots are in `docs/validation/SKELETON-OVERLAY-REFINEMENT.md`.
 
 The administrator portal now routes only server-authorized administrators to account, staff-role, link and supported-catalogue controls. Sensitive changes require confirmation. Failed reads clear prior administration data; late account responses cannot cross sign-out. Published catalogue instructions append versions and preserve historical references. English/Filipino selection is available on the landing screen and Profile; bilingual authored instructions remain available offline. Tracking status announces changes politely, consent and staff-role controls have explicit labels, and the assigned Start action is tested at double font size in Filipino. Severe device heat pauses camera/measurement and permits a later retry. These engineering checks do not establish physical accessibility, human terminology approval or clinical device eligibility. See validation/SPRINT-04-IMPLEMENTATION.md and the follow-up checklist.
+
+## Motion arc design system (2026-11-05)
+
+The user asked for a mobile UI/UX and interaction overhaul that disregards the Stitch prototype. The direction is drawn from the supplied Motivance logo and from the product's own subject: a joint's range of motion.
+
+**Tokens** (`designsystem/MotivanceTheme.kt`, object `Motion`). Ink `#0D2B36` (text, hero surfaces), Lagoon `#0E7C86` (primary actions), Sprout `#1B7F45` / bright `#6FE08F` (a reached or prescribed range), Mist `#F1F6F5` (page ground), Amber `#E8A33D` (caution and hold only). The camera session uses a separate dark `SessionTheme` (Night `#062229`, panel `#0E3640`). Amber never signals success, and progress is always also stated in text.
+
+**Type.** Bricolage Grotesque (OFL, bundled in `res/font`, licence in `assets/licenses/`) for headings and the numbers patients watch: angles, repetitions and targets. Body copy stays on the system face so long Filipino words wrap predictably at large font scales. All-caps labels were removed from both locales; the Filipino tagline's corrupted `?` separators were fixed.
+
+**Signature element.** `MotionArc`, an open 240° goniometer face, appears in a single orchestrated landing animation, the patient's Today card (prescribed band plus reach angle), empty states, local history and the session-complete summary. `RangeArc` remains the 0–180° protractor; in the therapist prescription editor both ends can be dragged, snapping to 5° and staying at least 15° apart, with haptic ticks. The typed angle fields remain the precise and accessible input.
+
+**Screens.**
+- Landing: arc hero, patient-first role cards, camera trial, language segmented control.
+- App bar sits on the page ground and shows the signed-in person's avatar; the development pill appears only before sign-in.
+- Patient home: greeting, Today card that starts the next valid downloaded assignment directly (falls back to the orientation hero when none is cached), Monday–Sunday completed-session strip built from uploaded and on-device sessions.
+- Therapist home: counts, the first three linked patients as a tappable grouped list, and See all.
+- Patient list: grouped rows that open the patient record; revocation stays behind the overflow menu and confirmation dialog. Invitation codes have a Copy action that confirms in place.
+- Exercise cards: the prescribed band on the protractor, range/repetition pills, Start, and download/version metadata behind Show details.
+- Camera setup: drawn positioning illustration and a numbered checklist (the steps are a sequence).
+- Live session: full dark stage including system-bar areas (`designsystem/Stage.kt`), tracking status chip on the image, larger angle/repetition readouts with a rolling count, then the measurement controls, then the counting rules. Recording shows a pulsing indicator.
+- Session complete: arc filled by completed/target repetitions with ROM, not-counted and active-time blocks.
+
+**Interaction.** Page transitions slide by navigation depth and fade between tabs (`AnimatedContent`). Pull-to-refresh is available on workspace pages; its indicator only shows for a refresh the person started, and the explicit Refresh button remains for accessibility. `Collapsible` animates disclosures (invitation, timing, filters, details). `TappableSurface` settles slightly under a press. Haptics (`designsystem/Interaction.kt`) tick on selection, tab changes and arc snapping, and confirm counted repetitions, measurement start, copy and a saved session. Compose animations follow the system animator scale, so disabling animations removes them.
+
+No database, backend, authentication, assessment rule or consent behaviour changed, and no runtime dependency was added. Evidence: [MOTION-ARC-REDESIGN.md](../validation/MOTION-ARC-REDESIGN.md).

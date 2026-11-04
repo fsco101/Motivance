@@ -91,6 +91,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Complete the owner-dependent items in `docs/operations/PRODUCTION-READINESS.md`: account verification/testing schedule, signing custody, actual retention/backup expiry, privacy notice/deletion URL, model distribution terms and production support ownership.
 - [ ] Before Play release, upgrade the tested target/compile SDK tuple for current API-36 submission requirements and verify native 16 KB page compatibility. Preparation documentation does not satisfy these S5 release checks.
 
+## Motion arc redesign follow-up (2026-11-05)
+
+- [ ] On both physical phone classes, check that repetition, start, copy and save haptics are noticeable but not startling, and that a counted repetition is felt during movement. Emulator runs cannot exercise vibration.
+- [ ] Have therapists drag the prescription range arc with real fingers: 5° snapping, 15° minimum span, accidental page scrolling, and parity with the typed angle fields. Check the arc and typed fields with TalkBack.
+- [ ] Confirm that patients and therapists discover pull-to-refresh, or use the Refresh button, on Home, Exercises, Patients, Progress and Profile. Check that the dark session stage and its light status-bar icons restore correctly after leaving the camera.
+- [ ] Have a Filipino speaker review the new copy (greeting, Today card, weekly strip, copy code, show/hide details, drag help, counting heading). Have a therapist confirm the Today card and "of 7 days" weekly wording do not imply adherence targets. Evidence so far is emulator-only: `MOTION-ARC-REDESIGN.md`.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
