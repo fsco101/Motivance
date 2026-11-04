@@ -15,16 +15,23 @@ class AdministrationViewModelTest {
         var wait:CompletableDeferred<AdminWorkspace>?=null
         var failure=false
         val changed=mutableListOf<String>()
-        var page=AdminWorkspace(accounts=listOf(AdminAccount("a","Fixture",true,setOf("patient"))),next="a")
-        override suspend fun loadAdministration(after:String?):AdminWorkspace {
+        val searches=mutableListOf<String?>()
+        val activityCursors=mutableListOf<Long>()
+        var page=AdminWorkspace(accounts=listOf(AdminAccount("a","Fixture",true,setOf("patient"))),next="a",
+            activity=listOf(AuditEvent(3,"insert","user_roles","a","t3"),AuditEvent(2,"enable","profiles","a","t2")),activityNext=2)
+        var older=AuditPage(listOf(AuditEvent(2,"enable","profiles","a","t2"),AuditEvent(1,"insert","sessions","s","t1")),null)
+        override suspend fun loadAdministration(after:String?,search:String?):AdminWorkspace {
             if(failure) throw RemoteFailure(403)
+            searches+=search
             return wait?.let {withContext(NonCancellable) {it.await()}} ?: page
         }
+        override suspend fun loadActivity(before:Long):AuditPage {if(failure) throw RemoteFailure(403);activityCursors+=before;return older}
         override suspend fun setAccount(user:String,active:Boolean) {changed+="account:$user:$active"}
         override suspend fun setRole(user:String,role:String,granted:Boolean) {changed+="role:$user:$role:$granted"}
-        override suspend fun setLink(therapist:String,patient:String,active:Boolean) {changed+="link"}
+        override suspend fun setLink(therapist:String,patient:String,active:Boolean) {changed+="link:$therapist:$patient:$active"}
         override suspend fun setExercise(exercise:String,active:Boolean) {changed+="exercise"}
-        override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {changed+="publish"}
+        override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {changed+="publish:$name:$english:$filipino"}
+        override suspend fun clearPhoto(user:String) {changed+="photo:$user"}
     }
     @Test fun lateDirectoryResponseCannotLeakAcrossAccounts()=runTest {
         val remote=Remote();val gate=CompletableDeferred<AdminWorkspace>();remote.wait=gate
@@ -36,7 +43,7 @@ class AdministrationViewModelTest {
         val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin");vm.refresh();advanceUntilIdle()
         assertEquals(1,vm.state.value.data.accounts.size)
         remote.failure=true;vm.refresh();advanceUntilIdle()
-        assertTrue(vm.state.value.failed);assertTrue(vm.state.value.data.accounts.isEmpty())
+        assertTrue(vm.state.value.failed);assertTrue(vm.state.value.data.accounts.isEmpty());assertTrue(vm.state.value.data.activity.isEmpty())
         remote.failure=false;vm.refresh();advanceUntilIdle();assertFalse(vm.state.value.failed)
     }
     @Test fun mutationLoadingStaysVisibleUntilDirectoryRefreshCompletes()=runTest {
@@ -52,6 +59,7 @@ class AdministrationViewModelTest {
         assertFalse(vm.state.value.busy)
         assertNull(vm.state.value.activeAction)
         assertTrue(vm.state.value.updated)
+        assertEquals(AdminAction.ACCOUNT,vm.state.value.completedAction)
     }
     @Test fun paginationDeduplicatesAndRepeatedClickWhileBusyDoesNotRepeatChange()=runTest {
         val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin");vm.refresh();advanceUntilIdle()
@@ -59,5 +67,52 @@ class AdministrationViewModelTest {
         vm.older();advanceUntilIdle();assertEquals(listOf("a","b"),vm.state.value.data.accounts.map {it.id})
         vm.account("b",false);vm.account("b",false);advanceUntilIdle()
         assertEquals(listOf("account:b:false"),remote.changed)
+    }
+    @Test fun searchIsTrimmedBoundedAndReusedForMutationsAndRetries()=runTest {
+        val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin")
+        vm.search("  maria  ");advanceUntilIdle()
+        assertEquals("maria",vm.state.value.query);assertEquals(listOf<String?>("maria"),remote.searches)
+        vm.role("a","therapist",true);advanceUntilIdle()
+        assertEquals("maria",remote.searches.last())
+        remote.failure=true;vm.refresh();advanceUntilIdle()
+        assertTrue(vm.state.value.failed);assertEquals("maria",vm.state.value.query)
+        remote.failure=false;vm.search("x".repeat(ADMIN_SEARCH_LIMIT+20));advanceUntilIdle()
+        assertEquals(ADMIN_SEARCH_LIMIT,vm.state.value.query.length)
+        vm.search("");advanceUntilIdle();assertEquals("",remote.searches.last())
+    }
+    @Test fun searchWhileBusyIsIgnoredSoTheShownQueryMatchesTheLoadedResults()=runTest {
+        val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin")
+        val gate=CompletableDeferred<AdminWorkspace>();remote.wait=gate
+        vm.refresh();runCurrent()
+        vm.search("late");gate.complete(remote.page);advanceUntilIdle()
+        assertEquals("",vm.state.value.query)
+    }
+    @Test fun readActionsAreNotReportedAsSavedChanges()=runTest {
+        val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin")
+        vm.refresh();advanceUntilIdle();assertFalse(vm.state.value.updated);assertEquals(AdminAction.REFRESH,vm.state.value.completedAction)
+        vm.search("a");advanceUntilIdle();assertFalse(vm.state.value.updated)
+        vm.olderActivity();advanceUntilIdle();assertFalse(vm.state.value.updated)
+        vm.publish("e"," Name ","  English ","Filipino ");advanceUntilIdle()
+        assertTrue(vm.state.value.updated);assertEquals("publish:Name:English:Filipino",remote.changed.last())
+    }
+    @Test fun olderActivityAppendsWithoutDuplicatesAndAccountPagingKeepsIt()=runTest {
+        val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin");vm.refresh();advanceUntilIdle()
+        vm.olderActivity();advanceUntilIdle()
+        assertEquals(listOf(2L),remote.activityCursors)
+        assertEquals(listOf(3L,2L,1L),vm.state.value.data.activity.map {it.id})
+        assertNull(vm.state.value.data.activityNext)
+        vm.olderActivity();advanceUntilIdle();assertEquals(1,remote.activityCursors.size)
+        vm.older();advanceUntilIdle()
+        assertEquals(listOf(3L,2L,1L),vm.state.value.data.activity.map {it.id})
+    }
+    @Test fun photoModerationIsAReportedChange()=runTest {
+        val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin")
+        vm.clearPhoto("p");advanceUntilIdle()
+        assertEquals(listOf("photo:p"),remote.changed);assertTrue(vm.state.value.updated);assertEquals(AdminAction.PHOTO,vm.state.value.completedAction)
+    }
+    @Test fun linkIdentifiersAreTrimmedBeforeSubmission()=runTest {
+        val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin")
+        vm.link(" t ","p  ",true);advanceUntilIdle()
+        assertEquals(listOf("link:t:p:true"),remote.changed)
     }
 }

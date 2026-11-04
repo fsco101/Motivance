@@ -124,7 +124,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
     var menu by remember {mutableStateOf(false)}
     ClinicalCard {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-            patient.profile?.let {ProfileAvatar(it)} ?: IconBadge(Icons.Default.Person,size=60)
+            patient.profile?.let {ProfileAvatar(it)} ?: PersonAvatar(patient.photoUrl,patient.name.ifBlank {patient.id.take(8)},60.dp,
+                container=MaterialTheme.colorScheme.secondaryContainer,content=MaterialTheme.colorScheme.onSecondaryContainer)
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 Text(patient.name.ifBlank {patient.id.take(8)},style=MaterialTheme.typography.titleMedium)
                 patient.profile?.let {

@@ -41,7 +41,7 @@ class PatientProfileTest {
         listOf(valid.copy(firstName=""),valid.copy(birthdate="not-a-date"),valid.copy(gender="")).forEach {
             assertFalse(it.personalValid);assertTrue(it.contactValid);assertFalse(it.valid())
         }
-        listOf(valid.copy(address="abc"),valid.copy(contact="12"),valid.copy(username="f_u_c_k"),valid.copy(avatar="robot")).forEach {
+        listOf(valid.copy(address="abc"),valid.copy(contact="12"),valid.copy(username="f_u_c_k")).forEach {
             assertTrue(it.personalValid);assertFalse(it.contactValid);assertFalse(it.valid())
         }
         // Consent belongs to the review step only.
@@ -51,5 +51,10 @@ class PatientProfileTest {
     @Test fun ageIsDerivedFromBirthday() {
         assertEquals(25,valid.copy(birthdate=LocalDate.now().minusYears(25).toString()).age)
         assertEquals(24,valid.copy(birthdate=LocalDate.now().minusYears(25).plusDays(1).toString()).age)
+    }
+    @Test fun profilePhotoIsOptionalAndNotPartOfStepValidation() {
+        val profile=PatientProfile("fixture_user","Fixture Person","female","1990-01-01","Fixture address","+639001234567",consent=true)
+        assertTrue(profile.valid())
+        assertTrue(profile.copy(photoUrl="https://res.cloudinary.com/demo/image/upload/v1/x").valid())
     }
 }

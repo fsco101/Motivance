@@ -3,19 +3,21 @@ package com.motivance.domain
 import java.time.LocalDate
 import java.time.Period
 
-data class PatientProfile(val username:String="",val name:String="",val gender:String="",val birthdate:String="",val address:String="",val contact:String="",val avatar:String="person",val consent:Boolean=false,val email:String="",val firstName:String=name.substringBefore(" "),val lastName:String=name.substringAfter(" ","")) {
+data class PatientProfile(val username:String="",val name:String="",val gender:String="",val birthdate:String="",val address:String="",val contact:String="",val photoUrl:String?=null,val consent:Boolean=false,val email:String="",val firstName:String=name.substringBefore(" "),val lastName:String=name.substringAfter(" ","")) {
     val age:Int? get()=runCatching {Period.between(LocalDate.parse(birthdate),LocalDate.now()).years}.getOrNull()
     val displayName:String get()=listOf(firstName.trim(),lastName.trim()).filter {it.isNotEmpty()}.joinToString(" ")
     /** Name, birthdate and gender: the signup "personal details" step. */
     val personalValid:Boolean get()=validName(firstName) && validName(lastName) && validBirthdate(birthdate) && gender in GENDERS
-    /** Address, contact number, username and avatar: the signup "contact and username" step. */
-    val contactValid:Boolean get()=validAddress(address) && validContact(contact) && UsernamePolicy.allowed(username) && avatar in AVATARS
+    /** Address, contact number and username: the signup "contact and username" step. The photo is optional and uploaded separately. */
+    val contactValid:Boolean get()=validAddress(address) && validContact(contact) && UsernamePolicy.allowed(username)
     fun valid():Boolean = personalValid && contactValid && consent
     companion object {
         val GENDERS=setOf("female","male","nonbinary","prefer_not_to_say")
-        val AVATARS=setOf("person","star","heart")
     }
 }
+
+/** Profile photos are JPEG uploads of at most this size, prepared on the device before upload. */
+const val MAX_PHOTO_BYTES=2_000_000
 
 fun validBirthdate(value:String)=runCatching {val date=LocalDate.parse(value);date<=LocalDate.now() && date>=LocalDate.now().minusYears(120)}.getOrDefault(false)
 fun validAddress(value:String)=value.trim().length in 5..500

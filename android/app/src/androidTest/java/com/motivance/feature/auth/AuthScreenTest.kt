@@ -41,7 +41,7 @@ class AuthScreenTest {
                 AuthContent(state.value, role, { action, email, password, code ->
                     submissions += listOf(action, email, password, code)
                     state.value = AuthState(busy = true)
-                }, { state.value = state.value.copy(notice = null) }, {}, {},initialProfile=com.motivance.domain.PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567","person",true))
+                }, { state.value = state.value.copy(notice = null) }, {}, {},initialProfile=com.motivance.domain.PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567",null,true))
             } }
         }
     }

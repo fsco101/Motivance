@@ -1,6 +1,10 @@
 package com.motivance.feature.auth
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -42,11 +46,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-@Composable fun ProfileAvatar(p:PatientProfile) {
-    Surface(shape=CircleShape,color=MaterialTheme.colorScheme.secondaryContainer) {
-        Icon(avatarIcon(p.avatar),
-            stringResource(R.string.profile_avatar),modifier=Modifier.padding(14.dp).size(32.dp),tint=MaterialTheme.colorScheme.secondary)
-    }
+/** The patient's profile photo, or their initials when none is set. */
+@Composable fun ProfileAvatar(p:PatientProfile,size:androidx.compose.ui.unit.Dp=60.dp) {
+    PersonAvatar(p.photoUrl,p.displayName.ifBlank {p.username},size,container=MaterialTheme.colorScheme.secondaryContainer,
+        content=MaterialTheme.colorScheme.onSecondaryContainer,description=stringResource(R.string.profile_avatar))
 }
 
 /**
@@ -104,28 +107,16 @@ import kotlinx.coroutines.flow.*
         KeyboardType.Phone,R.string.form_phone_help,leading=Icons.Default.Phone) {onChange(p.copy(contact=it))}
 }
 
-/** Username and a selectable avatar tile row (the tiles are the preview). */
-@Composable fun ColumnScope.IdentityFields(p:PatientProfile,enabled:Boolean,showErrors:Boolean=false,onChange:(PatientProfile)->Unit) {
+/** Username. At signup, a note explains that a profile photo can be added after the email is confirmed. */
+@Composable fun ColumnScope.IdentityFields(p:PatientProfile,enabled:Boolean,showErrors:Boolean=false,signup:Boolean=false,onChange:(PatientProfile)->Unit) {
     ProfileTextField(R.string.profile_username,p.username,when {UsernamePolicy.blocked(p.username)->R.string.form_username_blocked;!UsernamePolicy.allowed(p.username)->R.string.form_username_error;else->null},
         enabled,showErrors,KeyboardType.Ascii,R.string.profile_username_help,leading=Icons.Default.AccountCircle) {onChange(p.copy(username=it.trim()))}
-    Text(stringResource(R.string.profile_avatar),style=MaterialTheme.typography.labelLarge)
-    Row(Modifier.fillMaxWidth().selectableGroup(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-        listOf("person" to R.string.profile_person,"star" to R.string.profile_star,"heart" to R.string.profile_heart).forEach {(key,label)->
-            val selected=p.avatar==key
-            Surface(Modifier.weight(1f).selectable(selected,enabled=enabled,role=Role.RadioButton) {onChange(p.copy(avatar=key))},
-                shape=RoundedCornerShape(14.dp),
-                color=if(selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-                border=BorderStroke(if(selected) 2.dp else 1.dp,if(selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant)) {
-                Column(Modifier.padding(vertical=12.dp,horizontal=4.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(6.dp)) {
-                    Icon(avatarIcon(key),null,Modifier.size(30.dp),tint=MaterialTheme.colorScheme.secondary)
-                    Text(stringResource(label),style=MaterialTheme.typography.labelLarge,textAlign=TextAlign.Center)
-                }
-            }
-        }
+    if(signup) Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+        Icon(Icons.Default.AccountCircle,null,tint=MaterialTheme.colorScheme.secondary)
+        Text(stringResource(R.string.profile_photo_later),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-private fun avatarIcon(key:String)=when(key) {"star"->Icons.Default.Star;"heart"->Icons.Default.Favorite;else->Icons.Default.Person}
 
 /** All profile fields in one column, used by the profile editor. */
 @Composable fun ColumnScope.ProfileFields(p:PatientProfile,enabled:Boolean,onChange:(PatientProfile)->Unit) {
@@ -173,7 +164,16 @@ private fun avatarIcon(key:String)=when(key) {"star"->Icons.Default.Star;"heart"
     }
 }
 
-data class ProfileState(val owner:String="",val profile:PatientProfile?=null,val busy:Boolean=false,val failed:Boolean=false,val message:Int?=null)
+data class ProfileState(val owner:String="",val profile:PatientProfile?=null,val busy:Boolean=false,val failed:Boolean=false,val message:Int?=null,
+    val photoBusy:Boolean=false,val photoError:Int?=null)
+/** Photo errors name the cause where the server or device makes it known. */
+internal fun photoFailure(e:Exception)=when {
+    e is RemoteFailure && e.status==503 -> R.string.profile_photo_unconfigured
+    e is RemoteFailure && e.status==429 -> R.string.profile_photo_limit
+    e is UnreadablePhoto || e is IllegalArgumentException -> R.string.profile_photo_unreadable
+    else -> R.string.profile_photo_failed
+}
+
 @HiltViewModel class PatientProfileViewModel @Inject constructor(private val repository:AuthRepository):ViewModel() {
     private val mutable=MutableStateFlow(ProfileState());val state=mutable.asStateFlow()
     private var job:Job?=null
@@ -182,14 +182,19 @@ data class ProfileState(val owner:String="",val profile:PatientProfile?=null,val
     fun refresh()=perform {repository.loadProfile()}
     fun save(p:PatientProfile)=perform(R.string.profile_saved) {repository.saveProfile(p);repository.loadProfile()}
     fun password(old:String,new:String)=perform(R.string.profile_password_saved) {repository.changePassword(old,new);repository.loadProfile()}
-    private fun perform(message:Int?=null,action:suspend ()->PatientProfile) {
+    fun uploadPhoto(jpeg:ByteArray)=perform(R.string.profile_photo_saved,photo=true) {repository.uploadProfilePhoto(jpeg);repository.loadProfile()}
+    fun removePhoto()=perform(R.string.profile_photo_removed,photo=true) {repository.removeProfilePhoto();repository.loadProfile()}
+    /** The picked file could not be decoded on the device; nothing was uploaded. */
+    fun photoUnreadable() {mutable.value=mutable.value.copy(photoError=R.string.profile_photo_unreadable,message=null)}
+    private fun perform(message:Int?=null,photo:Boolean=false,action:suspend ()->PatientProfile) {
         if(mutable.value.owner.isBlank() || mutable.value.busy)return
         val ticket=++generation
-        mutable.value=mutable.value.copy(busy=true,failed=false,message=null)
+        mutable.value=mutable.value.copy(busy=true,photoBusy=photo,failed=false,message=null,photoError=null)
         job=viewModelScope.launch {
-            try {val p=action();if(ticket==generation)mutable.value=mutable.value.copy(profile=p,busy=false,message=message)}
+            try {val p=action();if(ticket==generation)mutable.value=mutable.value.copy(profile=p,busy=false,photoBusy=false,message=message)}
             catch(e:CancellationException){throw e}
-            catch(_:Exception){if(ticket==generation)mutable.value=mutable.value.copy(busy=false,failed=true)}
+            catch(e:Exception){if(ticket==generation)mutable.value=mutable.value.copy(busy=false,photoBusy=false,
+                failed=!photo,photoError=if(photo) photoFailure(e) else null)}
         }
     }
 }
@@ -198,9 +203,11 @@ data class ProfileState(val owner:String="",val profile:PatientProfile?=null,val
     val state by vm.state.collectAsStateWithLifecycle()
     if(state.busy) LoadingNotice(R.string.profile_loading)
     if(state.failed) FeedbackNotice(R.string.profile_failed,error=true,retry={vm.refresh()})
-    state.message?.let {FeedbackNotice(it)}
+    state.message?.takeIf {it!=R.string.profile_photo_saved && it!=R.string.profile_photo_removed}?.let {FeedbackNotice(it)}
     LaunchedEffect(state.message) {if(state.message==R.string.profile_saved)onSaved()}
-    state.profile?.let {loaded -> key(loaded) {
+    state.profile?.let {ProfilePhotoCard(it,state,vm)}
+    // Keyed without the photo, so changing the photo does not discard an edit in progress.
+    state.profile?.let {loaded -> key(loaded.copy(photoUrl=null)) {
         var draft by remember {mutableStateOf(loaded)}
         var editing by remember {mutableStateOf(false)}
         Text(stringResource(R.string.email),style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -229,4 +236,49 @@ data class ProfileState(val owner:String="",val profile:PatientProfile?=null,val
             ActionButton(R.string.profile_change_password,{vm.password(old,new);old="";new="";confirmation=""},enabled=!state.busy && old.isNotBlank() && new.length>=8 && new==confirmation && old!=new,busy=state.busy,busyLabel=R.string.profile_loading)
         }
     }
+}
+
+/**
+ * Photo picker, preview and removal. The system photo picker needs no storage permission. The picked image is
+ * prepared on the device (see [preparePhoto]) and then uploaded through a server-signed Cloudinary request.
+ */
+@Composable private fun ProfilePhotoCard(p:PatientProfile,state:ProfileState,vm:PatientProfileViewModel) {
+    val resolver=LocalContext.current.contentResolver
+    val scope=rememberCoroutineScope()
+    var confirmRemove by remember {mutableStateOf(false)}
+    val picker=rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) {uri ->
+        if(uri!=null) scope.launch {
+            val jpeg=withContext(Dispatchers.Default) {runCatching {preparePhoto(resolver,uri)}.getOrNull()}
+            if(jpeg==null) vm.photoUnreadable() else vm.uploadPhoto(jpeg)
+        }
+    }
+    ClinicalCard {
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)) {
+            Box(contentAlignment=Alignment.Center) {
+                ProfileAvatar(p,88.dp)
+                if(state.photoBusy) CircularProgressIndicator(Modifier.size(88.dp),strokeWidth=3.dp,color=MaterialTheme.colorScheme.secondary)
+            }
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.profile_photo),style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(if(p.photoUrl==null) R.string.profile_photo_empty else R.string.profile_photo_set),
+                    style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        state.photoError?.let {FeedbackNotice(it,error=true)}
+        state.message?.takeIf {it==R.string.profile_photo_saved || it==R.string.profile_photo_removed}?.let {FeedbackNotice(it)}
+        ActionButton(if(p.photoUrl==null) R.string.profile_photo_add else R.string.profile_photo_change,
+            {picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))},
+            enabled=!state.busy,busy=state.photoBusy,busyLabel=R.string.profile_photo_uploading)
+        if(p.photoUrl!=null) OutlinedButton({confirmRemove=true},Modifier.fillMaxWidth().heightIn(min=48.dp),enabled=!state.busy,
+            shape=MaterialTheme.shapes.medium,colors=ButtonDefaults.outlinedButtonColors(contentColor=MaterialTheme.colorScheme.error)) {
+            Icon(Icons.Default.Delete,null,Modifier.size(18.dp));Spacer(Modifier.width(8.dp));Text(stringResource(R.string.profile_photo_remove))
+        }
+        Text(stringResource(R.string.profile_photo_notice),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if(confirmRemove) AlertDialog(onDismissRequest={confirmRemove=false},
+        icon={Icon(Icons.Default.Warning,null,tint=MaterialTheme.colorScheme.error)},
+        title={Text(stringResource(R.string.profile_photo_remove))},text={Text(stringResource(R.string.profile_photo_remove_confirm))},
+        confirmButton={TextButton({confirmRemove=false;vm.removePhoto()},colors=ButtonDefaults.textButtonColors(contentColor=MaterialTheme.colorScheme.error)) {
+            Text(stringResource(R.string.profile_photo_remove))}},
+        dismissButton={TextButton({confirmRemove=false}) {Text(stringResource(R.string.cancel_action))}})
 }

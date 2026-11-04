@@ -72,7 +72,7 @@ internal fun SignupStep.complete(email:String,password:String,confirmation:Strin
             HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
             Text(stringResource(R.string.form_account),style=MaterialTheme.typography.titleMedium,color=MaterialTheme.colorScheme.primary)
             Text(stringResource(R.string.form_account_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            IdentityFields(profile,!busy,showErrors,onProfile)
+            IdentityFields(profile,!busy,showErrors,signup=true,onChange=onProfile)
         }
         SignupStep.REVIEW -> ReviewStep(email,profile,!busy,onStep) {onProfile(profile.copy(consent=it))}
     }
@@ -167,7 +167,7 @@ internal fun SignupStep.complete(email:String,password:String,confirmation:Strin
         R.string.profile_gender to stringResource(genderLabel(p.gender))))
     ReviewSection(R.string.signup_step_contact,SignupStep.CONTACT,enabled,onStep,listOf(
         R.string.profile_address to p.address.trim(),R.string.profile_contact to p.contact,
-        R.string.profile_username to "@${p.username}",R.string.profile_avatar to stringResource(avatarLabel(p.avatar))))
+        R.string.profile_username to "@${p.username}"))
     PrivacyCard(p.consent,enabled,onConsent)
 }
 
@@ -224,7 +224,6 @@ internal fun SignupStep.complete(email:String,password:String,confirmation:Strin
 }
 
 private fun genderLabel(key:String)=when(key) {"female"->R.string.profile_female;"male"->R.string.profile_male;"nonbinary"->R.string.profile_nonbinary;else->R.string.profile_private}
-private fun avatarLabel(key:String)=when(key) {"star"->R.string.profile_star;"heart"->R.string.profile_heart;else->R.string.profile_person}
 
 /** Decorative leading icons are dropped at large font scales so field labels keep their width and do not break mid-word. */
 @Composable internal fun fieldIconsFit()=androidx.compose.ui.platform.LocalDensity.current.fontScale<1.3f

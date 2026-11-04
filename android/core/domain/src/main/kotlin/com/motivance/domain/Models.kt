@@ -15,6 +15,9 @@ interface AuthRepository {
     suspend fun loadProfile():PatientProfile {throw UnsupportedOperationException()}
     suspend fun saveProfile(profile:PatientProfile) {throw UnsupportedOperationException()}
     suspend fun changePassword(currentPassword:String,newPassword:String) {throw UnsupportedOperationException()}
+    /** Uploads an already-prepared JPEG as the signed-in account's profile photo and returns its delivery URL. */
+    suspend fun uploadProfilePhoto(jpeg:ByteArray):String {throw UnsupportedOperationException()}
+    suspend fun removeProfilePhoto() {throw UnsupportedOperationException()}
     suspend fun confirmRegistration(email: String, token: String): UserSession
     suspend fun resendConfirmation(email:String) {throw UnsupportedOperationException("Confirmation resend is unavailable")}
     suspend fun requestRecovery(email: String)

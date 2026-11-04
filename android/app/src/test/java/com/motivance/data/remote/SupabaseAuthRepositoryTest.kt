@@ -33,11 +33,11 @@ class SupabaseAuthRepositoryTest {
     }.build()
     private fun repository()=SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture-key")
     @Test fun signupSendsValidatedDetailsAndConsent()=runBlocking {
-        val profile=com.motivance.domain.PatientProfile("patient_one","Test Patient","female","1995-01-01","Test address","09001234567","star",true)
+        val profile=com.motivance.domain.PatientProfile("patient_one","Test Patient","female","1995-01-01","Test address","09001234567",consent=true)
         repository().registerProfile("a@example.test","fixture-password",profile)
         val buffer=okio.Buffer();requests.single().body!!.writeTo(buffer)
         val data=JSONObject(buffer.readUtf8()).getJSONObject("data").getJSONObject("patient_profile")
-        assertTrue(data.getBoolean("consent"));assertEquals("star",data.getString("avatar"))
+        assertTrue(data.getBoolean("consent"));assertFalse("The retired icon choice is no longer sent",data.has("avatar"))
         requests.clear()
         assertTrue(runCatching {repository().registerProfile("a@example.test","fixture-password",profile.copy(consent=false))}.isFailure)
         assertTrue(requests.isEmpty())

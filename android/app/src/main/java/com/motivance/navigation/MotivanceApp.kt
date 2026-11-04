@@ -46,6 +46,7 @@ private val Teal=Color(0xFF006A61)
     val exercise:ExerciseSessionViewModel=viewModel()
     val local by exercise.state.collectAsStateWithLifecycle()
     val profile:PatientProfileViewModel=viewModel()
+    val profileState by profile.state.collectAsStateWithLifecycle()
     val rehabilitation:RehabilitationViewModel=viewModel()
     val connected by rehabilitation.state.collectAsStateWithLifecycle()
     val history:HistoryViewModel=viewModel()
@@ -132,9 +133,10 @@ private val Teal=Color(0xFF006A61)
                     SectionTitle(R.string.nav_profile,R.string.account_and_access)
                     ClinicalCard {
                         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-                            IconBadge(Icons.Default.AccountCircle,MaterialTheme.colorScheme.primary,52)
+                            val accountName=overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account)
+                            PersonAvatar(profileState.profile?.photoUrl,accountName,52.dp,container=MaterialTheme.colorScheme.primary,content=MaterialTheme.colorScheme.onPrimary)
                             Column(Modifier.weight(1f)) {
-                                Text(overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account),style=MaterialTheme.typography.titleLarge)
+                                Text(accountName,style=MaterialTheme.typography.titleLarge)
                                 Spacer(Modifier.height(4.dp))
                                 StatusPill(stringResource(actualRole.title()),PillTone.POSITIVE)
                             }

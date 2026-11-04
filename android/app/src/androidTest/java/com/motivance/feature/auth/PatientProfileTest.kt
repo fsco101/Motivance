@@ -25,7 +25,7 @@ class PatientProfileTest {
     private fun capture(name:String) {
         File(context.getExternalFilesDir(null),name).outputStream().use {compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}
     }
-    private val fixture=PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567","star",true,"patient@example.test")
+    private val fixture=PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567",null,true,"patient@example.test")
     private fun continueButton()=compose.onNode(hasText(text(R.string.signup_continue)) and hasClickAction())
     private fun openSignup(onRegister:(String,String,PatientProfile)->Unit,initial:PatientProfile=PatientProfile()) {
         compose.setContent {MotivanceTheme {Surface {AuthContent(AuthState(),UserRole.PATIENT,{_,_,_,_->},{},{},{},onRegister=onRegister,initialProfile=initial)}}}
@@ -72,7 +72,7 @@ class PatientProfileTest {
         compose.onNodeWithText(context.getString(R.string.profile_age,fixture.age.toString())).performScrollTo().assertExists()
         capture("signup-step-personal.png")
         continueButton().performScrollTo().performClick()
-        compose.onNodeWithText(text(R.string.profile_star)).performScrollTo().assertIsSelected()
+        compose.onNodeWithText(text(R.string.profile_photo_later)).performScrollTo().assertExists()
         capture("signup-step-contact.png")
         continueButton().performScrollTo().performClick()
         compose.onNodeWithText("@fixture_user").performScrollTo().assertExists()
