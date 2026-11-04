@@ -46,7 +46,7 @@ class MovementAssessment(val rules:ExerciseRules, restored:AssessmentSnapshot?=n
         if(state.running && last!=null && time>=last) state=state.copy(durationMs=state.durationMs+time-last)
         if(last==null || time>=last) lastClock=time
     }
-    private fun resetCycle() { state=state.copy(phase=MovementPhase.SEEKING_START); peakStarted=null; cycleStarted=0 }
+    private fun resetCycle() { state=state.copy(phase=MovementPhase.SEEKING_START,holdElapsedMs=0); peakStarted=null; cycleStarted=0 }
     private fun resetFilter() { stable=0; samples.clear(); lastAngle=null }
     private fun incomplete(reason:RepFeedback) {
         state=state.copy(incomplete=state.incomplete+1,feedback=reason,failureReasons=state.failureReasons+(reason to ((state.failureReasons[reason] ?: 0)+1)))
@@ -64,17 +64,16 @@ class MovementAssessment(val rules:ExerciseRules, restored:AssessmentSnapshot?=n
         if(people.isEmpty()) return invalid(TrackingQuality.NO_PERSON,time)
         if(people.size!=1) return invalid(TrackingQuality.MULTIPLE_PEOPLE,time)
         val points=people.single()
+        val chain=rules.measurementChain()
         val shoulder=if(rules.side==BodySide.LEFT) 11 else 12
-        val elbow=shoulder+2; val wrist=shoulder+4; val hip=shoulder+12
-        val required=if(rules.kind==ExerciseKind.ELBOW_FLEXION) listOf(shoulder,elbow,wrist,hip) else listOf(hip,shoulder,elbow)
+        val hip=shoulder+12
+        // The trunk (shoulder/hip) is always needed for the lean check; the chain defines the measured angle.
+        val required=(chain.landmarks+listOf(shoulder,hip)).distinct()
         if(required.any { it>=points.size || !points[it].visibility.isFinite() || points[it].visibility<rules.confidence }) return invalid(TrackingQuality.LOW_CONFIDENCE,time)
         if(required.any { !points[it].x.isFinite() || !points[it].y.isFinite() || points[it].x !in .02f.. .98f || points[it].y !in .02f.. .98f }) return invalid(TrackingQuality.OUT_OF_FRAME,time)
         if((points[hip].y-points[shoulder].y)*height<5) return invalid(TrackingQuality.DEGENERATE,time)
-        val a=if(rules.kind==ExerciseKind.ELBOW_FLEXION) points[shoulder] else points[hip]
-        val b=if(rules.kind==ExerciseKind.ELBOW_FLEXION) points[elbow] else points[shoulder]
-        val c=if(rules.kind==ExerciseKind.ELBOW_FLEXION) points[wrist] else points[elbow]
-        val included=JointAngles.included(a,b,c,width,height) ?: return invalid(TrackingQuality.DEGENERATE,time)
-        val raw=if(rules.kind==ExerciseKind.ELBOW_FLEXION) 180-included else included
+        val included=JointAngles.included(points[chain.proximal],points[chain.vertex],points[chain.distal],width,height) ?: return invalid(TrackingQuality.DEGENERATE,time)
+        val raw=if(chain.extendsProximal) 180-included else included
         val lean=Math.toDegrees(atan2(abs((points[shoulder].x-points[hip].x)*width),abs((points[shoulder].y-points[hip].y)*height)).toDouble())
         if(lean>rules.maxTrunkLeanDegrees) return invalid(TrackingQuality.TRUNK_LEAN,time)
         val previous=lastAngle
@@ -99,14 +98,16 @@ class MovementAssessment(val rules:ExerciseRules, restored:AssessmentSnapshot?=n
             MovementPhase.MOVING -> {
                 if(angle>=rules.highDegrees) {
                     if(peakStarted==null) peakStarted=time
-                    if(time-peakStarted!!>=rules.peakHoldMs) state=state.copy(phase=MovementPhase.AT_TARGET,feedback=RepFeedback.TARGET_REACHED)
-                } else peakStarted=null
-                if(angle<=rules.lowDegrees) { incomplete(RepFeedback.INCOMPLETE_RANGE); state=state.copy(phase=MovementPhase.REST); peakStarted=null }
+                    val held=time-peakStarted!!
+                    state=state.copy(holdElapsedMs=held)
+                    if(held>=rules.peakHoldMs) state=state.copy(phase=MovementPhase.AT_TARGET,feedback=RepFeedback.TARGET_REACHED)
+                } else { peakStarted=null; state=state.copy(holdElapsedMs=0) }
+                if(angle<=rules.lowDegrees) { incomplete(RepFeedback.INCOMPLETE_RANGE); state=state.copy(phase=MovementPhase.REST,holdElapsedMs=0); peakStarted=null }
             }
             MovementPhase.AT_TARGET -> if(angle<=rules.lowDegrees) {
                 val valid=time-cycleStarted>=rules.minimumCycleMs
                 if(!valid) incomplete(RepFeedback.TOO_FAST)
-                state=state.copy(completed=state.completed+if(valid) 1 else 0,phase=MovementPhase.REST,feedback=if(valid) RepFeedback.COMPLETE else RepFeedback.TOO_FAST)
+                state=state.copy(completed=state.completed+if(valid) 1 else 0,phase=MovementPhase.REST,holdElapsedMs=0,feedback=if(valid) RepFeedback.COMPLETE else RepFeedback.TOO_FAST)
                 peakStarted=null
             }
         }

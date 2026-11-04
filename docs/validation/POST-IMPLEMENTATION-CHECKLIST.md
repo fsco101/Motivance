@@ -27,6 +27,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 
 - [ ] Test front/back camera, portrait/landscape, 0/90/180/270 orientation, denied/revoked permission, background/return and process termination. Resume requires fresh tracking and does not count a partial cycle twice.
 - [ ] Verify correct anatomical side, camera plane and required visible joints. Elbow uses a side-on view; shoulder abduction uses a front view. Verify overlay alignment for mirroring and letterboxing.
+- [ ] On physical phones with real pose output, check the calculation overlay from `SKELETON-CALCULATION-OVERLAY.md`:
+  - The protractor stays on the measured joint, front and back camera, in portrait.
+  - The 0° reference, the low/high ticks and the live arc match a goniometer reading at the therapist thresholds.
+  - The step cards and hold bar follow real repetitions.
+  - The gauge and step announcements work with TalkBack.
+  - Therapists review the rule sentence and source line, and a fluent reviewer checks the new Filipino strings.
+- [ ] Rerun `CameraLifecycleTest` on an AVD with an emulated/virtual-scene camera or on a phone. On 2026-11-04 it failed on the Pixel_6 AVD because its host-webcam camera never opened (CameraX stuck in `PENDING_OPEN`).
 - [ ] Check no person, two people, occlusion, confidence loss, out-of-frame joints, large position jumps and trunk lean. Invalid frames must show an unavailable angle and preserve valid ROM extrema/counts.
 - [ ] Replay full, incomplete, jittering, excessively fast and timed-out cycles. Check feedback and persisted completed/incomplete reason totals.
 - [ ] With a qualified therapist, determine positioning, eligibility, comfortable movement limits, exclusions and stop criteria. Compare stationary holds against a documented goniometer/reference convention; do not treat model-estimated depth as reference truth.

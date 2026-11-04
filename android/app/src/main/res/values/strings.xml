@@ -434,4 +434,19 @@
     <string name="form_clear_dates">Clear dates</string>
     <string name="form_password_match">Passwords must match.</string>
     <string name="form_password_length">Use at least 8 characters.</string>
+    <string name="calc_gauge_title">Angle vs. therapist thresholds</string>
+    <string name="calc_progress">%1$d%% to target</string>
+    <string name="calc_start_zone">Start zone ≤ %1$d°</string>
+    <string name="calc_target_zone">Target zone ≥ %1$d°</string>
+    <string name="calc_gauge_description">%1$s angle gauge. Current %2$s. Start zone up to %3$d degrees, target from %4$d degrees. Session range %5$s.</string>
+    <string name="calc_step_start">Start</string>
+    <string name="calc_step_reach">Reach</string>
+    <string name="calc_step_hold">Hold</string>
+    <string name="calc_step_return">Return</string>
+    <string name="calc_session_rom">Session ROM</string>
+    <string name="calc_not_counted">Not counted</string>
+    <string name="calc_rule_summary">A repetition counts when the %1$s angle starts at %2$d° or less, reaches %3$d° or more, stays there for %4$d ms, and returns to %2$d° or less within %5$s–%6$s s.</string>
+    <string name="calc_source_prescribed">Thresholds from therapist prescription %1$s</string>
+    <string name="calc_source_demo">Demo thresholds · not a therapist prescription</string>
+    <string name="calc_legend">Dashed line: 0° reference · Arc: measured angle · Grey band: start zone · Mint band: target zone</string>
 </resources>

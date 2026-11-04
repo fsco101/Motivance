@@ -171,7 +171,6 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         val shown=display
         SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()))
         Text(stringResource(R.string.session_metrics,exercise.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",exercise.metrics.incomplete,exercise.metrics.durationMs/1000),style=MaterialTheme.typography.bodySmall)
-        Text(stringResource(R.string.session_targets,exercise.rules.lowDegrees.toInt(),exercise.rules.highDegrees.toInt()),style=MaterialTheme.typography.bodySmall)
         if(exercise.metrics.feedback!=RepFeedback.NONE) Text(stringResource(exercise.metrics.feedback.label()),color=MaterialTheme.colorScheme.secondary)
         if(BuildConfig.DEBUG) {
             if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height),style=MaterialTheme.typography.labelSmall)
