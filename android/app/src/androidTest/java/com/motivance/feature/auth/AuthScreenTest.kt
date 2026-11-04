@@ -22,6 +22,7 @@ import com.motivance.domain.UserRole
 import java.io.File
 import java.util.Locale
 import org.junit.Assert.*
+import androidx.compose.ui.semantics.SemanticsActions
 import org.junit.Rule
 import org.junit.Test
 
@@ -32,6 +33,8 @@ class AuthScreenTest {
     private val submissions = mutableListOf<List<Any>>()
     private fun text(id: Int) = context.getString(id)
     private fun button(id: Int) = compose.onNode(hasText(text(id)) and hasClickAction())
+    // Typing opens the keyboard and imePadding moves the layout; a semantic click cannot land on a stale position.
+    private fun SemanticsNodeInteraction.tap() = performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
     private fun display(role: UserRole = UserRole.PATIENT) {
         compose.setContent {
             MotivanceTheme { Surface {
@@ -58,7 +61,7 @@ class AuthScreenTest {
         compose.onNodeWithContentDescription(text(R.string.auth_show_password)).performClick()
         compose.onNodeWithContentDescription(text(R.string.auth_hide_password)).assertExists()
         compose.onNodeWithContentDescription(text(R.string.auth_hide_password)).performClick()
-        button(R.string.sign_in).performScrollTo().performClick()
+        button(R.string.sign_in).tap()
         button(R.string.auth_signing_in).assertIsNotEnabled()
         compose.onNodeWithText(text(R.string.email)).assertIsNotEnabled()
         button(R.string.auth_create_account).assertIsNotEnabled()
@@ -69,18 +72,23 @@ class AuthScreenTest {
         display()
         compose.onNodeWithText(text(R.string.email)).performTextInput("patient@example.test")
         compose.onNodeWithText(text(R.string.auth_password)).performTextInput("old-password")
-        button(R.string.auth_create_account).performScrollTo().performClick()
+        button(R.string.auth_create_account).tap()
         compose.onNodeWithText(text(R.string.auth_signup_heading)).performScrollTo()
+        compose.onNodeWithText(text(R.string.signup_step_counter).format(1, 4)).assertExists()
         compose.onNode(hasText(text(R.string.auth_password)) and hasSetTextAction()).assertTextContains("", substring = false)
         capture("signup")
         compose.onNodeWithText(text(R.string.auth_password)).performScrollTo().performTextInput("new-password")
-        button(R.string.auth_create_account).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.signup_confirm_password)).performScrollTo().performTextInput("new-password")
+        // The fixture profile is complete, so each step advances straight to review.
+        repeat(3) { button(R.string.signup_continue).tap() }
+        compose.onNodeWithText(text(R.string.signup_step_review)).assertExists()
+        button(R.string.auth_create_account).tap()
         assertEquals(listOf(AuthAction.REGISTER, "patient@example.test", "new-password", ""), submissions.single())
         compose.runOnIdle { state.value = AuthState(notice = AuthNotice.CONFIRM_EMAIL) }
         compose.onNodeWithText(text(R.string.auth_confirm_heading)).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(text(R.string.auth_password)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.auth_email_code)).performTextInput("123456")
-        button(R.string.auth_verify_email).performScrollTo().performClick()
+        button(R.string.auth_verify_email).tap()
         assertEquals(listOf(AuthAction.CONFIRM, "patient@example.test", "", "123456"), submissions.last())
     }
     @Test fun unconfirmedSignInOffersConfirmationResend() {
@@ -88,7 +96,7 @@ class AuthScreenTest {
         compose.onNodeWithText(text(R.string.email)).performTextInput("patient@example.test")
         compose.runOnIdle {state.value=AuthState(notice=AuthNotice.EMAIL_UNCONFIRMED)}
         compose.onNodeWithText(text(R.string.auth_confirm_heading)).performScrollTo().assertIsDisplayed()
-        button(R.string.auth_resend_code).performScrollTo().performClick()
+        button(R.string.auth_resend_code).tap()
         assertEquals(listOf(AuthAction.RESEND_CONFIRMATION,"patient@example.test","",""),submissions.single())
         button(R.string.auth_resend_code).assertIsNotEnabled()
     }
@@ -98,20 +106,20 @@ class AuthScreenTest {
         compose.runOnIdle {state.value=AuthState(notice=AuthNotice.RECOVERY_SENT)}
         compose.onNodeWithText(text(R.string.auth_new_password)).performScrollTo().performTextInput("replacement")
         compose.onNodeWithText(text(R.string.auth_email_code)).performScrollTo().performTextInput("123456")
-        button(R.string.auth_resend_code).performScrollTo().performClick()
+        button(R.string.auth_resend_code).tap()
         assertEquals(listOf(AuthAction.REQUEST_RECOVERY,"patient@example.test","",""),submissions.single())
     }
     @Test fun recoveryHasDistinctCodeAndNewPasswordSteps() {
         display()
-        button(R.string.auth_forgot_password).performScrollTo().performClick()
+        button(R.string.auth_forgot_password).tap()
         compose.onNodeWithText(text(R.string.auth_password)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.email)).performTextInput("patient@example.test")
-        button(R.string.auth_send_code).performScrollTo().performClick()
+        button(R.string.auth_send_code).tap()
         assertEquals(AuthAction.REQUEST_RECOVERY, submissions.single()[0])
         compose.runOnIdle { state.value = AuthState(notice = AuthNotice.RECOVERY_SENT) }
         compose.onNodeWithText(text(R.string.auth_new_password)).performScrollTo().performTextInput("replacement")
         compose.onNodeWithText(text(R.string.auth_email_code)).performScrollTo().performTextInput("123456")
-        button(R.string.auth_save_password).performScrollTo().performClick()
+        button(R.string.auth_save_password).tap()
         assertEquals(listOf(AuthAction.RECOVER, "patient@example.test", "replacement", "123456"), submissions.last())
     }
     @Test fun therapistPortalDoesNotOfferPatientRegistration() {
@@ -139,11 +147,11 @@ class AuthScreenTest {
                 } }
             }
         }
-        compose.onNode(hasText(localized.getString(R.string.auth_create_account)) and hasClickAction()).performScrollTo().performClick()
-        compose.onNode(hasText(localized.getString(R.string.auth_create_account)) and hasClickAction()).performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText(localized.getString(R.string.auth_create_account)) and hasClickAction()).tap()
+        compose.onNode(hasText(localized.getString(R.string.signup_continue)) and hasClickAction()).performScrollTo().assertIsDisplayed()
         capture("signup-large-fil")
-        compose.onNodeWithText(localized.getString(R.string.back_to_sign_in)).performScrollTo().performClick()
-        compose.onNodeWithText(localized.getString(R.string.auth_forgot_password)).performScrollTo().performClick()
+        compose.onNodeWithText(localized.getString(R.string.back_to_sign_in)).tap()
+        compose.onNodeWithText(localized.getString(R.string.auth_forgot_password)).tap()
         compose.onNode(hasText(localized.getString(R.string.auth_send_code)) and hasClickAction()).performScrollTo().assertIsDisplayed()
     }
 }

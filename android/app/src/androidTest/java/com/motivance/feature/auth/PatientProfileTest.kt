@@ -26,17 +26,77 @@ class PatientProfileTest {
         File(context.getExternalFilesDir(null),name).outputStream().use {compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}
     }
     private val fixture=PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567","star",true,"patient@example.test")
-    @Test fun signupCannotSubmitWithoutDetailsAndPrivacyAgreement() {
-        var calls=0
-        compose.setContent {MotivanceTheme {Surface {AuthContent(AuthState(),UserRole.PATIENT,{_,_,_,_->},{},{},{},onRegister={_,_,_->calls++})}}}
+    private fun continueButton()=compose.onNode(hasText(text(R.string.signup_continue)) and hasClickAction())
+    private fun openSignup(onRegister:(String,String,PatientProfile)->Unit,initial:PatientProfile=PatientProfile()) {
+        compose.setContent {MotivanceTheme {Surface {AuthContent(AuthState(),UserRole.PATIENT,{_,_,_,_->},{},{},{},onRegister=onRegister,initialProfile=initial)}}}
         compose.onNode(hasText(text(R.string.auth_create_account)) and hasClickAction()).performScrollTo().performClick()
+    }
+    private fun fillAccount() {
         compose.onNodeWithText(text(R.string.email)).performScrollTo().performTextInput("patient@example.test")
         compose.onNodeWithText(text(R.string.auth_password)).performScrollTo().performTextInput("fixture-password")
-        compose.onNode(hasText(text(R.string.auth_create_account)) and hasClickAction()).performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText(text(R.string.profile_privacy_title)).assertExists()
+        compose.onNodeWithText(text(R.string.signup_confirm_password)).performScrollTo().performTextInput("fixture-password")
+    }
+    @Test fun signupStepsBlockIncompleteDetails() {
+        var calls=0
+        openSignup({_,_,_->calls++})
+        // Mismatched confirmation keeps the patient on the sign-in step with a visible reason.
+        compose.onNodeWithText(text(R.string.email)).performScrollTo().performTextInput("patient@example.test")
+        compose.onNodeWithText(text(R.string.auth_password)).performScrollTo().performTextInput("fixture-password")
+        compose.onNodeWithText(text(R.string.signup_confirm_password)).performScrollTo().performTextInput("different-pass")
+        continueButton().performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.form_password_match)).assertExists()
+        compose.onNodeWithText(text(R.string.signup_fix_fields)).assertExists()
+        compose.onNodeWithText(text(R.string.signup_step_counter).format(1,4)).assertExists()
+        compose.onNodeWithText(text(R.string.signup_confirm_password)).performTextReplacement("fixture-password")
+        continueButton().performScrollTo().performClick()
+        // An empty personal step shows every missing field only after Continue.
+        compose.onNodeWithText(text(R.string.signup_step_counter).format(2,4)).assertExists()
+        compose.onNodeWithText(text(R.string.form_gender_required)).assertDoesNotExist()
+        continueButton().performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.signup_step_counter).format(2,4)).assertExists()
+        compose.onNodeWithText(text(R.string.form_gender_required)).performScrollTo().assertExists()
+        compose.onNodeWithText(text(R.string.form_birthdate_required)).assertExists()
+        compose.onNode(hasText(text(R.string.auth_create_account)) and hasClickAction()).assertDoesNotExist()
+        capture("signup-step-errors.png")
+        assertEquals(0,calls)
+    }
+    @Test fun signupReviewRequiresConsentAndSubmitsTheReviewedProfile() {
+        var submitted:Triple<String,String,PatientProfile>?=null
+        openSignup({e,pw,p->submitted=Triple(e,pw,p)},fixture.copy(consent=false,email=""))
+        fillAccount()
+        compose.onNodeWithText(text(R.string.signup_confirm_password)).performImeAction()
+        compose.onNodeWithText(text(R.string.signup_req_match)).performScrollTo().assertExists()
+        capture("signup-step-account.png")
+        continueButton().performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.auth_signup_heading)).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.profile_age,fixture.age.toString())).performScrollTo().assertExists()
+        capture("signup-step-personal.png")
+        continueButton().performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.profile_star)).performScrollTo().assertIsSelected()
+        capture("signup-step-contact.png")
+        continueButton().performScrollTo().performClick()
+        compose.onNodeWithText("@fixture_user").performScrollTo().assertExists()
+        compose.onNodeWithText("patient@example.test").assertExists()
+        val create=compose.onNode(hasText(text(R.string.auth_create_account)) and hasClickAction())
+        create.performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.signup_consent_needed)).assertExists()
+        // The full agreement text stays available on demand.
+        compose.onNodeWithText(text(R.string.profile_privacy_text)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.signup_privacy_read_full)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.profile_privacy_text)).performScrollTo().assertExists()
+        compose.onNodeWithText(text(R.string.signup_privacy_hide_full)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.profile_agree)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.profile_privacy_title)).performScrollTo()
         capture("profile-signup-consent.png")
-        assertEquals(0,calls)
+        // Edit returns to the step, and its values are kept.
+        compose.onNodeWithContentDescription(text(R.string.signup_edit_section).format(text(R.string.form_identity))).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.signup_step_counter).format(2,4)).assertExists()
+        repeat(2) {continueButton().performScrollTo().performClick()}
+        create.performScrollTo().assertIsEnabled().performClick()
+        assertEquals("patient@example.test",submitted?.first)
+        assertEquals("fixture-password",submitted?.second)
+        assertEquals(fixture.username,submitted?.third?.username)
+        assertTrue(submitted?.third?.consent==true)
     }
     @Test fun profileEmailIsReadOnlyAndEditedDetailsSave() {
         val repository=Fixture();val vm=PatientProfileViewModel(repository)

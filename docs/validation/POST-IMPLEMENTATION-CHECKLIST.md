@@ -16,6 +16,14 @@ Solved implementation issues and implemented sprint milestones may close while t
 ## Therapist-to-patient workflow
 
 - [ ] Review the detailed signup/privacy agreement and profile editing with representative users in both languages: age derived from birthdate, immutable email, avatar choice, current-password verification and connected-therapist demographic visibility. Review privacy wording, consent comprehension and any minor/guardian procedures with the deployment owner before live enrollment. These human/physical checks remain unexecuted; automated profile checks are separate engineering evidence.
+- [ ] With representative patients on physical phones, in both languages, review the 4-step signup flow from `SIGNUP-STEPPED-FLOW.md`:
+  - The step progress is understood, and Back/Edit return to the right place without losing entries.
+  - The errors shown after Continue are clear.
+  - The password checklist is understood.
+  - The privacy key points are read before consent, and "Read the full agreement" is found.
+  - TalkBack announces the step header, requirement states, avatar radio tiles and errors.
+  - The keyboard Next/Done order works.
+  - A fluent reviewer checks the new Filipino strings, and the deployment owner confirms the privacy key points match the full agreement.
 
 - [ ] Therapist creates an invitation for an email without entering a patient password. Patient registers/confirms that email, accepts the shared code and appears in the therapist's list. A mismatched email and expired invitation must fail.
 - [ ] Create left/right elbow-flexion and shoulder-abduction prescriptions, including low/high targets, repetitions, cycle timing, hold and visible trunk-lean threshold.
@@ -33,7 +41,7 @@ Solved implementation issues and implemented sprint milestones may close while t
   - The step cards and hold bar follow real repetitions.
   - The gauge and step announcements work with TalkBack.
   - Therapists review the rule sentence and source line, and a fluent reviewer checks the new Filipino strings.
-- [ ] Rerun `CameraLifecycleTest` on an AVD with an emulated/virtual-scene camera or on a phone. On 2026-11-04 it failed on the Pixel_6 AVD because its host-webcam camera never opened (CameraX stuck in `PENDING_OPEN`).
+- [x] Rerun `CameraLifecycleTest` on an emulator. It first failed on 2026-11-04 on the Pixel_6 AVD because its host-webcam camera never opened (CameraX stuck in `PENDING_OPEN`). The same day, after a cold boot (`-no-snapshot-load`), the full instrumented suite passed 48/48, including this test. This is an emulator engineering check only; the physical-phone camera checks above remain unexecuted.
 - [ ] Check no person, two people, occlusion, confidence loss, out-of-frame joints, large position jumps and trunk lean. Invalid frames must show an unavailable angle and preserve valid ROM extrema/counts.
 - [ ] Replay full, incomplete, jittering, excessively fast and timed-out cycles. Check feedback and persisted completed/incomplete reason totals.
 - [ ] With a qualified therapist, determine positioning, eligibility, comfortable movement limits, exclusions and stop criteria. Compare stationary holds against a documented goniometer/reference convention; do not treat model-estimated depth as reference truth.
