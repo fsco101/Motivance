@@ -1,0 +1,118 @@
+{
+  "common": {
+    "close": "Close", "cancel": "Cancel", "retry": "Try again", "working": "Working", "loading": "Loading", "preparing": "Getting your workspace ready",
+    "copy": "Copy", "copied": "Copied", "search": "Search", "sortBy": "Sort by", "language": "Language", "left": "Left side", "right": "Right side",
+    "showPassword": "Show password", "hidePassword": "Hide password", "nothingHere": "Nothing to show.", "done": "Done",
+    "loadFailedTitle": "This page could not load", "loadFailed": "Check your connection and try again."
+  },
+  "nav": {
+    "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
+    "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here"
+  },
+  "account": {
+    "menu": "Account", "profile": "Profile", "signOut": "Sign out",
+    "open": { "admin": "Open the administrator workspace", "therapist": "Open the therapist workspace" }
+  },
+  "auth": {
+    "backHome": "Back to home", "recoveryStep": "Step {{step}} of 2", "capsLock": "Caps Lock is on.", "sharedComputer": "On a shared computer? You are signed out after 15 minutes without activity.",
+    "welcome": "Welcome back.", "description": "Sign in to your Motivance account.", "promise": "See how far each patient moves, and set how far they go next.",
+    "recoveryHeading": "Let’s get you back in.", "recoveryDescription": "Enter your email to request a password reset code.", "newPasswordDescription": "Enter your email code and choose a new password.",
+    "email": "Email", "password": "Password", "newPassword": "New password", "emailCode": "Email code", "signIn": "Sign in", "sendCode": "Send reset code", "savePassword": "Save new password",
+    "forgotPassword": "Forgot password?", "backToSignIn": "Back to sign in", "resendCode": "Send a new code",
+    "invalidEmail": "Enter a valid email address.", "passwordRequired": "Enter your password.", "passwordShort": "Use at least 8 characters.", "codeRequired": "Enter the code from your email.",
+    "recoverySent": "If this email has an account, a reset code is on its way.", "signedOutIdle": "You were signed out after 15 minutes without activity.", "accountDisabled": "This account is disabled. Contact your administrator.",
+    "mobileHint": "Patients use the Motivance mobile app."
+  },
+  "landing": {
+    "title": "See how far every patient moves.", "lead": "Motivance follows movement through a phone camera and counts each repetition against the range you prescribe. You set the target, your patient does the work, and the results reach your desk.",
+    "signInStaff": "Sign in as staff", "how": "How it works", "step1": "Set the range", "step1Detail": "Choose an exercise, drag the arc to the start and target angles, and publish it to your patient.",
+    "step2": "The patient moves", "step2Detail": "At home, the phone camera follows the joint and counts each repetition that reaches the target and returns.", "phoneCount": "Repetitions",
+    "step3": "Review the result", "step3Detail": "Measured range and repetitions arrive here, session by session, so you can adjust the plan.",
+    "forWhom": "One place for each job", "therapists": "Therapists", "therapistsDetail": "Invite patients, prescribe ranges and your own exercises, and follow progress on a large screen.",
+    "administrators": "Administrators", "administratorsDetail": "Manage accounts, care-team links and the exercise catalogue. Every change is confirmed and audited.",
+    "patients": "Patients", "patientsDetail": "Exercises run in the Motivance mobile app, because they need the phone camera.",
+    "privacyTitle": "Camera frames stay on the phone.", "privacyDetail": "Only consented movement summaries are saved. No images, video or landmarks are stored.", "notValidated": "Development prototype. Movement measurements require professional validation.",
+    "demoLabel": "A sample skeleton measuring elbow flexion", "demoSlider": "Forearm angle", "demoHint": "Take the hand and move the arm yourself.", "demoSample": "Sample movement, not patient data.",
+    "demoStart": "Start at {{degrees}}° or below", "demoReach": "Reach {{degrees}}°", "demoReturn": "Return to {{degrees}}°", "demoCount": "{{count}} of {{target}}", "demoCountLabel": "Repetitions counted"
+  },
+  "errors": {
+    "credentials": "That email and password do not match.", "rateLimited": "Too many requests. Wait a moment before requesting another code or trying again.",
+    "unconfirmed": "Confirm your email before signing in. Enter your email code or request a new one.", "invalidCode": "The code is invalid or expired. Request a new code and use the latest email.",
+    "passwordPolicy": "Choose a different password that meets the account password requirements.", "sessionExpired": "Your session has expired. Sign in again.",
+    "forbidden": "Your account does not have access to this.", "offline": "Could not reach Motivance. Check your connection and try again.", "request": "Unable to complete the request. Check your details and connection, then try again."
+  },
+  "idle": {
+    "title": "Are you still there?", "stay": "Stay signed in",
+    "message_one": "To protect patient information, you will be signed out in {{count}} second.", "message_other": "To protect patient information, you will be signed out in {{count}} seconds."
+  },
+  "useMobile": { "title": "Use the Motivance mobile app", "detail": "Your exercises need the phone camera, so they run in the mobile app. This website is for therapists and administrators." },
+  "pending": { "title": "This page is on its way", "detail": "It will open here once its design is approved and built." },
+  "home": {
+    "greeting": "Hello, {{name}}", "latestMovement": "Latest movement", "latestMovementDetail": "The pale band is the prescribed range. The bright arc is what was measured.",
+    "targetBand": "Prescribed {{low}}° to {{high}}°", "patients": "Patients", "plans": "Active plans", "sessions": "Recent sessions", "sessionsDetail": "Up to the latest 20",
+    "recentPatients": "Your patients", "seeAll": "See all", "emptyTitle": "Invite your first patient", "emptyDetail": "Once a patient accepts, you can assign exercises and follow their movement here.",
+    "noSessionsTitle": "No sessions yet", "noSessionsDetail": "Measured movement appears here after a patient finishes an exercise."
+  },
+  "patients": {
+    "description": "Everyone linked to your care.", "open": "Open {{name}}", "plans_one": "{{count}} plan", "plans_other": "{{count}} plans",
+    "reached": "Moved {{low}}° to {{high}}°", "prescribed": "Prescribed {{low}}° to {{high}}°", "noSessions": "No sessions yet.", "noPlan": "No exercise assigned yet.",
+    "actions": "Actions for {{name}}", "revoke": "Revoke access", "dial": "Measured {{low}} to {{high}} degrees against a prescribed {{targetLow}} to {{targetHigh}} degrees", "dialTarget": "Prescribed {{targetLow}} to {{targetHigh}} degrees",
+    "invite": "Invite patient", "inviteDetail": "Enter the email the patient signed up with.", "inviteShare": "Share this code with the patient. They enter it in the mobile app to connect with you.", "createInvite": "Create invitation",
+    "emptyTitle": "No patients yet", "emptyDetail": "Invite a patient by email. They connect with a code in the mobile app.", "searchHint": "Name", "sortName": "Name", "sortRecent": "Latest session", "sortPlans": "Most plans",
+    "shown_one": "{{count}} patient shown", "shown_other": "{{count}} patients shown", "noMatch": "No patient matches “{{query}}”.",
+    "revokeTitle": "Revoke access to {{name}}?", "revokeMessage": "You will lose access to {{name}}’s records, and your active assignments for this patient will end."
+  },
+  "record": {
+    "planLine_one": "{{side}}, {{low}}° to {{high}}°, {{count}} repetition", "planLine_other": "{{side}}, {{low}}° to {{high}}°, {{count}} repetitions",
+    "version": "Version {{version}}", "custom": "Custom", "side": "Side", "focus": "Skeleton focus", "focusAutomatic": "Exercise joint (automatic)", "repetitions": "Repetitions", "edit": "Edit plan",
+    "gender": "Gender", "birthdate": "Birthdate", "contact": "Contact", "address": "Address", "plans": "Exercise plan", "assign": "Assign exercise",
+    "noPlansTitle": "No exercise assigned yet", "noPlansDetail": "Assign one to start measuring this patient’s movement.", "progress": "Progress", "allProgress": "All progress"
+  },
+  "progress": {
+    "description": "Measured movement over time, one patient at a time.", "rom": "Range of motion", "notValidated": "Movement estimates are not clinically validated.", "notMeasured": "Not measured",
+    "chartLabel": "{{title}} chart with {{count}} sessions. Use the left and right arrow keys to read each session.", "showTable": "Show as a table", "date": "Date", "unknown": "Unknown exercise", "targets": "Prescribed", "result": "Result",
+    "status": { "completed": "Completed", "partial": "Partial", "interrupted": "Interrupted", "empty": "No result", "invalid": "Not usable" },
+    "patient": "Patient", "allExercises": "All exercises", "bothSides": "Both sides", "from": "From", "through": "Through", "emptyTitle": "No sessions yet", "emptyDetail": "Results appear here after this patient finishes an exercise.",
+    "noMatch": "No sessions match these filters.", "seriesLine": "{{side}}, version {{version}}, prescribed {{low}}° to {{high}}°", "sessions": "Sessions", "shown_one": "{{count}} session", "shown_other": "{{count}} sessions", "loadOlder": "Load older sessions"
+  },
+  "assign": {
+    "title": "Assign exercise", "exercise": "Exercise", "exerciseHelp": "Choose a movement. Angle and repetition counting follow this exercise.", "addCustom": "Add custom exercise",
+    "side": "Side and focus", "sideHelp": "Pick the limb to assess and the body part to highlight on the skeleton.", "focus": "Skeleton focus", "targets": "Targets", "targetsHelp": "Drag either end of the arc, or type the exact angles.",
+    "rangeLabel": "Prescribed range {{low}} to {{high}} degrees", "low": "Start angle", "high": "Target angle", "fewer": "Fewer repetitions", "more": "More repetitions", "gapHint": "The arc snaps to 5° and keeps the ends at least {{gap}}° apart.",
+    "timing": "Timing", "timingHelp": "The defaults suit most patients.", "showTiming": "Adjust timing", "hideTiming": "Hide timing", "minimumCycle": "Minimum repetition time (ms)", "minimumCycleHint": "100 to 30000", "maximumCycle": "Maximum repetition time (ms)", "maximumCycleHint": "Above the minimum, up to 300000",
+    "hold": "Hold at target (ms)", "holdHint": "0 to 5000", "lean": "Trunk lean limit (degrees)", "leanHint": "0 to 90", "review": "Review", "reviewHelp": "This is what the patient will receive.", "notChosen": "Not chosen yet", "range": "Range", "publish": "Publish to patient",
+    "publishHint": "Choose an exercise to publish.", "rangeError": "Use 0° to 180°, with the target more than 10° above the start.", "repsError": "Use 1 to 1000 repetitions.", "timingError": "Check the timing values against their limits."
+  },
+  "joints": { "SHOULDER": "Shoulder", "ELBOW": "Elbow", "WRIST": "Wrist", "HIP": "Hip", "KNEE": "Knee", "ANKLE": "Ankle" },
+  "admin": {
+    "title": "Administration", "scope": "Manage accounts, care-team links and the exercise catalogue. Every change is confirmed and audited.",
+    "accounts": "Accounts", "patients": "Patients", "therapists": "Therapists", "admins": "Administrators", "activeLinks": "Active links", "activeExercises": "Active exercises", "sessions": "Sessions", "requests": "Privacy requests",
+    "disabledCount": "{{count}} disabled", "unlinkedCount": "{{count}} without a therapist", "exercisesTotal": "{{count}} in catalogue", "sessionsWindow": "Last 7 days",
+    "attention": "Needs attention", "attentionClear": "Nothing needs attention right now.", "attentionUnlinked": "Patients without a therapist", "attentionUnlinkedDetail": "Link them to an active therapist so they can receive exercises.",
+    "attentionDisabled": "Disabled accounts", "attentionDisabledDetail": "Review and re-enable accounts that should regain access.", "attentionCatalogue": "No active exercises", "attentionCatalogueDetail": "Therapists cannot prescribe until an exercise is activated.",
+    "attentionRequests": "Open privacy requests", "attentionRequestsDetail": "Export and deletion requests follow the documented data lifecycle procedure.", "recentActivity": "Recent activity", "viewAll": "View all",
+    "search": "Search accounts", "searchHelp": "Name, email, username or account ID", "searchAction": "Search directory", "searchClear": "Clear search", "searchFor": "Showing matches for “{{query}}”.", "filterLabel": "Filter", "shownCount": "{{shown}} of {{total}}", "more": "Load more accounts",
+    "filter": { "all": "All", "patients": "Patients", "therapists": "Therapists", "admins": "Administrators", "disabled": "Disabled" },
+    "accountsEmpty": "No matching accounts", "accountsEmptyDetail": "Try a different search or filter.", "accountsEmptyMore": "None of the loaded accounts match. Load more accounts or refine the search.",
+    "account": "Account", "role": "Role", "status": "Status", "active": "Active", "disabled": "Disabled", "joined": "Joined", "lastSignIn": "Last sign-in", "never": "Never", "accountId": "Account ID", "copyId": "Copy ID", "accountDetails": "Details for {{name}}",
+    "selfNotice": "This is your account. Another administrator must change your access or status.", "access": "Access", "rolesNeedActive": "Enable the account before changing its access.", "roleTherapist": "Therapist", "roleAdmin": "Administrator", "rolePatient": "Patient",
+    "grant": "Grant", "revoke": "Remove", "confirmGrantTitle": "Grant {{role}} access?", "confirmGrant": "{{name}} will receive {{role}} access immediately.", "confirmRevokeTitle": "Remove {{role}} access?", "confirmRevoke": "{{name}} will lose {{role}} access immediately.",
+    "revokeTherapistDetail": "Their patient links and active assignments are revoked, and pending invitations expire.", "revokeAdminDetail": "They will no longer be able to open this workspace.",
+    "disable": "Disable account", "enable": "Enable account", "confirmDisable": "{{name}} will immediately lose access to all protected records and actions. You can enable the account again later.", "confirmEnable": "{{name}} will regain access according to their current roles.",
+    "removePhoto": "Remove profile photo", "confirmRemovePhoto": "Remove {{name}}’s profile photo? Their initials will be shown instead. They can upload a new photo.",
+    "linksTitle": "Therapist–patient links", "linkHelp": "Choose people from the loaded directory or paste an account ID.", "newLink": "Link therapist and patient", "link": "Activate link", "unlink": "Revoke link", "restoreLink": "Restore link", "pickerHelp": "Type to search loaded accounts, or paste an ID", "pickerInvalid": "Choose an account or paste a complete account ID",
+    "linkExists": "This link is already active.", "confirmLink": "{{therapist}} will be able to view {{patient}}’s rehabilitation records and prescribe exercises.", "confirmUnlink": "{{therapist}} will lose access to {{patient}}’s records, and their active assignments for this patient will end.", "relinkNotice": "Restoring a link never reactivates earlier prescriptions.",
+    "linkActive": "Active", "linkRevoked": "Revoked", "linkSearch": "Filter links by name or ID", "linksEmpty": "No links to show", "linksEmptyDetail": "Change the filter or link a therapist and patient above.", "linksLimit": "Showing the first {{count}} links.", "patientCount": "Patients: {{count}}",
+    "catalogueTitle": "Supported exercise catalogue", "catalogueHelp": "Publishing appends a new immutable version; existing prescriptions keep the version they were written against.", "catalogueEmpty": "No exercises", "catalogueEmptyDetail": "Refresh to load the catalogue.", "version": "v{{version}}", "exerciseActive": "Active", "exerciseInactive": "Inactive",
+    "name": "Exercise name", "instructionsEn": "English instructions", "instructionsFil": "Filipino instructions", "required": "Required", "unsaved": "Unsaved changes", "edit": "Edit", "publish": "Review and publish", "publishVersion": "Publish version {{version}}", "confirmPublish": "Publish version {{version}} of {{name}}? New prescriptions will use this text. Published versions cannot be edited.", "discard": "Discard changes", "closeEditor": "Close editor",
+    "activate": "Activate exercise", "deactivate": "Deactivate exercise", "activateShort": "Activate", "deactivateShort": "Deactivate", "confirmActivate": "Therapists will be able to prescribe {{name}} again.", "confirmDeactivate": "Therapists will not be able to prescribe {{name}} while it is inactive.",
+    "activityHelp": "Audit records are append-only. They show who made each change and when.", "activityEmpty": "No activity to show", "activityEmptyDetail": "Audited changes appear here as they happen.", "activityEmptyMore": "No loaded records match this filter. Load older activity to look further back.", "activityMore": "Load older activity",
+    "category": { "accounts": "Accounts and roles", "links": "Links", "catalogue": "Catalogue", "clinical": "Clinical", "privacy": "Privacy" },
+    "eventBy": "By {{actor}}", "eventSystem": "System",
+    "event": {
+      "accountEnabled": "Account enabled", "accountDisabled": "Account disabled", "roleGranted": "Role granted", "roleRemoved": "Role removed", "linkCreated": "Link created", "linkUpdated": "Link updated", "invitation": "Patient invitation created",
+      "exerciseActivated": "Exercise activated", "exerciseDeactivated": "Exercise deactivated", "versionPublished": "Exercise version published", "prescription": "Prescription published", "session": "Session recorded", "consent": "Consent recorded",
+      "requestCreated": "Privacy request submitted", "requestUpdated": "Privacy request updated", "photoUpdated": "Profile photo updated", "photoRemoved": "Profile photo removed", "profileUpdated": "Profile details updated", "other": "Recorded change"
+    }
+  }
+}

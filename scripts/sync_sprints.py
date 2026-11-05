@@ -38,7 +38,7 @@ def completion(record, context):
 
 def validate(config, sprints):
     require(config['schema_version']==1, 'Unsupported config version')
-    require(len(sprints)==5, 'Expected five sprint files')
+    require(sprints and len({s['id'] for s in sprints})==len(sprints), 'Sprint IDs must be present and unique')
     keys, numbers, milestones = {}, set(), set()
     labels={l['name'] for l in config['labels']}
     for s in sprints:
@@ -200,13 +200,13 @@ def synchronize(config,sprints,api,apply=False,selected=None):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--apply',action='store_true'); p.add_argument('--validate-only',action='store_true')
-    p.add_argument('--sprint',choices=['S1','S2','S3','S4','S5'])
+    p.add_argument('--sprint')
     args=p.parse_args()
-    config=json.loads((ROOT/'sprints/config.json').read_text())
-    sprints=[json.loads((ROOT/'sprints'/f).read_text()) for f in config['files']]
+    config=json.loads((ROOT/'sprints/config.json').read_text(encoding='utf-8'))
+    sprints=[json.loads((ROOT/'sprints'/f).read_text(encoding='utf-8')) for f in config['files']]
     validate(config,sprints)
     if args.validate_only:
-        print('Validated 5 sprints, 30 issues and dependency/completion records.'); return
+        print(f"Validated {len(sprints)} sprints, {sum(len(s['issues']) for s in sprints)} issues and dependency/completion records."); return
     changes=synchronize(config,sprints,GitHub(config['repository']),args.apply,args.sprint)
     print(f'{len(changes)} changes '+('applied.' if args.apply else 'planned; no GitHub writes.'))
 

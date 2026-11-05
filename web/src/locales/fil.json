@@ -1,0 +1,118 @@
+{
+  "common": {
+    "close": "Isara", "cancel": "Kanselahin", "retry": "Subukan muli", "working": "Isinasagawa", "loading": "Nilo-load", "preparing": "Inihahanda ang iyong workspace",
+    "copy": "Kopyahin", "copied": "Nakopya", "search": "Maghanap", "sortBy": "Ayusin ayon sa", "language": "Wika", "left": "Kaliwang bahagi", "right": "Kanang bahagi",
+    "showPassword": "Ipakita ang password", "hidePassword": "Itago ang password", "nothingHere": "Walang maipapakita.", "done": "Tapos na",
+    "loadFailedTitle": "Hindi ma-load ang pahinang ito", "loadFailed": "Suriin ang koneksyon at subukan muli."
+  },
+  "nav": {
+    "main": "Pangunahin", "home": "Home", "patients": "Mga pasyente", "exercises": "Mga ehersisyo", "progress": "Pag-unlad", "overview": "Buod", "accounts": "Mga account",
+    "links": "Ugnayan", "catalogue": "Katalogo", "activity": "Aktibidad", "skip": "Lumaktaw sa nilalaman", "breadcrumbs": "Narito ka"
+  },
+  "account": {
+    "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",
+    "open": { "admin": "Buksan ang workspace ng administrador", "therapist": "Buksan ang workspace ng therapist" }
+  },
+  "auth": {
+    "backHome": "Bumalik sa home", "recoveryStep": "Hakbang {{step}} sa 2", "capsLock": "Naka-on ang Caps Lock.", "sharedComputer": "Nasa shared na computer? Masa-sign out ka matapos ang 15 minutong walang aktibidad.",
+    "welcome": "Maligayang pagbabalik.", "description": "Mag-sign in sa iyong Motivance account.", "promise": "Tingnan kung gaano kalayo ang galaw ng bawat pasyente, at itakda ang susunod na target.",
+    "recoveryHeading": "Bumalik sa iyong account.", "recoveryDescription": "Ilagay ang email para humiling ng code sa pag-reset ng password.", "newPasswordDescription": "Ilagay ang code mula sa email at pumili ng bagong password.",
+    "email": "Email", "password": "Password", "newPassword": "Bagong password", "emailCode": "Code mula sa email", "signIn": "Mag-sign in", "sendCode": "Ipadala ang reset code", "savePassword": "I-save ang bagong password",
+    "forgotPassword": "Nakalimutan ang password?", "backToSignIn": "Bumalik sa pag-sign in", "resendCode": "Magpadala ng bagong code",
+    "invalidEmail": "Maglagay ng wastong email address.", "passwordRequired": "Ilagay ang iyong password.", "passwordShort": "Gumamit ng hindi bababa sa 8 character.", "codeRequired": "Ilagay ang code mula sa iyong email.",
+    "recoverySent": "Kung may account ang email na ito, ipinapadala na ang reset code.", "signedOutIdle": "Na-sign out ka matapos ang 15 minutong walang aktibidad.", "accountDisabled": "Naka-disable ang account na ito. Makipag-ugnayan sa iyong administrador.",
+    "mobileHint": "Ginagamit ng mga pasyente ang Motivance mobile app."
+  },
+  "landing": {
+    "title": "Tingnan kung gaano kalayo ang galaw ng bawat pasyente.", "lead": "Sinusubaybayan ng Motivance ang galaw gamit ang camera ng telepono at binibilang ang bawat ulit ayon sa saklaw na nireseta mo. Ikaw ang nagtatakda ng target, ang pasyente ang gumagawa, at dumarating sa iyo ang resulta.",
+    "signInStaff": "Mag-sign in bilang staff", "how": "Paano ito gumagana", "step1": "Itakda ang saklaw", "step1Detail": "Pumili ng ehersisyo, i-drag ang arko sa simula at target na anggulo, at ilathala ito sa iyong pasyente.",
+    "step2": "Gumagalaw ang pasyente", "step2Detail": "Sa bahay, sinusundan ng camera ng telepono ang kasukasuan at binibilang ang bawat ulit na umaabot sa target at bumabalik.", "phoneCount": "Mga ulit",
+    "step3": "Suriin ang resulta", "step3Detail": "Dumarating dito ang nasukat na saklaw at mga ulit, bawat sesyon, para maiayos mo ang plano.",
+    "forWhom": "Isang lugar para sa bawat gawain", "therapists": "Mga therapist", "therapistsDetail": "Mag-imbita ng pasyente, magreseta ng saklaw at sarili mong ehersisyo, at subaybayan ang pag-unlad sa malaking screen.",
+    "administrators": "Mga administrator", "administratorsDetail": "Pamahalaan ang mga account, ugnayan ng care team at katalogo ng ehersisyo. Kinukumpirma at itinatala ang bawat pagbabago.",
+    "patients": "Mga pasyente", "patientsDetail": "Sa Motivance mobile app ginagawa ang mga ehersisyo, dahil kailangan ang camera ng telepono.",
+    "privacyTitle": "Nananatili sa telepono ang camera.", "privacyDetail": "Buod lamang na pinahintulutan ang sine-save. Walang sine-save na larawan, video o landmark.", "notValidated": "Development prototype. Kailangan ng propesyonal na pagpapatunay sa mga sukat.",
+    "demoLabel": "Halimbawang skeleton na sumusukat ng elbow flexion", "demoSlider": "Anggulo ng bisig", "demoHint": "Hawakan ang kamay at igalaw ang braso.", "demoSample": "Halimbawang galaw, hindi datos ng pasyente.",
+    "demoStart": "Magsimula sa {{degrees}}° o mas mababa", "demoReach": "Abutin ang {{degrees}}°", "demoReturn": "Bumalik sa {{degrees}}°", "demoCount": "{{count}} sa {{target}}", "demoCountLabel": "Nabilang na ulit"
+  },
+  "errors": {
+    "credentials": "Hindi tugma ang email at password.", "rateLimited": "Masyadong maraming kahilingan. Maghintay muna bago humiling ng bagong code o muling subukan.",
+    "unconfirmed": "Kumpirmahin ang email bago mag-sign in. Ilagay ang code mula sa email o humiling ng bago.", "invalidCode": "Hindi wasto o paso na ang code. Humiling ng bago at gamitin ang pinakabagong email.",
+    "passwordPolicy": "Pumili ng ibang password na tumutugon sa mga kinakailangan ng account.", "sessionExpired": "Nag-expire ang iyong session. Mag-sign in muli.",
+    "forbidden": "Walang access ang iyong account dito.", "offline": "Hindi maabot ang Motivance. Suriin ang koneksyon at subukan muli.", "request": "Hindi makumpleto ang kahilingan. Suriin ang detalye at koneksyon, at subukan muli."
+  },
+  "idle": {
+    "title": "Nandiyan ka pa ba?", "stay": "Manatiling naka-sign in",
+    "message_one": "Para maprotektahan ang impormasyon ng pasyente, masa-sign out ka sa loob ng {{count}} segundo.", "message_other": "Para maprotektahan ang impormasyon ng pasyente, masa-sign out ka sa loob ng {{count}} segundo."
+  },
+  "useMobile": { "title": "Gamitin ang Motivance mobile app", "detail": "Kailangan ng iyong mga ehersisyo ang camera ng telepono, kaya sa mobile app ito ginagawa. Para sa mga therapist at administrador ang website na ito." },
+  "pending": { "title": "Paparating ang pahinang ito", "detail": "Magbubukas ito rito kapag naaprubahan at nagawa na ang disenyo nito." },
+  "home": {
+    "greeting": "Kumusta, {{name}}", "latestMovement": "Pinakabagong galaw", "latestMovementDetail": "Ang maputlang banda ang nireseta na saklaw. Ang maliwanag na arko ang nasukat.",
+    "targetBand": "Nireseta {{low}}° hanggang {{high}}°", "patients": "Mga pasyente", "plans": "Aktibong plano", "sessions": "Kamakailang sesyon", "sessionsDetail": "Hanggang sa pinakabagong 20",
+    "recentPatients": "Iyong mga pasyente", "seeAll": "Tingnan lahat", "emptyTitle": "Imbitahan ang una mong pasyente", "emptyDetail": "Kapag tinanggap ng pasyente, makakapagtalaga ka ng ehersisyo at masusubaybayan dito ang kanyang galaw.",
+    "noSessionsTitle": "Wala pang sesyon", "noSessionsDetail": "Lalabas dito ang nasukat na galaw kapag natapos ng pasyente ang isang ehersisyo."
+  },
+  "patients": {
+    "description": "Lahat ng nakaugnay sa iyong pangangalaga.", "open": "Buksan si {{name}}", "plans_one": "{{count}} plano", "plans_other": "{{count}} plano",
+    "reached": "Gumalaw ng {{low}}° hanggang {{high}}°", "prescribed": "Nireseta {{low}}° hanggang {{high}}°", "noSessions": "Wala pang sesyon.", "noPlan": "Wala pang nakatalagang ehersisyo.",
+    "actions": "Mga aksiyon para kay {{name}}", "revoke": "Bawiin ang access", "dial": "Nasukat na {{low}} hanggang {{high}} degrees laban sa nireseta na {{targetLow}} hanggang {{targetHigh}} degrees", "dialTarget": "Nireseta {{targetLow}} hanggang {{targetHigh}} degrees",
+    "invite": "Imbitahan ang pasyente", "inviteDetail": "Ilagay ang email na ginamit ng pasyente sa pag-sign up.", "inviteShare": "Ibahagi ang code na ito sa pasyente. Ilalagay niya ito sa mobile app para makakonekta sa iyo.", "createInvite": "Gumawa ng imbitasyon",
+    "emptyTitle": "Wala pang pasyente", "emptyDetail": "Mag-imbita ng pasyente sa pamamagitan ng email. Kokonekta siya gamit ang code sa mobile app.", "searchHint": "Pangalan", "sortName": "Pangalan", "sortRecent": "Pinakabagong sesyon", "sortPlans": "Pinakamaraming plano",
+    "shown_one": "{{count}} pasyente ang ipinapakita", "shown_other": "{{count}} pasyente ang ipinapakita", "noMatch": "Walang pasyenteng tumutugma sa “{{query}}”.",
+    "revokeTitle": "Bawiin ang access kay {{name}}?", "revokeMessage": "Mawawalan ka ng access sa mga tala ni {{name}}, at matatapos ang iyong aktibong takda para sa pasyenteng ito."
+  },
+  "record": {
+    "planLine_one": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit", "planLine_other": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit",
+    "version": "Bersiyon {{version}}", "custom": "Custom", "side": "Bahagi", "focus": "Pokus ng skeleton", "focusAutomatic": "Kasukasuan ng ehersisyo (awtomatiko)", "repetitions": "Mga ulit", "edit": "I-edit ang plano",
+    "gender": "Kasarian", "birthdate": "Kaarawan", "contact": "Contact", "address": "Tirahan", "plans": "Plano ng ehersisyo", "assign": "Magtalaga ng ehersisyo",
+    "noPlansTitle": "Wala pang nakatalagang ehersisyo", "noPlansDetail": "Magtalaga ng isa para simulang sukatin ang galaw ng pasyenteng ito.", "progress": "Pag-unlad", "allProgress": "Lahat ng pag-unlad"
+  },
+  "progress": {
+    "description": "Nasukat na galaw sa paglipas ng panahon, isang pasyente sa bawat pagkakataon.", "rom": "Saklaw ng galaw", "notValidated": "Hindi pa clinically validated ang mga sukat.", "notMeasured": "Hindi nasukat",
+    "chartLabel": "Chart ng {{title}} na may {{count}} sesyon. Gamitin ang kaliwa at kanang arrow key para basahin ang bawat sesyon.", "showTable": "Ipakita bilang talahanayan", "date": "Petsa", "unknown": "Hindi kilalang ehersisyo", "targets": "Nireseta", "result": "Resulta",
+    "status": { "completed": "Natapos", "partial": "Bahagya", "interrupted": "Naantala", "empty": "Walang resulta", "invalid": "Hindi magagamit" },
+    "patient": "Pasyente", "allExercises": "Lahat ng ehersisyo", "bothSides": "Dalawang bahagi", "from": "Mula", "through": "Hanggang", "emptyTitle": "Wala pang sesyon", "emptyDetail": "Lalabas dito ang resulta kapag natapos ng pasyenteng ito ang isang ehersisyo.",
+    "noMatch": "Walang sesyong tumutugma sa mga filter na ito.", "seriesLine": "{{side}}, bersiyon {{version}}, nireseta {{low}}° hanggang {{high}}°", "sessions": "Mga sesyon", "shown_one": "{{count}} sesyon", "shown_other": "{{count}} sesyon", "loadOlder": "Mag-load ng mas lumang sesyon"
+  },
+  "assign": {
+    "title": "Magtalaga ng ehersisyo", "exercise": "Ehersisyo", "exerciseHelp": "Pumili ng galaw. Susundan ng pagbilang ng anggulo at ulit ang ehersisyong ito.", "addCustom": "Magdagdag ng custom na ehersisyo",
+    "side": "Bahagi at pokus", "sideHelp": "Piliin ang susuriing bahagi ng katawan at ang ii-highlight sa skeleton.", "focus": "Pokus ng skeleton", "targets": "Mga target", "targetsHelp": "I-drag ang alinmang dulo ng arko, o i-type ang eksaktong anggulo.",
+    "rangeLabel": "Nireseta na saklaw {{low}} hanggang {{high}} degrees", "low": "Simulang anggulo", "high": "Target na anggulo", "fewer": "Bawasan ang ulit", "more": "Dagdagan ang ulit", "gapHint": "Sumusunod ang arko sa bawat 5° at pinapanatili ang mga dulo na hindi bababa sa {{gap}}° ang pagitan.",
+    "timing": "Oras", "timingHelp": "Angkop ang mga default sa karamihan ng pasyente.", "showTiming": "Baguhin ang oras", "hideTiming": "Itago ang oras", "minimumCycle": "Pinakamaikling oras ng ulit (ms)", "minimumCycleHint": "100 hanggang 30000", "maximumCycle": "Pinakamahabang oras ng ulit (ms)", "maximumCycleHint": "Higit sa pinakamaikli, hanggang 300000",
+    "hold": "Tagal sa target (ms)", "holdHint": "0 hanggang 5000", "lean": "Limitasyon ng pagkiling ng katawan (degrees)", "leanHint": "0 hanggang 90", "review": "Suriin", "reviewHelp": "Ito ang matatanggap ng pasyente.", "notChosen": "Hindi pa napipili", "range": "Saklaw", "publish": "Ilathala sa pasyente",
+    "publishHint": "Pumili ng ehersisyo para mailathala.", "rangeError": "Gumamit ng 0° hanggang 180°, at ang target ay higit sa 10° sa itaas ng simula.", "repsError": "Gumamit ng 1 hanggang 1000 ulit.", "timingError": "Suriin ang mga value ng oras ayon sa limitasyon."
+  },
+  "joints": { "SHOULDER": "Balikat", "ELBOW": "Siko", "WRIST": "Pulso", "HIP": "Balakang", "KNEE": "Tuhod", "ANKLE": "Bukung-bukong" },
+  "admin": {
+    "title": "Administrasyon", "scope": "Pamahalaan ang mga account, ugnayan ng care team at katalogo ng ehersisyo. Kinukumpirma at itinatala ang bawat pagbabago.",
+    "accounts": "Mga account", "patients": "Mga pasyente", "therapists": "Mga therapist", "admins": "Mga administrator", "activeLinks": "Aktibong ugnayan", "activeExercises": "Aktibong ehersisyo", "sessions": "Mga sesyon", "requests": "Kahilingan sa privacy",
+    "disabledCount": "{{count}} naka-disable", "unlinkedCount": "{{count}} walang therapist", "exercisesTotal": "{{count}} sa katalogo", "sessionsWindow": "Huling 7 araw",
+    "attention": "Kailangang tingnan", "attentionClear": "Walang kailangang tingnan sa ngayon.", "attentionUnlinked": "Mga pasyenteng walang therapist", "attentionUnlinkedDetail": "Iugnay sila sa aktibong therapist para makatanggap ng ehersisyo.",
+    "attentionDisabled": "Mga naka-disable na account", "attentionDisabledDetail": "Suriin at muling i-enable ang mga account na dapat bumalik ang access.", "attentionCatalogue": "Walang aktibong ehersisyo", "attentionCatalogueDetail": "Hindi makapagreseta ang mga therapist hangga’t walang aktibong ehersisyo.",
+    "attentionRequests": "Bukas na kahilingan sa privacy", "attentionRequestsDetail": "Sinusunod ng mga kahilingang i-export o burahin ang nakadokumentong proseso sa data lifecycle.", "recentActivity": "Kamakailang aktibidad", "viewAll": "Tingnan lahat",
+    "search": "Maghanap ng account", "searchHelp": "Pangalan, email, username o account ID", "searchAction": "Hanapin sa direktoryo", "searchClear": "I-clear ang paghahanap", "searchFor": "Ipinapakita ang tugma para sa “{{query}}”.", "filterLabel": "Filter", "shownCount": "{{shown}} sa {{total}}", "more": "Mag-load ng iba pang account",
+    "filter": { "all": "Lahat", "patients": "Pasyente", "therapists": "Therapist", "admins": "Administrator", "disabled": "Naka-disable" },
+    "accountsEmpty": "Walang tugmang account", "accountsEmptyDetail": "Subukan ang ibang paghahanap o filter.", "accountsEmptyMore": "Walang tugma sa mga na-load na account. Mag-load pa o baguhin ang paghahanap.",
+    "account": "Account", "role": "Tungkulin", "status": "Status", "active": "Aktibo", "disabled": "Naka-disable", "joined": "Sumali", "lastSignIn": "Huling pag-sign in", "never": "Hindi pa", "accountId": "Account ID", "copyId": "Kopyahin ang ID", "accountDetails": "Detalye ni {{name}}",
+    "selfNotice": "Ito ang iyong account. Ibang administrator ang dapat magbago ng iyong access o status.", "access": "Access", "rolesNeedActive": "I-enable muna ang account bago baguhin ang access nito.", "roleTherapist": "Therapist", "roleAdmin": "Administrator", "rolePatient": "Pasyente",
+    "grant": "Ibigay", "revoke": "Alisin", "confirmGrantTitle": "Ibigay ang access bilang {{role}}?", "confirmGrant": "Agad na makakatanggap si {{name}} ng access bilang {{role}}.", "confirmRevokeTitle": "Alisin ang access bilang {{role}}?", "confirmRevoke": "Agad na mawawalan si {{name}} ng access bilang {{role}}.",
+    "revokeTherapistDetail": "Babawiin ang kanilang ugnayan sa pasyente at aktibong takda, at mag-e-expire ang nakabinbing imbitasyon.", "revokeAdminDetail": "Hindi na nila mabubuksan ang workspace na ito.",
+    "disable": "I-disable ang account", "enable": "I-enable ang account", "confirmDisable": "Agad na mawawalan si {{name}} ng access sa lahat ng protektadong tala at aksiyon. Maaari mo itong i-enable muli sa ibang pagkakataon.", "confirmEnable": "Babalik ang access ni {{name}} ayon sa kasalukuyan niyang mga tungkulin.",
+    "removePhoto": "Alisin ang larawan sa profile", "confirmRemovePhoto": "Alisin ang larawan sa profile ni {{name}}? Ang inisyal ang ipapakita. Maaari siyang mag-upload ng bago.",
+    "linksTitle": "Ugnayan ng therapist at pasyente", "linkHelp": "Pumili mula sa na-load na direktoryo o mag-paste ng account ID.", "newLink": "Iugnay ang therapist at pasyente", "link": "I-activate ang ugnayan", "unlink": "Bawiin ang ugnayan", "restoreLink": "Ibalik ang ugnayan", "pickerHelp": "Mag-type para maghanap sa na-load na account, o mag-paste ng ID", "pickerInvalid": "Pumili ng account o mag-paste ng kumpletong account ID",
+    "linkExists": "Aktibo na ang ugnayang ito.", "confirmLink": "Makikita ni {{therapist}} ang mga tala sa rehabilitasyon ni {{patient}} at makapagrereseta siya ng ehersisyo.", "confirmUnlink": "Mawawalan si {{therapist}} ng access sa mga tala ni {{patient}}, at matatapos ang kanilang aktibong takda para sa pasyenteng ito.", "relinkNotice": "Hindi kailanman ibinabalik ng muling pag-ugnay ang mga dating reseta.",
+    "linkActive": "Aktibo", "linkRevoked": "Binawi", "linkSearch": "I-filter ang ugnayan ayon sa pangalan o ID", "linksEmpty": "Walang ugnayang maipapakita", "linksEmptyDetail": "Baguhin ang filter o mag-ugnay ng therapist at pasyente sa itaas.", "linksLimit": "Ipinapakita ang unang {{count}} ugnayan.", "patientCount": "Pasyente: {{count}}",
+    "catalogueTitle": "Katalogo ng sinusuportahang ehersisyo", "catalogueHelp": "Nagdaragdag ng bagong bersiyong hindi na mababago ang paglalathala; nananatili sa dating bersiyon ang mga umiiral na reseta.", "catalogueEmpty": "Walang ehersisyo", "catalogueEmptyDetail": "Mag-refresh para i-load ang katalogo.", "version": "v{{version}}", "exerciseActive": "Aktibo", "exerciseInactive": "Hindi aktibo",
+    "name": "Pangalan ng ehersisyo", "instructionsEn": "Tagubilin sa English", "instructionsFil": "Tagubilin sa Filipino", "required": "Kailangan", "unsaved": "Hindi pa nai-save", "edit": "I-edit", "publish": "Suriin at ilathala", "publishVersion": "Ilathala ang bersiyon {{version}}", "confirmPublish": "Ilathala ang bersiyon {{version}} ng {{name}}? Gagamitin ng mga bagong reseta ang tekstong ito. Hindi na mababago ang nailathalang bersiyon.", "discard": "Itapon ang pagbabago", "closeEditor": "Isara ang editor",
+    "activate": "I-activate ang ehersisyo", "deactivate": "I-deactivate ang ehersisyo", "activateShort": "I-activate", "deactivateShort": "I-deactivate", "confirmActivate": "Maaari nang muling ireseta ng mga therapist ang {{name}}.", "confirmDeactivate": "Hindi maireseta ng mga therapist ang {{name}} habang hindi ito aktibo.",
+    "activityHelp": "Hindi nababago ang mga audit record. Ipinapakita nito kung sino ang gumawa ng bawat pagbabago at kailan.", "activityEmpty": "Walang aktibidad na maipapakita", "activityEmptyDetail": "Lalabas dito ang mga itinalang pagbabago habang nangyayari ang mga ito.", "activityEmptyMore": "Walang tugma sa na-load na tala. Mag-load ng mas lumang aktibidad para tumingin pa.", "activityMore": "Mag-load ng mas lumang aktibidad",
+    "category": { "accounts": "Account at tungkulin", "links": "Ugnayan", "catalogue": "Katalogo", "clinical": "Klinikal", "privacy": "Privacy" },
+    "eventBy": "Gumawa: {{actor}}", "eventSystem": "System",
+    "event": {
+      "accountEnabled": "Na-enable ang account", "accountDisabled": "Na-disable ang account", "roleGranted": "Naibigay ang tungkulin", "roleRemoved": "Inalis ang tungkulin", "linkCreated": "Nagawa ang ugnayan", "linkUpdated": "Na-update ang ugnayan", "invitation": "Nagawa ang imbitasyon sa pasyente",
+      "exerciseActivated": "Na-activate ang ehersisyo", "exerciseDeactivated": "Na-deactivate ang ehersisyo", "versionPublished": "Nailathala ang bersiyon ng ehersisyo", "prescription": "Nailathala ang reseta", "session": "Naitala ang sesyon", "consent": "Naitala ang pahintulot",
+      "requestCreated": "Naisumite ang kahilingan sa privacy", "requestUpdated": "Na-update ang kahilingan sa privacy", "photoUpdated": "Na-update ang larawan sa profile", "photoRemoved": "Inalis ang larawan sa profile", "profileUpdated": "Na-update ang detalye ng profile", "other": "Naitalang pagbabago"
+    }
+  }
+}

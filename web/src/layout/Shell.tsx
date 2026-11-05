@@ -1,0 +1,143 @@
+import { CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { m as motion } from 'motion/react'
+import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link, NavLink, useMatches } from 'react-router'
+import type { Workspace } from '@/auth/roles'
+import { Avatar } from '@/components/Display'
+import { cn } from '@/lib/cn'
+import { spring } from '@/motion/tokens'
+import { LanguageSwitch } from './LanguageSwitch'
+
+type NavItem = { path: string; label: string; icon: Icon; end?: boolean }
+
+const NAV: Record<Workspace, readonly NavItem[]> = {
+  therapist: [
+    { path: '', label: 'nav.home', icon: HouseIcon, end: true },
+    { path: 'patients', label: 'nav.patients', icon: UsersThreeIcon },
+    { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
+    { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
+  ],
+  admin: [
+    { path: '', label: 'nav.overview', icon: GaugeIcon, end: true },
+    { path: 'accounts', label: 'nav.accounts', icon: UsersThreeIcon },
+    { path: 'links', label: 'nav.links', icon: LinkSimpleIcon },
+    { path: 'catalogue', label: 'nav.catalogue', icon: ListChecksIcon },
+    { path: 'activity', label: 'nav.activity', icon: ClockCounterClockwiseIcon },
+  ],
+}
+
+/** A slim instrument rail: the graduated edge is the goniometer's scale, and a needle marks where you are. */
+function Rail({ workspace, base }: { workspace: Workspace; base: string }) {
+  const { t } = useTranslation()
+  return (
+    <div className="bg-ink">
+    <nav aria-label={t('nav.main')} className="on-dark graduated sticky top-0 flex h-dvh w-24 flex-col text-night-ink">
+      <Link to={base} aria-label={t('nav.home')} className="grid place-items-center py-5">
+        <img src="/logo-96.png" alt="" width={40} height={40} className="rounded-lg" />
+      </Link>
+      <ul className="mt-3 flex flex-col gap-1 pr-3">
+        {NAV[workspace].map((item) => (
+          <li key={item.label}>
+            <NavLink to={item.path ? `${base}/${item.path}` : base} end={item.end}
+              className={({ isActive }) => cn('relative flex min-h-16 flex-col items-center justify-center gap-1 pl-2 text-xs font-semibold transition-colors transition-quick hover:text-paper', isActive && 'text-paper')}>
+              {({ isActive }) => (
+                <>
+                  <item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="text-2xl" />
+                  <span className="text-center leading-tight">{t(item.label)}</span>
+                  {isActive && (
+                    <motion.span layoutId="rail-needle" transition={spring.needle} aria-hidden className="absolute -right-3 top-[calc(50%-1px)] flex h-0.5 w-6 items-center bg-sprout-bright">
+                      <span className="-ml-1 size-2 rounded-full bg-sprout-bright" />
+                    </motion.span>
+                  )}
+                </>
+              )}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    </div>
+  )
+}
+
+export type Crumb = { crumb?: string | ((params: Record<string, string | undefined>) => string) }
+
+function Breadcrumbs() {
+  const { t } = useTranslation()
+  const trail = useMatches().flatMap((match) => {
+    const crumb = (match.handle as Crumb | undefined)?.crumb
+    if (!crumb) return []
+    return [{ id: match.id, path: match.pathname, label: typeof crumb === 'string' ? t(crumb) : crumb(match.params) }]
+  })
+  if (trail.length < 2) return <span />
+  return (
+    <nav aria-label={t('nav.breadcrumbs')} className="min-w-0">
+      <ol className="flex items-center gap-1.5 text-sm text-slate">
+        {trail.map((step, index) => {
+          const last = index === trail.length - 1
+          return (
+            <li key={step.id} className="flex min-w-0 items-center gap-1.5">
+              {index > 0 && <CaretRightIcon aria-hidden className="shrink-0" />}
+              {last ? <span aria-current="page" className="truncate font-semibold text-ink">{step.label}</span> : <Link to={step.path} className="truncate hover:text-lagoon-deep">{step.label}</Link>}
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
+  )
+}
+
+export type ShellAccount = { name: string; email: string; photo?: string | null; workspaces: readonly Workspace[] }
+
+function AccountMenu({ account, current, profilePath, onSwitch, onSignOut }: { account: ShellAccount; current: Workspace; profilePath: string; onSwitch: (workspace: Workspace) => void; onSignOut: () => void }) {
+  const { t } = useTranslation()
+  const item = 'flex min-h-10 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-none data-highlighted:bg-tide'
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger aria-label={t('account.menu')} className="rounded-full">
+        <Avatar name={account.name} photo={account.photo} size={40} />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content align="end" sideOffset={8} className="z-50 w-64 rounded-control border border-line bg-paper p-1 shadow-float">
+          <div className="px-2.5 py-2">
+            <p className="truncate font-semibold">{account.name}</p>
+            <p className="truncate text-sm text-slate">{account.email}</p>
+          </div>
+          <DropdownMenu.Separator className="my-1 h-px bg-line" />
+          <DropdownMenu.Item asChild className={item}><Link to={profilePath}><UserCircleIcon aria-hidden className="text-lg" />{t('account.profile')}</Link></DropdownMenu.Item>
+          {account.workspaces.filter((workspace) => workspace !== current).map((workspace) => (
+            <DropdownMenu.Item key={workspace} className={item} onSelect={() => onSwitch(workspace)}><SwapIcon aria-hidden className="text-lg" />{t(`account.open.${workspace}`)}</DropdownMenu.Item>
+          ))}
+          <DropdownMenu.Item className={item} onSelect={onSignOut}><SignOutIcon aria-hidden className="text-lg" />{t('account.signOut')}</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
+
+type Props = { workspace: Workspace; base: string; account: ShellAccount; onSwitch: (workspace: Workspace) => void; onSignOut: () => void; children: ReactNode }
+
+/** The frame of both workspaces. It takes everything as props, so the design gallery runs the same frame on sample data. */
+export function Shell({ workspace, base, account, onSwitch, onSignOut, children }: Props) {
+  const { t } = useTranslation()
+  return (
+    <RadixTooltip.Provider>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-28 focus:top-3 focus:z-50 focus:rounded-control focus:bg-paper focus:px-3 focus:py-2 focus:shadow-float">{t('nav.skip')}</a>
+      <div className="grid min-h-dvh grid-cols-[6rem_minmax(0,1fr)]">
+        <Rail workspace={workspace} base={base} />
+        <div className="flex min-w-0 flex-col">
+          <div className="flex min-h-16 items-center justify-between gap-4 px-6 tablet:px-8 wide:px-12">
+            <Breadcrumbs />
+            <div className="flex shrink-0 items-center gap-4">
+              <LanguageSwitch />
+              <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
+            </div>
+          </div>
+          <main id="main" tabIndex={-1} className="w-full max-w-[100rem] flex-1 px-6 pb-16 pt-4 outline-none tablet:px-8 wide:px-12">{children}</main>
+        </div>
+      </div>
+    </RadixTooltip.Provider>
+  )
+}

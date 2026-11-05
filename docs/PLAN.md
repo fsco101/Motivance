@@ -1,6 +1,6 @@
 # Motivance implementation plan
 
-Build an Android rehabilitation support application in Kotlin, with a feature-complete MVP by week 8 and a validated live pilot by week 10. The live camera view displays a skeleton, estimates joint angles and range of motion (ROM), counts repetitions and compares movement against therapist-defined prescriptions. The application supports professional review; supported measurements must pass a predeclared validation protocol.
+Build an Android rehabilitation support application in Kotlin, with a feature-complete MVP by week 8 and a validated live pilot by week 10. The live camera view displays a skeleton, estimates joint angles and range of motion (ROM), counts repetitions and compares movement against therapist-defined prescriptions. The application supports professional review; supported measurements must pass a predeclared validation protocol. After the Android pilot, a TypeScript web workspace gives therapists and administrators a large-screen version of their work; see [Web workspace](#web-workspace).
 
 Implementation instruction: therapist review and physical-device validation are deferred follow-up work, not blockers to implementing Sprints 2 and 3. The executable development catalogue supports elbow flexion and shoulder abduction, and therapists can add their own single-joint exercises ([custom exercises](validation/CUSTOM-EXERCISES.md)). Record later reference/device/therapist checks in [POST-IMPLEMENTATION-CHECKLIST.md](validation/POST-IMPLEMENTATION-CHECKLIST.md); do not represent deferred checks as executed clinical validation.
 
@@ -18,7 +18,7 @@ The workspace UI refinement centralizes cards, action buttons, loading notices, 
 
 The 2026-11-05 motion arc redesign replaces the navy/teal theme with logo-derived tokens, bundles the OFL Bricolage Grotesque display face as a resource (no new Gradle dependency), and adds shared interaction primitives (haptics, press feedback, animated disclosure, pull-to-refresh, depth-based page transitions) plus a draggable prescription range arc. No database, backend or assessment change. See [motion arc evidence](validation/MOTION-ARC-REDESIGN.md).
 
-Store all new project documents, architecture decisions, evaluation reports and operational guides in `docs/`. The explicit exception is the executable sprint backlog: keep `sprints/config.json` and the five flat `sprints/sprint-01.json` through `sprint-05.json` files at the repository root. Keep implementation scripts in `scripts/` and executable CI configuration in `.github/workflows/`. The root README is an entry-point link to documentation.
+Store all new project documents, architecture decisions, evaluation reports and operational guides in `docs/`. The explicit exception is the executable sprint backlog: keep `sprints/config.json` and the flat numbered `sprints/sprint-NN.json` files at the repository root. Keep implementation scripts in `scripts/` and executable CI configuration in `.github/workflows/`. The root README is an entry-point link to documentation.
 
 This document owns scope, architecture, database and dependency decisions. Sprint JSON owns issue status, acceptance evidence and completion. Do not recreate `docs/planning/backlog.json` or maintain another copy of the backlog. Describe changes to architecture here and update affected sprint records in the same change. Preserve existing imported design assets as reference material; their HTML is not the Kotlin application.
 
@@ -30,7 +30,7 @@ Assume three to four active contributors sharing Android, computer vision, backe
 
 MVP includes patient, therapist and basic administrator screens in one Android application; secure sign-in and recovery; therapist-patient assignments; a small therapist-approved exercise set (target two or three); camera setup; live skeleton; angles, ROM, repetitions and duration; supported form feedback; immutable prescriptions; offline session recording; safe upload retries; history and progress charts; English/Filipino critical flows; consent and audit events.
 
-Defer iOS, a separate web dashboard, video consultations, raw video archives, custom model training, arbitrary exercise recognition and automatic diagnosis. Each new exercise needs its own camera geometry, angle conventions and evidence; adding catalogue data does not automatically implement a new movement algorithm.
+Defer iOS, video consultations, raw video archives, custom model training, arbitrary exercise recognition and automatic diagnosis. Each new exercise needs its own camera geometry, angle conventions and evidence; adding catalogue data does not automatically implement a new movement algorithm.
 
 | Sprint | Weeks | Delivery and acceptance gate | Existing issues |
 |---|---|---|---|
@@ -39,6 +39,9 @@ Defer iOS, a separate web dashboard, video consultations, raw video archives, cu
 | S3 | 5-6 | Therapist prescribes; patient completes offline; results upload once and remain isolated by patient | MOT-13 through MOT-18 |
 | S4 | 7-8 | History/charts, basic admin, bilingual usability, interruption recovery and MVP acceptance | MOT-19 through MOT-24 |
 | S5 | 9-10 | Final accuracy/device/security evidence, defect resolution, production release and handover | MOT-25 through MOT-30 |
+| S6 | 11-12 | Web art direction, design system, motion, sign-in and data layer | MOT-31 through MOT-36 |
+| S7 | 13-14 | Therapist web workspace: patients, assignments, custom exercises and progress | MOT-37 through MOT-42 |
+| S8 | 15-16 | Administrator web workspace at parity with Android, web hardening and release | MOT-43 through MOT-48 |
 
 At each sprint kickoff, assign owners and confirm prerequisites. During week one, implement contracts and the riskiest behavior first. During week two, integrate and demonstrate the vertical workflow. Review dependency blockers midweek. A sprint completes only after its acceptance records and demo evidence are reviewed. An eight-week final release is a stretch outcome requiring the same release gates as week 10; feature completeness alone is insufficient.
 
@@ -54,6 +57,7 @@ Critical path: exercise protocol and camera feasibility -> measurement engine ->
 | Central persistence | PostgreSQL SQL migrations, RLS and transactional functions in Supabase |
 | Local persistence | Room over SQLite; Room migrations and schema exports |
 | Optional privileged backend operations | Supabase Edge Functions in TypeScript only when needed; no separate inference server |
+| Therapist and administrator web workspace | TypeScript, React and Vite in `web/`; see [Web workspace](#web-workspace) |
 | Planning synchronization | Existing Python standard-library script and GitHub CLI |
 
 Start with minimum Android API 26 as a proposed baseline, then confirm the client device inventory in MOT-01. Supabase's Kotlin installation guidance identifies API 26 as its baseline without additional desugaring. Confirm compatibility across MediaPipe, CameraX, Room and the selected SDK. Choose compile/target SDK to satisfy the distribution requirements at release. Select the JDK required by the pinned Android Gradle Plugin, then document the tested JDK/AGP/Gradle/Kotlin/KSP tuple; do not choose those versions independently. [Supabase installation](https://supabase.com/docs/reference/kotlin/installing)
@@ -88,6 +92,36 @@ Add `androidx.hilt:hilt-work` and its matching compiler only if workers use Hilt
 Select the lite or full pose model based on measured accuracy/latency on target phones. Record its origin, licence, checksum and model version; bundle it so downloaded instructions and inference work offline. [MediaPipe Android setup](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker/android)
 
 Dependency references: [Compose BOM](https://developer.android.com/develop/ui/compose/bom), [Room releases and setup](https://developer.android.com/jetpack/androidx/releases/room), [Hilt setup](https://developer.android.com/training/dependency-injection/hilt-android), [persistent work](https://developer.android.com/develop/background-work/background-tasks/persistent), [Supabase Kotlin modules](https://supabase.com/docs/reference/kotlin/installing). Review versions at Sprint 1 rather than treating documentation examples as a tested combination.
+
+## Web workspace
+
+Therapists and administrators work with a lot of data, which is cramped on a phone, so S6-S8 add a web app for those two roles. Patients stay on Android because the camera session needs it; a patient who signs in on the web is told to use the mobile app.
+
+`web/` is a frontend only: a React and TypeScript single-page app on static hosting, with a public landing page at `/`. Supabase remains the only backend, so new tables, policies and functions go in `supabase/migrations/`, and anything needing a secret goes in `supabase/functions/`. The web app holds only the publishable key, never the service-role key.
+
+**Administrator parity.** Per the user's instruction, Android and web must have the same administrator features. Layout can differ for the screen, but capabilities cannot: a new administrator feature ships to both apps in the same change, and a web-only feature counts as a gap. MOT-43 enforces this with `docs/architecture/ADMIN-PARITY.md` and a CI check that both apps call every `admin_*` database function. Android keeps its therapist and administrator screens.
+
+**Design.** [WEB-DESIGN.md](architecture/WEB-DESIGN.md) owns the art direction, extending the motion arc system to large screens. Feature screens are presentational views that take data as props: the `/design` route runs them on sample data for review, and S7 and S8 wire the same views to live data. The launch theme is light only.
+
+**Sessions.** The workspace comes from the address, not from stored state, so a choice cannot outlive its sign-in. A signed-in session ends after 15 minutes without activity, with a 1-minute warning. The activity time is stored, so closing the browser still counts as being away, and signing out ends every tab but not the person's phone.
+
+The stack is pinned in `web/package.json`. Each runtime dependency earns its place:
+
+| Capability | Package | Why |
+|---|---|---|
+| Language and build | TypeScript 6 (strict), React 19, Vite 8 | TypeScript stays below 6.1 because `typescript-eslint` does not yet support newer versions |
+| Backend access | `@supabase/supabase-js`, generated database types | Auth, queries and RPC calls; types come from the migrations, and CI fails if they drift |
+| Routing and server state | React Router, TanStack Query | Pages, and caching in memory only, cleared at sign-out |
+| Accessible primitives | Radix UI | Dialogs, menus, selects and tooltips with correct keyboard behaviour |
+| Motion | Motion (motion.dev) | Interactive cards, transitions and arcs. `LazyMotion` keeps its layout engine out of the initial download |
+| Languages | i18next, react-i18next | English and Filipino, with a parity check |
+| Icons and fonts | Phosphor Icons, Fontsource | Tree-shaken icons, and self-hosted Bricolage Grotesque and Atkinson Hyperlegible Next |
+| Styling (build only) | Tailwind CSS 4 | Design tokens as the only available values |
+| Testing (build only) | Vitest, Testing Library, Playwright, axe-core | Unit, contract, browser and accessibility checks |
+
+Three proposed packages were dropped. Storybook became a development-only `/design` route, which renders the real views on sample data and is not bundled. Recharts became a small SVG chart, which keeps gaps honest and saves initial download. TanStack Table was not needed for the current tables; reconsider it if S8 needs more.
+
+Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. It is currently 278 KB, almost all of it libraries, so S7 must load feature screens lazily by route.
 
 ## System architecture
 
@@ -243,6 +277,18 @@ Motivance/
     core/assessment/src/main/kotlin/com/motivance/assessment/
     core/assessment/src/test/kotlin/
     gradle/                       # Version catalogue; wrapper created in S1
+  web/                            # S6-S8: therapist and administrator web frontend
+    src/
+      design/                     # Tokens and theme
+      components/                 # Shared accessible components
+      motion/                     # Motion tokens and animated primitives
+      auth/                       # Sign-in, role routing, idle sign-out
+      data/                       # Typed Supabase access and generated types
+      layout/                     # Rail, top bar and breadcrumbs
+      features/                   # therapist/, admin/ presentational views
+      gallery/                    # Development-only design review, not bundled
+      locales/                    # English and Filipino
+    tests/                        # Contract, browser and accessibility tests
   supabase/
     migrations/                   # Tables, policies, functions and indexes
     functions/                    # Privileged operations only when needed
@@ -261,7 +307,7 @@ Motivance/
     sprint-02.json
     sprint-03.json
     sprint-04.json
-    sprint-05.json
+    sprint-05.json through sprint-08.json
   scripts/sync_sprints.py
   .github/workflows/sprint-sync.yml
 ```

@@ -125,6 +125,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Run `CameraLifecycleTest` on a device with a working camera. It cannot pass on the current emulator, which reports no cameras.
 - [ ] Have a Filipino speaker review the revised `auth_sign_in_description` text.
 
+## Web foundation follow-up (2026-11-05)
+
+- [ ] Have the project owner review the web designs at `/design` and approve them, or list changes, before S7 feature screens start. Evidence scope: [web foundation](WEB-FOUNDATION.md).
+- [ ] Have a therapist and an administrator try the prototype and confirm the screens match how they work. Have a therapist confirm the home fan reads clearly and implies no score.
+- [ ] Have a Filipino speaker review the web text in `web/src/locales/fil.json`. Most of it comes from Android, but the sign-in, idle, home and assignment text is new.
+- [ ] Check the motion on a typical clinic computer. The 60 frames per second result came from a development machine.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

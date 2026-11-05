@@ -55,6 +55,18 @@ def deferred():
 
 
 class SprintSyncTest(unittest.TestCase):
+    def test_the_backlog_can_grow_past_five_sprints(self):
+        config,sprints=fixtures()
+        extra=copy.deepcopy(sprints[-1]);extra.update(id='S6',github_milestone=6)
+        extra['issues'][0].update(id='MOT-06',github_issue=7)
+        self.assertIn('MOT-06',sync.validate(config,sprints+[extra]))
+
+    def test_duplicate_sprint_ids_are_rejected(self):
+        config,sprints=fixtures()
+        extra=copy.deepcopy(sprints[-1]);extra.update(github_milestone=6)
+        extra['issues'][0].update(id='MOT-06',github_issue=7)
+        with self.assertRaises(ValueError): sync.validate(config,sprints+[extra])
+
     def test_solved_issue_closes_before_its_sprint(self):
         config,sprints=fixtures();sprints[0]['issues'][0]['status']='done'
         api=FakeGitHub(config,sprints)

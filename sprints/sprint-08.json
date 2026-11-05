@@ -1,0 +1,539 @@
+{
+  "schema_version": 1,
+  "id": "S8",
+  "title": "S8 - Admin web workspace and web release",
+  "description": "Weeks 15-16. Exit: every Android administrator feature works on the web, an automated check keeps the two apps matched, and the web app passes accessibility, security and performance checks and is deployed.",
+  "goal": "Give administrators the same features on the web as on Android, then harden and release the web app.",
+  "status": "planned",
+  "weeks": {
+    "start": 15,
+    "end": 16
+  },
+  "github_milestone": 8,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Perform every administrator task side by side in Android and the browser and show the same results and audit records, then open the deployed web app.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Perform every administrator task side by side in Android and the browser and show the same results and audit records, then open the deployed web app.",
+  "risks": [
+    "The two administrator apps can drift apart; the parity check must run in CI before the web pages are built.",
+    "Production release depends on the hosted backend from MOT-28."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and design risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 32,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-43",
+      "github_issue": 54,
+      "title": "Set the admin parity rule and its automated check",
+      "description": "Android and web must have the same administrator features. Layout may differ for the screen; capabilities may not. This issue makes that an enforced rule rather than a promise.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web lead + Android lead",
+      "estimate_points": 3,
+      "labels": [
+        "type:task",
+        "area:web",
+        "priority:p0",
+        "sprint:08"
+      ],
+      "dependencies": [
+        "MOT-36"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "docs/architecture/ADMIN-PARITY.md",
+        "scripts/check_admin_parity.py",
+        ".github/workflows/",
+        "AGENTS.md",
+        "docs/PLAN.md"
+      ],
+      "functions": [
+        {
+          "name": "recordAdminParityMatrix",
+          "description": "List every administrator capability with its Android code, web code and tests.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "checkAdminParity",
+          "description": "Fail CI when an admin_* database function is not used by both apps.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-43-AC1",
+          "description": "docs/architecture/ADMIN-PARITY.md lists every administrator capability with its Android code, web code and tests.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-43-AC2",
+          "description": "scripts/check_admin_parity.py fails when any admin_* database function is not called by both apps. Today there are 10: admin_accounts, admin_activity, admin_clear_photo, admin_links, admin_publish_exercise, admin_set_account, admin_set_exercise, admin_set_link, admin_set_role, admin_summary.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-43-AC3",
+          "description": "The check runs in Android, web and database CI whenever administrator code or migrations change.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-43-AC4",
+          "description": "docs/PLAN.md and AGENTS.md state the rule: a new administrator feature ships to both apps in the same change. A web-only bulk action or export counts as a new feature and needs Android too.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-43-AC5",
+          "description": "Any gap found while building the web pages is added to the matrix and closed in both apps.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-44",
+      "github_issue": 55,
+      "title": "Build admin overview and account management",
+      "description": "Match the Android administrator overview and accounts pages, using the larger screen for tables and side panels.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:08"
+      ],
+      "dependencies": [
+        "MOT-34",
+        "MOT-35",
+        "MOT-43"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/admin/overview/",
+        "web/src/features/admin/accounts/"
+      ],
+      "functions": [
+        {
+          "name": "showAdminOverview",
+          "description": "Show the system counts, attention items and recent activity from admin_summary and admin_activity.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "manageAccounts",
+          "description": "Search, filter, enable or disable accounts, change staff roles and remove photos.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-44-AC1",
+          "description": "The overview shows the same counts as Android: accounts, patients, therapists, administrators, disabled accounts, active links, unlinked patients, active and total exercises, sessions this week and pending requests.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-44-AC2",
+          "description": "Attention items cover unlinked patients, disabled accounts, the catalogue and data requests, and each opens its section. Recent activity is shown.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-44-AC3",
+          "description": "The directory has server search across name, email, username and ID, filters for All, Patients, Therapists, Admins and Disabled, and loads 50 accounts at a time. Each account shows when it joined, last sign-in, roles and ID.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-44-AC4",
+          "description": "An administrator can enable or disable an account, grant or revoke the therapist and administrator roles, and remove another account's photo. Every change needs a confirmation that names the account.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-44-AC5",
+          "description": "As on Android, an administrator cannot change their own account, roles need an active account, and the reason is shown.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-44-AC6",
+          "description": "A failed load clears sensitive lists instead of showing old data, and the server rejects every action from a non-administrator, proven by a test.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-45",
+      "github_issue": 56,
+      "title": "Build admin links, catalogue and activity",
+      "description": "Complete administrator parity with Android for therapist-patient links, the exercise catalogue and the audit trail.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:08"
+      ],
+      "dependencies": [
+        "MOT-44"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/admin/links/",
+        "web/src/features/admin/catalogue/",
+        "web/src/features/admin/activity/"
+      ],
+      "functions": [
+        {
+          "name": "manageLinks",
+          "description": "Create, remove and restore therapist-patient links.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "manageCatalogue",
+          "description": "Activate exercises and publish new versions.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "showActivity",
+          "description": "Show the audit feed with category filters and older pages.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-45-AC1",
+          "description": "Links are grouped by therapist and filtered by Active, Revoked and All. An administrator can pick a therapist and patient to link, unlink, and restore a link, with the same existing-link and limit messages as Android.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-45-AC2",
+          "description": "The catalogue lists every exercise, including therapist custom exercises, with activate and deactivate.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-45-AC3",
+          "description": "An administrator can edit the name and English and Filipino instructions and publish a new version, with an unsaved-changes state and a confirmation showing the next version number.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-45-AC4",
+          "description": "Activity uses the same event wording as Android, filters by Accounts, Links, Catalogue, Clinical and Privacy, loads older events and labels system events.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-45-AC5",
+          "description": "Every row in docs/architecture/ADMIN-PARITY.md is marked done with tests on both apps, and the same action in either app writes the same audit record.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-46",
+      "github_issue": 57,
+      "title": "Add staff profile settings",
+      "description": "Let therapists and administrators manage their own account without going back to the phone.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p1",
+        "sprint:08"
+      ],
+      "dependencies": [
+        "MOT-35",
+        "MOT-36"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/profile/"
+      ],
+      "functions": [
+        {
+          "name": "editStaffProfile",
+          "description": "Edit profile details with the same validation as Android.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "uploadProfilePhoto",
+          "description": "Prepare a JPEG in the browser and upload it through the server-signed Cloudinary flow.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "changePassword",
+          "description": "Change the password after confirming the current one.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-46-AC1",
+          "description": "Profile details can be edited with the same validation as Android, through save_my_profile.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-46-AC2",
+          "description": "Photos are prepared as JPEG in the browser within the Android size limit and uploaded through profile_photo_upload. The Cloudinary API secret never reaches the browser.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-46-AC3",
+          "description": "A photo can be removed, and the avatar updates across the app.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-46-AC4",
+          "description": "Changing the password requires the current password and a different new password that meets the account rules.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-47",
+      "github_issue": 58,
+      "title": "Complete web accessibility, security, performance and design QA",
+      "description": "Prove the web app is usable, safe and as polished as designed before it goes live.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "QA + product designer",
+      "estimate_points": 5,
+      "labels": [
+        "type:validation",
+        "area:qa",
+        "priority:p0",
+        "sprint:08"
+      ],
+      "dependencies": [
+        "MOT-37",
+        "MOT-38",
+        "MOT-39",
+        "MOT-40",
+        "MOT-41",
+        "MOT-42",
+        "MOT-44",
+        "MOT-45",
+        "MOT-46"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/tests/",
+        "docs/validation/WEB-RELEASE.md"
+      ],
+      "functions": [
+        {
+          "name": "auditAccessibility",
+          "description": "Run automated and keyboard-only accessibility checks on every page.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "verifyRoleIsolation",
+          "description": "Prove with browser tests that each role reaches only its own data.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "reviewBuiltDesign",
+          "description": "Compare built screens with the approved designs.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-47-AC1",
+          "description": "Automated axe checks pass on every page, and a keyboard-only walkthrough covers both workspaces, to WCAG 2.1 AA.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-47-AC2",
+          "description": "Browser tests prove no therapist reaches administrator pages or another therapist's patients, and no patient reaches either workspace.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-47-AC3",
+          "description": "Content Security Policy, HSTS and frame-denial headers are set. Patient data never appears in URLs beyond IDs, browser storage, logs or analytics.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-47-AC4",
+          "description": "Lighthouse scores at least 90 for performance and accessibility on sign-in, therapist home and accounts.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-47-AC5",
+          "description": "The app works in the latest two versions of Chrome, Edge, Firefox and Safari from 768 to 1920 px wide.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-47-AC6",
+          "description": "Design QA compares each built screen with the approved designs, and every difference is fixed or approved.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-47-AC7",
+          "description": "Therapist and administrator usability reviews are recorded in docs/validation/POST-IMPLEMENTATION-CHECKLIST.md and are not claimed as passed until they have been run.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-48",
+      "github_issue": 59,
+      "title": "Deploy the web app and hand over operations",
+      "description": "Put the web app on a secure public address, with the release and rollback steps written down.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "DevOps",
+      "estimate_points": 5,
+      "labels": [
+        "type:task",
+        "area:devops",
+        "priority:p0",
+        "sprint:08"
+      ],
+      "dependencies": [
+        "MOT-47",
+        "MOT-28"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "docs/operations/WEB-DEPLOYMENT.md",
+        ".github/workflows/"
+      ],
+      "functions": [
+        {
+          "name": "deployWebApp",
+          "description": "Deploy preview and production builds to static hosting over HTTPS.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "configureProduction",
+          "description": "Set production values and Supabase Auth URLs.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "documentOperations",
+          "description": "Write the release, rollback and monitoring runbook.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-48-AC1",
+          "description": "The hosting choice is recorded in docs/PLAN.md, and preview and production deployments both work over HTTPS.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-48-AC2",
+          "description": "Production uses the hosted Supabase project, with its Auth site URL and allowed URLs set for the web address.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-48-AC3",
+          "description": "Migrations, including 202611050001_custom_exercises.sql, are applied before each release that needs them.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-48-AC4",
+          "description": "docs/operations/WEB-DEPLOYMENT.md covers release, rollback and monitoring, and a rollback has been rehearsed.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-48-AC5",
+          "description": "Error monitoring is in place and records no patient data.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    }
+  ],
+  "plan_reference": "docs/PLAN.md"
+}

@@ -3,7 +3,7 @@
   "repository": "fsco101/Motivance",
   "plan_issue": 1,
   "schedule": {
-    "duration_weeks": 10,
+    "duration_weeks": 16,
     "mvp_week": 8,
     "start_date": null,
     "contributors_assumed": "3-4 plus therapist input"
@@ -13,13 +13,16 @@
     "sprint-02.json",
     "sprint-03.json",
     "sprint-04.json",
-    "sprint-05.json"
+    "sprint-05.json",
+    "sprint-06.json",
+    "sprint-07.json",
+    "sprint-08.json"
   ],
   "sync": {
     "default": "dry-run",
     "close_issues": "Close each solved issue immediately after its own engineering evidence validates; explicit user-deferred checks remain false with nonblocking follow-up records.",
     "close_milestone": "Only when all milestone issues are closed.",
-    "close_plan": "Only when all five sprints are completed.",
+    "close_plan": "Only when all sprints are completed.",
     "managed_body_markers": [
       "<!-- motivance-sprint:start -->",
       "<!-- motivance-sprint:end -->"
@@ -92,6 +95,11 @@
       "description": "Area: planning"
     },
     {
+      "name": "area:web",
+      "color": "5319E7",
+      "description": "Area: web"
+    },
+    {
       "name": "priority:p0",
       "color": "D93F0B",
       "description": "Release-critical; must pass before pilot release"
@@ -155,6 +163,21 @@
       "name": "sprint:05",
       "description": "Sprint 5: weeks 9-10",
       "color": "0052CC"
+    },
+    {
+      "name": "sprint:06",
+      "color": "0052CC",
+      "description": "Sprint 6: weeks 11-12"
+    },
+    {
+      "name": "sprint:07",
+      "color": "0052CC",
+      "description": "Sprint 7: weeks 13-14"
+    },
+    {
+      "name": "sprint:08",
+      "color": "0052CC",
+      "description": "Sprint 8: weeks 15-16"
     }
   ]
 }

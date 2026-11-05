@@ -1,0 +1,69 @@
+name: Web checks
+on:
+  push:
+    paths: ['web/**', 'supabase/**', 'scripts/check_web_bundle.py', '.github/workflows/web-ci.yml']
+  pull_request:
+    paths: ['web/**', 'supabase/**', 'scripts/check_web_bundle.py', '.github/workflows/web-ci.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://build-check.invalid
+          VITE_SUPABASE_PUBLISHABLE_KEY: build-check
+      - run: python ../scripts/check_web_bundle.py
+
+  integration:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.20.12
+      - run: supabase start
+        working-directory: .
+      - run: supabase db reset
+        working-directory: .
+      - name: Database types match the migrations
+        run: |
+          supabase gen types typescript --local --schema public > /tmp/database.types.ts
+          diff <(tr -d '\r' < src/data/database.types.ts) <(tr -d '\r' < /tmp/database.types.ts)
+      - name: Point the app at the local stack
+        run: |
+          supabase status -o env > /tmp/stack.env
+          grep '^API_URL=' /tmp/stack.env | sed 's/^API_URL=/VITE_SUPABASE_URL=/' | tr -d '"' > .env
+          grep '^ANON_KEY=' /tmp/stack.env | sed 's/^ANON_KEY=/VITE_SUPABASE_PUBLISHABLE_KEY=/' | tr -d '"' >> .env
+      - run: npm ci
+      - run: npm run test:contract
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - if: always()
+        run: supabase stop --no-backup
+        working-directory: .
