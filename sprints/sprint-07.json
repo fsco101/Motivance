@@ -1,0 +1,491 @@
+{
+  "schema_version": 1,
+  "id": "S7",
+  "title": "S7 - Therapist web workspace",
+  "description": "Weeks 13-14. Exit: a therapist can invite a patient, assign standard and custom exercises and review progress entirely in the browser, and what they publish runs unchanged in the Android app.",
+  "goal": "Let therapists do all of their daily work comfortably on a large screen.",
+  "status": "planned",
+  "weeks": {
+    "start": 13,
+    "end": 14
+  },
+  "github_milestone": 7,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "In the browser, invite a patient, create a custom exercise and assign it. Run it in the Android app, then review the result and its charts back in the browser.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "In the browser, invite a patient, create a custom exercise and assign it. Run it in the Android app, then review the result and its charts back in the browser.",
+  "risks": [
+    "A web change that alters what patients download would affect the Android app; keep cross-app checks in every assignment change.",
+    "Charts can imply clinical conclusions; show only existing measures and keep the not-clinically-validated wording."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and design risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 32,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-37",
+      "github_issue": 48,
+      "title": "Build the therapist home dashboard",
+      "description": "Give therapists a clear starting point that uses the extra screen space well.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p1",
+        "sprint:07"
+      ],
+      "dependencies": [
+        "MOT-34",
+        "MOT-35",
+        "MOT-36"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/therapist/home/"
+      ],
+      "functions": [
+        {
+          "name": "loadTherapistOverview",
+          "description": "Load patient, session and assignment counts from the server.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "showWorkspaceCards",
+          "description": "Show interactive metric and patient cards that open the matching page.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-37-AC1",
+          "description": "Shows linked patient, recent session (up to 20) and active assignment counts from server data, with distinct loading, empty and error states.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-37-AC2",
+          "description": "Metric and patient cards use the shared interactive card and open the matching page.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-37-AC3",
+          "description": "Shows only existing measures, and adds no adherence or risk score that a therapist has not approved.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-37-AC4",
+          "description": "Refreshing keeps current data on screen instead of flashing an empty page.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-38",
+      "github_issue": 49,
+      "title": "Build the patient list, invitations and link revocation",
+      "description": "Let therapists find patients quickly and manage who they are linked to.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:07"
+      ],
+      "dependencies": [
+        "MOT-34",
+        "MOT-35",
+        "MOT-36"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/therapist/patients/"
+      ],
+      "functions": [
+        {
+          "name": "listPatients",
+          "description": "Show a searchable, sortable list of linked patients with their photo and plan count.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "invitePatient",
+          "description": "Create an invitation by email and show a code with a Copy action.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "revokePatientLink",
+          "description": "Revoke a link after a confirmation that names the patient.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-38-AC1",
+          "description": "The list can be searched and sorted, and shows each patient name, photo and plan count.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-38-AC2",
+          "description": "A therapist sees only their own linked patients, proven by a test with two therapists.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-38-AC3",
+          "description": "Inviting by email shows the code with a Copy action that confirms in place.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-38-AC4",
+          "description": "Revoking a link needs a confirmation that names the patient.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-38-AC5",
+          "description": "The whole page works by keyboard alone.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-39",
+      "github_issue": 50,
+      "title": "Build the patient record",
+      "description": "Bring a patient profile, plans and recent progress together on one page, which a phone screen cannot do.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:07"
+      ],
+      "dependencies": [
+        "MOT-38"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/therapist/record/"
+      ],
+      "functions": [
+        {
+          "name": "showPatientProfile",
+          "description": "Show the demographics the therapist is allowed to read.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "showAssignedPlans",
+          "description": "Show each assigned exercise with its version, targets and focus, and an Edit action.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-39-AC1",
+          "description": "Shows the profile summary, assigned plans and recent progress together on wide screens, and stacks them on narrow ones.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-39-AC2",
+          "description": "Each plan card shows its version, range, repetitions, side and focus, and opens the editor.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-39-AC3",
+          "description": "A removed custom exercise stays named on existing plans.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-39-AC4",
+          "description": "Loading, empty and error states are distinct, and opening another patient never shows the previous patient data, even briefly.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-40",
+      "github_issue": 51,
+      "title": "Build the exercise assignment editor",
+      "description": "Make assigning an exercise faster and safer than on a phone, with the same rules and the same result for the patient.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web + therapist input",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:07"
+      ],
+      "dependencies": [
+        "MOT-34",
+        "MOT-39"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/therapist/assign/"
+      ],
+      "functions": [
+        {
+          "name": "editPrescription",
+          "description": "Guide the therapist through exercise, side and focus, targets, timing and review.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "publishPrescription",
+          "description": "Publish a retry-safe, immutable version with publish_prescription.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-40-AC1",
+          "description": "Follows the same steps as Android: exercise, side and focus, targets, timing, review. Wide screens show a live summary beside the form.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-40-AC2",
+          "description": "Both ends of RangeArc can be dragged, snapping to 5 degrees and staying at least 15 degrees apart. Typed fields remain the precise and accessible input.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-40-AC3",
+          "description": "Validation matches the server: range 0-180 with high more than 10 above low, repetitions 1-1000, minimum cycle 100-30000 ms, maximum above minimum and up to 300000 ms, peak hold 0-5000 ms, trunk lean 0-90 degrees.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-40-AC4",
+          "description": "Publishing is retry-safe, an edit creates a new immutable version, and a new exercise always gets a new assignment ID so it cannot replace another one.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-40-AC5",
+          "description": "The picker shows each exercise once at its latest version, and editing a plan pinned to an older version still works.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-40-AC6",
+          "description": "A test proves that a prescription published from the web downloads into the Android cache unchanged.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-41",
+      "github_issue": 52,
+      "title": "Add custom exercises to the web app",
+      "description": "Give therapists the same custom exercises as Android, plus a page to manage them, which there is room for on a large screen.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p1",
+        "sprint:07"
+      ],
+      "dependencies": [
+        "MOT-40"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/therapist/exercises/"
+      ],
+      "functions": [
+        {
+          "name": "createCustomExercise",
+          "description": "Create an exercise with a name, measured joint and instructions.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "manageCustomExercises",
+          "description": "List a therapist's exercises and remove them with a confirmation.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-41-AC1",
+          "description": "Creating an exercise takes a name, one of the six joints, instructions and optional Filipino instructions, with the same limits as Android (120 and 4000 characters).",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-41-AC2",
+          "description": "Creation is retry-safe, the new exercise is selected automatically, and the form shows the per-joint angle hint and the 2D camera limits.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-41-AC3",
+          "description": "A My exercises page lists and removes exercises. Removal needs a confirmation and leaves existing assignments and history in place.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-41-AC4",
+          "description": "Exercises owned by other therapists are never offered.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-41-AC5",
+          "description": "An exercise created on the web runs in the Android app unchanged.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    },
+    {
+      "id": "MOT-42",
+      "github_issue": 53,
+      "title": "Build progress and session history",
+      "description": "Turn session results into charts a therapist can explore, with the same data rules as Android.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:07"
+      ],
+      "dependencies": [
+        "MOT-36",
+        "MOT-39"
+      ],
+      "requirements": "User request, 2026-11-05: web app for therapists and administrators, in TypeScript",
+      "target_paths": [
+        "web/src/features/therapist/progress/"
+      ],
+      "functions": [
+        {
+          "name": "loadPatientHistory",
+          "description": "Load one patient at a time in 50-record keyset pages.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "showProgressCharts",
+          "description": "Show interactive, animated charts with an accessible table alternative.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-42-AC1",
+          "description": "Queries one patient at a time in 50-record keyset pages, with filters for exercise, side and dates.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-42-AC2",
+          "description": "Charts respond to hover and keyboard, draw in with motion that respects reduced-motion settings, and offer a table alternative for screen readers.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-42-AC3",
+          "description": "Series stay separated by exercise version, prescription, side, model and algorithm, as on Android, and are never merged.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-42-AC4",
+          "description": "Each session shows the targets prescribed at the time, and custom exercises show the therapist's name for them.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-42-AC5",
+          "description": "Limited or invalid tracking is labelled, and pages keep the wording that measurements are not clinically validated.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/PLAN.md"
+    }
+  ],
+  "plan_reference": "docs/PLAN.md"
+}
