@@ -19,6 +19,8 @@ for (const path of SCREENS) {
 
 for (const width of [768, 1024, 1440, 1920]) {
   test(`no sideways page scroll at ${width}`, async ({ page }) => {
+    // One test walks every screen, which takes longer on a shared CI machine.
+    test.setTimeout(180_000)
     await page.setViewportSize({ width, height: 900 })
     for (const path of SCREENS) {
       await page.goto(path)
