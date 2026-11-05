@@ -18,6 +18,7 @@ import com.motivance.domain.*
 import java.io.File
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -51,6 +52,29 @@ class ExerciseGuideTest {
         }}}}
         compose.mainClock.advanceTimeBy(100)
         capture("guide-all.png")
+    }
+
+    @Test fun everyMovementIsDrawnAsAPersonAtBothEnds() {
+        val all=listOf(
+            "Shoulder" to guideMotion(BodyJoint.SHOULDER,BodySide.LEFT),"Elbow" to guideMotion(BodyJoint.ELBOW,BodySide.RIGHT),"Wrist" to guideMotion(BodyJoint.WRIST,BodySide.RIGHT),
+            "Hip" to guideMotion(BodyJoint.HIP,BodySide.LEFT),"Seated knee" to guideMotion(BodyJoint.KNEE,BodySide.RIGHT),"Standing knee" to guideMotion(BodyJoint.KNEE,BodySide.LEFT,"Standing knee curl"),
+            "Ankle" to guideMotion(BodyJoint.ANKLE,BodySide.RIGHT),"Seated hip" to guideMotion(BodyJoint.HIP,BodySide.RIGHT,"Seated hip flexion"),"Full shoulder" to guideMotion(BodyJoint.SHOULDER,BodySide.RIGHT,low=15.0,high=170.0),
+        )
+        compose.mainClock.autoAdvance=false
+        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().padding(4.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+            all.chunked(3).forEach {row ->
+                Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) {
+                    row.forEach {(name,motion) -> ExerciseGuide(motion,name,Modifier.weight(1f).height(200.dp).background(Motion.Tide),still=false)}
+                }
+            }
+        }}}}
+        compose.mainClock.advanceTimeBy(100)
+        val skin=0xFFC98E66.toInt()
+        assertTrue("A body is drawn at the start",frame().count {it==skin}>2000)
+        capture("guide-person-start.png")
+        compose.mainClock.advanceTimeBy(2000)
+        assertTrue("A body is drawn at the target",frame().count {it==skin}>2000)
+        capture("guide-person-target.png")
     }
 
     @Test fun lowPoseAndDarkStageRender() {
