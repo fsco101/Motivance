@@ -105,6 +105,20 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Have a Filipino speaker review the new `toast_*` strings and the revised `ui_prescription_published` text.
 - [ ] Exercise the session start, pause, save and upload toasts on a physical phone with a real person in frame, and confirm they do not obscure guidance during movement. Automated checks used synthetic landmarks.
 
+## Assigned camera rules follow-up (2026-11-05)
+
+- [ ] On a physical phone with a real person in frame, run an assigned exercise through Start, finish, "Check camera again" and "New session", and confirm the camera shows Prescribed throughout and the results reach the therapist. Automated checks used synthetic landmarks. Evidence scope: [assigned camera rules](ASSIGNED-CAMERA-RULES.md).
+- [ ] Have a therapist confirm that Camera check opening on the assignment is acceptable, since consent and Start there record a real assigned session.
+- [ ] Have a Filipino speaker review the revised `use_cached_prescription` text.
+
+## Custom exercises follow-up (2026-11-05)
+
+- [ ] On a physical phone with a real person in frame, run a custom exercise for each of the six joints and compare the angle with a goniometer. Wrist and ankle use finger and foot landmarks that have had no real-person check. Evidence scope: [custom exercises](CUSTOM-EXERCISES.md).
+- [ ] Have a therapist try the form and confirm the joint choices, the angle starting points and the upright-only limit are understood.
+- [ ] Have a therapist decide whether movements that work toward straight, such as seated knee extension, need a direction setting. Today the hold and guidance fall at the bent end.
+- [ ] Decide whether therapist-written exercises need review before patient use. They currently reach a patient without one.
+- [ ] Have a Filipino speaker review the new `custom_*` and `toast_exercise_*` strings.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

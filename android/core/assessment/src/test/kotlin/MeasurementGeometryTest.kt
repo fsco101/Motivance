@@ -6,7 +6,7 @@ import kotlin.math.*
 
 class MeasurementGeometryTest {
     @Test fun protractorAngleMatchesTheEngineForEveryExerciseAndSide() {
-        for(kind in ExerciseKind.entries) for(side in BodySide.entries) for(angle in listOf(15.0,45.0,90.0,120.0)) {
+        for(kind in listOf(ExerciseKind.ELBOW_FLEXION,ExerciseKind.SHOULDER_ABDUCTION)) for(side in BodySide.entries) for(angle in listOf(15.0,45.0,90.0,120.0)) {
             val rules=ExerciseRules(kind=kind,side=side)
             val pose=pose(angle,side,kind==ExerciseKind.SHOULDER_ABDUCTION)
             val engine=MovementAssessment(rules)

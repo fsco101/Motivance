@@ -46,10 +46,31 @@ data class ExerciseSessionState(
         observeJob=viewModelScope.launch {
             store.recover(account)
             store.dao.observe(account).collect { rows ->
-                if(owner==account) mutable.value=mutable.value.copy(history=rows,recoverable=rows.firstOrNull { it.status!="COMPLETED" && it.id!=mutable.value.id })
+                if(owner==account) mutable.value=mutable.value.copy(history=rows,recoverable=recoverable(rows,mutable.value.cached,mutable.value.id))
             }
         }
-        cacheJob=viewModelScope.launch { store.dao.prescriptions(account).collect { rows -> if(owner==account) mutable.value=mutable.value.copy(cached=rows) } }
+        cacheJob=viewModelScope.launch { store.dao.prescriptions(account).collect { rows -> if(owner==account) applyCache(rows) } }
+    }
+    /** One state write, so nothing can observe the new assignments alongside the old demo rules. */
+    private fun applyCache(rows:List<CachedPrescription>) {
+        val current=mutable.value
+        val adopted=assigned(rows).takeIf {current.rules.demo && current.id==null && !current.saving && !current.saved}
+        if(adopted!=null) engine=MovementAssessment(adopted)
+        mutable.value=current.copy(cached=rows,rules=adopted ?: current.rules,metrics=if(adopted!=null) engine.snapshot else current.metrics,
+            recoverable=recoverable(current.history,rows,current.id))
+    }
+    private fun prescribed(p:CachedPrescription):ExerciseRules? {
+        if(p.ownerId!=owner || p.patientId!=owner || p.expiresAt<=System.currentTimeMillis()) return null
+        return ExerciseJson.rules(p.rulesJson).takeIf {!it.demo && it.prescriptionVersionId==p.versionId}
+    }
+    /** Demo thresholds are only for an account with no valid assignment; [preferred] keeps the one already in use. */
+    private fun assigned(rows:List<CachedPrescription>,preferred:String?=null):ExerciseRules? {
+        val valid=rows.mapNotNull {prescribed(it)}
+        return valid.firstOrNull {it.prescriptionVersionId==preferred} ?: valid.firstOrNull()
+    }
+    private fun recoverable(rows:List<LocalSession>,cached:List<CachedPrescription>,active:String?):LocalSession? {
+        val hasAssignment=assigned(cached)!=null
+        return rows.firstOrNull {it.status!="COMPLETED" && it.id!=active && !(hasAssignment && ExerciseJson.rules(it.rulesJson).demo)}
     }
     fun select(kind:ExerciseKind,side:BodySide) {
         if(mutable.value.id!=null || mutable.value.saving || !mutable.value.rules.demo) return
@@ -57,9 +78,8 @@ data class ExerciseSessionState(
         engine=MovementAssessment(rules); mutable.value=mutable.value.copy(rules=rules,metrics=engine.snapshot,saved=false,error=false)
     }
     fun usePrescription(p:CachedPrescription) {
-        if(mutable.value.id!=null || p.ownerId!=owner || p.patientId!=owner || p.expiresAt<=System.currentTimeMillis()) return
-        val rules=ExerciseJson.rules(p.rulesJson)
-        if(rules.demo || rules.prescriptionVersionId!=p.versionId) return
+        if(mutable.value.id!=null) return
+        val rules=prescribed(p) ?: return
         engine=MovementAssessment(rules); mutable.value=mutable.value.copy(rules=rules,metrics=engine.snapshot,error=false)
     }
     fun frame(people:List<List<Landmark>>,width:Int,height:Int,time:Long) {
@@ -143,7 +163,10 @@ data class ExerciseSessionState(
     }
     fun newSession() {
         if(mutable.value.saving) return
-        interrupt(); engine=MovementAssessment(ExerciseRules())
-        mutable.value=mutable.value.copy(id=null,rules=ExerciseRules(),metrics=engine.snapshot,saved=false,error=false)
+        interrupt()
+        val current=mutable.value
+        val rules=assigned(current.cached,current.rules.prescriptionVersionId) ?: ExerciseRules()
+        engine=MovementAssessment(rules)
+        mutable.value=current.copy(id=null,rules=rules,metrics=engine.snapshot,saved=false,error=false)
     }
 }

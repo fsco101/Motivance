@@ -185,14 +185,14 @@ import java.time.Instant
         val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name,photo_url)",null,token,"GET"))
         val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))
         val profileById=(0 until details.length()).map {details.getJSONObject(it)}.associate {it.getString("user_id") to readProfile(it)}
-        val catalogue=JSONArray(call("/rest/v1/exercise_versions?select=id,algorithm_key,definition&published=eq.true",null,token,"GET"))
+        val catalogue=JSONArray(call("/rest/v1/exercise_versions?select=${CatalogueJson.SELECT}&published=eq.true",null,token,"GET"))
         val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)&active=eq.true",null,token,"GET"))
         val requests=JSONArray(call("/rest/v1/data_requests?select=id,kind,status&order=created_at.desc",null,token,"GET"))
         fun <T> rows(a:JSONArray,convert:(JSONObject)->T)=(0 until a.length()).map {convert(a.getJSONObject(it))}
         RehabWorkspace(
             rows(patients) {val account=it.optJSONObject("profiles");val photo=account?.text("photo_url")
                 LinkedPatient(it.getString("id"),account?.optString("display_name").orEmpty(),profileById[it.getString("id")]?.copy(photoUrl=photo),photo)},
-            rows(catalogue) {val d=it.getJSONObject("definition"); CatalogueExercise(it.getString("id"),d.optString("name",it.getString("algorithm_key")),it.getString("algorithm_key"),d.optString("instructions_en"))}.filter {it.algorithm in setOf("elbow-flexion-v1","shoulder-abduction-v1")},
+            CatalogueJson.decode(catalogue,id),
             rows(assignments) {a -> val v=a.getJSONArray("prescription_versions"); if(v.length()==0) null else {
                 val p=(0 until v.length()).map {v.getJSONObject(it)}.maxBy {it.getInt("version")}
                 PrescriptionSummary(a.getString("id"),p.getString("id"),a.getString("patient_id"),p.getString("exercise_version_id"),p.getInt("version"),p.getString("side"),p.getDouble("minimum_degrees"),p.getDouble("maximum_degrees"),p.getInt("target_repetitions"),p.optJSONObject("parameters")?.toString() ?: "{}")
@@ -243,6 +243,12 @@ import java.time.Instant
         val body=JSONObject().put("p_assignment",draft.assignmentId).put("p_version",draft.requestId).put("p_patient",draft.patientId).put("p_exercise",draft.exerciseId).put("p_side",draft.side.name.lowercase()).put("p_low",draft.low).put("p_high",draft.high).put("p_repetitions",draft.repetitions).put("p_parameters",p)
         call("/rest/v1/rpc/publish_prescription",body,token)
     }}
+    override suspend fun createCustomExercise(draft:CustomExerciseDraft)=authorized {token,_ ->
+        val body=JSONObject().put("p_id",draft.id).put("p_name",draft.name.trim()).put("p_joint",draft.joint.name).put("p_english",draft.english.trim())
+            .put("p_filipino",draft.filipino.trim().ifBlank {null} ?: JSONObject.NULL)
+        call("/rest/v1/rpc/create_custom_exercise",body,token).trim().trim('"')
+    }
+    override suspend fun archiveCustomExercise(exerciseId:String) {authorized {token,_ -> call("/rest/v1/rpc/archive_custom_exercise",JSONObject().put("p_exercise",exerciseId),token)} }
     override suspend fun requestPatientData(id:String,kind:String) {authorized {token,_ -> call("/rest/v1/rpc/request_patient_data",JSONObject().put("p_id",id).put("p_kind",kind),token)} }
     override suspend fun uploadConsent(owner:String,id:String,event:String,version:String,occurredAt:Long) {authorized(owner) {token,_ ->
         call("/rest/v1/rpc/record_consent",JSONObject().put("p_id",id).put("p_event",event).put("p_version",version).put("p_occurred_at",Instant.ofEpochMilli(occurredAt).toString()),token)

@@ -67,7 +67,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
     val focus=if(caution) CautionAmber else FocusMint
     val side=stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)
     val joint=stringResource(rules.focusJoint.label())
-    val measurementJoint=stringResource(rules.kind.measurementJoint.label())
+    val measurementJoint=stringResource(rules.measuredJoint.label())
     val focusLabel=stringResource(R.string.skeleton_focus,side,joint)
     val description=stringResource(R.string.skeleton_description,focusLabel)
     val chain=rules.focusJoint.chain(rules.side)
@@ -97,7 +97,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
                     color=BodyInk,style=MaterialTheme.typography.labelMedium)
             }
             Text(focusLabel,color=Color.White,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
-            if(rules.focusJoint!=rules.kind.measurementJoint) Text(stringResource(R.string.focus_measurement,measurementJoint),color=BodyInk,style=MaterialTheme.typography.bodySmall)
+            if(rules.focusJoint!=rules.measuredJoint) Text(stringResource(R.string.focus_measurement,measurementJoint),color=BodyInk,style=MaterialTheme.typography.bodySmall)
             if(showBody && !focusVisible) Text(stringResource(R.string.focus_not_visible),color=CautionAmber,style=MaterialTheme.typography.bodySmall)
         }
         Box(Modifier.fillMaxWidth().heightIn(max=440.dp).aspectRatio(4f/5f).onSizeChanged {viewport=it}
@@ -191,7 +191,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PreviewNavy).border(1.dp,Motion.NightLine,RoundedCornerShape(24.dp))
         .padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.how_reps_counted),color=Color.White,style=MaterialTheme.typography.titleMedium,modifier=Modifier.semantics {heading()})
-        CalculationContent(rules,metrics,liveAngle,guide,stringResource(rules.kind.measurementJoint.label()))
+        CalculationContent(rules,metrics,liveAngle,guide,stringResource(rules.measuredJoint.label()))
     }
 }
 

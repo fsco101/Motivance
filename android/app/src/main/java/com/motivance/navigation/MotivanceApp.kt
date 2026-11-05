@@ -196,7 +196,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                 "SETUP" -> CameraSetup { route="CAMERA" }
                 "CHECK_COMPLETE" -> SessionComplete(local.saved,local.metrics.completed,local.rules.targetRepetitions,local.metrics.romDegrees,
                     local.metrics.incomplete,local.metrics.durationMs,connected.outbox.firstOrNull {it.sessionId==local.id}?.state,
-                    again={route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"})
+                    again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"})
                 "PROFILE" -> {
                     PageHeader(R.string.nav_profile,R.string.account_and_access)
                     ClinicalCard {
@@ -234,7 +234,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                                     Text(metrics.completed.toString(),style=MaterialTheme.typography.titleMedium,fontFamily=DisplayFamily)
                                 }
                                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                                    Text(stringResource(if(rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction),style=MaterialTheme.typography.titleMedium)
+                                    Text(rules.displayName(),style=MaterialTheme.typography.titleMedium)
                                     Text(displayDate(Instant.ofEpochMilli(row.startedAt).atZone(ZoneId.systemDefault()).toLocalDate().toString()),
                                         style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
@@ -538,7 +538,7 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
  */
 @Composable private fun TodayPlan(next:CachedPrescription,count:Int,start:()->Unit,all:()->Unit) {
     val rules=remember(next.rulesJson) {ExerciseJson.rules(next.rulesJson)}
-    val name=stringResource(if(rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction)
+    val name=rules.displayName()
     val side=stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)
     var shown by remember {mutableStateOf(false)}
     LaunchedEffect(Unit) {shown=true}

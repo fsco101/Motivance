@@ -9,19 +9,16 @@ import kotlin.math.*
  *
  * The measured angle is always the angle between a 0° [reference] direction leaving [vertex] and the
  * moving segment `vertex -> distal`:
- * - Elbow flexion: reference continues the upper arm (shoulder -> elbow), so a straight arm is 0°.
- * - Shoulder abduction: reference points down the trunk (shoulder -> hip), so an arm at the side is 0°.
+ * - Elbow, wrist, hip, knee, ankle: reference continues the proximal segment, so a straight limb is 0°.
+ * - Shoulder: reference points down the trunk (shoulder -> hip), so an arm at the side is 0°.
  */
 data class MeasurementChain(val proximal:Int, val vertex:Int, val distal:Int, val extendsProximal:Boolean) {
     val landmarks get()=listOf(proximal,vertex,distal)
 }
 
 fun ExerciseRules.measurementChain():MeasurementChain {
-    val shoulder=if(side==BodySide.LEFT) 11 else 12
-    return when(kind) {
-        ExerciseKind.ELBOW_FLEXION -> MeasurementChain(shoulder,shoulder+2,shoulder+4,extendsProximal=true)
-        ExerciseKind.SHOULDER_ABDUCTION -> MeasurementChain(shoulder+12,shoulder,shoulder+2,extendsProximal=false)
-    }
+    val (proximal,vertex,distal)=measuredJoint.chain(side)
+    return MeasurementChain(proximal,vertex,distal,extendsProximal=measuredJoint.straightIsZero)
 }
 
 /** A point in normalized frame coordinates (0..1), ready for [PreviewMapping.map]. */
