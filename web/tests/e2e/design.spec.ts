@@ -52,6 +52,20 @@ for (const [path, empty] of [
   })
 }
 
+test('a toast appears at the top right, below the top bar', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/design/admin/activity')
+  await page.getByRole('button', { name: 'Load older activity' }).click()
+  const toast = page.getByRole('status').filter({ hasText: 'Loaded older activity' })
+  await expect(toast).toBeVisible()
+  await page.waitForTimeout(400)
+  const box = (await toast.boundingBox())!
+  expect(box.x + box.width).toBeGreaterThan(1440 - 40)
+  expect(box.x + box.width).toBeLessThanOrEqual(1440)
+  expect(box.y).toBeGreaterThanOrEqual(56)
+  expect(box.y).toBeLessThan(100)
+})
+
 test('a swipe that starts on the movement demo still scrolls the page', async ({ page }) => {
   await page.goto('/design/landing')
   await expect(page.getByRole('group', { name: 'A sample skeleton measuring elbow flexion' })).toHaveCSS('touch-action', 'pan-y')
@@ -98,7 +112,7 @@ for (const [reducedMotion, drawn] of [['reduce', false], ['no-preference', true]
   })
 }
 
-test('each card is one link and one menu in the tab order, with no empty stops', async ({ page }) => {
+test('each patient row is one link and one menu in the tab order, with no empty stops', async ({ page }) => {
   await page.goto('/design/therapist/patients')
   await page.getByRole('link', { name: 'Open Ana Dela Cruz' }).focus()
   await page.keyboard.press('Tab')
@@ -130,8 +144,8 @@ test('a dialog says what it is for, and returns focus when it closes', async ({ 
 })
 
 test('a keyboard user gets the same card emphasis as a pointer user', async ({ page }) => {
-  await page.goto('/design/therapist/patients')
-  const card = page.getByRole('link', { name: 'Open Ana Dela Cruz' })
+  await page.goto('/design/therapist')
+  const card = page.getByRole('link', { name: 'Patients: 18' })
   await card.focus()
   await page.keyboard.press('Shift+Tab')
   await page.keyboard.press('Tab')
@@ -221,7 +235,7 @@ test('opening a record carries the avatar across as a shared transition', async 
   const sizes = await page.evaluate(() => (window as unknown as { samples: Array<{ size: number }> }).samples.map((sample) => sample.size))
   const start = sizes[0]!
   const end = sizes.at(-1)!
-  expect([start, end]).toEqual([44, 88])
+  expect([start, end]).toEqual([32, 72])
   // Sizes strictly between the two ends can only come from a shared animation, not from swapping pages.
   expect(sizes.filter((size) => size > start + 2 && size < end - 2).length).toBeGreaterThan(3)
 })
@@ -253,7 +267,7 @@ test('cards stay smooth on a 50-card page', async ({ page }) => {
 
 test('an account opens by keyboard alone', async ({ page }) => {
   await page.goto('/design/admin/accounts')
-  await page.getByRole('button', { name: /Dana Reyes/ }).focus()
+  await page.getByRole('main').getByRole('button', { name: /Dana Reyes/ }).focus()
   await page.keyboard.press('Enter')
   await expect(page.getByRole('complementary', { name: 'Details for Dana Reyes' })).toBeVisible()
 })

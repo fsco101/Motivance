@@ -10,20 +10,22 @@ A physical therapist measures a joint with a goniometer: a hinged protractor wit
 | --- | --- |
 | The measurement is the hero | Arcs and dials show real values. They are never decoration. |
 | Spend boldness in one place | One memorable moment per page: the sign-in dial, the home fan. The rest is disciplined. |
-| Only interactive things rise | Cards are for things a person can act on. Metrics and tables sit directly on the page. |
+| Built for a desk | Mouse, keyboard and a wide screen come first. Lists are data tables, not stacked phone cards. |
+| Only interactive things rise | Panels stay flat. Only what opens something, like a stat card, lifts under the pointer. |
 | Motion explains | Movement shows what changed or where you went. It is never the only signal. |
 | Honest numbers | Show measured values only. No invented scores, and no comparison the data does not support. |
 
 ## What it deliberately avoids
 
-The obvious brief for this product produces a wide dark sidebar, a row of metric tiles and a grid of identical white cards. That template was rejected:
+The first version kept a slim icon rail, 48 px titles, 60 px numbers and lists sitting on the page. The owner reviewed it and said it read as a mobile design, so the workspace was rebuilt as a desktop application. The goniometer idea stays, in the sidebar's graduated edge and needle, the home fan and the care coverage arc.
 
-| Default | Used here instead |
+| Mobile habit | Used here instead |
 | --- | --- |
-| Wide sidebar | A slim 96 px instrument rail with a graduated edge and a needle marking the current page |
-| Boxed metric tiles | Plain readouts: large numbers on the page, with no card around them |
-| Every section in a card | Tables and lists on the page ground, separated by hairlines |
-| One radius and one grey shadow everywhere | Radius follows importance (28, 18 and 10 px), and elevation is tinted with Ink and reserved for interactive things |
+| Icon bar with stacked labels | A 240 px sidebar with a row per page, folding to icons below 1024 px |
+| Oversized titles and figures | 26 px page titles and 30 px figures |
+| Timelines and stacked cards for lists | Data tables with sticky headers, in panels with a toolbar and footer |
+| Expanding a card to see more | A row selects, and its details open beside the table |
+| 44 px touch-sized controls | 40 px controls and 32 px table actions, sized for a mouse |
 | All-caps labels, eyebrows, middle-dot metadata, arrows on buttons | Sentence case, plain labels and two short lines instead of a joined string |
 
 ## Colour
@@ -32,7 +34,7 @@ The palette comes unchanged from `MotivanceTheme.kt`, so the two apps are recogn
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| Ink | `#0D2B36` | Text, the rail, hero surfaces |
+| Ink | `#0D2B36` | Text, the sidebar, hero surfaces |
 | Lagoon | `#0E7C86` | Primary actions, measured values |
 | Sprout / bright | `#1B7F45` / `#6FE08F` | A prescribed or reached range |
 | Mist | `#F1F6F5` | Page ground |
@@ -53,17 +55,26 @@ Both are self-hosted under the SIL Open Font License, with licences in `web/publ
 ## Layout
 
 ```text
-+----+------------------------------------------------------+
-| o  | Home > Patients > Ana          [English|Filipino] (DR)|
-| :  |                                                      |
-| :- | Page title                              [One action] |
-| :  | One sentence of context                              |
-| :  |                                                      |
-| :  | Content on a fluid grid, left aligned, up to 1600 px |
-+----+------------------------------------------------------+
++-----------+------------------------------------------------+
+| Motivance | Home > Patients > Ana     [English|Filipino] (DR)|
+|           +------------------------------------------------+
+| Workspace | Page title                         [One action] |
+| > Home  --| One sentence of context                         |
+|   Patients|                                                 |
+|   Progress| [stat] [stat] [stat] [stat]                     |
+|           | +---------------------------------------------+ |
+|           | | Toolbar: search and filters                 | |
+|           | | Table with a sticky header                  | |
+|           | | Footer: count and Load more                 | |
+|           | +---------------------------------------------+ |
++-----------+------------------------------------------------+
 ```
 
-The rail never collapses, so there is one layout from 768 to 1920 px. Columns hide or stack before anything scrolls sideways. Content is left aligned, because staff scan down a left edge.
+The sidebar and top bar stay in place while the page scrolls. Below 1024 px the sidebar folds to icons, with its labels kept for screen readers. Columns hide or stack before anything scrolls sideways. Content is left aligned, because staff scan down a left edge.
+
+**Building blocks.** `Panel` is the surface, with an optional title, toolbar and footer. `DataTable` lists records, with sorting, grouping and a selected row. `StatCard` shows one server count and opens the page that explains it. `BarList` compares a few counts, and `RangeBar` shows prescribed and measured range on the 0 to 180 degree scale.
+
+**Dashboards.** Both open with stat cards, then what needs a decision, then the detail. Every figure is a real count. A share such as care coverage is calculated from those counts, and nothing is estimated or scored. Account roles can overlap, so roles are compared with separate bars rather than as parts of one whole.
 
 ## Public pages
 
@@ -76,11 +87,11 @@ Visitors reach the landing page at `/`; a signed-in account skips it and goes to
 
 ## Interaction
 
-- **Cards.** A card lifts, a soft light follows the pointer, and it settles under a press. Keyboard focus gets the same emphasis as hover.
-- **Patient cards replay the movement.** On hover or focus the dial's needle sweeps from the patient's lowest to highest measured angle against the prescribed band. The card shows what happened rather than simply reacting to the pointer.
-- **Expanding in place.** Detail opens inside the card, so a person keeps their place in the list.
-- **Shared transition.** A patient's avatar travels from their card into the record header.
+- **Stat cards.** A card lifts, a soft light follows the pointer, and it settles under a press. Keyboard focus gets the same emphasis as hover.
+- **Details beside the table.** Selecting an account or exercise opens it next to the list, so a person keeps their place.
+- **Shared transition.** A patient's avatar travels from their table row into the record.
 - **Tables.** The whole row is a target, and a real button in the row serves keyboards.
+- **Toasts.** Results appear at the top right, just below the top bar, so they never cover the account menu or the page's main action.
 - **Dialogs.** Every consequential change names the record in a confirmation, using the same words as Android.
 
 ## Motion
@@ -89,7 +100,7 @@ All timing lives in `web/src/motion/tokens.ts`; no screen sets its own. The char
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `needle` spring | stiffness 170, damping 15 | Readings: dials, the rail marker, filter markers |
+| `needle` spring | stiffness 170, damping 15 | Readings: dials, the sidebar marker, filter markers |
 | `press` spring | stiffness 520, damping 34 | Things under the pointer, with no wobble |
 | `layout` spring | stiffness 340, damping 36 | Things changing size or place |
 | `quick`, `standard`, `slow`, `sweep` | 140, 220, 340, 900 ms | Fades, page changes, disclosures, arc draws |
@@ -113,5 +124,5 @@ Progress charts show range of motion, which is the difference between two angles
 ## Known limits
 
 - The launch theme is light only.
-- Below the desk breakpoint, the account panel opens under the table rather than beside it. S8 should revisit this.
+- Below 1024 px, account and exercise details open under the table rather than beside it.
 - The therapist Exercises page is not designed yet; it arrives with MOT-41.

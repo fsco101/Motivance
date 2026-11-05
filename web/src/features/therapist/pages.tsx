@@ -48,8 +48,8 @@ export function TherapistHomePage() {
     const { overview, patients, plans, catalogue, sessions } = state.data
     return ready({
       name: overview.displayName.split(' ')[0] || email.split('@')[0] || '',
-      patients: patients.length, plans: plans.length, sessions: overview.sessions.length,
-      latest: latestMovement(patients, sessions), recent: recentFirst(summarisePatients(patients, plans, catalogue, sessions)).slice(0, 3),
+      patients: patients.length, plans: plans.length, sessions: overview.sessions.length, withoutPlan: patients.filter((patient) => !plans.some((plan) => plan.patientId === patient.id)).length,
+      latest: latestMovement(patients, sessions), recent: recentFirst(summarisePatients(patients, plans, catalogue, sessions)).slice(0, 6),
     })
   }
   return <TherapistHomeView load={home()} base={BASE} />

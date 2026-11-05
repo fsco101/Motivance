@@ -146,6 +146,10 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Have an administrator try the workspace and confirm it fits how they work.
 - [ ] Have a Filipino speaker review the new administrator and profile text in `web/src/locales/fil.json`.
 
+## Continuous integration follow-up (2026-11-05)
+
+- [ ] If GitHub Actions becomes available, confirm that Web checks, Android checks and Database checks pass in full, including `scripts/check_admin_parity.py` and the longer limit in `no sideways page scroll`. Until then these run locally only. The owner deferred this because the account is on GitHub's free tier.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

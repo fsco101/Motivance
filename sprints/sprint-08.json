@@ -48,7 +48,7 @@
       "github_issue": 54,
       "title": "Set the admin parity rule and its automated check",
       "description": "Android and web must have the same administrator features. Layout may differ for the screen; capabilities may not. This issue makes that an enforced rule rather than a promise.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web lead + Android lead",
       "estimate_points": 3,
@@ -109,8 +109,13 @@
             "docs/validation/WEB-ADMIN-PROFILE.md",
             ".github/workflows/web-ci.yml",
             ".github/workflows/android-ci.yml",
-            ".github/workflows/database-ci.yml"
-          ]
+            ".github/workflows/database-ci.yml",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "non_blocking": true,
+          "deferral_authority": "User instruction, 2026-11-05: the GitHub Actions billing lock is to be neglected because the account is on the free tier. CI runs do not block delivery.",
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Not run on CI, because GitHub Actions cannot start jobs on this account. The same checks pass locally. Deferred; not a development blocker."
         },
         {
           "id": "MOT-43-AC4",
@@ -133,9 +138,14 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T13:56:28.733565+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/WEB-ADMIN-PROFILE.md",
+          "docs/architecture/ADMIN-PARITY.md",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md",
       "implementation_status": "implemented",
@@ -144,9 +154,7 @@
         "docs/architecture/ADMIN-PARITY.md",
         "scripts/check_admin_parity.py"
       ],
-      "blockers": [
-        "GitHub Actions cannot start any job: \"your account is locked due to a billing issue\". The check is in all three workflows and passes locally, but has not run on CI."
-      ]
+      "blockers": []
     },
     {
       "id": "MOT-44",

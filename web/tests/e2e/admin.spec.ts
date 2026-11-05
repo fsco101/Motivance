@@ -45,7 +45,7 @@ const search = async (text: string) => {
 const openAccount = async (name: string) => {
   await page.goto('/admin/accounts')
   await search(name)
-  await page.getByRole('button', { name: new RegExp(name) }).click()
+  await page.getByRole('main').getByRole('button', { name: new RegExp(name) }).click()
   return page.getByRole('complementary', { name: `Details for ${name}` })
 }
 const confirm = async (text: string, button: string) => {
@@ -59,7 +59,7 @@ test('the overview shows every count and leads to each section', async () => {
   await page.route('**/rpc/admin_summary', (route) => route.fulfill({ json: { accounts: 111, disabled: 2, patients: 88, therapists: 12, admins: 3, active_links: 44, unlinked_patients: 5, exercises: 9, active_exercises: 0, sessions_week: 77, pending_requests: 6 } }))
   await page.goto('/admin')
   const main = page.getByRole('main')
-  for (const [name, value] of [[/Accounts/, '111'], [/^\d*\s*Patients/, '88'], [/Therapists/, '12'], [/Active links/, '44'], [/Active exercises/, '0']] as const) await expect(main.getByRole('link', { name: name }).first()).toContainText(value)
+  for (const name of ['Accounts: 111', 'Patients: 88', 'Therapists: 12', 'Active links: 44', 'Active exercises: 0']) await expect(main.getByRole('link', { name })).toBeVisible()
   await expect(main).toContainText('2 disabled')
   await expect(main).toContainText('5 without a therapist')
   await expect(main).toContainText('9 in catalogue')
@@ -81,9 +81,9 @@ test('the overview shows every count and leads to each section', async () => {
 test('the directory searches the server, and each account shows its details', async () => {
   await page.goto('/admin/accounts')
   await search(patient.id)
-  await expect(page.getByRole('button', { name: new RegExp(patientName) })).toBeVisible()
-  await expect(page.getByRole('button', { name: new RegExp(therapistName) })).toHaveCount(0)
-  await page.getByRole('button', { name: new RegExp(patientName) }).click()
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(patientName) })).toBeVisible()
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(therapistName) })).toHaveCount(0)
+  await page.getByRole('main').getByRole('button', { name: new RegExp(patientName) }).click()
   const details = page.getByRole('complementary', { name: `Details for ${patientName}` })
   await expect(details).toContainText(patient.email)
   await expect(details).toContainText(patient.id)
@@ -97,10 +97,10 @@ test('the directory searches the server, and each account shows its details', as
 
 test('filters narrow the loaded accounts', async () => {
   await search(tag)
-  await expect(page.getByRole('button', { name: new RegExp(`${patientName}|${therapistName}|${adminName}`) })).toHaveCount(3)
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(`${patientName}|${therapistName}|${adminName}`) })).toHaveCount(3)
   await page.getByRole('button', { name: /^Therapists/ }).click()
-  await expect(page.getByRole('button', { name: new RegExp(therapistName) })).toBeVisible()
-  await expect(page.getByRole('button', { name: new RegExp(patientName) })).toHaveCount(0)
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(therapistName) })).toBeVisible()
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(patientName) })).toHaveCount(0)
   await page.getByRole('button', { name: /^Disabled/ }).click()
   await expect(page.getByRole('heading', { name: 'No matching accounts' })).toBeVisible()
 })
@@ -149,7 +149,7 @@ test('an administrator cannot change their own account, and is told why', async 
 test('a failed read clears the list instead of leaving old data on screen', async () => {
   await page.goto('/admin/accounts')
   await search(patientName)
-  const row = page.getByRole('button', { name: new RegExp(patientName) })
+  const row = page.getByRole('main').getByRole('button', { name: new RegExp(patientName) })
   await expect(row).toBeVisible()
   await page.route('**/rpc/admin_accounts', (route) => route.fulfill({ status: 403, json: { code: '42501', message: 'denied' } }))
   await search(therapistName)
@@ -158,7 +158,7 @@ test('a failed read clears the list instead of leaving old data on screen', asyn
   await expect(row).toHaveCount(0)
   await page.unroute('**/rpc/admin_accounts')
   await retry.click()
-  await expect(page.getByRole('button', { name: new RegExp(therapistName) })).toBeVisible()
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(therapistName) })).toBeVisible()
 })
 
 test('a failed change says so and changes nothing', async () => {
@@ -198,7 +198,7 @@ test('a link is made, revoked and restored, with the same messages as Android', 
   await expect(page.getByRole('button', { name: 'Activate link' })).toBeDisabled()
 
   await page.getByLabel('Filter links by name or ID').fill(tag)
-  const group = page.getByRole('region', { name: therapistName })
+  const group = page.getByRole('rowgroup', { name: therapistName })
   await expect(group).toContainText(patientName)
   await group.getByRole('button', { name: 'Revoke link' }).click()
   await confirm(patientName, 'Revoke link')
@@ -223,10 +223,9 @@ test('a picker refuses text that is not an account', async () => {
 
 test('the catalogue lists therapists’ exercises, and publishing shows the next version', async () => {
   await page.goto('/admin/catalogue')
-  await page.getByRole('button', { name: new RegExp(exerciseName) }).click()
-  const card = page.locator('div').filter({ has: page.getByRole('heading', { name: exerciseName }) }).last()
+  await page.getByRole('main').getByRole('button', { name: new RegExp(exerciseName) }).click()
   await expect(page.getByText('Sit tall and straighten the knee.')).toBeVisible()
-  await expect(card).toContainText('Custom')
+  await expect(page.getByRole('row', { name: new RegExp(exerciseName) })).toContainText('Custom')
   await page.getByRole('button', { name: 'Edit', exact: true }).click()
   await expect(page.getByText('Unsaved changes')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Review and publish' })).toBeDisabled()
@@ -245,7 +244,7 @@ test('the catalogue lists therapists’ exercises, and publishing shows the next
 
 test('a failed publish keeps the draft open', async () => {
   await page.goto('/admin/catalogue')
-  await page.getByRole('button', { name: new RegExp(exerciseName) }).click()
+  await page.getByRole('main').getByRole('button', { name: new RegExp(exerciseName) }).click()
   await page.getByRole('button', { name: 'Edit', exact: true }).click()
   await page.getByLabel('English instructions').fill('A long draft worth keeping.')
   await page.route('**/rpc/admin_publish_exercise', (route) => route.fulfill({ status: 500, json: { message: 'failed' } }))
@@ -259,12 +258,12 @@ test('a failed publish keeps the draft open', async () => {
 
 test('an exercise can be deactivated and stays listed so it can come back', async () => {
   await page.goto('/admin/catalogue')
-  await page.getByRole('button', { name: new RegExp(exerciseName) }).click()
+  await page.getByRole('main').getByRole('button', { name: new RegExp(exerciseName) }).click()
   await page.getByRole('button', { name: 'Deactivate' }).click()
   await confirm(exerciseName, 'Deactivate')
   await expect.poll(() => sql(`select active from public.exercises where id='${exercise}'`)).toBe('f')
   await page.reload()
-  await page.getByRole('button', { name: new RegExp(exerciseName) }).click()
+  await page.getByRole('main').getByRole('button', { name: new RegExp(exerciseName) }).click()
   await page.getByRole('button', { name: 'Activate' }).click()
   await confirm(exerciseName, 'Activate')
   await expect.poll(() => sql(`select active from public.exercises where id='${exercise}'`)).toBe('t')
@@ -287,8 +286,8 @@ test('activity uses Android’s wording, filters by category, labels system even
   await expect(page.getByText('Role granted')).toBeVisible()
   await expect(page.getByText(`${therapistName} → ${patientName}`)).toBeVisible()
   await expect(page.getByText('Exercise version published')).toBeVisible()
-  await expect(page.getByText('By System').first()).toBeVisible()
-  await expect(page.getByText(`By ${adminName}`).first()).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'System', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('cell', { name: adminName }).first()).toBeVisible()
 
   await page.getByRole('button', { name: 'Links' }).click()
   await expect(page.getByText('Link updated')).toBeVisible()
@@ -306,5 +305,5 @@ test('activity uses Android’s wording, filters by category, labels system even
 test('a real change reaches the activity page', async () => {
   await page.goto('/admin/activity')
   await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible()
-  await expect(page.getByText(`By ${adminName}`).first()).toBeVisible()
+  await expect(page.getByRole('cell', { name: adminName }).first()).toBeVisible()
 })

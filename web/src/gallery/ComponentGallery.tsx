@@ -1,10 +1,12 @@
+import { UsersThreeIcon } from '@phosphor-icons/react'
 import { PlusIcon } from '@phosphor-icons/react'
 import { Tooltip as RadixTooltip } from 'radix-ui'
 import { useState, type ReactNode } from 'react'
 import { Button } from '@/components/Button'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
 import { ConfirmDialog, Dialog } from '@/components/Dialog'
-import { Avatar, EmptyState, Notice, Readout, Skeleton, StatusPill, Tabs, Tooltip } from '@/components/Display'
+import { Avatar, EmptyState, Notice, Skeleton, StatusPill, Tabs, Tooltip } from '@/components/Display'
+import { StatCard } from '@/components/StatCard'
 import { PasswordField, SelectField, TextArea, TextField } from '@/components/Field'
 import { toast } from '@/components/Toast'
 import { ExpandableCard, InteractiveCard } from '@/motion/InteractiveCard'
@@ -124,8 +126,8 @@ export function ComponentGallery() {
           </div>
         </Section>
 
-        <Section title="Readouts">
-          <div className="flex flex-wrap gap-12"><Readout value={18} label="Patients" /><Readout value={24} label="Active plans" detail="Across all patients" /><Readout value={3} label="Disabled" tone="caution" /></div>
+        <Section title="Stat cards">
+          <div className="grid max-w-3xl gap-4 tablet:grid-cols-3"><StatCard icon={UsersThreeIcon} value={18} label="Patients" to="/design/therapist/patients" /><StatCard icon={UsersThreeIcon} value={24} label="Active plans" detail="Across 18 patients" /><StatCard icon={UsersThreeIcon} value={3} label="Without a plan" tone="caution" /></div>
         </Section>
 
         <Section title="Tabs">

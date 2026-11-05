@@ -23,14 +23,14 @@ export type AssignmentContext = { patient: { id: string; name: string; photo?: s
 function Step({ number, title, help, done, children }: { number: number; title: string; help: string; done: boolean; children: ReactNode }) {
   const { t } = useTranslation()
   return (
-    <section className="grid gap-x-4 gap-y-3 tablet:grid-cols-[2.5rem_minmax(0,1fr)]">
+    <section className="grid gap-x-4 gap-y-3 rounded-card border border-line bg-paper p-5 shadow-rest tablet:grid-cols-[2rem_minmax(0,1fr)]">
       <motion.span animate={{ scale: done ? [1, 1.12, 1] : 1 }} transition={{ duration: duration.slow }}
-        className={cn('numeric grid size-10 place-items-center rounded-full text-lg font-bold transition-colors transition-quick', done ? 'bg-sprout text-paper' : 'bg-tide text-ink')}>
+        className={cn('numeric grid size-8 place-items-center rounded-full text-base font-bold transition-colors transition-quick', done ? 'bg-sprout text-paper' : 'bg-tide text-ink')}>
         {done ? <CheckCircleIcon weight="fill" aria-label={t('common.done')} /> : number}
       </motion.span>
-      <div className="min-w-0 border-b border-line pb-8">
-        <h2 className="text-2xl font-bold">{title}</h2>
-        <p className="mb-4 text-slate">{help}</p>
+      <div className="min-w-0">
+        <h2 className="text-base font-bold">{title}</h2>
+        <p className="mb-3 text-sm text-slate">{help}</p>
         {children}
       </div>
     </section>
@@ -40,7 +40,7 @@ function Step({ number, title, help, done, children }: { number: number; title: 
 function Choice({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" role="radio" aria-checked={selected} onClick={onClick}
-      className={cn('min-h-11 rounded-control border px-4 text-left font-semibold transition-colors transition-quick', selected ? 'border-lagoon bg-tide text-ink' : 'border-line-strong bg-paper hover:border-lagoon')}>
+      className={cn('min-h-9 rounded-control border px-3 text-left text-sm font-semibold transition-colors transition-quick', selected ? 'border-lagoon bg-tide text-ink' : 'border-line-strong bg-paper hover:border-lagoon')}>
       {children}
     </button>
   )
@@ -80,15 +80,15 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
             <PageHeader title={existing ? t('assign.editing', { version: existing.version }) : t('assign.title')}>
               <div className="mt-3 flex items-center gap-2"><Avatar name={context.patient.name} photo={context.patient.photo} size={28} /><span className="font-semibold">{context.patient.name}</span></div>
             </PageHeader>
-            <div className="grid items-start gap-10 wide:grid-cols-[minmax(0,1fr)_24rem]">
-              <div className="flex min-w-0 flex-col gap-8">
+            <div className="grid items-start gap-5 desk:grid-cols-[minmax(0,1fr)_20rem]">
+              <div className="flex min-w-0 flex-col gap-4">
                 <Step number={1} title={t('assign.exercise')} help={t('assign.exerciseHelp')} done={Boolean(chosen)}>
                   {chosen?.retired && <div className="mb-3"><Notice tone="info">{t('assign.removedHint')}</Notice></div>}
                   <div role="radiogroup" aria-label={t('assign.exercise')} className="grid gap-2 tablet:grid-cols-2">
                     {options.map((item) => (
                       <button key={item.id} type="button" role="radio" aria-checked={exercise === item.id} onClick={() => setExercise(item.id)}
-                        className={cn('rounded-card border p-4 text-left transition-colors transition-quick', exercise === item.id ? 'border-lagoon bg-tide' : 'border-line bg-paper hover:border-lagoon')}>
-                        <span className="flex flex-wrap items-center gap-2 text-lg font-bold">{item.name}{!item.selectable && <StatusPill tone="caution">{t(item.retired ? 'assign.removed' : 'assign.pinned')}</StatusPill>}</span>
+                        className={cn('rounded-control border p-3 text-left transition-colors transition-quick', exercise === item.id ? 'border-lagoon bg-tide' : 'border-line bg-paper hover:border-lagoon')}>
+                        <span className="flex flex-wrap items-center gap-2 text-sm font-bold">{item.name}{!item.selectable && <StatusPill tone="caution">{t(item.retired ? 'assign.removed' : 'assign.pinned')}</StatusPill>}</span>
                         <span className="line-clamp-2 text-sm text-slate">{item.instructions}</span>
                       </button>
                     ))}
@@ -99,7 +99,7 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                   <div role="radiogroup" aria-label={t('assign.side')} className="flex flex-wrap gap-2">
                     {(['left', 'right'] as const).map((value) => <Choice key={value} selected={side === value} onClick={() => setSide(value)}>{t(`common.${value}`)}</Choice>)}
                   </div>
-                  <h3 className="mb-2 mt-5 font-semibold">{t('assign.focus')}</h3>
+                  <h3 className="mb-2 mt-4 text-sm font-semibold">{t('assign.focus')}</h3>
                   <div role="radiogroup" aria-label={t('assign.focus')} className="flex flex-wrap gap-2">
                     <Choice selected={focus === ''} onClick={() => setFocus('')}>{t('record.focusAutomatic')}</Choice>
                     {JOINTS.map((joint) => <Choice key={joint} selected={focus === joint} onClick={() => setFocus(joint)}>{t(`joints.${joint}`)}</Choice>)}
@@ -140,9 +140,9 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                   </AnimatePresence>
                 </Step>
               </div>
-              <aside className="on-dark rounded-stage bg-ink p-6 text-paper wide:sticky wide:top-6">
-                <h2 className="text-2xl font-bold">{t('assign.review')}</h2>
-                <p className="mb-5 text-night-ink">{t('assign.reviewHelp')}</p>
+              <aside className="on-dark rounded-card bg-ink p-5 text-sm text-paper desk:sticky desk:top-19">
+                <h2 className="text-base font-bold">{t('assign.review')}</h2>
+                <p className="mb-4 text-night-ink">{t('assign.reviewHelp')}</p>
                 <div className="grid place-items-center pb-4"><RangeDial dark low={low} high={high} width={220} label={t('assign.rangeLabel', { low, high })} /></div>
                 <motion.dl layout transition={spring.layout} className="grid gap-3 border-t border-night-line pt-4">
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('assign.exercise')}</dt><dd className="text-right font-semibold">{chosen?.name ?? t('assign.notChosen')}</dd></div>
@@ -151,7 +151,7 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('record.repetitions')}</dt><dd className="numeric font-semibold">{repetitions}</dd></div>
                 </motion.dl>
                 {existing && <p className="mt-4 text-sm text-night-ink">{t('assign.nextVersion', { version: existing.version + 1 })}</p>}
-                <Button variant="bright" size="lg" className="mt-6 w-full" disabled={!publishable} busy={busy} busyLabel={t('common.working')}
+                <Button variant="bright" className="mt-5 w-full" disabled={!publishable} busy={busy} busyLabel={t('common.working')}
                   onClick={() => { if (parsed) onPublish({ ...parsed, exerciseId: exercise, side, focus: focus || null, low, high, repetitions, confidence: number(parameters.confidence, 0.7) }) }}>{t('assign.publish')}</Button>
                 {!exercise && <p className="mt-2 text-sm text-night-ink">{t('assign.publishHint')}</p>}
               </aside>

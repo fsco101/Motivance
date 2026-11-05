@@ -45,7 +45,7 @@ export function CustomExerciseForm({ onSave, onCancel }: { onSave: (draft: Custo
         <div role="radiogroup" aria-labelledby="custom-joint" className="flex flex-wrap gap-2">
           {JOINTS.map((item) => (
             <button key={item} type="button" role="radio" aria-checked={joint === item} disabled={busy} onClick={() => setJoint(item)}
-              className={cn('min-h-11 rounded-control border px-3 font-semibold transition-colors transition-quick', joint === item ? 'border-lagoon bg-tide' : 'border-line-strong bg-paper hover:border-lagoon')}>
+              className={cn('min-h-9 rounded-control border px-3 text-sm font-semibold transition-colors transition-quick', joint === item ? 'border-lagoon bg-tide' : 'border-line-strong bg-paper hover:border-lagoon')}>
               {t(`joints.${item}`)}
             </button>
           ))}

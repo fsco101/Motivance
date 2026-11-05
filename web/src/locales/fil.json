@@ -6,6 +6,7 @@
     "loadFailedTitle": "Hindi ma-load ang pahinang ito", "loadFailed": "Suriin ang koneksyon at subukan muli."
   },
   "nav": {
+    "workspace": { "admin": "Pangangasiwa", "therapist": "Workspace ng therapist" },
     "main": "Pangunahin", "home": "Home", "patients": "Mga pasyente", "exercises": "Mga ehersisyo", "progress": "Pag-unlad", "overview": "Buod", "accounts": "Mga account",
     "links": "Ugnayan", "catalogue": "Katalogo", "activity": "Aktibidad", "skip": "Lumaktaw sa nilalaman", "breadcrumbs": "Narito ka"
   },
@@ -41,7 +42,7 @@
     "removeDetail": "Hindi mo na ito maitatalaga. Mananatili ito sa mga pasyenteng mayroon na nito, at mananatili ang kanilang mga resulta sa kasaysayan.", "zeroStraight": "0° kapag tuwid ang kasukasuan. Tumataas ang anggulo habang bumabaluktot ito.", "zeroSide": "0° kapag nakababa ang braso sa tagiliran. Tumataas ang anggulo habang itinataas ito.",
     "zeroAnkle": "Humigit-kumulang 90° kapag patag ang paa. Tumataas ang anggulo habang itinataas ang paa patungo sa binti.", "cameraLimit": "Sumusukat ang camera sa 2D. Kailangang manatiling nakatayo nang tuwid ang pasyente, at kita ang balikat, balakang at kasukasuang ito."
   },
-  "exercises": { "description": "Ang mga ehersisyong maitatalaga mo.", "mine": "Aking mga ehersisyo", "standard": "Mga karaniwang ehersisyo", "emptyTitle": "Wala pang custom na ehersisyo", "emptyDetail": "Magdagdag ng isa para masukat ang galaw na wala sa karaniwang listahan." },
+  "exercises": { "columnName": "Ehersisyo", "columnInstructions": "Mga tagubilin", "description": "Ang mga ehersisyong maitatalaga mo.", "mine": "Aking mga ehersisyo", "standard": "Mga karaniwang ehersisyo", "emptyTitle": "Wala pang custom na ehersisyo", "emptyDetail": "Magdagdag ng isa para masukat ang galaw na wala sa karaniwang listahan." },
   "toast": {
     "saving": "Sine-save…",
     "invitationCreated": "Nagawa ang imbitasyon. Ibahagi ang code sa iyong pasyente.", "accessRevoked": "Binawi ang access ng pasyente.", "published": "Nailathala ang reseta. Awtomatiko itong makakarating sa telepono ng pasyente kapag online siya.",
@@ -64,17 +65,19 @@
   },
   "useMobile": { "title": "Gamitin ang Motivance mobile app", "detail": "Kailangan ng iyong mga ehersisyo ang camera ng telepono, kaya sa mobile app ito ginagawa. Para sa mga therapist at administrador ang website na ito." },
   "home": {
+    "subtitle": "Ang galaw ng iyong mga pasyente, at kung sino ang nangangailangan ng plano.", "withoutPlan": "Walang plano",
     "greeting": "Kumusta, {{name}}", "latestMovement": "Pinakabagong galaw", "latestMovementDetail": "Ang maputlang banda ang nireseta na saklaw. Ang maliwanag na arko ang nasukat.",
     "targetBand": "Nireseta {{low}}° hanggang {{high}}°", "patients": "Mga pasyente", "plans": "Aktibong plano", "sessions": "Kamakailang sesyon", "sessionsDetail": "Hanggang sa pinakabagong 20",
     "recentPatients": "Iyong mga pasyente", "seeAll": "Tingnan lahat", "emptyTitle": "Imbitahan ang una mong pasyente", "emptyDetail": "Kapag tinanggap ng pasyente, makakapagtalaga ka ng ehersisyo at masusubaybayan dito ang kanyang galaw.",
     "noSessionsTitle": "Wala pang sesyon", "noSessionsDetail": "Lalabas dito ang nasukat na galaw kapag natapos ng pasyente ang isang ehersisyo."
   },
   "patients": {
+    "columnPatient": "Pasyente", "columnExercise": "Pinakabagong ehersisyo", "columnRange": "Galaw", "columnPlans": "Mga plano", "columnLast": "Huling sesyon", "columnActions": "Mga aksyon",
     "description": "Lahat ng nakaugnay sa iyong pangangalaga.", "open": "Buksan si {{name}}", "plans_one": "{{count}} plano", "plans_other": "{{count}} plano",
     "reached": "Gumalaw ng {{low}}° hanggang {{high}}°", "prescribed": "Nireseta {{low}}° hanggang {{high}}°", "noSessions": "Wala pang sesyon.", "noPlan": "Wala pang nakatalagang ehersisyo.",
     "actions": "Mga aksiyon para kay {{name}}", "revoke": "Bawiin ang access", "dial": "Nasukat na {{low}} hanggang {{high}} degrees laban sa nireseta na {{targetLow}} hanggang {{targetHigh}} degrees", "dialTarget": "Nireseta {{targetLow}} hanggang {{targetHigh}} degrees",
     "invite": "Imbitahan ang pasyente", "inviteDetail": "Ilagay ang email na ginamit ng pasyente sa pag-sign up.", "inviteShare": "Ibahagi ang code na ito sa pasyente. Ilalagay niya ito sa mobile app para makakonekta sa iyo.", "createInvite": "Gumawa ng imbitasyon",
-    "emptyTitle": "Wala pang pasyente", "emptyDetail": "Mag-imbita ng pasyente sa pamamagitan ng email. Kokonekta siya gamit ang code sa mobile app.", "searchHint": "Pangalan", "sortName": "Pangalan", "sortRecent": "Pinakabagong sesyon", "sortPlans": "Pinakamaraming plano",
+    "emptyTitle": "Wala pang pasyente", "emptyDetail": "Mag-imbita ng pasyente sa pamamagitan ng email. Kokonekta siya gamit ang code sa mobile app.", "searchHint": "Pangalan",
     "shown_one": "{{count}} pasyente ang ipinapakita", "shown_other": "{{count}} pasyente ang ipinapakita", "noMatch": "Walang pasyenteng tumutugma sa “{{query}}”.",
     "revokeTitle": "Bawiin ang access kay {{name}}?", "revokeMessage": "Mawawalan ka ng access sa mga tala ni {{name}}, at matatapos ang iyong aktibong takda para sa pasyenteng ito."
   },
@@ -106,6 +109,7 @@
   },
   "joints": { "SHOULDER": "Balikat", "ELBOW": "Siko", "WRIST": "Pulso", "HIP": "Balakang", "KNEE": "Tuhod", "ANKLE": "Bukung-bukong" },
   "admin": {
+    "eventColumn": "Pangyayari", "affectedColumn": "Apektado", "categoryColumn": "Kategorya", "byColumn": "Gumawa", "whenColumn": "Kailan", "versionColumn": "Bersiyon", "typeColumn": "Uri", "standard": "Karaniwan", "accountsByRole": "Mga account ayon sa tungkulin", "coverage": "Saklaw ng pangangalaga", "coverageDetail": "{{linked}} sa {{total}} pasyente ang may aktibong therapist.", "adminsCount": "{{count}} administrator",
     "roles": "Mga tungkulin", "eventLink": "{{therapist}} → {{patient}}", "eventReference": "Sanggunian {{reference}}", "failed": "Hindi natapos ang pagbabago. Suriin ang koneksiyon at access bilang administrator, saka subukang muli.", "savedAccount": "Na-update ang status ng account.", "savedRole": "Na-update ang access. Agad itong ilalapat sa server.", "savedLink": "Na-update ang ugnayan ng care team.", "savedExercise": "Na-update ang availability ng ehersisyo.", "savedPublish": "Nailathala ang bagong bersiyon ng ehersisyo.", "savedPhoto": "Inalis ang larawan sa profile.",
     "title": "Administrasyon", "scope": "Pamahalaan ang mga account, ugnayan ng care team at katalogo ng ehersisyo. Kinukumpirma at itinatala ang bawat pagbabago.",
     "accounts": "Mga account", "patients": "Mga pasyente", "therapists": "Mga therapist", "admins": "Mga administrator", "activeLinks": "Aktibong ugnayan", "activeExercises": "Aktibong ehersisyo", "sessions": "Mga sesyon", "requests": "Kahilingan sa privacy",
@@ -129,8 +133,7 @@
     "name": "Pangalan ng ehersisyo", "instructionsEn": "Tagubilin sa English", "instructionsFil": "Tagubilin sa Filipino", "required": "Kailangan", "unsaved": "Hindi pa nai-save", "edit": "I-edit", "publish": "Suriin at ilathala", "publishVersion": "Ilathala ang bersiyon {{version}}", "confirmPublish": "Ilathala ang bersiyon {{version}} ng {{name}}? Gagamitin ng mga bagong reseta ang tekstong ito. Hindi na mababago ang nailathalang bersiyon.", "discard": "Itapon ang pagbabago", "closeEditor": "Isara ang editor",
     "activate": "I-activate ang ehersisyo", "deactivate": "I-deactivate ang ehersisyo", "activateShort": "I-activate", "deactivateShort": "I-deactivate", "confirmActivate": "Maaari nang muling ireseta ng mga therapist ang {{name}}.", "confirmDeactivate": "Hindi maireseta ng mga therapist ang {{name}} habang hindi ito aktibo.",
     "activityHelp": "Hindi nababago ang mga audit record. Ipinapakita nito kung sino ang gumawa ng bawat pagbabago at kailan.", "activityEmpty": "Walang aktibidad na maipapakita", "activityEmptyDetail": "Lalabas dito ang mga itinalang pagbabago habang nangyayari ang mga ito.", "activityEmptyMore": "Walang tugma sa na-load na tala. Mag-load ng mas lumang aktibidad para tumingin pa.", "activityMore": "Mag-load ng mas lumang aktibidad",
-    "category": { "accounts": "Account at tungkulin", "links": "Ugnayan", "catalogue": "Katalogo", "clinical": "Klinikal", "privacy": "Privacy" },
-    "eventBy": "Gumawa: {{actor}}", "eventSystem": "System",
+    "category": { "accounts": "Account at tungkulin", "links": "Ugnayan", "catalogue": "Katalogo", "clinical": "Klinikal", "privacy": "Privacy" }, "eventSystem": "System",
     "event": { "roleChanged": "Binago ang tungkulin",
       "accountEnabled": "Na-enable ang account", "accountDisabled": "Na-disable ang account", "roleGranted": "Naibigay ang tungkulin", "roleRemoved": "Inalis ang tungkulin", "linkCreated": "Nagawa ang ugnayan", "linkUpdated": "Na-update ang ugnayan", "invitation": "Nagawa ang imbitasyon sa pasyente",
       "exerciseActivated": "Na-activate ang ehersisyo", "exerciseDeactivated": "Na-deactivate ang ehersisyo", "versionPublished": "Nailathala ang bersiyon ng ehersisyo", "prescription": "Nailathala ang reseta", "session": "Naitala ang sesyon", "consent": "Naitala ang pahintulot",

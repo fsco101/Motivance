@@ -2,7 +2,7 @@ import type { CatalogueExercise } from '@/data/catalogue'
 import type { HistoricalSession } from '@/data/history'
 import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent } from '@/features/admin/types'
-import type { PatientSummary } from '@/features/therapist/PatientCard'
+import type { PatientSummary } from '@/features/therapist/PatientTable'
 import type { PatientRecord } from '@/features/therapist/PatientRecordView'
 import type { TherapistHome } from '@/features/therapist/TherapistHomeView'
 
@@ -21,7 +21,7 @@ export const patients: PatientSummary[] = [
 ]
 
 export const therapistHome: TherapistHome = {
-  name: 'Dana', patients: 18, plans: 24, sessions: 20,
+  name: 'Dana', patients: 18, plans: 24, sessions: 20, withoutPlan: 2,
   latest: patients.flatMap((p) => (p.latest?.reached ? [{ id: `s-${p.id}`, patientId: p.id, patient: p.name, exercise: p.latest.exercise, low: p.latest.low, high: p.latest.high, reached: p.latest.reached }] : [])),
   recent: patients.slice(0, 3),
 }

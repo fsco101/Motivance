@@ -3,10 +3,8 @@ import { m as motion } from 'motion/react'
 import { Avatar as RadixAvatar, Tooltip as RadixTooltip } from 'radix-ui'
 import { useId, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 import { cn } from '@/lib/cn'
 import { MotionArc } from '@/motion/MotionArc'
-import { RollingNumber } from '@/motion/RollingNumber'
 import { spring } from '@/motion/tokens'
 import { Button } from './Button'
 
@@ -29,7 +27,7 @@ const tones = {
 }
 
 export function StatusPill({ tone = 'neutral', icon, children, className }: { tone?: keyof typeof tones; icon?: ReactNode; children: ReactNode; className?: string }) {
-  return <span className={cn('inline-flex min-h-6 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-sm font-semibold', tones[tone], className)}>{icon}{children}</span>
+  return <span className={cn('inline-flex min-h-5.5 items-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold', tones[tone], className)}>{icon}{children}</span>
 }
 
 export function Skeleton({ className }: { className?: string }) {
@@ -42,10 +40,10 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function EmptyState({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-start gap-3 py-10">
-      <MotionArc progress={0} size={72} stroke={7} />
-      <h3 className="text-xl font-bold">{title}</h3>
-      <p className="max-w-[52ch] text-slate">{detail}</p>
+    <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+      <MotionArc progress={0} size={56} stroke={6} />
+      <h3 className="text-lg font-bold">{title}</h3>
+      <p className="max-w-[52ch] text-sm text-slate">{detail}</p>
       {action}
     </div>
   )
@@ -69,25 +67,12 @@ export function Notice({ tone = 'error', title, children, onRetry, className }: 
 }
 
 /** A number without a box around it: the digits carry the weight, not a card. */
-export function Readout({ value, label, detail, to, tone }: { value: number | string; label: string; detail?: string; to?: string; tone?: 'caution' }) {
-  const body = (
-    <>
-      <span className={cn('numeric block text-5xl font-bold', tone === 'caution' && 'text-amber-ink')}>
-        {typeof value === 'number' ? <RollingNumber value={value} /> : value}
-      </span>
-      <span className="mt-1 block font-semibold">{label}</span>
-      {detail && <span className="block text-sm text-slate">{detail}</span>}
-    </>
-  )
-  return to ? <Link to={to} className="group block rounded-control transition-colors transition-quick hover:text-lagoon-deep">{body}</Link> : <div>{body}</div>
-}
-
 export function PageHeader({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children?: ReactNode }) {
   return (
-    <header className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-      <div className="min-w-0 max-w-[62ch]">
-        <h1 className="text-4xl font-bold">{title}</h1>
-        {description && <p className="mt-2 text-lg text-slate">{description}</p>}
+    <header className="mb-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+      <div className="min-w-0 max-w-[72ch]">
+        <h1 className="text-title font-bold">{title}</h1>
+        {description && <p className="mt-0.5 text-sm text-slate">{description}</p>}
         {children}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -95,12 +80,25 @@ export function PageHeader({ title, description, actions, children }: { title: s
   )
 }
 
-export function SectionHeading({ title, action, className }: { title: string; action?: ReactNode; className?: string }) {
+type PanelProps = { title?: string; description?: string; action?: ReactNode; toolbar?: ReactNode; footer?: ReactNode; flush?: boolean; children: ReactNode; className?: string }
+
+/** The surface of the workspace: a titled area with an optional toolbar and footer. `flush` is for tables, which bring their own padding. */
+export function Panel({ title, description, action, toolbar, footer, flush, children, className }: PanelProps) {
   return (
-    <div className={cn('mb-3 flex items-center justify-between gap-4', className)}>
-      <h2 className="text-2xl font-bold">{title}</h2>
-      {action}
-    </div>
+    <section className={cn('overflow-clip rounded-card border border-line bg-paper shadow-rest', className)}>
+      {title && (
+        <div className={cn('flex items-start justify-between gap-4 px-5 pt-4', flush ? 'border-b border-line pb-3' : 'pb-1')}>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold">{title}</h2>
+            {description && <p className="text-sm text-slate">{description}</p>}
+          </div>
+          {action}
+        </div>
+      )}
+      {toolbar && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-2.5">{toolbar}</div>}
+      <div className={flush ? undefined : 'px-5 pb-5 pt-3'}>{children}</div>
+      {footer && <div className="border-t border-line px-4 py-2.5">{footer}</div>}
+    </section>
   )
 }
 
@@ -124,14 +122,14 @@ type TabsProps = { value: string; onChange: (value: string) => void; label: stri
 export function Tabs({ value, onChange, label, tabs, className }: TabsProps) {
   const group = useId()
   return (
-    <div role="group" aria-label={label} className={cn('flex flex-wrap gap-x-6 border-b border-line', className)}>
+    <div role="group" aria-label={label} className={cn('inline-flex max-w-full flex-wrap gap-0.5 rounded-control bg-mist p-0.5', className)}>
       {tabs.map((tab) => {
         const active = tab.value === value
         return (
           <button key={tab.value} type="button" aria-pressed={active} onClick={() => onChange(tab.value)}
-            className={cn('relative min-h-11 font-semibold transition-colors transition-quick hover:text-ink', active ? 'text-ink' : 'text-slate')}>
-            {tab.label}{tab.count !== undefined && <span className="numeric ml-1.5 text-sm font-normal text-slate">{tab.count}</span>}
-            {active && <motion.span layoutId={group} transition={spring.needle} className="absolute inset-x-0 -bottom-px h-0.5 bg-lagoon" />}
+            className={cn('relative min-h-8 rounded-md px-3 text-sm font-semibold transition-colors transition-quick hover:text-ink', active ? 'text-ink' : 'text-slate')}>
+            {active && <motion.span layoutId={group} transition={spring.needle} className="absolute inset-0 rounded-md bg-paper shadow-rest" />}
+            <span className="relative">{tab.label}{tab.count !== undefined && <span className="numeric ml-1.5 text-xs font-normal text-slate">{tab.count}</span>}</span>
           </button>
         )
       })}

@@ -1,15 +1,14 @@
 import { CheckIcon, CopyIcon, MagnifyingGlassIcon, PlusIcon } from '@phosphor-icons/react'
-import { AnimatePresence, m as motion } from 'motion/react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, IconButton } from '@/components/Button'
+import type { Sort } from '@/components/DataTable'
 import { ConfirmDialog, Dialog } from '@/components/Dialog'
-import { EmptyState, Notice, PageHeader } from '@/components/Display'
-import { SelectField, TextField } from '@/components/Field'
+import { EmptyState, Notice, PageHeader, Panel } from '@/components/Display'
+import { TextField } from '@/components/Field'
 import { failureKey } from '@/data/errors'
-import { Loadable, SkeletonCards, type Load } from '@/features/shared'
-import { spring } from '@/motion/tokens'
-import { PatientCard, type PatientSummary } from './PatientCard'
+import { Loadable, SkeletonLines, type Load } from '@/features/shared'
+import { PatientTable, type PatientSummary } from './PatientTable'
 
 function Invite({ open, onOpenChange, onInvite }: { open: boolean; onOpenChange: (open: boolean) => void; onInvite: (email: string) => Promise<string> }) {
   const { t } = useTranslation()
@@ -57,44 +56,30 @@ function Invite({ open, onOpenChange, onInvite }: { open: boolean; onOpenChange:
 export function PatientsView({ load, base, onInvite, onRevoke }: { load: Load<PatientSummary[]>; base: string; onInvite: (email: string) => Promise<string>; onRevoke: (id: string) => void }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
-  const [sort, setSort] = useState('name')
+  const [sort, setSort] = useState<Sort>({ key: 'name', direction: 'asc' })
   const [inviting, setInviting] = useState(false)
   const [revoking, setRevoking] = useState<PatientSummary | null>(null)
   const patients = load.status === 'ready' ? load.data : null
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return (patients ?? []).filter((patient) => patient.name.toLowerCase().includes(needle)).sort((a, b) => (
-      sort === 'plans' ? b.plans - a.plans || a.name.localeCompare(b.name)
-        : sort === 'recent' ? (b.latest?.when ?? '').localeCompare(a.latest?.when ?? '') : a.name.localeCompare(b.name)
-    ))
+    const order = sort.direction === 'asc' ? 1 : -1
+    return (patients ?? []).filter((patient) => patient.name.toLowerCase().includes(needle)).sort((a, b) => order * (
+      sort.key === 'plans' ? a.plans - b.plans : sort.key === 'recent' ? (a.latest?.when ?? '').localeCompare(b.latest?.when ?? '') : 0
+    ) || a.name.localeCompare(b.name) * (sort.key === 'name' ? order : 1))
   }, [patients, query, sort])
   return (
     <>
       <PageHeader title={t('nav.patients')} description={t('patients.description')} actions={<Button onClick={() => setInviting(true)} leading={<PlusIcon weight="bold" aria-hidden />}>{t('patients.invite')}</Button>} />
-      <Loadable load={load} skeleton={<SkeletonCards />}>
+      <Loadable load={load} skeleton={<SkeletonLines />}>
         {(data) => data.length === 0 ? (
-          <EmptyState title={t('patients.emptyTitle')} detail={t('patients.emptyDetail')} action={<Button onClick={() => setInviting(true)}>{t('patients.invite')}</Button>} />
+          <Panel><EmptyState title={t('patients.emptyTitle')} detail={t('patients.emptyDetail')} action={<Button onClick={() => setInviting(true)}>{t('patients.invite')}</Button>} /></Panel>
         ) : (
-          <>
-            <div className="mb-5 flex flex-wrap items-end gap-4">
-              <TextField label={t('common.search')} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('patients.searchHint')} className="min-w-64 flex-1"
-                trailing={<MagnifyingGlassIcon aria-hidden className="mr-2.5 text-lg text-slate" />} />
-              <SelectField label={t('common.sortBy')} value={sort} onChange={setSort} className="w-56"
-                options={[{ value: 'name', label: t('patients.sortName') }, { value: 'recent', label: t('patients.sortRecent') }, { value: 'plans', label: t('patients.sortPlans') }]} />
-            </div>
-            <p role="status" className="sr-only">{t('patients.shown', { count: shown.length })}</p>
-            {shown.length === 0 ? <Notice tone="info">{t('patients.noMatch', { query })}</Notice> : (
-              <motion.ul layout className="grid gap-4 tablet:grid-cols-2 wide:grid-cols-3">
-                <AnimatePresence initial={false}>
-                  {shown.map((patient) => (
-                    <motion.li key={patient.id} layout="position" className="h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={spring.layout}>
-                      <PatientCard patient={patient} to={`${base}/patients/${patient.id}`} onRevoke={() => setRevoking(patient)} />
-                    </motion.li>
-                  ))}
-                </AnimatePresence>
-              </motion.ul>
-            )}
-          </>
+          <Panel flush
+            toolbar={<TextField label={t('common.search')} labelHidden value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('patients.searchHint')} className="w-80" trailing={<MagnifyingGlassIcon aria-hidden className="mr-2.5 text-lg text-slate" />} />}
+            footer={<p role="status" className="text-sm text-slate">{t('patients.shown', { count: shown.length })}</p>}>
+            {shown.length === 0 ? <div className="p-4"><Notice tone="info">{t('patients.noMatch', { query })}</Notice></div>
+              : <PatientTable patients={shown} base={base} sort={sort} onSort={setSort} onRevoke={setRevoking} />}
+          </Panel>
         )}
       </Loadable>
       <Invite key={String(inviting)} open={inviting} onOpenChange={setInviting} onInvite={onInvite} />

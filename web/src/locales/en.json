@@ -6,6 +6,7 @@
     "loadFailedTitle": "This page could not load", "loadFailed": "Check your connection and try again."
   },
   "nav": {
+    "workspace": { "admin": "Administration", "therapist": "Therapist workspace" },
     "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
     "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here"
   },
@@ -41,7 +42,7 @@
     "removeDetail": "You can no longer assign it. Patients who already have it keep it, and their results stay in their history.", "zeroStraight": "0° is the joint held straight. The angle rises as it bends.", "zeroSide": "0° is the arm resting at the side. The angle rises as it lifts.",
     "zeroAnkle": "About 90° with the foot flat. The angle rises as the foot lifts toward the shin.", "cameraLimit": "The camera measures in 2D. The patient needs to stay upright, with the shoulder, hip and this joint in view."
   },
-  "exercises": { "description": "The exercises you can assign.", "mine": "My exercises", "standard": "Standard exercises", "emptyTitle": "No custom exercises yet", "emptyDetail": "Add one to measure a movement that is not in the standard list." },
+  "exercises": { "columnName": "Exercise", "columnInstructions": "Instructions", "description": "The exercises you can assign.", "mine": "My exercises", "standard": "Standard exercises", "emptyTitle": "No custom exercises yet", "emptyDetail": "Add one to measure a movement that is not in the standard list." },
   "toast": {
     "saving": "Saving…",
     "invitationCreated": "Invitation created. Share the code with your patient.", "accessRevoked": "Patient access revoked.", "published": "Prescription published. It reaches the patient’s phone automatically while they are online.",
@@ -64,17 +65,19 @@
   },
   "useMobile": { "title": "Use the Motivance mobile app", "detail": "Your exercises need the phone camera, so they run in the mobile app. This website is for therapists and administrators." },
   "home": {
+    "subtitle": "How your patients are moving, and who needs a plan.", "withoutPlan": "Without a plan",
     "greeting": "Hello, {{name}}", "latestMovement": "Latest movement", "latestMovementDetail": "The pale band is the prescribed range. The bright arc is what was measured.",
     "targetBand": "Prescribed {{low}}° to {{high}}°", "patients": "Patients", "plans": "Active plans", "sessions": "Recent sessions", "sessionsDetail": "Up to the latest 20",
     "recentPatients": "Your patients", "seeAll": "See all", "emptyTitle": "Invite your first patient", "emptyDetail": "Once a patient accepts, you can assign exercises and follow their movement here.",
     "noSessionsTitle": "No sessions yet", "noSessionsDetail": "Measured movement appears here after a patient finishes an exercise."
   },
   "patients": {
+    "columnPatient": "Patient", "columnExercise": "Latest exercise", "columnRange": "Movement", "columnPlans": "Plans", "columnLast": "Last session", "columnActions": "Actions",
     "description": "Everyone linked to your care.", "open": "Open {{name}}", "plans_one": "{{count}} plan", "plans_other": "{{count}} plans",
     "reached": "Moved {{low}}° to {{high}}°", "prescribed": "Prescribed {{low}}° to {{high}}°", "noSessions": "No sessions yet.", "noPlan": "No exercise assigned yet.",
     "actions": "Actions for {{name}}", "revoke": "Revoke access", "dial": "Measured {{low}} to {{high}} degrees against a prescribed {{targetLow}} to {{targetHigh}} degrees", "dialTarget": "Prescribed {{targetLow}} to {{targetHigh}} degrees",
     "invite": "Invite patient", "inviteDetail": "Enter the email the patient signed up with.", "inviteShare": "Share this code with the patient. They enter it in the mobile app to connect with you.", "createInvite": "Create invitation",
-    "emptyTitle": "No patients yet", "emptyDetail": "Invite a patient by email. They connect with a code in the mobile app.", "searchHint": "Name", "sortName": "Name", "sortRecent": "Latest session", "sortPlans": "Most plans",
+    "emptyTitle": "No patients yet", "emptyDetail": "Invite a patient by email. They connect with a code in the mobile app.", "searchHint": "Name",
     "shown_one": "{{count}} patient shown", "shown_other": "{{count}} patients shown", "noMatch": "No patient matches “{{query}}”.",
     "revokeTitle": "Revoke access to {{name}}?", "revokeMessage": "You will lose access to {{name}}’s records, and your active assignments for this patient will end."
   },
@@ -106,6 +109,7 @@
   },
   "joints": { "SHOULDER": "Shoulder", "ELBOW": "Elbow", "WRIST": "Wrist", "HIP": "Hip", "KNEE": "Knee", "ANKLE": "Ankle" },
   "admin": {
+    "eventColumn": "Event", "affectedColumn": "Affected", "categoryColumn": "Category", "byColumn": "By", "whenColumn": "When", "versionColumn": "Version", "typeColumn": "Type", "standard": "Standard", "accountsByRole": "Accounts by role", "coverage": "Care coverage", "coverageDetail": "{{linked}} of {{total}} patients have an active therapist.", "adminsCount": "{{count}} administrators",
     "roles": "Roles", "eventLink": "{{therapist}} → {{patient}}", "eventReference": "Reference {{reference}}", "failed": "The change could not be completed. Check your connection and administrator access, then try again.", "savedAccount": "Account status updated.", "savedRole": "Access updated. The change applies on the server immediately.", "savedLink": "Care-team link updated.", "savedExercise": "Exercise availability updated.", "savedPublish": "New exercise version published.", "savedPhoto": "Profile photo removed.",
     "title": "Administration", "scope": "Manage accounts, care-team links and the exercise catalogue. Every change is confirmed and audited.",
     "accounts": "Accounts", "patients": "Patients", "therapists": "Therapists", "admins": "Administrators", "activeLinks": "Active links", "activeExercises": "Active exercises", "sessions": "Sessions", "requests": "Privacy requests",
@@ -129,8 +133,7 @@
     "name": "Exercise name", "instructionsEn": "English instructions", "instructionsFil": "Filipino instructions", "required": "Required", "unsaved": "Unsaved changes", "edit": "Edit", "publish": "Review and publish", "publishVersion": "Publish version {{version}}", "confirmPublish": "Publish version {{version}} of {{name}}? New prescriptions will use this text. Published versions cannot be edited.", "discard": "Discard changes", "closeEditor": "Close editor",
     "activate": "Activate exercise", "deactivate": "Deactivate exercise", "activateShort": "Activate", "deactivateShort": "Deactivate", "confirmActivate": "Therapists will be able to prescribe {{name}} again.", "confirmDeactivate": "Therapists will not be able to prescribe {{name}} while it is inactive.",
     "activityHelp": "Audit records are append-only. They show who made each change and when.", "activityEmpty": "No activity to show", "activityEmptyDetail": "Audited changes appear here as they happen.", "activityEmptyMore": "No loaded records match this filter. Load older activity to look further back.", "activityMore": "Load older activity",
-    "category": { "accounts": "Accounts and roles", "links": "Links", "catalogue": "Catalogue", "clinical": "Clinical", "privacy": "Privacy" },
-    "eventBy": "By {{actor}}", "eventSystem": "System",
+    "category": { "accounts": "Accounts and roles", "links": "Links", "catalogue": "Catalogue", "clinical": "Clinical", "privacy": "Privacy" }, "eventSystem": "System",
     "event": { "roleChanged": "Role changed",
       "accountEnabled": "Account enabled", "accountDisabled": "Account disabled", "roleGranted": "Role granted", "roleRemoved": "Role removed", "linkCreated": "Link created", "linkUpdated": "Link updated", "invitation": "Patient invitation created",
       "exerciseActivated": "Exercise activated", "exerciseDeactivated": "Exercise deactivated", "versionPublished": "Exercise version published", "prescription": "Prescription published", "session": "Session recorded", "consent": "Consent recorded",
