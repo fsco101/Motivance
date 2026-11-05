@@ -111,7 +111,7 @@
         },
         {
           "id": "MOT-37-AC2",
-          "description": "Patient cards use the shared interactive card, metrics are plain linked readouts as in the approved design, and both open the matching page.",
+          "description": "Metrics use the shared interactive card, patients are listed in a table, and both open the matching page.",
           "passed": true,
           "evidence": [
             "docs/validation/WEB-THERAPIST.md",

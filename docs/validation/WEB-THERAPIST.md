@@ -29,7 +29,7 @@ Each page loads as its own download. The screens are the same views the owner re
 
 The skipped browser tests are the on-demand screenshot captures and the frame-rate measurement. The captures ran separately, as shown above.
 
-**CI has not run this work.** GitHub Actions cannot start jobs while the account is locked over billing. See [web foundation](WEB-FOUNDATION.md#continuous-integration).
+**CI has not run this work.** GitHub Actions cannot start jobs on this account, and the owner decided not to depend on it. See [web foundation](WEB-FOUNDATION.md#continuous-integration).
 
 ## Acceptance evidence
 
@@ -38,14 +38,14 @@ The skipped browser tests are the on-demand screenshot captures and the frame-ra
 | Criterion | Proven by |
 | --- | --- |
 | MOT-37-AC1 | `home counts come from the server…`, `a new therapist is told what to do first`, `…tells loading, failure and an empty list apart` |
-| MOT-37-AC2 | `home counts come from the server…`. Patient cards use the shared interactive card. Metrics are plain linked readouts, the design the owner approved in S6, so the criterion's wording was updated |
+| MOT-37-AC2 | `home counts come from the server…`. Metrics use the shared interactive card. Patients are a table after the owner's desktop redesign, so the criterion's wording was updated |
 | MOT-37-AC3 | `home counts…invent no score` |
 | MOT-37-AC4 | `the whole page works by keyboard, and a refresh keeps the list on screen` |
 | MOT-38-AC1 | `the list shows linked patients only, and can be searched and sorted` |
 | MOT-38-AC2 | Contract: `keeps one therapist's patients and custom exercises from another`, `shows someone who is also an administrator only the patients linked to them`. Browser: `a patient who is not linked cannot be reached through the address bar` |
 | MOT-38-AC3 | `an invitation code copies, and the button says so in place` |
 | MOT-38-AC4 | `revoking needs a confirmation that names the patient, and ends access` |
-| MOT-38-AC5 | `the whole page works by keyboard…`, `each card is one link and one menu in the tab order`, `the patient actions menu opens with Enter, Space and ArrowDown` |
+| MOT-38-AC5 | `the whole page works by keyboard…`, `each patient row is one link and one menu in the tab order`, `the patient actions menu opens with Enter, Space and ArrowDown` |
 | MOT-39-AC1 | `the record puts everything side by side on wide screens and stacks it on narrow ones` |
 | MOT-39-AC2 | `each plan card shows its details, and only the therapist who assigned it can edit` |
 | MOT-39-AC3 | `a removed exercise leaves the list but stays named on the plan` |

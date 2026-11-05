@@ -1,4 +1,4 @@
-import { CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
 import type { ReactNode } from 'react'
@@ -28,36 +28,41 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
   ],
 }
 
-/** A slim instrument rail: the graduated edge is the goniometer's scale, and a needle marks where you are. */
-function Rail({ workspace, base }: { workspace: Workspace; base: string }) {
+/**
+ * The sidebar keeps the goniometer's graduated edge, and a needle marks where you are. On a narrow window it folds to icons,
+ * and the labels stay for screen readers.
+ */
+function Sidebar({ workspace, base }: { workspace: Workspace; base: string }) {
   const { t } = useTranslation()
   return (
     <div className="bg-ink">
-    <nav aria-label={t('nav.main')} className="on-dark graduated sticky top-0 flex h-dvh w-24 flex-col text-night-ink">
-      <Link to={base} aria-label={t('nav.home')} className="grid place-items-center py-5">
-        <img src="/logo-96.png" alt="" width={40} height={40} className="rounded-lg" />
-      </Link>
-      <ul className="mt-3 flex flex-col gap-1 pr-3">
-        {NAV[workspace].map((item) => (
-          <li key={item.label}>
-            <NavLink to={item.path ? `${base}/${item.path}` : base} end={item.end}
-              className={({ isActive }) => cn('relative flex min-h-16 flex-col items-center justify-center gap-1 pl-2 text-xs font-semibold transition-colors transition-quick hover:text-paper', isActive && 'text-paper')}>
-              {({ isActive }) => (
-                <>
-                  <item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="text-2xl" />
-                  <span className="text-center leading-tight">{t(item.label)}</span>
-                  {isActive && (
-                    <motion.span layoutId="rail-needle" transition={spring.needle} aria-hidden className="absolute -right-3 top-[calc(50%-1px)] flex h-0.5 w-6 items-center bg-sprout-bright">
-                      <span className="-ml-1 size-2 rounded-full bg-sprout-bright" />
-                    </motion.span>
-                  )}
-                </>
-              )}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
-    </nav>
+      <nav aria-label={t('nav.main')} className="on-dark graduated sticky top-0 flex h-dvh w-16 flex-col text-night-ink desk:w-60">
+        <Link to={base} aria-label={`Motivance, ${t('nav.home')}`} className="flex h-14 shrink-0 items-center gap-2.5 px-3.5 desk:px-5">
+          <img src="/logo-96.png" alt="" width={30} height={30} className="rounded-md" />
+          <span className="hidden font-display text-lg font-bold text-paper desk:block">Motivance</span>
+        </Link>
+        <p className="hidden px-5 pb-2 pt-4 text-xs font-semibold desk:block">{t(`nav.workspace.${workspace}`)}</p>
+        <ul className="mt-3 flex flex-col gap-0.5 pl-2 pr-4 desk:mt-0 desk:pl-3 desk:pr-5">
+          {NAV[workspace].map((item) => (
+            <li key={item.label}>
+              <NavLink to={item.path ? `${base}/${item.path}` : base} end={item.end}
+                className={({ isActive }) => cn('relative flex h-10 items-center justify-center gap-3 rounded-control text-sm font-semibold transition-colors transition-quick desk:justify-start desk:px-3', isActive ? 'bg-night-panel text-paper' : 'hover:bg-night-panel/60 hover:text-paper')}>
+                {({ isActive }) => (
+                  <>
+                    <item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="shrink-0 text-xl" />
+                    <span className="sr-only desk:not-sr-only">{t(item.label)}</span>
+                    {isActive && (
+                      <motion.span layoutId="rail-needle" transition={spring.needle} aria-hidden className="absolute -right-4 top-[calc(50%-1px)] flex h-0.5 w-4 items-center bg-sprout-bright desk:-right-5 desk:w-5">
+                        <span className="-ml-1 size-2 rounded-full bg-sprout-bright" />
+                      </motion.span>
+                    )}
+                  </>
+                )}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   )
 }
@@ -71,7 +76,6 @@ function Breadcrumbs() {
     if (!crumb) return []
     return [{ id: match.id, path: match.pathname, label: typeof crumb === 'string' ? t(crumb) : crumb(match.params) }]
   })
-  if (trail.length < 2) return <span />
   return (
     <nav aria-label={t('nav.breadcrumbs')} className="min-w-0">
       <ol className="flex items-center gap-1.5 text-sm text-slate">
@@ -93,11 +97,13 @@ export type ShellAccount = { name: string; email: string; photo?: string | null;
 
 function AccountMenu({ account, current, profilePath, onSwitch, onSignOut }: { account: ShellAccount; current: Workspace; profilePath: string; onSwitch: (workspace: Workspace) => void; onSignOut: () => void }) {
   const { t } = useTranslation()
-  const item = 'flex min-h-10 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-none data-highlighted:bg-tide'
+  const item = 'flex min-h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-sm outline-none data-highlighted:bg-tide'
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger aria-label={t('account.menu')} className="rounded-full">
-        <Avatar name={account.name} photo={account.photo} size={40} />
+      <DropdownMenu.Trigger aria-label={`${t('account.menu')}: ${account.name}`} className="flex items-center gap-2 rounded-control p-1 text-sm font-semibold transition-colors transition-quick hover:bg-mist">
+        <Avatar name={account.name} photo={account.photo} size={30} />
+        <span className="hidden max-w-40 truncate desk:block">{account.name}</span>
+        <CaretDownIcon aria-hidden className="hidden text-slate desk:block" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={8} className="z-50 w-64 rounded-control border border-line bg-paper p-1 shadow-float">
@@ -124,18 +130,18 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, children 
   const { t } = useTranslation()
   return (
     <RadixTooltip.Provider>
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-28 focus:top-3 focus:z-50 focus:rounded-control focus:bg-paper focus:px-3 focus:py-2 focus:shadow-float">{t('nav.skip')}</a>
-      <div className="grid min-h-dvh grid-cols-[6rem_minmax(0,1fr)]">
-        <Rail workspace={workspace} base={base} />
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-20 focus:top-3 focus:z-50 focus:rounded-control focus:bg-paper focus:px-3 focus:py-2 focus:shadow-float">{t('nav.skip')}</a>
+      <div className="grid min-h-dvh grid-cols-[auto_minmax(0,1fr)]">
+        <Sidebar workspace={workspace} base={base} />
         <div className="flex min-w-0 flex-col">
-          <div className="flex min-h-16 items-center justify-between gap-4 px-6 tablet:px-8 wide:px-12">
+          <div className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-line bg-paper px-5 desk:px-7">
             <Breadcrumbs />
-            <div className="flex shrink-0 items-center gap-4">
+            <div className="flex shrink-0 items-center gap-3">
               <LanguageSwitch />
               <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
             </div>
           </div>
-          <main id="main" tabIndex={-1} className="w-full max-w-[100rem] flex-1 px-6 pb-16 pt-4 outline-none tablet:px-8 wide:px-12">{children}</main>
+          <main id="main" tabIndex={-1} className="w-full max-w-[100rem] flex-1 px-5 pb-12 pt-5 outline-none desk:px-7">{children}</main>
         </div>
       </div>
     </RadixTooltip.Provider>

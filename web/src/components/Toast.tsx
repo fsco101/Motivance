@@ -47,11 +47,11 @@ export function Toaster() {
   }, [active])
   const Icon = active && active.tone !== 'pending' ? icons[active.tone] : null
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4">
+    <div className="pointer-events-none fixed right-5 top-17 z-[60] flex w-[min(24rem,calc(100vw-2.5rem))] justify-end desk:right-7">
       <AnimatePresence mode="popLayout">
         {active && (
-          <motion.div key={active.id} role={active.tone === 'error' ? 'alert' : 'status'} initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10 }} transition={spring.layout}
-            className="on-dark pointer-events-auto relative w-[min(30rem,100%)] overflow-hidden rounded-control bg-ink text-paper shadow-float">
+          <motion.div key={active.id} role={active.tone === 'error' ? 'alert' : 'status'} initial={{ opacity: 0, x: 24, scale: 0.98 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 16 }} transition={spring.layout}
+            className="on-dark pointer-events-auto relative w-full overflow-hidden rounded-control bg-ink text-paper shadow-float">
             <div className="flex items-center gap-3 py-3 pl-4 pr-2">
               {Icon ? <Icon weight="fill" aria-hidden className={cn('shrink-0 text-xl', active.tone === 'error' ? 'text-night-caution' : 'text-sprout-bright')} /> : <Spinner className="shrink-0" />}
               <p className="min-w-0 flex-1 text-sm">{active.message}</p>

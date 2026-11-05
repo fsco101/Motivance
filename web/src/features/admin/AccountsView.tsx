@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router'
 import { Button, IconButton } from '@/components/Button'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
 import { ConfirmDialog } from '@/components/Dialog'
-import { Avatar, EmptyState, Notice, PageHeader, StatusPill, Tabs } from '@/components/Display'
+import { Avatar, EmptyState, Notice, PageHeader, Panel, StatusPill, Tabs } from '@/components/Display'
 import { TextField } from '@/components/Field'
 import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { spring } from '@/motion/tokens'
@@ -42,7 +42,7 @@ function Details({ account, self, actions, onClose, confirm }: { account: AdminA
   }
   return (
     <motion.aside aria-label={t('admin.accountDetails', { name })} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={spring.layout}
-      className="rounded-card border border-line bg-paper p-5 shadow-lift desk:sticky desk:top-6">
+      className="rounded-card border border-line bg-paper p-5 shadow-rest desk:sticky desk:top-19">
       <div className="flex items-start gap-3">
         <Avatar name={name} photo={account.photo} size={52} />
         <div className="min-w-0 flex-1">
@@ -121,8 +121,8 @@ export function AccountsView({ load, self, actions }: { load: Load<{ accounts: A
     { key: 'name', header: t('admin.account'), cell: (a) => (
       <button type="button" aria-pressed={a.id === selected} onClick={(event) => { event.stopPropagation(); setSelected(a.id === selected ? null : a.id) }}
         className="flex min-w-0 items-center gap-3 rounded-control text-left">
-        <Avatar name={label(a)} photo={a.photo} size={36} />
-        <span className="min-w-0"><span className="block truncate font-semibold">{label(a)}</span><span className="block truncate text-sm text-slate">{a.email}</span></span>
+        <Avatar name={label(a)} photo={a.photo} size={32} />
+        <span className="min-w-0"><span className="block truncate font-semibold">{label(a)}</span><span className="block truncate text-xs text-slate">{a.email}</span></span>
       </button>
     ) },
     { key: 'role', header: t('admin.role'), cell: (a) => <StatusPill tone={primaryRole(a) === 'patient' ? 'neutral' : 'primary'}>{t(`admin.role${primaryRole(a) === 'admin' ? 'Admin' : primaryRole(a) === 'therapist' ? 'Therapist' : 'Patient'}`)}</StatusPill> },
@@ -132,26 +132,30 @@ export function AccountsView({ load, self, actions }: { load: Load<{ accounts: A
   return (
     <>
       <PageHeader title={t('nav.accounts')} description={t('admin.searchHelp')} />
-      <form onSubmit={search} className="mb-5 flex flex-wrap items-end gap-3">
-        <TextField label={t('admin.search')} value={query} maxLength={100} onChange={(event) => setQuery(event.target.value)} className="min-w-64 flex-1 max-w-xl" />
-        <Button type="submit" variant="secondary" leading={<MagnifyingGlassIcon aria-hidden />}>{t('admin.searchAction')}</Button>
-        {searched && <Button variant="quiet" onClick={() => { setQuery(''); setSearched(''); actions.onSearch('') }}>{t('admin.searchClear')}</Button>}
-      </form>
-      {searched && <p className="mb-3 text-slate">{t('admin.searchFor', { query: searched })}</p>}
-      <Tabs className="mb-4" label={t('admin.filterLabel')} value={filter} onChange={(value) => setFilter(value as Filter)}
-        tabs={FILTERS.map((value) => ({ value, label: t(`admin.filter.${value}`), count: accounts.filter((account) => accepts(value, account)).length }))} />
-      <Loadable load={load} skeleton={<SkeletonLines rows={8} />}>
-        {(data) => (
-          <div className={chosen ? 'grid items-start gap-6 desk:grid-cols-[minmax(0,1fr)_23rem]' : undefined}>
-            <div className="min-w-0">
+      <div className={chosen ? 'grid items-start gap-5 desk:grid-cols-[minmax(0,1fr)_22rem]' : undefined}>
+        <Panel flush className="min-w-0"
+          toolbar={(
+            <>
+              <form onSubmit={search} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <TextField label={t('admin.search')} labelHidden placeholder={t('admin.search')} value={query} maxLength={100} onChange={(event) => setQuery(event.target.value)} className="min-w-56 max-w-sm flex-1" />
+                <Button type="submit" variant="secondary" leading={<MagnifyingGlassIcon aria-hidden />}>{t('admin.searchAction')}</Button>
+                {searched && <Button variant="quiet" onClick={() => { setQuery(''); setSearched(''); actions.onSearch('') }}>{t('admin.searchClear')}</Button>}
+              </form>
+              <Tabs label={t('admin.filterLabel')} value={filter} onChange={(value) => setFilter(value as Filter)}
+                tabs={FILTERS.map((value) => ({ value, label: t(`admin.filter.${value}`), count: accounts.filter((account) => accepts(value, account)).length }))} />
+            </>
+          )}
+          footer={load.status === 'ready' && <LoadMore shown={t('admin.shownCount', { shown: shown.length, total: load.data.accounts.length })} onLoad={load.data.hasMore ? actions.onMore : undefined} busy={load.data.loadingMore} label={t('admin.more')} />}>
+          {searched && <p className="border-b border-line px-4 py-2 text-sm text-slate">{t('admin.searchFor', { query: searched })}</p>}
+          <Loadable load={load} skeleton={<div className="p-4"><SkeletonLines rows={8} /></div>}>
+            {(data) => (
               <DataTable caption={t('nav.accounts')} columns={columns} rows={shown} rowKey={(a) => a.id} onRowClick={(a) => setSelected(a.id === selected ? null : a.id)} selectedKey={selected}
                 empty={<EmptyState title={t('admin.accountsEmpty')} detail={t(data.hasMore ? 'admin.accountsEmptyMore' : 'admin.accountsEmptyDetail')} />} />
-              <LoadMore shown={t('admin.shownCount', { shown: shown.length, total: data.accounts.length })} onLoad={data.hasMore ? actions.onMore : undefined} busy={data.loadingMore} label={t('admin.more')} />
-            </div>
-            <AnimatePresence>{chosen && <Details key={chosen.id} account={chosen} self={chosen.id === self} actions={actions} onClose={() => setSelected(null)} confirm={setPending} />}</AnimatePresence>
-          </div>
-        )}
-      </Loadable>
+            )}
+          </Loadable>
+        </Panel>
+        <AnimatePresence>{chosen && <Details key={chosen.id} account={chosen} self={chosen.id === self} actions={actions} onClose={() => setSelected(null)} confirm={setPending} />}</AnimatePresence>
+      </div>
       <ConfirmDialog open={pending !== null} onOpenChange={(open) => { if (!open) setPending(null) }} title={pending?.title ?? ''} message={pending?.message ?? ''} confirmLabel={pending?.confirm ?? ''}
         destructive={pending?.destructive} onConfirm={() => pending?.run()} />
     </>

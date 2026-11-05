@@ -1,7 +1,7 @@
 import type { CatalogueExercise } from '@/data/catalogue'
 import { rehabilitationProgress, roundDegrees, usable, type HistoricalSession, type ProgressSeries } from '@/data/history'
 import type { LinkedPatient, PlanSummary } from '@/data/workspace'
-import type { PatientSummary } from './PatientCard'
+import type { PatientSummary } from './PatientTable'
 import type { FanSession } from './SessionFan'
 import type { TrendPoint } from './TrendChart'
 

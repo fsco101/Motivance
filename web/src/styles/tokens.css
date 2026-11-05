@@ -60,14 +60,19 @@
   --text-5xl--line-height: 3.9rem;
   --text-6xl: 4.5rem;
   --text-6xl--line-height: 4.5rem;
+  /* Workspace pages: a desk-sized title and figure, not a phone headline. */
+  --text-title: 1.625rem;
+  --text-title--line-height: 2rem;
+  --text-stat: 1.875rem;
+  --text-stat--line-height: 2.25rem;
 
   /* Radius follows importance, not one value everywhere. */
-  --radius-control: 0.625rem;
-  --radius-card: 1.125rem;
-  --radius-stage: 1.75rem;
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-stage: 1rem;
 
   /* Elevation is tinted with Ink, and only interactive things rise. */
-  --shadow-rest: 0 1px 0 rgb(13 43 54 / 0.05);
+  --shadow-rest: 0 1px 2px rgb(13 43 54 / 0.05);
   --shadow-lift: 0 18px 34px -22px rgb(13 43 54 / 0.42), 0 2px 6px -2px rgb(13 43 54 / 0.1);
   --shadow-float: 0 26px 60px -24px rgb(6 34 41 / 0.5);
 

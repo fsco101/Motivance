@@ -23,7 +23,7 @@ Date: 2026-11-05. Local engineering evidence for MOT-43 to MOT-46: a development
 | Parity check | 10 functions called by both apps, and the check's own test passes |
 | Initial JavaScript | 293 KB compressed, budget 300 KB |
 
-**CI has not run this work.** GitHub Actions cannot start jobs while the account is locked over billing. MOT-43-AC3 asks for the parity check to run in CI, so MOT-43 stays open until it has.
+**CI has not run this work.** GitHub Actions cannot start jobs while the account is locked over billing. The owner decided not to depend on it, because the account is on GitHub's free tier. MOT-43-AC3 asks for the parity check to run in CI, so that criterion is recorded as deferred, not passed.
 
 ## Acceptance evidence
 
@@ -31,7 +31,7 @@ Date: 2026-11-05. Local engineering evidence for MOT-43 to MOT-46: a development
 | --- | --- |
 | MOT-43-AC1 | [ADMIN-PARITY.md](../architecture/ADMIN-PARITY.md) |
 | MOT-43-AC2 | `check_admin_parity.py`, `test_admin_parity.py` |
-| MOT-43-AC3 | **Not yet shown.** The step is in `web-ci.yml`, `android-ci.yml` and `database-ci.yml`, but no job can start |
+| MOT-43-AC3 | **Deferred, not passed.** The step is in `web-ci.yml`, `android-ci.yml` and `database-ci.yml`, but no job can start. It passes locally |
 | MOT-43-AC4 | `AGENTS.md`, `docs/PLAN.md` |
 | MOT-43-AC5 | The gaps section of the matrix |
 | MOT-44-AC1, AC2 | `the overview shows every count and leads to each section`, contract `counts the whole system, not one page` |

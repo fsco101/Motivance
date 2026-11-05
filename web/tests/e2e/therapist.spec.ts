@@ -92,7 +92,6 @@ test('a published prescription lands with the chosen values', async () => {
 })
 
 test('editing makes a new version of the same plan', async () => {
-  await page.getByRole('button', { name: /Elbow flexion/ }).click()
   await page.getByRole('link', { name: 'Edit plan' }).click()
   await expect(page.getByRole('spinbutton', { name: 'Target angle' })).toHaveValue('110')
   await expect(page.getByRole('radio', { name: 'Right side' })).toHaveAttribute('aria-checked', 'true')

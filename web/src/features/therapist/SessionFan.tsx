@@ -27,10 +27,10 @@ export function SessionFan({ sessions, base }: { sessions: readonly FanSession[]
   const active = sessions.find((session) => session.id === activeId) ?? sessions[0]
   if (!active) return null
   return (
-    <section aria-label={t('home.latestMovement')} className="on-dark grid gap-6 rounded-stage bg-ink p-6 text-paper tablet:p-8 desk:grid-cols-[minmax(0,1fr)_17rem]">
+    <section aria-label={t('home.latestMovement')} className="on-dark grid items-center gap-6 rounded-card bg-ink p-5 text-paper desk:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] desk:gap-10">
       <div className="min-w-0">
-        <h2 className="text-2xl font-bold">{t('home.latestMovement')}</h2>
-        <p className="mb-4 text-night-ink">{t('home.latestMovementDetail')}</p>
+        <h2 className="text-base font-bold">{t('home.latestMovement')}</h2>
+        <p className="mb-3 text-sm text-night-ink">{t('home.latestMovementDetail')}</p>
         <div className="relative">
           <svg viewBox={`0 0 ${W} ${CY + 14}`} aria-hidden className="w-full overflow-visible">
             {[0, 45, 90, 135, 180].map((degrees) => {
@@ -52,23 +52,23 @@ export function SessionFan({ sessions, base }: { sessions: readonly FanSession[]
             })}
           </svg>
           <div className="absolute inset-x-0 bottom-0 text-center">
-            <p className="numeric text-5xl font-bold">{active.reached[1]}°</p>
-            <p className="text-sm text-night-ink">{t('home.targetBand', { low: active.low, high: active.high })}</p>
+            <p className="numeric text-stat font-bold">{active.reached[1]}°</p>
+            <p className="text-xs text-night-ink">{t('home.targetBand', { low: active.low, high: active.high })}</p>
           </div>
         </div>
       </div>
-      <ul className="flex flex-col justify-center gap-1">
+      <ul className="grid content-center gap-1 tablet:grid-cols-2">
         {sessions.map((session) => {
           const on = session.id === active.id
           return (
             <li key={session.id}>
               <Link to={`${base}/patients/${session.patientId}`} onPointerEnter={() => setActiveId(session.id)} onFocus={() => setActiveId(session.id)}
-                className={cn('flex min-h-14 items-center gap-3 rounded-control px-2.5 transition-colors transition-quick', on ? 'bg-night-panel' : 'hover:bg-night-panel/60')}>
-                <Avatar name={session.patient} photo={session.photo} size={36} />
+                className={cn('flex min-h-14 items-center gap-3 rounded-control px-2.5 text-sm transition-colors transition-quick', on ? 'bg-night-panel' : 'hover:bg-night-panel/60')}>
+                <Avatar name={session.patient} photo={session.photo} size={32} />
                 <span className="min-w-0">
                   <span className="block truncate font-semibold">{session.patient}</span>
-                  <span className="block truncate text-sm text-night-ink">{session.exercise}</span>
-                  <span className="sr-only">{t('patients.dial', { low: session.reached[0], high: session.reached[1], targetLow: session.low, targetHigh: session.high })}</span>
+                  <span className="block truncate text-night-ink">{session.exercise}</span>
+                  <span className="block truncate text-xs text-night-ink">{t('patients.reached', { low: session.reached[0], high: session.reached[1] })}</span>
                 </span>
               </Link>
             </li>

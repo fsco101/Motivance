@@ -3,7 +3,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/Dialog'
-import { Avatar, Notice, PageHeader, SectionHeading } from '@/components/Display'
+import { Avatar, Notice, PageHeader, Panel } from '@/components/Display'
 import { PasswordField, SelectField, TextArea, TextField } from '@/components/Field'
 import { failureKey } from '@/data/errors'
 import { ageOn, GENDERS, PhotoFailure, usernameBlocked, validAddress, validBirthdate, validContact, validDetails, validName, validUsername, type MyProfile, type ProfileDetails } from '@/data/profile'
@@ -36,15 +36,15 @@ function PhotoPanel({ profile, actions }: { profile: MyProfile; actions: Profile
     }
   }
   return (
-    <aside className="flex flex-col gap-4">
-      <Avatar name={displayName(profile)} photo={profile.photo} size={112} />
+    <aside className="flex flex-col gap-4 rounded-card border border-line bg-paper p-5 shadow-rest">
+      <Avatar name={displayName(profile)} photo={profile.photo} size={88} />
       <div>
-        <h2 className="text-2xl font-bold">{displayName(profile)}</h2>
-        <p className="break-all text-slate">{profile.email}</p>
+        <h2 className="text-lg font-bold">{displayName(profile)}</h2>
+        <p className="break-all text-sm text-slate">{profile.email}</p>
         <p className="mt-1 text-sm text-slate">{t('profile.emailFixed')}</p>
       </div>
       <div className="border-t border-line pt-4">
-        <h3 className="font-bold">{t('profile.photo')}</h3>
+        <h3 className="text-sm font-bold">{t('profile.photo')}</h3>
         <p className="mb-3 text-sm text-slate">{t(profile.photo ? 'profile.photoSet' : 'profile.photoEmpty')}</p>
         {problem && <Notice className="mb-3">{problem}</Notice>}
         <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden aria-label={t('profile.photo')}
@@ -133,32 +133,28 @@ function Details({ profile, onSave }: { profile: MyProfile; onSave: ProfileActio
   const [editing, setEditing] = useState(false)
   if (!profile.complete) {
     return (
-      <section>
-        <SectionHeading title={t('profile.details')} />
-        <p className="-mt-2 mb-4 max-w-[62ch] text-slate">{t('profile.incomplete')}</p>
+      <Panel title={t('profile.details')} description={t('profile.incomplete')}>
         <DetailsForm profile={profile} onSave={onSave} />
-      </section>
+      </Panel>
     )
   }
   if (editing) {
     return (
-      <section>
-        <SectionHeading title={t('profile.details')} />
+      <Panel title={t('profile.details')}>
         <DetailsForm profile={profile} onCancel={() => setEditing(false)} onSave={async (details) => { await onSave(details); setEditing(false) }} />
-      </section>
+      </Panel>
     )
   }
   return (
-    <section>
-      <SectionHeading title={t('profile.details')} action={<Button variant="secondary" size="sm" leading={<PencilSimpleIcon aria-hidden />} onClick={() => setEditing(true)}>{t('profile.edit')}</Button>} />
-      <dl className="grid gap-4 tablet:grid-cols-2">
+    <Panel title={t('profile.details')} action={<Button variant="secondary" size="sm" leading={<PencilSimpleIcon aria-hidden />} onClick={() => setEditing(true)}>{t('profile.edit')}</Button>}>
+      <dl className="grid gap-4 tablet:grid-cols-3">
         <Fact term={t('profile.username')}>{profile.username}</Fact>
         <Fact term={t('profile.birthdate')}>{format.day(profile.birthdate)}</Fact>
         <Fact term={t('profile.gender')}>{t(`genders.${profile.gender}`, profile.gender)}</Fact>
         <Fact term={t('profile.contact')}>{profile.contact}</Fact>
         <Fact term={t('profile.address')}>{profile.address}</Fact>
       </dl>
-    </section>
+    </Panel>
   )
 }
 
@@ -191,17 +187,15 @@ function Password({ onPassword }: { onPassword: ProfileActions['onPassword'] }) 
     }
   }
   return (
-    <section>
-      <SectionHeading title={t('profile.password')} />
+    <Panel title={t('profile.password')} description={t('profile.passwordHelp')}>
       <form onSubmit={(event) => void submit(event)} className="flex max-w-md flex-col gap-4">
-        <p className="-mt-2 text-slate">{t('profile.passwordHelp')}</p>
         {problem && <Notice>{problem}</Notice>}
         <PasswordField label={t('profile.currentPassword')} autoComplete="current-password" value={current} error={wrong ? t('profile.currentWrong') : null} onChange={(event) => { setCurrent(event.target.value); setWrong(false) }} />
         <PasswordField label={t('profile.newPassword')} autoComplete="new-password" value={next} error={nextError} onChange={(event) => setNext(event.target.value)} />
         <PasswordField label={t('profile.confirmPassword')} autoComplete="new-password" value={confirmation} error={confirmation && confirmation !== next ? t('profile.passwordMatch') : null} onChange={(event) => setConfirmation(event.target.value)} />
         <Button type="submit" variant="secondary" className="self-start" disabled={!ready} busy={busy} busyLabel={t('profile.saving')}>{t('profile.password')}</Button>
       </form>
-    </section>
+    </Panel>
   )
 }
 
@@ -212,9 +206,9 @@ export function ProfileView({ load, actions }: { load: Load<MyProfile>; actions:
       <PageHeader title={t('account.profile')} />
       <Loadable load={load} skeleton={<SkeletonLines rows={8} />}>
         {(profile) => (
-          <div className="grid items-start gap-10 desk:grid-cols-[19rem_minmax(0,1fr)]">
+          <div className="grid items-start gap-5 desk:grid-cols-[17rem_minmax(0,1fr)]">
             <PhotoPanel profile={profile} actions={actions} />
-            <div className="flex min-w-0 flex-col gap-12">
+            <div className="flex min-w-0 flex-col gap-5">
               <Details profile={profile} onSave={actions.onSave} />
               <Password onPassword={actions.onPassword} />
             </div>

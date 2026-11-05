@@ -1,9 +1,12 @@
-import { CaretRightIcon, EnvelopeIcon, LockIcon, UserIcon, WarningIcon, type Icon } from '@phosphor-icons/react'
+import { BookOpenIcon, CaretRightIcon, EnvelopeIcon, LinkSimpleIcon, LockIcon, PulseIcon, StethoscopeIcon, UserIcon, UsersThreeIcon, WarningIcon, type Icon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { Notice, PageHeader, Readout, SectionHeading, Skeleton } from '@/components/Display'
+import { BarList } from '@/components/Charts'
+import { Notice, PageHeader, Panel, Skeleton } from '@/components/Display'
+import { StatCard } from '@/components/StatCard'
 import { Loadable, SkeletonLines, type Load } from '@/features/shared'
-import { ActivityList } from './ActivityView'
+import { MotionArc } from '@/motion/MotionArc'
+import { ActivityTable } from './ActivityView'
 import type { AdminSummary, AuditEvent } from './types'
 
 export type AdminOverview = { summary: AdminSummary; recent: AuditEvent[] }
@@ -19,29 +22,45 @@ function Attention({ summary, base }: { summary: AdminSummary; base: string }) {
     summary.activeExercises === 0 && { title: t('admin.attentionCatalogue'), detail: t('admin.attentionCatalogueDetail'), count: 0, icon: WarningIcon, to: `${base}/catalogue` },
     summary.pendingRequests > 0 && { title: t('admin.attentionRequests'), detail: t('admin.attentionRequestsDetail'), count: summary.pendingRequests, icon: EnvelopeIcon },
   ].filter((item): item is Item => Boolean(item))
-  if (items.length === 0) return <Notice tone="info">{t('admin.attentionClear')}</Notice>
+  if (items.length === 0) return <div className="p-5"><Notice tone="info">{t('admin.attentionClear')}</Notice></div>
   return (
     <ul className="divide-y divide-line">
       {items.map((item) => {
         const body = (
           <>
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-amber-soft text-xl text-amber-ink"><item.icon aria-hidden /></span>
+            <span className="grid size-8 shrink-0 place-items-center rounded-control bg-amber-soft text-lg text-amber-ink"><item.icon aria-hidden /></span>
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold">{item.title}</span>
+              <span className="block text-sm font-semibold">{item.title}</span>
               <span className="block text-sm text-slate">{item.detail}</span>
             </span>
-            <span className="numeric text-2xl font-bold">{item.count}</span>
+            <span className="numeric text-lg font-bold">{item.count}</span>
           </>
         )
         return (
           <li key={item.title}>
             {item.to
-              ? <Link to={item.to} className="group flex items-center gap-3 py-3 transition-colors transition-quick hover:text-lagoon-deep">{body}<CaretRightIcon aria-hidden className="shrink-0 text-slate" /></Link>
-              : <div className="flex items-center gap-3 py-3">{body}<span className="w-4" /></div>}
+              ? <Link to={item.to} className="flex items-center gap-3 px-5 py-3 transition-colors transition-quick hover:bg-mist">{body}<CaretRightIcon aria-hidden className="shrink-0 text-slate" /></Link>
+              : <div className="flex items-center gap-3 px-5 py-3">{body}<span className="w-4" /></div>}
           </li>
         )
       })}
     </ul>
+  )
+}
+
+/** How many patients have a therapist: a plain share of a count, shown on the product's own arc. */
+function Coverage({ summary }: { summary: AdminSummary }) {
+  const { t } = useTranslation()
+  const linked = Math.max(summary.patients - summary.unlinkedPatients, 0)
+  const share = summary.patients === 0 ? 0 : linked / summary.patients
+  return (
+    <div className="flex items-center gap-5">
+      <div className="relative grid shrink-0 place-items-center">
+        <MotionArc progress={share} size={132} stroke={12} />
+        <span className="numeric absolute text-2xl font-bold">{Math.round(share * 100)}%</span>
+      </div>
+      <p className="text-sm text-slate">{t('admin.coverageDetail', { linked, total: summary.patients })}</p>
+    </div>
   )
 }
 
@@ -50,31 +69,30 @@ export function AdminOverviewView({ load, base }: { load: Load<AdminOverview>; b
   return (
     <>
       <PageHeader title={t('admin.title')} description={t('admin.scope')} />
-      <Loadable load={load} skeleton={<div className="flex flex-col gap-8"><div className="grid grid-cols-2 gap-6 desk:grid-cols-4">{[0, 1, 2, 3].map((index) => <Skeleton key={index} className="h-24" />)}</div><SkeletonLines rows={4} /></div>}>
+      <Loadable load={load} skeleton={<div className="flex flex-col gap-5"><div className="grid gap-4 tablet:grid-cols-3 wide:grid-cols-6">{[0, 1, 2, 3, 4, 5].map((index) => <Skeleton key={index} className="h-28 rounded-card" />)}</div><SkeletonLines rows={6} /></div>}>
         {({ summary, recent }) => (
-          <div className="flex flex-col gap-12">
-            <div className="grid gap-x-10 gap-y-8 border-b border-line pb-10 tablet:grid-cols-3 wide:grid-cols-6">
-              <Readout value={summary.accounts} label={t('admin.accounts')} detail={t('admin.disabledCount', { count: summary.disabled })} to={`${base}/accounts`} />
-              <Readout value={summary.patients} label={t('admin.patients')} detail={t('admin.unlinkedCount', { count: summary.unlinkedPatients })} to={`${base}/accounts?filter=patients`} />
-              <Readout value={summary.therapists} label={t('admin.therapists')} to={`${base}/accounts?filter=therapists`} />
-              <Readout value={summary.activeLinks} label={t('admin.activeLinks')} to={`${base}/links`} />
-              <Readout value={summary.activeExercises} label={t('admin.activeExercises')} detail={t('admin.exercisesTotal', { count: summary.exercises })} to={`${base}/catalogue`} />
-              <Readout value={summary.sessionsWeek} label={t('admin.sessions')} detail={t('admin.sessionsWindow')} />
+          <div className="flex flex-col gap-5">
+            <div className="grid gap-4 tablet:grid-cols-3 wide:grid-cols-6">
+              <StatCard icon={UsersThreeIcon} value={summary.accounts} label={t('admin.accounts')} detail={t('admin.disabledCount', { count: summary.disabled })} to={`${base}/accounts`} />
+              <StatCard icon={UserIcon} value={summary.patients} label={t('admin.patients')} detail={t('admin.unlinkedCount', { count: summary.unlinkedPatients })} to={`${base}/accounts?filter=patients`} />
+              <StatCard icon={StethoscopeIcon} value={summary.therapists} label={t('admin.therapists')} detail={t('admin.adminsCount', { count: summary.admins })} to={`${base}/accounts?filter=therapists`} />
+              <StatCard icon={LinkSimpleIcon} value={summary.activeLinks} label={t('admin.activeLinks')} to={`${base}/links`} />
+              <StatCard icon={BookOpenIcon} value={summary.activeExercises} label={t('admin.activeExercises')} detail={t('admin.exercisesTotal', { count: summary.exercises })} to={`${base}/catalogue`} />
+              <StatCard icon={PulseIcon} value={summary.sessionsWeek} label={t('admin.sessions')} detail={t('admin.sessionsWindow')} />
             </div>
-            <div className="grid items-start gap-12 desk:grid-cols-2">
-              <section>
-                <SectionHeading title={t('admin.attention')} />
-                <Attention summary={summary} base={base} />
-                <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-3 text-sm">
-                  <div className="flex items-baseline gap-2"><dt className="text-slate">{t('admin.admins')}</dt><dd className="numeric font-semibold">{summary.admins}</dd></div>
-                  <div className="flex items-baseline gap-2"><dt className="text-slate">{t('admin.requests')}</dt><dd className="numeric font-semibold">{summary.pendingRequests}</dd></div>
-                </dl>
-              </section>
-              <section>
-                <SectionHeading title={t('admin.recentActivity')} action={<Link to={`${base}/activity`} className="font-semibold text-lagoon-deep hover:underline">{t('admin.viewAll')}</Link>} />
-                <ActivityList events={recent} />
-              </section>
+            <div className="grid items-stretch gap-5 desk:grid-cols-3">
+              <Panel title={t('admin.attention')} flush><Attention summary={summary} base={base} /></Panel>
+              <Panel title={t('admin.accountsByRole')}>
+                <BarList items={[
+                  { label: t('admin.patients'), value: summary.patients }, { label: t('admin.therapists'), value: summary.therapists },
+                  { label: t('admin.admins'), value: summary.admins }, { label: t('admin.filter.disabled'), value: summary.disabled },
+                ]} />
+              </Panel>
+              <Panel title={t('admin.coverage')}><Coverage summary={summary} /></Panel>
             </div>
+            <Panel title={t('admin.recentActivity')} flush action={<Link to={`${base}/activity`} className="text-sm font-semibold text-lagoon-deep hover:underline">{t('admin.viewAll')}</Link>}>
+              <ActivityTable events={recent} />
+            </Panel>
           </div>
         )}
       </Loadable>

@@ -21,7 +21,7 @@ const variants = {
   danger: 'bg-alarm text-paper hover:brightness-90',
   bright: 'bg-sprout-bright text-ink hover:brightness-95',
 }
-const sizes = { sm: 'min-h-9 px-3 text-sm', md: 'min-h-11 px-4 text-base', lg: 'min-h-13 px-6 text-base' }
+const sizes = { sm: 'min-h-8 whitespace-nowrap px-3 text-sm', md: 'min-h-10 px-4 text-sm', lg: 'min-h-12 px-6 text-base' }
 
 export function Spinner({ className }: { className?: string }) {
   return (
@@ -57,7 +57,7 @@ export function ButtonLink({ to, variant = 'primary', size = 'md', leading, chil
 export function IconButton({ label, children, className, press = true, ...rest }: Omit<HTMLMotionProps<'button'>, 'children'> & { label: string; children: ReactNode; press?: boolean }) {
   return (
     <motion.button type="button" aria-label={label} title={label} whileTap={press ? { scale: 0.92 } : undefined} transition={spring.press}
-      className={cn('grid size-10 place-items-center rounded-control text-lg transition-colors transition-quick hover:bg-tide disabled:opacity-55', className)} {...rest}>
+      className={cn('grid size-9 place-items-center rounded-control text-lg transition-colors transition-quick hover:bg-tide disabled:opacity-55', className)} {...rest}>
       {children}
     </motion.button>
   )

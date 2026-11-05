@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
-import { EmptyState, Notice, PageHeader, SectionHeading, StatusPill } from '@/components/Display'
+import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
 import { SelectField, TextField } from '@/components/Field'
 import { rehabilitationProgress, resultStatus, rom, roundDegrees, usable, type HistoricalSession, type ResultStatus } from '@/data/history'
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
@@ -56,7 +56,7 @@ export function ProgressView({ choices, results, filters, onFilters, onPatient, 
       <Loadable load={choices} skeleton={<SkeletonLines />}>
         {(data) => (
           <>
-            <div className="mb-8 grid gap-4 tablet:grid-cols-2 wide:grid-cols-5">
+            <div className="mb-5 grid gap-3 rounded-card border border-line bg-paper p-4 shadow-rest tablet:grid-cols-2 desk:grid-cols-5">
               <SelectField label={t('progress.patient')} value={data.patientId} onChange={onPatient} options={data.patients.map((p) => ({ value: p.id, label: p.name }))} />
               <SelectField label={t('assign.exercise')} value={filters.exerciseVersionId} onChange={(exerciseVersionId) => onFilters({ ...filters, exerciseVersionId })}
                 options={[{ value: 'all', label: t('progress.allExercises') }, ...data.exercises.map((item) => ({ value: item.id, label: item.name }))]} />
@@ -66,22 +66,18 @@ export function ProgressView({ choices, results, filters, onFilters, onPatient, 
             </div>
             <Loadable load={results} skeleton={<SkeletonLines />}>
               {(found) => (found.sessions.length === 0 ? (filtered ? <Notice tone="info">{t('progress.noMatch')}</Notice> : <EmptyState title={t('progress.emptyTitle')} detail={t('progress.emptyDetail')} />) : (
-              <div className="flex flex-col gap-12">
+              <div className="flex flex-col gap-5">
                 {series.map((item) => (
-                  <section key={item.key}>
-                    <SectionHeading title={item.prescription.exerciseName} />
-                    <p className="-mt-2 mb-4 text-slate">{t('progress.seriesLine', { side: t(`common.${item.side}`, item.side), version: item.prescription.version, low: item.prescription.low, high: item.prescription.high })}</p>
+                  <Panel key={item.key} title={item.prescription.exerciseName} description={t('progress.seriesLine', { side: t(`common.${item.side}`, item.side), version: item.prescription.version, low: item.prescription.low, high: item.prescription.high })}>
                     <div className="grid gap-8 desk:grid-cols-2">
                       <TrendChart title={t('progress.rom')} unit="°" points={romPoints(item, format.short)} />
                       <TrendChart title={t('record.repetitions')} unit="" max={Math.max(item.prescription.targetRepetitions * 2, 2)} points={item.points.map((p) => ({ id: p.session.id, label: format.short(p.session.startedAt), value: p.repetitions }))} />
                     </div>
-                  </section>
+                  </Panel>
                 ))}
-                <section>
-                  <SectionHeading title={t('progress.sessions')} />
+                <Panel title={t('progress.sessions')} flush footer={<LoadMore shown={t('progress.shown', { count: found.sessions.length })} onLoad={found.more ? onMore : undefined} busy={found.loadingMore} label={t('progress.loadOlder')} />}>
                   <DataTable caption={t('progress.sessions')} columns={columns} rows={found.sessions} rowKey={(s) => s.id} />
-                  <LoadMore shown={t('progress.shown', { count: found.sessions.length })} onLoad={found.more ? onMore : undefined} busy={found.loadingMore} label={t('progress.loadOlder')} />
-                </section>
+                </Panel>
                 <p className="max-w-[62ch] text-sm text-slate">{t('progress.notValidated')}</p>
               </div>
               ))}
