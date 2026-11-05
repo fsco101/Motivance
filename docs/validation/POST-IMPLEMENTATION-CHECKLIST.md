@@ -150,6 +150,12 @@ Solved implementation issues and implemented sprint milestones may close while t
 
 - [ ] If GitHub Actions becomes available, confirm that Web checks, Android checks and Database checks pass in full, including `scripts/check_admin_parity.py` and the longer limit in `no sideways page scroll`. Until then these run locally only. The owner deferred this because the account is on GitHub's free tier.
 
+## Exercise guide follow-up (2026-11-05)
+
+- [ ] Have a therapist watch the guide for every joint, seated and standing, and confirm each movement is safe and correct to show patients. Evidence scope: [exercise guide](EXERCISE-GUIDE.md).
+- [ ] On a physical phone with animations on, confirm the guide moves smoothly on the patient exercise list, where several can play at once.
+- [ ] Try the guide with TalkBack, and have a Filipino speaker review its spoken description.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

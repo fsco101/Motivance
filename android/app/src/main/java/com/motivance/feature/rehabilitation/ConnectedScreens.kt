@@ -33,6 +33,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.motivance.R
+import com.motivance.feature.exercise.ExerciseThumbnail
+import com.motivance.feature.exercise.GuideStage
 import com.motivance.data.local.CachedPrescription
 import com.motivance.data.local.ExerciseJson
 import com.motivance.designsystem.*
@@ -183,7 +185,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
         ?.let {runCatching {BodyJoint.valueOf(it)}.getOrNull()}
     ClinicalCard {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-            ExerciseGlyph(exercise?.algorithm)
+            val side=if(p.side=="right") BodySide.RIGHT else BodySide.LEFT
+            ExerciseGlyph(exercise?.guide(side,p.low,p.high) ?: guideMotion(BodyJoint.ELBOW,side,low=p.low,high=p.high))
             Column(Modifier.weight(1f)) {
                 Text(exercise?.name ?: stringResource(R.string.history_unknown_exercise),style=MaterialTheme.typography.titleMedium)
                 Text(stringResource(if(p.side=="right") R.string.right_side else R.string.left_side),style=MaterialTheme.typography.bodySmall,
@@ -231,19 +234,14 @@ internal fun RehabAction.loadingLabel()=when(this) {
         var details by rememberSaveable(p.versionId) {mutableStateOf(false)}
         ClinicalCard(accent=if(valid) MaterialTheme.colorScheme.primary else null) {
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-                ExerciseGlyph(when(rules.kind) {ExerciseKind.ELBOW_FLEXION -> "elbow-flexion-v1"; ExerciseKind.SHOULDER_ABDUCTION -> "shoulder-abduction-v1"; ExerciseKind.CUSTOM -> null})
                 Column(Modifier.weight(1f)) {
                     Text(rules.displayName(),style=MaterialTheme.typography.titleLarge)
                     Text(side,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if(!valid) StatusPill(stringResource(R.string.ui_expired),PillTone.ATTENTION)
             }
-            // The prescribed band on the same protractor the therapist set it with.
-            Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally) {
-                Column(Modifier.widthIn(max=280.dp).fillMaxWidth()) {
-                    RangeArc(rules.lowDegrees,rules.highDegrees,stringResource(R.string.session_targets,rules.lowDegrees.toInt(),rules.highDegrees.toInt()))
-                }
-            }
+            // The model person moves through the range this patient was prescribed.
+            GuideStage(guideMotion(rules),rules.displayName(),Modifier.height(260.dp))
             FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                 StatusPill(stringResource(R.string.ui_range_value,degrees(rules.lowDegrees),degrees(rules.highDegrees)),PillTone.POSITIVE)
                 StatusPill(stringResource(R.string.ui_reps_value,rules.targetRepetitions),PillTone.POSITIVE)
@@ -328,7 +326,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
             choices.forEach {item ->
                 val measures=item.joint?.let {stringResource(R.string.custom_exercise_measures,stringResource(it.label()))}
                 SelectionTile(exercise==item.id,{exercise=item.id; changed()},item.name,Modifier.fillMaxWidth(),
-                    description=listOfNotNull(measures,item.instructions.ifBlank {null}).joinToString("\n").ifBlank {null},enabled=enabled,leading={ExerciseGlyph(item.algorithm)})
+                    description=listOfNotNull(measures,item.instructions.ifBlank {null}).joinToString("\n").ifBlank {null},enabled=enabled,leading={ExerciseGlyph(item.guide())})
                 if(item.custom) TextButton({removing=item},enabled=enabled,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.custom_exercise_remove))}
             }
         }
@@ -367,6 +365,9 @@ internal fun RehabAction.loadingLabel()=when(this) {
 
     StepCard(3,R.string.ui_step_targets,R.string.ui_step_targets_help,complete=rangeValid && repsValid) {
         chosenExercise?.joint?.let {Text(stringResource(it.zeroHint()),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
+        chosenExercise?.let {item ->
+            GuideStage(item.guide(if(side=="right") BodySide.RIGHT else BodySide.LEFT,l.takeIf {rangeValid},h.takeIf {rangeValid}),item.name,Modifier.height(220.dp))
+        }
         val arcDescription=stringResource(R.string.ui_range_preview,low.ifBlank {"--"},high.ifBlank {"--"})
         Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally) {
             Column(Modifier.widthIn(max=340.dp).fillMaxWidth()) {
@@ -474,22 +475,14 @@ internal fun RehabAction.loadingLabel()=when(this) {
 }
 
 /** Small drawn limb-angle icon: upper segment plus a moving segment at the exercise's typical angle. */
-@Composable internal fun ExerciseGlyph(algorithm:String?) {
-    val tint=MaterialTheme.colorScheme.primary
-    val open=when {algorithm?.startsWith("shoulder")==true -> 90f; algorithm?.startsWith("elbow")==true -> 45f; else -> 65f}
-    Surface(color=tint.copy(alpha=.1f),shape=RoundedCornerShape(14.dp),modifier=Modifier.size(44.dp)) {
-        Canvas(Modifier.padding(9.dp).fillMaxSize()) {
-            val joint=Offset(size.width*.32f,size.height*.78f)
-            val length=size.height*.66f
-            val radians=Math.toRadians((-90.0+open))
-            val end=Offset(joint.x+length*cos(radians).toFloat(),joint.y+length*sin(radians).toFloat())
-            drawArc(tint.copy(alpha=.45f),-90f,open,false,Offset(joint.x-length*.42f,joint.y-length*.42f),Size(length*.84f,length*.84f),style=Stroke(2.dp.toPx()))
-            drawLine(tint,joint,Offset(joint.x,joint.y-length),3.dp.toPx(),StrokeCap.Round)
-            drawLine(tint,joint,end,3.dp.toPx(),StrokeCap.Round)
-            drawCircle(tint,3.5.dp.toPx(),joint)
-        }
-    }
+/** The model person at the target position, so an exercise can be recognised at a glance in a list. */
+@Composable internal fun ExerciseGlyph(motion:GuideMotion) {
+    Surface(color=Motion.Tide,shape=RoundedCornerShape(14.dp),modifier=Modifier.size(64.dp)) {ExerciseThumbnail(motion,Modifier.fillMaxSize())}
 }
+
+/** A catalogue entry has no prescribed range until it is assigned, so the guide then shows a typical one. */
+internal fun CatalogueExercise.guide(side:BodySide=BodySide.LEFT,low:Double?=null,high:Double?=null)=
+    guideMotion(joint ?: if(algorithm.startsWith("shoulder")) BodyJoint.SHOULDER else BodyJoint.ELBOW,side,name,low,high)
 
 @Composable private fun Choice(label:Int,options:List<Pair<String,String>>,selected:String,enabled:Boolean,choose:(String)->Unit) {
     var expanded by remember {mutableStateOf(false)}

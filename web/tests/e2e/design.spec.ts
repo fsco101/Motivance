@@ -66,6 +66,29 @@ test('a toast appears at the top right, below the top bar', async ({ page }) => 
   expect(box.y).toBeLessThan(100)
 })
 
+test('the model person raises an arm as the sign-in form is completed', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/design/sign-in')
+  const arm = page.locator('aside svg g[transform^="rotate"]').nth(2)
+  const angle = async () => Math.abs(Number(/rotate\((-?[\d.]+)\)/.exec((await arm.getAttribute('transform'))!)![1]))
+  await expect.poll(angle).toBeLessThan(25)
+  await page.getByLabel('Email').fill('dana@example.test')
+  await expect.poll(angle).toBeGreaterThan(55)
+  await page.getByLabel('Password', { exact: true }).fill('a-password')
+  await expect.poll(angle).toBeGreaterThan(105)
+  await page.getByLabel('Password', { exact: true }).fill('')
+  await expect.poll(angle).toBeLessThan(80)
+})
+
+test('with reduced motion the figure goes straight to its position', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/design/sign-in')
+  await page.getByLabel('Email').fill('dana@example.test')
+  await page.getByLabel('Password', { exact: true }).fill('a-password')
+  await expect(page.locator('aside svg g[transform^="rotate"]').nth(2)).toHaveAttribute('transform', 'rotate(-116)')
+})
+
 test('a swipe that starts on the movement demo still scrolls the page', async ({ page }) => {
   await page.goto('/design/landing')
   await expect(page.getByRole('group', { name: 'A sample skeleton measuring elbow flexion' })).toHaveCSS('touch-action', 'pan-y')
@@ -316,17 +339,6 @@ test.describe('public pages', () => {
     await expect(page.getByText('90°', { exact: true })).toBeVisible()
     await page.waitForTimeout(600)
     await expect(page.getByText('90°', { exact: true })).toBeVisible()
-  })
-
-  test('the sign-in needle climbs as the form is completed', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/design/sign-in')
-    await expect(page.getByText('20°', { exact: true }).first()).toBeVisible()
-    await page.getByLabel('Email').fill('dana@example.test')
-    await expect(page.getByText('68°', { exact: true }).first()).toBeVisible()
-    await page.getByLabel('Password', { exact: true }).fill('secret')
-    await expect(page.getByText('116°', { exact: true }).first()).toBeVisible()
   })
 
   test('sign-in warns about Caps Lock', async ({ page }) => {

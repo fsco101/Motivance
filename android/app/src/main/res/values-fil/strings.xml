@@ -523,6 +523,9 @@
     <string name="profile_name">Buong pangalan</string>
     <string name="profile_username">Username</string>
     <string name="profile_username_help">Gumamit ng 3&#8211;30 titik, numero o underscore. Makikita ng nakakonektang therapist ang iyong username.</string>
+    <string name="guide_description">Gumagalaw na gabay: %1$s, mula %2$d° hanggang %3$d°.</string>
+    <string name="guide_pause">I-pause ang gabay</string>
+    <string name="guide_play">I-play ang gabay</string>
     <string name="profile_details">Iyong mga detalye</string>
     <string name="profile_incomplete">Idagdag ang iyong mga detalye para matapos ang pag-set up ng account na ito.</string>
     <string name="profile_gender_choose">Pumili ng isa</string>

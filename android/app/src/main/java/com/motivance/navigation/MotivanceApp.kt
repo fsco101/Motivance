@@ -39,6 +39,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.motivance.R
+import com.motivance.domain.ExerciseRules
+import com.motivance.domain.GuideBody
+import com.motivance.domain.guideMotion
+import com.motivance.feature.exercise.ExerciseGuide
 import com.motivance.data.local.CachedPrescription
 import com.motivance.data.local.ExerciseJson
 import com.motivance.designsystem.*
@@ -185,7 +189,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         Box(Modifier.fillMaxSize(),contentAlignment=Alignment.TopCenter) {
         Column(Modifier.widthIn(max=720.dp).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=20.dp,vertical=12.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
             when(page) {
-                "SETUP" -> CameraSetup { route="CAMERA" }
+                "SETUP" -> CameraSetup(local.rules) { route="CAMERA" }
                 "CHECK_COMPLETE" -> SessionComplete(local.saved,local.metrics.completed,local.rules.targetRepetitions,local.metrics.romDegrees,
                     local.metrics.incomplete,local.metrics.durationMs,connected.outbox.firstOrNull {it.sessionId==local.id}?.state,
                     again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"})
@@ -393,9 +397,9 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     }
 }
 
-@Composable private fun CameraSetup(onStart:()->Unit) {
+@Composable private fun CameraSetup(rules:ExerciseRules,onStart:()->Unit) {
     PageHeader(R.string.prepare_camera,R.string.camera_setup_subtitle,eyebrow=stringResource(R.string.positioning_step))
-    SetupIllustration()
+    SetupIllustration(rules)
     ClinicalCard {
         Text(stringResource(R.string.position_checklist),style=MaterialTheme.typography.titleLarge,modifier=Modifier.semantics {heading()})
         listOf(R.string.position_stable,R.string.position_visible,R.string.position_lighting).forEachIndexed { index,label ->
@@ -414,46 +418,26 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     }
 }
 
-/** Phone on a stand, a dashed sightline, and a whole-body figure: the setup in one glance. */
-@Composable private fun SetupIllustration() {
+/** A phone on a stand, a dashed sightline, and the model person showing the exercise to come: the setup in one glance. */
+@Composable internal fun SetupIllustration(rules:ExerciseRules) {
     val description=stringResource(R.string.setup_figure)
+    val motion=remember(rules) {guideMotion(rules)}
     Surface(Modifier.fillMaxWidth(),shape=MaterialTheme.shapes.large,color=Motion.Night) {
-        Canvas(Modifier.fillMaxWidth().height(184.dp).semantics {contentDescription=description}) {
-            val ink=Motion.NightInk; val mint=Motion.SproutBright; val w=size.width; val h=size.height
-            val floor=h*.86f
-            drawLine(Motion.NightLine,Offset(w*.08f,floor),Offset(w*.92f,floor),2.dp.toPx(),StrokeCap.Round)
-            // Phone on a tripod.
-            val px=w*.2f; val top=h*.32f
-            drawLine(ink,Offset(px,top+h*.2f),Offset(px-w*.05f,floor),2.5.dp.toPx(),StrokeCap.Round)
-            drawLine(ink,Offset(px,top+h*.2f),Offset(px+w*.05f,floor),2.5.dp.toPx(),StrokeCap.Round)
-            drawLine(ink,Offset(px,top+h*.2f),Offset(px,floor),2.5.dp.toPx(),StrokeCap.Round)
-            drawRoundRect(ink,Offset(px-12.dp.toPx(),top),androidx.compose.ui.geometry.Size(24.dp.toPx(),h*.22f),
-                androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
-            drawCircle(Motion.Night,3.dp.toPx(),Offset(px,top+8.dp.toPx()))
-            // Sightline to the person.
-            val fx=w*.72f
-            listOf(h*.16f,floor-4.dp.toPx()).forEach {y ->
-                drawLine(mint.copy(alpha=.55f),Offset(px+14.dp.toPx(),top+h*.08f),Offset(fx-w*.08f,y),1.5.dp.toPx(),
-                    pathEffect=PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(),6.dp.toPx())))
+        Box(Modifier.fillMaxWidth().height(260.dp)) {
+            Canvas(Modifier.matchParentSize().semantics {contentDescription=description}) {
+                val ink=Motion.NightInk; val mint=Motion.SproutBright; val w=size.width; val h=size.height
+                // On the same floor as the model person.
+                val floor=h/2+((GuideBody.FLOOR-motion.frame.centerY)*minOf(w*.68f,h)/motion.frame.span).toFloat()
+                drawLine(Motion.NightLine,Offset(w*.04f,floor),Offset(w*.96f,floor),2.dp.toPx(),StrokeCap.Round)
+                val px=w*.15f; val top=h*.32f
+                listOf(px-w*.05f,px,px+w*.05f).forEach {drawLine(ink,Offset(px,top+h*.2f),Offset(it,floor),2.5.dp.toPx(),StrokeCap.Round)}
+                drawRoundRect(ink,Offset(px-12.dp.toPx(),top),androidx.compose.ui.geometry.Size(24.dp.toPx(),h*.22f),androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
+                drawCircle(Motion.Night,3.dp.toPx(),Offset(px,top+8.dp.toPx()))
+                listOf(h*.08f,floor-4.dp.toPx()).forEach {y ->
+                    drawLine(mint.copy(alpha=.55f),Offset(px+14.dp.toPx(),top+h*.08f),Offset(w*.56f,y),1.5.dp.toPx(),pathEffect=PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(),6.dp.toPx())))
+                }
             }
-            // Whole-body figure with the working arm raised along an arc.
-            val head=Offset(fx,h*.2f); val neck=Offset(fx,h*.3f); val hip=Offset(fx,h*.58f)
-            val stroke=4.dp.toPx()
-            drawCircle(ink,h*.06f,head)
-            drawLine(ink,neck,hip,stroke,StrokeCap.Round)
-            drawLine(ink,hip,Offset(fx-w*.05f,floor),stroke,StrokeCap.Round)
-            drawLine(ink,hip,Offset(fx+w*.05f,floor),stroke,StrokeCap.Round)
-            // Resting arm on the far side, working arm abducted toward the camera with its sweep from the side.
-            drawLine(ink,Offset(fx+w*.02f,h*.34f),Offset(fx+w*.06f,h*.56f),stroke,StrokeCap.Round)
-            val shoulder=Offset(fx-w*.02f,h*.34f); val reach=h*.28f
-            val raised=Math.toRadians(210.0)
-            val hand=Offset(shoulder.x+reach*kotlin.math.cos(raised).toFloat(),shoulder.y+reach*kotlin.math.sin(raised).toFloat())
-            val sweep=h*.17f
-            drawArc(mint.copy(alpha=.5f),90f,120f,false,Offset(shoulder.x-sweep,shoulder.y-sweep),
-                androidx.compose.ui.geometry.Size(sweep*2,sweep*2),style=androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx(),cap=StrokeCap.Round,
-                    pathEffect=PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(),4.dp.toPx()))))
-            drawLine(mint,shoulder,hand,stroke,StrokeCap.Round)
-            drawCircle(mint,5.dp.toPx(),shoulder)
+            ExerciseGuide(motion,rules.displayName(),Modifier.align(Alignment.CenterEnd).fillMaxWidth(.68f).fillMaxHeight(),dark=true)
         }
     }
 }
@@ -508,8 +492,6 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     val rules=remember(next.rulesJson) {ExerciseJson.rules(next.rulesJson)}
     val name=rules.displayName()
     val side=stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)
-    var shown by remember {mutableStateOf(false)}
-    LaunchedEffect(Unit) {shown=true}
     Surface(Modifier.fillMaxWidth(),shape=MaterialTheme.shapes.extraLarge,color=Motion.Ink,contentColor=Color.White) {
         Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
             Text(stringResource(R.string.today_exercise),style=MaterialTheme.typography.titleSmall,color=Motion.NightInk)
@@ -522,13 +504,7 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
                             style=MaterialTheme.typography.labelLarge)
                     }
                 }
-                MotionArc(if(shown) (rules.highDegrees/180.0).toFloat() else 0f,Modifier.size(128.dp),track=Motion.NightPanel,fill=Motion.SproutBright,
-                    stroke=11f,band=rules.lowDegrees to rules.highDegrees,bandColor=Color.White) {
-                    Column(horizontalAlignment=Alignment.CenterHorizontally,modifier=Modifier.semantics(mergeDescendants=true) {}) {
-                        Text("${rules.highDegrees.toInt()}°",style=MaterialTheme.typography.headlineMedium)
-                        Text(stringResource(R.string.today_target_label),style=MaterialTheme.typography.labelSmall,color=Motion.NightInk)
-                    }
-                }
+                ExerciseGuide(remember(rules) {guideMotion(rules)},name,Modifier.size(136.dp),dark=true)
             }
             if(next.instructions.isNotBlank()) Text(next.instructions,style=MaterialTheme.typography.bodyMedium,color=Motion.NightInk,maxLines=3,
                 overflow=androidx.compose.ui.text.style.TextOverflow.Ellipsis)

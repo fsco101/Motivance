@@ -22,6 +22,13 @@
   --color-night-ink: #bfe3dd;
   --color-night-caution: #ffc56b;
 
+  /* The model person, matching the Android guide */
+  --color-figure-skin: #d8a07a;
+  --color-figure-shade: #b98660;
+  --color-figure-hair: #3a2a22;
+  --color-figure-shirt: #17a3af;
+  --color-figure-shorts: #e9f3f1;
+
   /* Web additions */
   --color-paper: #ffffff;
   --color-transparent: transparent;
