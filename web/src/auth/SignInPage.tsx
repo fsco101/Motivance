@@ -1,6 +1,6 @@
 import { LockKeyIcon } from '@phosphor-icons/react'
-import { AnimatePresence, animate, m as motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { AnimatePresence, m as motion, useReducedMotion } from 'motion/react'
+import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Button } from '@/components/Button'
@@ -9,53 +9,12 @@ import { PasswordField, TextField } from '@/components/Field'
 import { recoveryClient, supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
 import { LanguageSwitch } from '@/layout/LanguageSwitch'
-import { FACE_START, FACE_SWEEP, arcPath, faceAngle, polar } from '@/motion/geometry'
-import { duration, ease, spring } from '@/motion/tokens'
+import { duration, ease } from '@/motion/tokens'
 import { useAuth } from './AuthProvider'
+import { FormFigure } from './FormFigure'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const SIZE = 560
-const C = SIZE / 2
-const R = C - 34
 const BAND: readonly [number, number] = [20, 120]
-
-/** The needle answers the form: it rests low, climbs as the form is completed and drops back on an error. */
-function FormDial({ reach, compact }: { reach: number; compact?: boolean }) {
-  const reduced = useReducedMotion()
-  const value = useMotionValue(reduced ? reach : 0)
-  const reading = useTransform(value, (latest) => `${Math.round(latest)}°`)
-  const rotate = useTransform(value, (latest) => faceAngle(latest))
-  useEffect(() => {
-    if (reduced) {
-      value.jump(reach)
-      return
-    }
-    const controls = animate(value, reach, spring.needle)
-    return () => controls.stop()
-  }, [reach, reduced, value])
-  const ticks = Array.from({ length: 49 }, (_, index) => index)
-  return (
-    <div aria-hidden className={compact ? 'relative aspect-square w-40' : 'relative aspect-square w-full max-w-[32rem]'}>
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="size-full overflow-visible">
-        {ticks.map((index) => {
-          const angle = FACE_START + (FACE_SWEEP / 48) * index
-          const major = index % 6 === 0
-          const a = polar(C, C, R - 30, angle)
-          const b = polar(C, C, R - (major ? 48 : 40), angle)
-          return <line key={index} x1={a.x} y1={a.y} x2={b.x} y2={b.y} strokeWidth={major ? 2.5 : 1.25} className={major ? 'stroke-night-ink' : 'stroke-night-line'} />
-        })}
-        <path d={arcPath(C, C, R, FACE_START, FACE_START + FACE_SWEEP)} fill="none" strokeWidth={22} strokeLinecap="round" className="stroke-night-panel" />
-        <motion.path d={arcPath(C, C, R, faceAngle(BAND[0]), faceAngle(BAND[1]))} fill="none" strokeWidth={22} strokeLinecap="butt" className="stroke-sprout-bright"
-          initial={reduced ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: duration.sweep, ease: ease.inOut, delay: 0.1 }} />
-        <motion.g style={{ rotate, transformOrigin: `${C}px ${C}px`, transformBox: 'view-box' }}>
-          <line x1={C} y1={C} x2={C + R - 6} y2={C} strokeWidth={3} strokeLinecap="round" className="stroke-paper" />
-        </motion.g>
-        <circle cx={C} cy={C} r={9} className="fill-paper" />
-      </svg>
-      <motion.span className={compact ? 'numeric absolute inset-x-0 bottom-[14%] text-center text-2xl font-bold text-paper' : 'numeric absolute inset-x-0 bottom-[17%] text-center text-6xl font-bold text-paper'}>{reading}</motion.span>
-    </div>
-  )
-}
 
 type Step = 'signIn' | 'requestCode' | 'newPassword'
 
@@ -152,7 +111,7 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
           <img src="/logo-96.png" alt="" width={40} height={40} className="rounded-lg" />
           <span className="font-display text-2xl font-bold">Motivance</span>
         </Link>
-        <div className="grid place-items-center py-6"><FormDial reach={reach} /></div>
+        <div className="grid min-h-0 flex-1 place-items-center py-4"><FormFigure reach={reach} band={BAND} /></div>
         <p className="max-w-[30ch] font-display text-3xl font-semibold">{t('auth.promise')}</p>
       </aside>
       <main className="flex flex-col px-6 py-6 tablet:px-12 tablet:py-8">
@@ -165,7 +124,7 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
           <LanguageSwitch />
         </div>
         <div className="mx-auto flex w-full max-w-[26rem] flex-1 flex-col justify-center py-8">
-          <div className="on-dark mb-6 grid place-items-center rounded-stage bg-ink py-3 desk:hidden"><FormDial reach={reach} compact /></div>
+          <div className="on-dark mb-6 grid place-items-center rounded-stage bg-ink py-3 desk:hidden"><FormFigure reach={reach} band={BAND} compact /></div>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={step} initial={{ opacity: 0, x: reduced ? 0 : 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: reduced ? 0 : -10 }} transition={{ duration: duration.standard, ease: ease.out }}>
               {step !== 'signIn' && <p className="mb-2 font-semibold text-lagoon-deep">{t('auth.recoveryStep', { step: step === 'requestCode' ? 1 : 2 })}</p>}

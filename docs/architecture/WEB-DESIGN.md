@@ -9,7 +9,7 @@ A physical therapist measures a joint with a goniometer: a hinged protractor wit
 | Principle | What it means here |
 | --- | --- |
 | The measurement is the hero | Arcs and dials show real values. They are never decoration. |
-| Spend boldness in one place | One memorable moment per page: the sign-in dial, the home fan. The rest is disciplined. |
+| Spend boldness in one place | One memorable moment per page: the sign-in model person, the home fan. The rest is disciplined. |
 | Built for a desk | Mouse, keyboard and a wide screen come first. Lists are data tables, not stacked phone cards. |
 | Only interactive things rise | Panels stay flat. Only what opens something, like a stat card, lifts under the pointer. |
 | Motion explains | Movement shows what changed or where you went. It is never the only signal. |
@@ -82,7 +82,7 @@ Visitors reach the landing page at `/`; a signed-in account skips it and goes to
 
 - **Landing hero.** A front-facing skeleton measures elbow flexion by itself, and anyone can take the hand and move it, by pointer or arrow keys. The angle, the prescribed band and the repetition count respond using the same rule as the app. It is labelled as sample movement, and it stops playing when it leaves the screen or someone takes over.
 - **Landing content.** Three numbered steps (they really are a sequence), who each part is for, and the privacy facts in Android's own words. There are no statistics, logos or quotes, because the product has none yet.
-- **Sign-in dial.** The needle answers the form: it rests at 20 degrees, climbs as the form is completed, swings past its mark while signing in, and drops back on an error. Below the desk breakpoint it becomes a compact panel above the form.
+- **Sign-in model person.** A dial read as a car speedometer, so the owner replaced it with a person. Their arm rests low, rises through a soft arc as the form is completed, and eases down on an error. The body is one set of curved anatomical outlines rather than capsules, so it reads as human. It shows the same character as the Android guide, in the same clothes.
 - **Sign-in details.** Warns when Caps Lock is on, moves between sign-in and the two recovery steps with a short transition, and states the 15-minute sign-out for shared computers.
 
 ## Interaction
