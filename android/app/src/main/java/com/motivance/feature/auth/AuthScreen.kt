@@ -41,18 +41,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.motivance.R
-import com.motivance.domain.UserRole
 
 @Composable
-fun AuthScreen(viewModel: AuthViewModel, openCamera: () -> Unit, role: UserRole? = null, onBack: () -> Unit = {}) {
+fun AuthScreen(viewModel: AuthViewModel, openCamera: () -> Unit, onBack: () -> Unit = {}) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AuthContent(state, role, viewModel::act, viewModel::clearNotice, openCamera, onBack,viewModel::registerProfile)
+    AuthContent(state, viewModel::act, viewModel::clearNotice, openCamera, onBack,viewModel::registerProfile)
 }
 
 @Composable
 internal fun AuthContent(
     state: AuthState,
-    role: UserRole?,
     onSubmit: (AuthAction, String, String, String) -> Unit,
     clearNotice: () -> Unit,
     openCamera: () -> Unit,
@@ -109,21 +107,21 @@ internal fun AuthContent(
         ) {
             Row(Modifier.widthIn(max = 480.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { if (action == AuthAction.SIGN_IN) onBack() else changeAction(AuthAction.SIGN_IN) }, enabled = !state.busy) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(if (action == AuthAction.SIGN_IN) R.string.choose_role else R.string.back_to_sign_in))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(if (action == AuthAction.SIGN_IN) R.string.back else R.string.back_to_sign_in))
                 }
                 Spacer(Modifier.width(12.dp))
                 AuthBrand(Modifier.weight(1f))
             }
             Column(Modifier.widthIn(max = 480.dp).fillMaxWidth().padding(top = 28.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Surface(color = MaterialTheme.colorScheme.secondary.copy(alpha = .08f), shape = CircleShape) {
-                    Text(stringResource(when(role) {UserRole.THERAPIST->R.string.clinical_portal;UserRole.ADMIN->R.string.admin_title;else->R.string.rehabilitation_portal}),
+                    Text(stringResource(R.string.rehabilitation_portal),
                         Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 }
                 // After the first signup step the step header carries the context, so the hero stays out of the way.
                 if (action != AuthAction.REGISTER || signupStep == SignupStep.ACCOUNT) {
                     Text(stringResource(action.heading()), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(action.description(role)), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(action.description()), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Surface(Modifier.widthIn(max = 480.dp).fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = Color.White,
@@ -179,7 +177,7 @@ internal fun AuthContent(
                             Text(stringResource(R.string.auth_resend_code))
                         }
                     }
-                    if (action == AuthAction.SIGN_IN && role != UserRole.THERAPIST && role != UserRole.ADMIN) {
+                    if (action == AuthAction.SIGN_IN) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
                         Text(stringResource(R.string.auth_new_here), Modifier.fillMaxWidth(), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
                         OutlinedButton(onClick = { changeAction(AuthAction.REGISTER) }, enabled = !state.busy,
@@ -287,8 +285,8 @@ private fun AuthAction.heading() = when (this) {
     AuthAction.REQUEST_RECOVERY, AuthAction.RECOVER -> R.string.auth_recovery_heading
     else -> R.string.app_name
 }
-private fun AuthAction.description(role: UserRole?) = when (this) {
-    AuthAction.SIGN_IN -> if (role == UserRole.THERAPIST) R.string.auth_therapist_description else R.string.auth_patient_description
+private fun AuthAction.description() = when (this) {
+    AuthAction.SIGN_IN -> R.string.auth_sign_in_description
     AuthAction.REGISTER -> R.string.auth_signup_description
     AuthAction.CONFIRM -> R.string.auth_confirm_description
     AuthAction.REQUEST_RECOVERY -> R.string.auth_recovery_description

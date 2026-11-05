@@ -99,6 +99,8 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
     val role=selectedRole?.let { UserRole.valueOf(it) }
     LaunchedEffect(auth.session?.userId) {
         selectedPatient=null; editingAssignment=null
+        // A workspace chosen on the profile page belongs to that sign-in; the next one starts from the account's roles.
+        if(auth.session==null) selectedRole=null
         if(auth.session!=null) { route="HOME"; vm.loadOverview() }
         else if(route !in setOf("LANDING","AUTH","SETUP","CAMERA","CHECK_COMPLETE")) route="AUTH"
     }
@@ -107,22 +109,12 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
     BackHandler(enabled=route!="LANDING" && route!="HOME") { goBack() }
     if(route=="CAMERA") { CameraPrototype(ownerId=auth.session?.userId ?: "local-demo") { route="CHECK_COMPLETE" }; return }
     if(route=="AUTH" && auth.session==null) {
-        AuthScreen(vm,{route="SETUP"},role) { route="LANDING" }; return
+        AuthScreen(vm,{route="SETUP"}) { route="LANDING" }; return
     }
     if(auth.session==null && route=="LANDING") {
-        RoleLanding({selectedRole=it.name; route="AUTH"},{route="SETUP"}); return
+        Landing({route="AUTH"},{route="SETUP"}); return
     }
-    val actualRole=role ?: auth.session?.roles?.firstOrNull() ?: UserRole.PATIENT
-    if(auth.session!=null && actualRole !in auth.session!!.roles) {
-        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            BrandHeader()
-            Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-                Text(stringResource(R.string.role_not_authorized),style=MaterialTheme.typography.titleMedium)
-                auth.session!!.roles.forEach { allowed -> ActionButton(allowed.title(),{selectedRole=allowed.name; route="HOME"}) }
-                TextButton({vm.act(AuthAction.SIGN_OUT); route="AUTH"},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.sign_out)) }
-            }
-        }; return
-    }
+    val actualRole=auth.session?.workspace(role) ?: UserRole.PATIENT
     // A patient's exercises arrive on their own: on opening these pages, on returning to the app, and while it stays open.
     val lifecycle=LocalLifecycleOwner.current
     val patientAccount=auth.session?.userId?.takeIf {actualRole==UserRole.PATIENT}
@@ -359,7 +351,7 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     else -> if(signedIn) "HOME" else "LANDING"
 }
 
-@Composable internal fun RoleLanding(onRole:(UserRole)->Unit,onCamera:()->Unit) {
+@Composable internal fun Landing(onSignIn:()->Unit,onCamera:()->Unit) {
     // The one orchestrated moment in the app: the arc sweeps to a working range when the app first opens.
     var shown by rememberSaveable {mutableStateOf(false)}
     LaunchedEffect(Unit) {shown=true}
@@ -375,33 +367,15 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
             Text(stringResource(R.string.markerless_rehabilitation),style=MaterialTheme.typography.titleSmall,color=MaterialTheme.colorScheme.primary)
             Text(stringResource(R.string.welcome_motivance),style=MaterialTheme.typography.displaySmall,modifier=Modifier.semantics {heading()})
             Text(stringResource(R.string.welcome_description),style=MaterialTheme.typography.bodyLarge,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(stringResource(R.string.select_access_portal),style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=8.dp))
-            RoleCard(UserRole.PATIENT,R.string.patient_description,R.string.continue_patient,MaterialTheme.colorScheme.primary,onRole)
-            RoleCard(UserRole.THERAPIST,R.string.therapist_description,R.string.enter_therapist,Motion.Ink,onRole)
+            Spacer(Modifier.height(4.dp))
+            ActionButton(R.string.sign_in,onSignIn)
             OutlinedButton(onCamera,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp),shape=MaterialTheme.shapes.medium) {
                 Icon(Icons.Default.PlayArrow,null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.try_camera))
             }
-            TextButton({onRole(UserRole.ADMIN)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.admin_sign_in))}
             HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
             LanguagePicker()
             Text(stringResource(R.string.research_prototype),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
-        }
-    }
-}
-
-@Composable private fun RoleCard(role:UserRole,description:Int,action:Int,color:Color,onRole:(UserRole)->Unit) {
-    Surface(Modifier.fillMaxWidth(),shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.surface,
-        border=BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
-        Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-                IconBadge(if(role==UserRole.PATIENT) Icons.Default.Person else Icons.Default.Favorite,color,48)
-                Text(stringResource(role.title()),style=MaterialTheme.typography.headlineSmall,modifier=Modifier.weight(1f))
-            }
-            Text(stringResource(description),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            Button({onRole(role)},colors=ButtonDefaults.buttonColors(containerColor=color),shape=MaterialTheme.shapes.medium,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp)) {
-                Text(stringResource(action),modifier=Modifier.weight(1f)); Icon(Icons.AutoMirrored.Filled.ArrowForward,null)
-            }
         }
     }
 }

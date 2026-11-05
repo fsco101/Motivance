@@ -10,7 +10,7 @@ Dashboard names, patient lists, recent sessions (up to 20) and active assignment
 
 | Reference | Native flow | Sprint |
 |---|---|---|
-| Role selection | Sign-in and server-authorized role routing; role cards never grant privileges | S1 auth shell; full role flows S3-S4 |
+| Role selection | Replaced on 2026-11-05 by one sign-in page; the account's server-side roles choose the workspace ([one sign-in](../validation/ONE-SIGN-IN.md)) | S1 auth shell; full role flows S3-S4 |
 | Patient home, exercise guide | Downloaded assignments -> instructions -> camera setup -> session | S3 |
 | Camera positioning, real-time CV | Phone placement -> permission -> landmarks -> readable tracking state | S1 prototype; S2 assessment |
 | Movement correction, completion | Feedback -> finish -> saved/pending-sync summary | S2-S3 |
@@ -105,7 +105,7 @@ The user asked for a mobile UI/UX and interaction overhaul that disregards the S
 **Signature element.** `MotionArc`, an open 240° goniometer face, appears in a single orchestrated landing animation, the patient's Today card (prescribed band plus reach angle), empty states, local history and the session-complete summary. `RangeArc` remains the 0–180° protractor; in the therapist prescription editor both ends can be dragged, snapping to 5° and staying at least 15° apart, with haptic ticks. The typed angle fields remain the precise and accessible input.
 
 **Screens.**
-- Landing: arc hero, patient-first role cards, camera trial, language segmented control.
+- Landing: arc hero, one Sign in action, camera trial, language segmented control.
 - App bar sits on the page ground and shows the signed-in person's avatar; the development pill appears only before sign-in.
 - Patient home: greeting, Today card that starts the next valid downloaded assignment directly (falls back to the orientation hero when none is cached), Monday–Sunday completed-session strip built from uploaded and on-device sessions.
 - Therapist home: counts, the first three linked patients as a tappable grouped list, and See all.

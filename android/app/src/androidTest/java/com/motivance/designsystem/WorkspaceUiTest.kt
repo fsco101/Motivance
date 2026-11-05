@@ -75,12 +75,14 @@ class WorkspaceUiTest {
         capture("ui-workspace-large-text.png")
     }
 
-    @Test fun landingPortalsNavigateAndPatientHeroHasClearPrimaryAction() {
-        var role:UserRole?=null
-        compose.setContent {MotivanceTheme {Surface {RoleLanding({role=it},{})}}}
+    @Test fun landingOffersOneSignInWithNoRoleChoice() {
+        var signIn=false
+        compose.setContent {MotivanceTheme {Surface {Landing({signIn=true},{})}}}
         capture("ui-workspace-landing.png")
-        compose.onNodeWithText(label(R.string.continue_patient)).performScrollTo().performClick()
-        assertEquals(UserRole.PATIENT,role)
+        compose.onNodeWithText(label(R.string.patient_title)).assertDoesNotExist()
+        compose.onNodeWithText(label(R.string.therapist_title)).assertDoesNotExist()
+        compose.onNodeWithText(label(R.string.sign_in)).performScrollTo().performClick()
+        assertTrue(signIn)
     }
 
     @Test fun patientDashboardVisual() {

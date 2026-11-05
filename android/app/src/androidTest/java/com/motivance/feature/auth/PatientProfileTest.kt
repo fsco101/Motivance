@@ -28,7 +28,7 @@ class PatientProfileTest {
     private val fixture=PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567",null,true,"patient@example.test")
     private fun continueButton()=compose.onNode(hasText(text(R.string.signup_continue)) and hasClickAction())
     private fun openSignup(onRegister:(String,String,PatientProfile)->Unit,initial:PatientProfile=PatientProfile()) {
-        compose.setContent {MotivanceTheme {Surface {AuthContent(AuthState(),UserRole.PATIENT,{_,_,_,_->},{},{},{},onRegister=onRegister,initialProfile=initial)}}}
+        compose.setContent {MotivanceTheme {Surface {AuthContent(AuthState(),{_,_,_,_->},{},{},{},onRegister=onRegister,initialProfile=initial)}}}
         compose.onNode(hasText(text(R.string.auth_create_account)) and hasClickAction()).performScrollTo().performClick()
     }
     private fun fillAccount() {

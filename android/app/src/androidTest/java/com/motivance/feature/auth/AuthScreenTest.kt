@@ -35,10 +35,10 @@ class AuthScreenTest {
     private fun button(id: Int) = compose.onNode(hasText(text(id)) and hasClickAction())
     // Typing opens the keyboard and imePadding moves the layout; a semantic click cannot land on a stale position.
     private fun SemanticsNodeInteraction.tap() = performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
-    private fun display(role: UserRole = UserRole.PATIENT) {
+    private fun display() {
         compose.setContent {
             MotivanceTheme { Surface {
-                AuthContent(state.value, role, { action, email, password, code ->
+                AuthContent(state.value, { action, email, password, code ->
                     submissions += listOf(action, email, password, code)
                     state.value = AuthState(busy = true)
                 }, { state.value = state.value.copy(notice = null) }, {}, {},initialProfile=com.motivance.domain.PatientProfile("fixture_user","Fixture Patient","female","1995-01-01","Fixture address","09001234567",null,true))
@@ -122,12 +122,11 @@ class AuthScreenTest {
         button(R.string.auth_save_password).tap()
         assertEquals(listOf(AuthAction.RECOVER, "patient@example.test", "replacement", "123456"), submissions.last())
     }
-    @Test fun therapistPortalDoesNotOfferPatientRegistration() {
-        display(UserRole.THERAPIST)
-        compose.onNodeWithText(text(R.string.clinical_portal)).assertIsDisplayed()
-        button(R.string.auth_create_account).assertDoesNotExist()
+    @Test fun theOneSignInPageServesEveryoneAndOffersRegistration() {
+        display()
+        compose.onNodeWithText(text(R.string.auth_sign_in_description)).assertIsDisplayed()
+        button(R.string.auth_create_account).assertExists()
         button(R.string.sign_in).assertIsEnabled()
-        capture("therapist")
     }
     @Test fun loadingScreenShowsStatusWithoutSignInForm() {
         compose.setContent { MotivanceTheme { AuthLoadingScreen() } }
@@ -143,7 +142,7 @@ class AuthScreenTest {
             CompositionLocalProvider(LocalContext provides localized, LocalConfiguration provides configuration,
                 LocalDensity provides Density(density.density, 1.6f)) {
                 MotivanceTheme { Box(Modifier.widthIn(max = 320.dp).fillMaxSize()) {
-                    AuthContent(state.value, UserRole.PATIENT, { _, _, _, _ -> }, {}, {}, {})
+                    AuthContent(state.value, { _, _, _, _ -> }, {}, {}, {})
                 } }
             }
         }
