@@ -96,3 +96,28 @@ npx --yes supabase@2.20.12 test db
 The first command uses four disposable local users and cleans only those fixtures; the existing demo accounts/program are preserved. Android instrumented tests add file-backed migration, lost-acknowledgement/offline sync, owner isolation and Keystore checks. All generated reports belong in `docs/validation/`.
 
 For the optional native `CameraLifecycleTest`, use a camera source that actually supplies frames. On the headless test host the saved webcam0 setting supplied none; cold-booting the AVD with `-camera-back emulated -camera-front emulated -no-snapshot-load` passes the native smoke test without changing its saved camera preferences. Synthetic emulator imagery does not test patient tracking accuracy.
+
+## Web app
+
+The therapist and administrator web app is in `web/`. It needs Node 22 and the local Supabase stack. Everything in `web/.env` ships to the browser, so it holds only the URL and the publishable key.
+
+```powershell
+cd web
+npm ci
+Copy-Item .env.example .env   # Then fill in API_URL and ANON_KEY from: npx supabase@2.20.12 status
+npm run dev                   # http://localhost:3000
+```
+
+Open `http://localhost:3000/design` to review every screen on sample data, with no account needed. Add `?state=loading`, `?state=error` or `?state=empty` to any screen. The route exists only in development.
+
+| Check | Command | Needs |
+| --- | --- | --- |
+| Types, lint, unit tests | `npm run typecheck`, `npm run lint`, `npm test` | Nothing |
+| Build and bundle check | `npm run build`, then `python ../scripts/check_web_bundle.py` | Nothing |
+| Queries against the real schema | `npm run test:contract` | Local Supabase |
+| Browser and accessibility tests | `npx playwright install chromium`, then `npm run e2e` | Local Supabase |
+| Regenerate database types after a migration | `npm run types:db` | Local Supabase |
+| Render the design screens | `$env:CAPTURE_DESIGNS=1; npx playwright test capture-designs` | Nothing |
+| Measure card smoothness | `$env:MEASURE_MOTION=1; npx playwright test design -g smooth` | Nothing |
+
+Contract and browser tests create disposable accounts and remove them afterwards.

@@ -97,27 +97,31 @@ Dependency references: [Compose BOM](https://developer.android.com/develop/ui/co
 
 Therapists and administrators work with a lot of data, which is cramped on a phone, so S6-S8 add a web app for those two roles. Patients stay on Android because the camera session needs it; a patient who signs in on the web is told to use the mobile app.
 
-`web/` is a frontend only: a React and TypeScript single-page app on static hosting. Supabase remains the only backend, so new tables, policies and functions go in `supabase/migrations/`, and anything needing a secret goes in `supabase/functions/`. The web app holds only the publishable key, never the service-role key.
+`web/` is a frontend only: a React and TypeScript single-page app on static hosting, with a public landing page at `/`. Supabase remains the only backend, so new tables, policies and functions go in `supabase/migrations/`, and anything needing a secret goes in `supabase/functions/`. The web app holds only the publishable key, never the service-role key.
 
 **Administrator parity.** Per the user's instruction, Android and web must have the same administrator features. Layout can differ for the screen, but capabilities cannot: a new administrator feature ships to both apps in the same change, and a web-only feature counts as a gap. MOT-43 enforces this with `docs/architecture/ADMIN-PARITY.md` and a CI check that both apps call every `admin_*` database function. Android keeps its therapist and administrator screens.
 
-**Design.** MOT-32 sets the art direction and high-fidelity designs before feature screens are built, extending the motion arc system in `docs/architecture/UI-UX.md` to large screens. Cards are interactive and motion is a designed system, not decoration: it respects reduced-motion settings and is never the only sign of a state change. The launch theme is light only.
+**Design.** [WEB-DESIGN.md](architecture/WEB-DESIGN.md) owns the art direction, extending the motion arc system to large screens. Feature screens are presentational views that take data as props: the `/design` route runs them on sample data for review, and S7 and S8 wire the same views to live data. The launch theme is light only.
 
-Proposed stack, pinned and confirmed in MOT-31:
+**Sessions.** The workspace comes from the address, not from stored state, so a choice cannot outlive its sign-in. A signed-in session ends after 15 minutes without activity, with a 1-minute warning. The activity time is stored, so closing the browser still counts as being away, and signing out ends every tab but not the person's phone.
 
-| Capability | Package | Use |
+The stack is pinned in `web/package.json`. Each runtime dependency earns its place:
+
+| Capability | Package | Why |
 |---|---|---|
-| Language and build | TypeScript (strict), React, Vite | App and tooling |
-| Backend access | `@supabase/supabase-js`, generated database types | Auth, queries and RPC calls |
-| Routing and server state | React Router, TanStack Query | Pages, caching in memory only, retries |
-| Tables | TanStack Table | Sorting, filtering and pagination |
-| Styling and primitives | Tailwind CSS with design tokens, Radix UI | Consistent, accessible components |
-| Motion | Motion (motion.dev) | Interactive cards, transitions and animated arcs |
-| Charts | Recharts | Progress charts with table alternatives |
-| Forms | React Hook Form, Zod | Validation matching the server rules |
-| Languages | i18next | English and Filipino |
-| Testing | Vitest, Testing Library, Playwright, axe-core | Unit, browser and accessibility checks |
-| Component gallery | Storybook | Design review of every component state |
+| Language and build | TypeScript 6 (strict), React 19, Vite 8 | TypeScript stays below 6.1 because `typescript-eslint` does not yet support newer versions |
+| Backend access | `@supabase/supabase-js`, generated database types | Auth, queries and RPC calls; types come from the migrations, and CI fails if they drift |
+| Routing and server state | React Router, TanStack Query | Pages, and caching in memory only, cleared at sign-out |
+| Accessible primitives | Radix UI | Dialogs, menus, selects and tooltips with correct keyboard behaviour |
+| Motion | Motion (motion.dev) | Interactive cards, transitions and arcs. `LazyMotion` keeps its layout engine out of the initial download |
+| Languages | i18next, react-i18next | English and Filipino, with a parity check |
+| Icons and fonts | Phosphor Icons, Fontsource | Tree-shaken icons, and self-hosted Bricolage Grotesque and Atkinson Hyperlegible Next |
+| Styling (build only) | Tailwind CSS 4 | Design tokens as the only available values |
+| Testing (build only) | Vitest, Testing Library, Playwright, axe-core | Unit, contract, browser and accessibility checks |
+
+Three proposed packages were dropped. Storybook became a development-only `/design` route, which renders the real views on sample data and is not bundled. Recharts became a small SVG chart, which keeps gaps honest and saves initial download. TanStack Table was not needed for the current tables; reconsider it if S8 needs more.
+
+Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. It is currently 271 KB, almost all of it libraries, so S7 must load feature screens lazily by route.
 
 ## System architecture
 
@@ -278,10 +282,13 @@ Motivance/
       design/                     # Tokens and theme
       components/                 # Shared accessible components
       motion/                     # Motion tokens and animated primitives
-      data/                       # Typed Supabase access
-      features/                   # therapist/, admin/, profile/
+      auth/                       # Sign-in, role routing, idle sign-out
+      data/                       # Typed Supabase access and generated types
+      layout/                     # Rail, top bar and breadcrumbs
+      features/                   # therapist/, admin/ presentational views
+      gallery/                    # Development-only design review, not bundled
       locales/                    # English and Filipino
-    tests/                        # Browser and accessibility tests
+    tests/                        # Contract, browser and accessibility tests
   supabase/
     migrations/                   # Tables, policies, functions and indexes
     functions/                    # Privileged operations only when needed

@@ -19,3 +19,9 @@ docs/operations/local-test-accounts.json
 # Local tooling output and imported prototype material
 graphify-out/
 stitch_galawgo_rehabilitation_system_prototype/
+
+# Web app
+node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/

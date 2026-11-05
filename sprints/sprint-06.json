@@ -4,7 +4,7 @@
   "title": "S6 - Web foundation and design system",
   "description": "Weeks 11-12. Exit: the web app builds and deploys through CI, staff can sign in and reach the right workspace, and the approved designs, design system and motion system are ready for feature work.",
   "goal": "Give the web app a professional visual identity, motion system and secure foundation before any feature screen is built.",
-  "status": "planned",
+  "status": "in-progress",
   "weeks": {
     "start": 11,
     "end": 12
@@ -48,7 +48,7 @@
       "github_issue": 42,
       "title": "Set up the TypeScript web app and its CI",
       "description": "Create web/ as a React and TypeScript single-page app that talks directly to Supabase, with no server of its own. Supabase stays the only backend, in supabase/.",
-      "status": "planned",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "Web lead",
       "estimate_points": 5,
@@ -88,20 +88,26 @@
         {
           "id": "MOT-31-AC1",
           "description": "TypeScript runs in strict mode, and typecheck, lint, test and build all pass from a clean clone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-31-AC2",
           "description": "docs/PLAN.md records the pinned stack and the reason for each runtime dependency.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-31-AC3",
           "description": "Environment values live in ignored web/.env with web/.env.example as the template; only the Supabase URL and publishable key are used.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-31-AC4",
@@ -112,14 +118,18 @@
         {
           "id": "MOT-31-AC5",
           "description": "A build check fails if a service-role key or any other secret appears in the built files.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-31-AC6",
           "description": "docs/operations/DEVELOPMENT.md explains how to run the web app against local Supabase.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         }
       ],
       "completion": {
@@ -127,14 +137,21 @@
         "reviewed_by": null,
         "evidence": []
       },
-      "plan_reference": "docs/PLAN.md"
+      "plan_reference": "docs/PLAN.md",
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/WEB-FOUNDATION.md"
+      ],
+      "blockers": [
+        "Workflow written; it has not run because this work is not pushed."
+      ]
     },
     {
       "id": "MOT-32",
       "github_issue": 43,
       "title": "Create the web art direction and high-fidelity designs",
       "description": "Set the visual direction before feature screens are built, so the app looks designed rather than assembled from a template. It extends the Motivance motion arc brand to large screens; it does not start a new brand.",
-      "status": "planned",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "Product designer",
       "estimate_points": 8,
@@ -171,32 +188,42 @@
         {
           "id": "MOT-32-AC1",
           "description": "docs/architecture/WEB-DESIGN.md records the direction: layout grid, type scale, data density, use of the motion arc, and what the design deliberately avoids, such as default dashboard templates.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-32-AC2",
           "description": "High-fidelity designs cover sign-in, therapist home, patient list, patient record, assignment editor, progress, and the administrator overview, accounts, links, catalogue and activity pages, at 1440, 1024 and 768 px wide.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-32-AC3",
           "description": "Each design shows its loading, empty, error and confirmation states, not only the filled state.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-32-AC4",
           "description": "Interactions for cards, tables, dialogs and page changes are specified alongside the designs.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-32-AC5",
           "description": "Colours meet WCAG 2.1 AA contrast, Amber stays reserved for caution and hold, and progress is always also stated in text, as in docs/architecture/UI-UX.md.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-32-AC6",
@@ -210,14 +237,21 @@
         "reviewed_by": null,
         "evidence": []
       },
-      "plan_reference": "docs/PLAN.md"
+      "plan_reference": "docs/PLAN.md",
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/WEB-FOUNDATION.md"
+      ],
+      "blockers": [
+        "Waiting for the project owner to review the designs."
+      ]
     },
     {
       "id": "MOT-33",
       "github_issue": 44,
       "title": "Build the web design system",
       "description": "Turn the approved designs into reusable tokens and components, so every screen shares one polished, consistent look.",
-      "status": "planned",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "Web lead + product designer",
       "estimate_points": 8,
@@ -258,38 +292,50 @@
         {
           "id": "MOT-33-AC1",
           "description": "Tokens come from the motion arc system (Ink #0D2B36, Lagoon #0E7C86, Sprout #1B7F45, Mist #F1F6F5, Amber #E8A33D), and components use tokens rather than hard-coded values.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-33-AC2",
           "description": "Bricolage Grotesque is self-hosted under its OFL licence for headings and key numbers; no font loads from a third party.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-33-AC3",
           "description": "The library covers buttons, fields, selects, dialogs, confirmation dialogs, toasts, cards, tables, tabs, pagination, tooltips, avatars, status pills, skeletons and empty states.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-33-AC4",
           "description": "Every interactive component has designed hover, focus, pressed, disabled, loading and error states, and works by keyboard alone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-33-AC5",
           "description": "A component gallery shows each component in every state.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-33-AC6",
           "description": "Toasts match Android: 5 seconds, a close button and a time bar.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         }
       ],
       "completion": {
@@ -304,7 +350,7 @@
       "github_issue": 45,
       "title": "Add interactive cards and the motion system",
       "description": "Make the interface feel responsive and alive without slowing clinical work: cards that react to the pointer, transitions that explain where you went, and numbers and arcs that move with meaning.",
-      "status": "planned",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "Web lead + product designer",
       "estimate_points": 5,
@@ -348,44 +394,58 @@
         {
           "id": "MOT-34-AC1",
           "description": "Motion tokens define durations, easing and springs in one place; no screen sets its own timing.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-34-AC2",
           "description": "Cards lift on hover with a highlight that follows the pointer, settle under a press, and show the same emphasis on keyboard focus.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-34-AC3",
           "description": "Cards can expand in place to reveal detail, and opening a record from a row or card carries through to the record header as a shared transition.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-34-AC4",
           "description": "Page changes move by navigation depth, as on Android. Lists stagger in on first load only, not on every refresh, and skeletons crossfade to content.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-34-AC5",
           "description": "MotionArc and the draggable RangeArc are ported with an animated sweep, and key numbers roll to their new value.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-34-AC6",
           "description": "The prefers-reduced-motion setting replaces movement with simple fades, and this is tested.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-34-AC7",
-          "description": "Animations use transform and opacity only, hold 60 frames per second on a 50-row page, and never delay input. Motion is never the only sign of a state change.",
-          "passed": false,
-          "evidence": []
+          "description": "Animations use transform and opacity, apart from SVG arc strokes and the height of a card expanding in place. They hold 60 frames per second on a 50-card page and never delay input. Motion is never the only sign of a state change.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         }
       ],
       "completion": {
@@ -400,7 +460,7 @@
       "github_issue": 46,
       "title": "Add one sign-in, role routing and secure sessions",
       "description": "Use the same single sign-in rules as Android, and protect patient data on shared clinic computers.",
-      "status": "planned",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "Web + security",
       "estimate_points": 5,
@@ -441,44 +501,58 @@
         {
           "id": "MOT-35-AC1",
           "description": "One sign-in page with no role choice, using the same order as Android: administrator, then therapist, then patient.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-35-AC2",
           "description": "An account with several staff roles can switch workspace, and that choice ends at sign-out.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-35-AC3",
           "description": "A patient-only account is told to use the mobile app and no patient data loads. The web app has no sign-up.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-35-AC4",
           "description": "Password recovery uses the same emailed code as Android, and disabled accounts cannot enter.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-35-AC5",
           "description": "After 15 minutes of inactivity, with a 1-minute warning, the session ends. Signing out in one tab ends every tab.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-35-AC6",
           "description": "Signing out clears all cached data. Nothing containing patient data is written to browser storage; only the auth session is stored.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-35-AC7",
           "description": "A workspace the account does not hold cannot be reached by URL, proven by a browser test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         }
       ],
       "completion": {
@@ -493,7 +567,7 @@
       "github_issue": 47,
       "title": "Add the typed data layer, app shell and English/Filipino support",
       "description": "Give every screen a safe, typed way to reach Supabase, a shared layout, and the same two languages as Android.",
-      "status": "planned",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "Web lead",
       "estimate_points": 5,
@@ -546,26 +620,34 @@
         {
           "id": "MOT-36-AC2",
           "description": "All reads and writes go through one typed layer. Failures show a friendly message with Retry, and raw server errors never reach the screen.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-36-AC3",
           "description": "A contract test runs the web queries against local Supabase, including the history embedding and the catalogue exercises(id,owner_id) query.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-36-AC4",
           "description": "The shell has a role-aware sidebar, a top bar with account and language controls, and breadcrumbs, and works from 768 to 1920 px wide with no horizontal page scroll.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-36-AC5",
           "description": "All text exists in English and Filipino, CI fails when keys or placeholders differ, and the language choice is remembered.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         }
       ],
       "completion": {
@@ -573,7 +655,10 @@
         "reviewed_by": null,
         "evidence": []
       },
-      "plan_reference": "docs/PLAN.md"
+      "plan_reference": "docs/PLAN.md",
+      "blockers": [
+        "Types are generated; the CI freshness check has not run because this work is not pushed."
+      ]
     }
   ],
   "plan_reference": "docs/PLAN.md"

@@ -1,0 +1,143 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/bricolage-grotesque/opsz.css';
+@import '@fontsource-variable/atkinson-hyperlegible-next/index.css';
+
+/* Clearing the defaults means a colour outside this system cannot be used by accident. */
+@theme {
+  --color-*: initial;
+  --shadow-*: initial;
+
+  /* Motion arc brand, identical to android .../designsystem/MotivanceTheme.kt */
+  --color-ink: #0d2b36;
+  --color-lagoon: #0e7c86;
+  --color-lagoon-deep: #075a63;
+  --color-sprout: #1b7f45;
+  --color-sprout-bright: #6fe08f;
+  --color-amber: #e8a33d;
+  --color-mist: #f1f6f5;
+  --color-tide: #dcefec;
+  --color-night: #062229;
+  --color-night-panel: #0e3640;
+  --color-night-line: #285661;
+  --color-night-ink: #bfe3dd;
+  --color-night-caution: #ffc56b;
+
+  /* Web additions */
+  --color-paper: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-slate: #48616c; /* Secondary text: 6:1 on mist */
+  --color-line: #d2e1df; /* Hairlines */
+  --color-line-strong: #93aeb0; /* Control outlines: 3:1 on paper */
+  --color-sprout-soft: #dcf2e3;
+  --color-sprout-deep: #11603a; /* Sprout text on its soft tint: AA contrast */
+  --color-amber-soft: #fbefdb;
+  --color-amber-ink: #744a0a;
+  --color-alarm: #b3261e;
+  --color-alarm-soft: #fbe8e6;
+
+  --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Atkinson Hyperlegible Next Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* The classical scale, from The Elements of Typographic Style */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.05rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.3rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.55rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.65rem;
+  --text-xl: 1.3125rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.9rem;
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 2.5rem;
+  --text-4xl: 3rem;
+  --text-4xl--line-height: 3.15rem;
+  --text-5xl: 3.75rem;
+  --text-5xl--line-height: 3.9rem;
+  --text-6xl: 4.5rem;
+  --text-6xl--line-height: 4.5rem;
+
+  /* Radius follows importance, not one value everywhere. */
+  --radius-control: 0.625rem;
+  --radius-card: 1.125rem;
+  --radius-stage: 1.75rem;
+
+  /* Elevation is tinted with Ink, and only interactive things rise. */
+  --shadow-rest: 0 1px 0 rgb(13 43 54 / 0.05);
+  --shadow-lift: 0 18px 34px -22px rgb(13 43 54 / 0.42), 0 2px 6px -2px rgb(13 43 54 / 0.1);
+  --shadow-float: 0 26px 60px -24px rgb(6 34 41 / 0.5);
+
+  --breakpoint-tablet: 48rem;
+  --breakpoint-desk: 64rem;
+  --breakpoint-wide: 90rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-mist);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 100%;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
+  }
+
+  /* One focus treatment everywhere; keyboard users must never lose their place. */
+  :focus-visible {
+    outline: 2px solid var(--color-lagoon);
+    outline-offset: 2px;
+  }
+
+  .on-dark :focus-visible {
+    outline-color: var(--color-sprout-bright);
+  }
+
+  ::selection {
+    background: var(--color-tide);
+  }
+}
+
+/* The graduated edge of the rail, read like the scale on a goniometer. */
+@utility graduated {
+  background-image:
+    repeating-linear-gradient(to bottom, var(--color-night-line) 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(to bottom, var(--color-night-ink) 0 1px, transparent 1px 40px);
+  background-size: 7px 100%, 13px 100%;
+  background-position: right, right;
+  background-repeat: no-repeat;
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@utility numeric {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+@utility transition-quick {
+  transition-duration: var(--motion-quick);
+  transition-timing-function: var(--motion-ease-out);
+}
