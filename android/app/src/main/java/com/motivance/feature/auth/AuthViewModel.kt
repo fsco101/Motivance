@@ -1,6 +1,9 @@
 package com.motivance.feature.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.motivance.R
+import com.motivance.designsystem.Toaster
+import com.motivance.designsystem.ToastTone
 import com.motivance.domain.AuthRepository
 import com.motivance.domain.UserSession
 import com.motivance.domain.WorkspaceOverview
@@ -15,7 +18,16 @@ enum class AuthAction { SIGN_IN, REGISTER, CONFIRM, RESEND_CONFIRMATION, REQUEST
 enum class AuthNotice { INVALID_EMAIL, PASSWORD_REQUIRED, CODE_REQUIRED, CONFIRM_EMAIL, RECOVERY_SENT, REQUEST_FAILED, SESSION_EXPIRED, EMAIL_UNCONFIRMED, INVALID_CODE, RATE_LIMITED, PASSWORD_POLICY }
 data class AuthState(val session: UserSession? = null, val busy: Boolean = false, val notice: AuthNotice? = null, val restoring: Boolean = false, val activeAction: AuthAction? = null)
 data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean = false, val failed: Boolean = false)
-@HiltViewModel class AuthViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
+private fun AuthAction.doneToast()=when(this) {
+    AuthAction.SIGN_IN -> R.string.toast_signed_in to ToastTone.SUCCESS
+    AuthAction.REGISTER -> R.string.toast_account_created to ToastTone.PENDING
+    AuthAction.CONFIRM -> R.string.toast_email_verified to ToastTone.SUCCESS
+    AuthAction.RESEND_CONFIRMATION, AuthAction.REQUEST_RECOVERY -> R.string.toast_code_sent to ToastTone.PENDING
+    AuthAction.RECOVER -> R.string.toast_password_reset to ToastTone.SUCCESS
+    AuthAction.REFRESH -> R.string.toast_session_refreshed to ToastTone.SUCCESS
+    AuthAction.SIGN_OUT -> R.string.toast_signed_out to ToastTone.SUCCESS
+}
+@HiltViewModel class AuthViewModel @Inject constructor(private val auth: AuthRepository,private val toasts:Toaster=Toaster()) : ViewModel() {
     private val mutable = MutableStateFlow(AuthState(restoring=true))
     val state = mutable.asStateFlow()
     private val overviewMutable=MutableStateFlow(OverviewState())
@@ -29,6 +41,8 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
             catch(_:Exception) {mutable.value=AuthState()}
         }
     }
+    private fun report(action:AuthAction) {val (message,tone)=action.doneToast(); toasts.show(message,tone)}
+    private fun report(notice:AuthNotice) {toasts.show(notice.label(),ToastTone.ERROR)}
     fun loadOverview() {
         val user=mutable.value.session?.userId ?: return
         if(overviewMutable.value.busy) return
@@ -44,12 +58,13 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
     fun clearNotice() { if (!mutable.value.busy) mutable.value=mutable.value.copy(notice=null) }
     fun registerProfile(email:String,password:String,profile:com.motivance.domain.PatientProfile) {
         if(mutable.value.busy) return
-        if(!profile.valid() || password.length<8 || !email.trim().matches(Regex("[^\\s@]+@[^\\s@]+\\.[^\\s@]+"))) {mutable.value=mutable.value.copy(notice=AuthNotice.REQUEST_FAILED);return}
+        if(!profile.valid() || password.length<8 || !email.trim().matches(Regex("[^\\s@]+@[^\\s@]+\\.[^\\s@]+"))) {mutable.value=mutable.value.copy(notice=AuthNotice.REQUEST_FAILED);report(AuthNotice.REQUEST_FAILED);return}
         mutable.value=mutable.value.copy(busy=true,notice=null,activeAction=AuthAction.REGISTER)
+        toasts.show(AuthAction.REGISTER.busyLabel(),ToastTone.PENDING)
         viewModelScope.launch {
-            try {auth.registerProfile(email.trim(),password,profile);mutable.value=AuthState(notice=AuthNotice.CONFIRM_EMAIL)}
+            try {auth.registerProfile(email.trim(),password,profile);mutable.value=AuthState(notice=AuthNotice.CONFIRM_EMAIL);report(AuthAction.REGISTER)}
             catch(e:CancellationException) {throw e}
-            catch(_:Exception) {mutable.value=mutable.value.copy(busy=false,activeAction=null,notice=AuthNotice.REQUEST_FAILED)}
+            catch(_:Exception) {mutable.value=mutable.value.copy(busy=false,activeAction=null,notice=AuthNotice.REQUEST_FAILED);report(AuthNotice.REQUEST_FAILED)}
         }
     }
     fun act(action: AuthAction, email: String = "", password: String = "", otp: String = "") {
@@ -61,8 +76,9 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
             action in setOf(AuthAction.CONFIRM,AuthAction.RECOVER) && otp.isBlank() -> AuthNotice.CODE_REQUIRED
             else -> null
         }
-        if(notice!=null) { mutable.value=mutable.value.copy(notice=notice,restoring=false); return }
+        if(notice!=null) { mutable.value=mutable.value.copy(notice=notice,restoring=false); report(notice); return }
         mutable.value=mutable.value.copy(busy=true,notice=null,restoring=false,activeAction=action)
+        toasts.show(action.busyLabel(),ToastTone.PENDING)
         viewModelScope.launch {
             try {
                 when(action) {
@@ -75,6 +91,7 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
                     AuthAction.REFRESH -> mutable.value=AuthState(session=auth.refresh())
                     AuthAction.SIGN_OUT -> { overviewMutable.value=OverviewState(); mutable.value=AuthState(busy=true,activeAction=AuthAction.SIGN_OUT); auth.signOut() }
                 }
+                report(action)
             } catch(e: CancellationException) { throw e }
             catch(e: Exception) {
                 if(action==AuthAction.REFRESH || action==AuthAction.SIGN_OUT) overviewMutable.value=OverviewState()
@@ -87,6 +104,7 @@ data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean 
                     else -> AuthNotice.REQUEST_FAILED
                 }
                 mutable.value=mutable.value.copy(busy=false,notice=notice,session=if(action==AuthAction.REFRESH || action==AuthAction.SIGN_OUT) null else mutable.value.session)
+                report(notice)
             }
             finally { mutable.value=mutable.value.copy(busy=false,activeAction=null) }
         }

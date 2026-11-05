@@ -512,7 +512,7 @@
     <string name="ui_withdrawing_consent">Saving your consent preference&#8230;</string>
     <string name="ui_submitting_request">Submitting your request&#8230;</string>
     <string name="ui_sync_queued">Sync requested. Each result below shows its latest upload status.</string>
-    <string name="ui_prescription_published">Prescription published. The patient can refresh their exercises to see the new version.</string>
+    <string name="ui_prescription_published">Prescription published. It reaches the patient\'s phone automatically while they are online.</string>
     <string name="ui_changes_saved">Changes saved.</string>
     <string name="ui_no_pending_uploads">No recorded sessions to upload yet.</string>
     <string name="ui_show_timing">Adjust timing and movement limits</string>
@@ -709,4 +709,26 @@
     <string name="session_close">Close session</string>
     <string name="calc_source_demo_short">Demo</string>
     <string name="calc_source_prescribed_short">Prescribed</string>
+    <string name="toast_signed_in">Signed in successfully.</string>
+    <string name="toast_signed_out">You are signed out.</string>
+    <string name="toast_account_created">Account created. Enter the code sent to your email.</string>
+    <string name="toast_email_verified">Email verified. You are signed in.</string>
+    <string name="toast_code_sent">Code sent. Check your email.</string>
+    <string name="toast_password_reset">Password changed. You are signed in.</string>
+    <string name="toast_session_refreshed">Your session was refreshed.</string>
+    <string name="toast_invitation_created">Invitation created. Share the code with your patient.</string>
+    <string name="toast_therapist_connected">You are now connected to your therapist.</string>
+    <string name="toast_access_revoked">Patient access revoked.</string>
+    <string name="toast_workspace_updated">Everything is up to date.</string>
+    <string name="toast_new_assignment">You have a new or updated exercise from your therapist.</string>
+    <string name="toast_session_uploaded">Your session was uploaded.</string>
+    <string name="toast_upload_failed">A session could not be uploaded. Open Profile to retry.</string>
+    <string name="toast_upload_sign_in">Sign in again to finish uploading your session.</string>
+    <string name="toast_saving">Saving&#8230;</string>
+    <string name="toast_session_started">Session started.</string>
+    <string name="toast_session_paused">Session paused.</string>
+    <string name="toast_session_restored">Interrupted session restored.</string>
+    <string name="toast_session_saved">Session saved on this phone.</string>
+    <string name="toast_session_saved_pending">Session saved. It will upload when you are online.</string>
+    <string name="toast_close">Close notification</string>
 </resources>

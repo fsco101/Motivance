@@ -33,7 +33,10 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.motivance.R
 import com.motivance.data.local.CachedPrescription
@@ -48,14 +51,28 @@ import com.motivance.feature.auth.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.rehabilitation.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
+/** How often an open patient screen checks for exercises the therapist has just published. */
+private const val ASSIGNMENT_CHECK_MS=30_000L
+
+/** The toast host wraps the whole app because several screens below return early and draw without the scaffold. */
+@Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster) {
+    CompositionLocalProvider(LocalToaster provides toaster) {
+        Box(Modifier.fillMaxSize()) {
+            AppContent(vm)
+            ToastHost(toaster,Modifier.align(Alignment.TopCenter))
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun MotivanceApp(vm: AuthViewModel) {
+@Composable private fun AppContent(vm: AuthViewModel) {
     val auth by vm.state.collectAsStateWithLifecycle()
     val overview by vm.overview.collectAsStateWithLifecycle()
     val exercise:ExerciseSessionViewModel=viewModel()
@@ -106,6 +123,15 @@ import java.time.ZoneId
             }
         }; return
     }
+    // A patient's exercises arrive on their own: on opening these pages, on returning to the app, and while it stays open.
+    val lifecycle=LocalLifecycleOwner.current
+    val patientAccount=auth.session?.userId?.takeIf {actualRole==UserRole.PATIENT}
+    val assignmentPage=route.takeIf {patientAccount!=null && it in setOf("HOME","EXERCISES")}
+    LaunchedEffect(assignmentPage,patientAccount,lifecycle) {
+        if(assignmentPage!=null) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while(true) {rehabilitation.syncAssignments(); delay(ASSIGNMENT_CHECK_MS)}
+        }
+    }
     val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","PROGRESS","PROFILE","ADMIN")
     val activeTab=when(route) {
         "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
@@ -114,7 +140,7 @@ import java.time.ZoneId
     }
     val accountName=overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account)
     fun refreshWorkspace() {
-        rehabilitation.refresh()
+        rehabilitation.refreshNow()
         if(route=="PROGRESS" || route=="PATIENT_DETAIL") history.refresh()
         vm.loadOverview()
     }
@@ -191,7 +217,7 @@ import java.time.ZoneId
                         ActionButton(R.string.refresh_session,{vm.act(AuthAction.REFRESH)},outlined=true,enabled=!auth.busy,busy=auth.activeAction==AuthAction.REFRESH,busyLabel=R.string.ui_refreshing_session)
                         ActionButton(R.string.sign_out,{vm.act(AuthAction.SIGN_OUT)},outlined=true,enabled=!auth.busy,busy=auth.activeAction==AuthAction.SIGN_OUT,busyLabel=R.string.ui_signing_out)
                     }
-                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
                     SyncAndPrivacy(connected,rehabilitation,actualRole==UserRole.PATIENT) {exercise.newSession(); rehabilitation.withdraw()}
                 }
                 "LOCAL_HISTORY" -> {
@@ -226,7 +252,7 @@ import java.time.ZoneId
                 "ADMIN" -> if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
                 "PATIENTS" -> {
                     PageHeader(R.string.patient_management,R.string.assigned_patients_only)
-                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
                     if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
                     else PatientManagement(connected,rehabilitation) {selectedPatient=it; route="PATIENT_DETAIL"}
                 }
@@ -235,7 +261,7 @@ import java.time.ZoneId
                     val plans=connected.workspace.prescriptions.filter {it.patientId==patientId}
                     PageHeader(R.string.patient_management,eyebrow=patient?.name?.ifBlank {null} ?: patientId?.take(8))
                     patient?.profile?.let {PatientProfileSummary(it)}
-                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
                     SectionHeading(R.string.ui_exercise_plan) {
                         FilledTonalButton({editingAssignment=null; route="ASSIGN"},enabled=!connected.busy,modifier=Modifier.heightIn(min=48.dp)) {
                             Icon(Icons.Default.Add,null,Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.assign_exercise))
@@ -251,20 +277,22 @@ import java.time.ZoneId
                 "ASSIGN" -> {
                     val existing=connected.workspace.prescriptions.firstOrNull {it.assignmentId==editingAssignment}
                     PageHeader(R.string.exercise_assignment,R.string.professional_targets)
-                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
-                    key(existing?.versionId ?: "new") {PrescriptionForm(connected,rehabilitation,patientId,existing)}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
+                    // Leaving on success also retires the form's assignment ID: reusing it would turn the next exercise into a new
+                    // version of this one and replace it on the patient's phone.
+                    key(existing?.versionId ?: "new") {PrescriptionForm(connected,rehabilitation,patientId,existing) {if(route=="ASSIGN") route="PATIENT_DETAIL"}}
                 }
                 "EXERCISES" -> {
                     PageHeader(R.string.your_exercises,R.string.professional_targets)
-                    ConnectedStatus(connected) {rehabilitation.refresh(); vm.loadOverview()}
-                    CachedAssignments(local.cached,connected.workspace.prescriptions.any {p -> local.cached.none {it.versionId==p.versionId}},loading=connected.busy || connected.failed) {exercise.newSession(); exercise.usePrescription(it); route="SETUP"}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
+                    CachedAssignments(local.cached,connected.workspace.prescriptions.any {p -> p.patientId==connected.owner && local.cached.none {it.versionId==p.versionId}},loading=connected.busy || connected.failed) {exercise.newSession(); exercise.usePrescription(it); route="SETUP"}
                     SectionHeading(R.string.ui_quick_actions)
                     QuickAction(Icons.Default.PlayArrow,R.string.camera_check,R.string.camera_preview_only) {route="SETUP"}
                     PatientInvitation(connected,rehabilitation)
                 }
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
-                    ConnectedStatus(connected) {rehabilitation.refresh(); history.refresh()}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); history.refresh()}
                     ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history)
                 }
                 else -> {

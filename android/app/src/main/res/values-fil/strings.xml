@@ -512,7 +512,7 @@
     <string name="ui_withdrawing_consent">Sine-save ang iyong pahintulot&#8230;</string>
     <string name="ui_submitting_request">Ipinapadala ang iyong kahilingan&#8230;</string>
     <string name="ui_sync_queued">Hiniling ang pag-sync. Makikita sa ibaba ang kasalukuyang katayuan ng bawat upload.</string>
-    <string name="ui_prescription_published">Nailathala ang reseta. Maaaring i-refresh ng pasyente ang mga ehersisyo upang makita ang bagong bersyon.</string>
+    <string name="ui_prescription_published">Nailathala ang reseta. Awtomatiko itong makakarating sa telepono ng pasyente kapag online siya.</string>
     <string name="ui_changes_saved">Na-save ang mga pagbabago.</string>
     <string name="ui_no_pending_uploads">Wala pang naitalang session na ia-upload.</string>
     <string name="ui_show_timing">Ayusin ang oras at mga limitasyon ng paggalaw</string>
@@ -709,4 +709,26 @@
     <string name="session_close">Isara ang session</string>
     <string name="calc_source_demo_short">Demo</string>
     <string name="calc_source_prescribed_short">Nakareseta</string>
+    <string name="toast_signed_in">Matagumpay na naka-sign in.</string>
+    <string name="toast_signed_out">Naka-sign out ka na.</string>
+    <string name="toast_account_created">Nagawa ang account. Ilagay ang code na ipinadala sa iyong email.</string>
+    <string name="toast_email_verified">Na-verify ang email. Naka-sign in ka na.</string>
+    <string name="toast_code_sent">Naipadala ang code. Tingnan ang iyong email.</string>
+    <string name="toast_password_reset">Nabago ang password. Naka-sign in ka na.</string>
+    <string name="toast_session_refreshed">Na-refresh ang iyong session.</string>
+    <string name="toast_invitation_created">Nagawa ang imbitasyon. Ibahagi ang code sa iyong pasyente.</string>
+    <string name="toast_therapist_connected">Nakakonekta ka na sa iyong therapist.</string>
+    <string name="toast_access_revoked">Binawi ang access ng pasyente.</string>
+    <string name="toast_workspace_updated">Napapanahon na ang lahat.</string>
+    <string name="toast_new_assignment">May bago o na-update na ehersisyo mula sa iyong therapist.</string>
+    <string name="toast_session_uploaded">Na-upload ang iyong sesyon.</string>
+    <string name="toast_upload_failed">Hindi na-upload ang isang sesyon. Buksan ang Profile para subukang muli.</string>
+    <string name="toast_upload_sign_in">Mag-sign in muli para matapos ang pag-upload ng sesyon.</string>
+    <string name="toast_saving">Sine-save&#8230;</string>
+    <string name="toast_session_started">Nagsimula ang sesyon.</string>
+    <string name="toast_session_paused">Naka-pause ang sesyon.</string>
+    <string name="toast_session_restored">Naibalik ang naantalang sesyon.</string>
+    <string name="toast_session_saved">Nai-save ang sesyon sa teleponong ito.</string>
+    <string name="toast_session_saved_pending">Nai-save ang sesyon. Ia-upload ito kapag online ka.</string>
+    <string name="toast_close">Isara ang abiso</string>
 </resources>

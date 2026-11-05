@@ -174,7 +174,7 @@ internal fun photoFailure(e:Exception)=when {
     else -> R.string.profile_photo_failed
 }
 
-@HiltViewModel class PatientProfileViewModel @Inject constructor(private val repository:AuthRepository):ViewModel() {
+@HiltViewModel class PatientProfileViewModel @Inject constructor(private val repository:AuthRepository,private val toasts:Toaster=Toaster()):ViewModel() {
     private val mutable=MutableStateFlow(ProfileState());val state=mutable.asStateFlow()
     private var job:Job?=null
     private var generation=0
@@ -185,16 +185,19 @@ internal fun photoFailure(e:Exception)=when {
     fun uploadPhoto(jpeg:ByteArray)=perform(R.string.profile_photo_saved,photo=true) {repository.uploadProfilePhoto(jpeg);repository.loadProfile()}
     fun removePhoto()=perform(R.string.profile_photo_removed,photo=true) {repository.removeProfilePhoto();repository.loadProfile()}
     /** The picked file could not be decoded on the device; nothing was uploaded. */
-    fun photoUnreadable() {mutable.value=mutable.value.copy(photoError=R.string.profile_photo_unreadable,message=null)}
+    fun photoUnreadable() {mutable.value=mutable.value.copy(photoError=R.string.profile_photo_unreadable,message=null);toasts.show(R.string.profile_photo_unreadable,ToastTone.ERROR)}
     private fun perform(message:Int?=null,photo:Boolean=false,action:suspend ()->PatientProfile) {
         if(mutable.value.owner.isBlank() || mutable.value.busy)return
         val ticket=++generation
         mutable.value=mutable.value.copy(busy=true,photoBusy=photo,failed=false,message=null,photoError=null)
+        // Only a change has a message; the plain profile load stays silent.
+        if(message!=null) toasts.show(R.string.profile_loading,ToastTone.PENDING)
         job=viewModelScope.launch {
-            try {val p=action();if(ticket==generation)mutable.value=mutable.value.copy(profile=p,busy=false,photoBusy=false,message=message)}
+            try {val p=action();if(ticket==generation) {mutable.value=mutable.value.copy(profile=p,busy=false,photoBusy=false,message=message);message?.let {toasts.show(it)}}}
             catch(e:CancellationException){throw e}
-            catch(e:Exception){if(ticket==generation)mutable.value=mutable.value.copy(busy=false,photoBusy=false,
-                failed=!photo,photoError=if(photo) photoFailure(e) else null)}
+            catch(e:Exception){if(ticket==generation) {mutable.value=mutable.value.copy(busy=false,photoBusy=false,
+                failed=!photo,photoError=if(photo) photoFailure(e) else null)
+                if(message!=null) toasts.show(if(photo) photoFailure(e) else R.string.profile_failed,ToastTone.ERROR)}}
         }
     }
 }
@@ -203,7 +206,6 @@ internal fun photoFailure(e:Exception)=when {
     val state by vm.state.collectAsStateWithLifecycle()
     if(state.busy) LoadingNotice(R.string.profile_loading)
     if(state.failed) FeedbackNotice(R.string.profile_failed,error=true,retry={vm.refresh()})
-    state.message?.takeIf {it!=R.string.profile_photo_saved && it!=R.string.profile_photo_removed}?.let {FeedbackNotice(it)}
     LaunchedEffect(state.message) {if(state.message==R.string.profile_saved)onSaved()}
     state.profile?.let {ProfilePhotoCard(it,state,vm)}
     // Keyed without the photo, so changing the photo does not discard an edit in progress.

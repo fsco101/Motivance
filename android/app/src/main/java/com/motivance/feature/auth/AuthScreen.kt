@@ -295,7 +295,7 @@ private fun AuthAction.description(role: UserRole?) = when (this) {
     AuthAction.RECOVER -> R.string.auth_new_password_description
     else -> R.string.auth_restoring
 }
-private fun AuthAction.busyLabel() = when (this) {
+internal fun AuthAction.busyLabel() = when (this) {
     AuthAction.SIGN_IN -> R.string.auth_signing_in
     AuthAction.REGISTER -> R.string.auth_creating_account
     AuthAction.CONFIRM -> R.string.auth_verifying
@@ -315,7 +315,7 @@ private fun AuthAction.label() = when (this) {
     AuthAction.REFRESH -> R.string.refresh_session
     AuthAction.SIGN_OUT -> R.string.sign_out
 }
-private fun AuthNotice.label() = when (this) {
+internal fun AuthNotice.label() = when (this) {
     AuthNotice.INVALID_EMAIL -> R.string.invalid_email
     AuthNotice.PASSWORD_REQUIRED -> R.string.password_required
     AuthNotice.CODE_REQUIRED -> R.string.code_required

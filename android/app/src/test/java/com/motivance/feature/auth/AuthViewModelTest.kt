@@ -1,5 +1,8 @@
 package com.motivance.feature.auth
 
+import com.motivance.R
+import com.motivance.designsystem.Toaster
+import com.motivance.designsystem.ToastTone
 import com.motivance.domain.AuthRepository
 import com.motivance.domain.UserRole
 import com.motivance.domain.UserSession
@@ -21,6 +24,57 @@ class AuthViewModelTest {
     @Before fun setup() { Dispatchers.setMain(dispatcher) }
     @After fun teardown() { Dispatchers.resetMain() }
 
+    private fun toasted(toasts:Toaster)=toasts.current.value?.let {it.message to it.tone}
+    @Test fun signingInReportsPendingThenDone()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        repository.signInGate=CompletableDeferred()
+        vm.act(AuthAction.SIGN_IN,"a@example.test","password"); runCurrent()
+        assertEquals(R.string.auth_signing_in to ToastTone.PENDING,toasted(toasts))
+        repository.signInGate!!.complete(repository.session); advanceUntilIdle()
+        assertEquals(R.string.toast_signed_in to ToastTone.SUCCESS,toasted(toasts))
+    }
+    @Test fun aFailedSignInReportsTheSameReasonAsTheScreen()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        repository.signInFailure=RemoteFailure(400,"email_not_confirmed")
+        vm.act(AuthAction.SIGN_IN,"a@example.test","password"); advanceUntilIdle()
+        assertEquals(AuthNotice.EMAIL_UNCONFIRMED.label() to ToastTone.ERROR,toasted(toasts))
+    }
+    @Test fun invalidInputIsReportedWithoutARequest()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        vm.act(AuthAction.SIGN_IN,"invalid","password")
+        assertEquals(AuthNotice.INVALID_EMAIL.label() to ToastTone.ERROR,toasted(toasts))
+        assertEquals(0,repository.calls)
+    }
+    @Test fun creatingAnAccountIsPendingUntilTheEmailIsVerified()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        vm.act(AuthAction.REGISTER,"a@example.test","password"); advanceUntilIdle()
+        assertEquals(R.string.toast_account_created to ToastTone.PENDING,toasted(toasts))
+    }
+    private val profile=com.motivance.domain.PatientProfile("fixture_user","Fixture Person","female","1990-01-01","Fixture address","+639001234567",consent=true,firstName="Fixture",lastName="Person")
+    @Test fun theSignupFlowReportsPendingThenAwaitingVerification()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        vm.registerProfile("a@example.test","password1",profile)
+        assertEquals(R.string.auth_creating_account to ToastTone.PENDING,toasted(toasts))
+        advanceUntilIdle()
+        assertEquals(R.string.toast_account_created to ToastTone.PENDING,toasted(toasts))
+    }
+    @Test fun aFailedSignupIsReported()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        repository.failRegister=true
+        vm.registerProfile("a@example.test","password1",profile); advanceUntilIdle()
+        assertEquals(AuthNotice.REQUEST_FAILED.label() to ToastTone.ERROR,toasted(toasts))
+    }
+    @Test fun signingOutIsReported()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        vm.act(AuthAction.SIGN_IN,"a@example.test","password"); advanceUntilIdle()
+        vm.act(AuthAction.SIGN_OUT); advanceUntilIdle()
+        assertEquals(R.string.toast_signed_out to ToastTone.SUCCESS,toasted(toasts))
+    }
+    @Test fun restoringASessionOnLaunchIsSilent()=runTest(dispatcher) {
+        val toasts=Toaster();val vm=AuthViewModel(repository,toasts)
+        vm.restore(); advanceUntilIdle()
+        assertNull(toasts.current.value)
+    }
     @Test fun invalidEmailNeverReachesBackend()=runTest(dispatcher) {
         val vm=AuthViewModel(repository)
         vm.act(AuthAction.SIGN_IN,"invalid","password")
@@ -157,6 +211,8 @@ class AuthViewModelTest {
         var signOutGate: CompletableDeferred<Unit>?=null
         var overviewGate: CompletableDeferred<WorkspaceOverview>?=null
         var failRefresh=false
+        var failRegister=false
+        override suspend fun registerProfile(email:String,password:String,profile:com.motivance.domain.PatientProfile) {if(failRegister) error("sensitive backend detail")}
         var failSignIn=false
         var signInFailure:Exception?=null
         var resentEmail:String?=null

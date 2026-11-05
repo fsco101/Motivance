@@ -5,8 +5,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.motivance.BuildConfig
+import com.motivance.R
 import com.motivance.assessment.MovementAssessment
 import com.motivance.data.local.*
+import com.motivance.designsystem.Toaster
+import com.motivance.designsystem.ToastTone
 import com.motivance.domain.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,7 +27,7 @@ data class ExerciseSessionState(
     val id:String?=null,val saving:Boolean=false,val saved:Boolean=false,val error:Boolean=false,
     val recoverable:LocalSession?=null,val history:List<LocalSession> = emptyList(),val cached:List<CachedPrescription> = emptyList()
 )
-@HiltViewModel class ExerciseSessionViewModel @Inject constructor(private val store:SessionStore,@ApplicationContext private val context:Context):ViewModel() {
+@HiltViewModel class ExerciseSessionViewModel @Inject constructor(private val store:SessionStore,@ApplicationContext private val context:Context,private val toasts:Toaster=Toaster()):ViewModel() {
     private val mutable=MutableStateFlow(ExerciseSessionState())
     val state=mutable.asStateFlow()
     private var engine=MovementAssessment(ExerciseRules())
@@ -83,8 +86,9 @@ data class ExerciseSessionState(
                 if(current.id==null) {startedAt=maxOf(System.currentTimeMillis(),grant?.occurredAt ?: 0); mutable.value=mutable.value.copy(id=UUID.randomUUID().toString())}
                 mutable.value=mutable.value.copy(metrics=engine.snapshot)
                 persist("DRAFT")
+                toasts.show(R.string.toast_session_started)
             } catch(e:CancellationException) {throw e}
-            catch(_:Exception) {if(owner==account) mutable.value=mutable.value.copy(error=true)}
+            catch(_:Exception) {if(owner==account) {mutable.value=mutable.value.copy(error=true); toasts.show(R.string.local_save_failed,ToastTone.ERROR)}}
             finally {if(owner==account) mutable.value=mutable.value.copy(saving=false)}
         }
     }
@@ -93,6 +97,11 @@ data class ExerciseSessionState(
         val metrics=engine.pause(SystemClock.uptimeMillis())
         mutable.value=mutable.value.copy(metrics=metrics)
         if(mutable.value.id!=null && !mutable.value.saved && !mutable.value.saving) persist("INTERRUPTED")
+    }
+    /** The person's own pause. [interrupt] also runs for lifecycle events, which are not announced. */
+    fun pause() {
+        interrupt()
+        if(mutable.value.id!=null) toasts.show(R.string.toast_session_paused,ToastTone.INFO)
     }
     fun finish() {
         lifecycleRevision++
@@ -110,9 +119,17 @@ data class ExerciseSessionState(
                 if(status=="COMPLETED") {
                     SyncScheduler.schedule(context,account)
                     if(owner==account && mutable.value.id==id) mutable.value=mutable.value.copy(saving=false,saved=true,error=false)
+                    if(captured.rules.demo) toasts.show(R.string.toast_session_saved)
+                    else toasts.show(R.string.toast_session_saved_pending,ToastTone.PENDING)
                 }
             } catch(e: CancellationException) { throw e }
-            catch(e: Exception) { if(owner==account && mutable.value.id==id) mutable.value=mutable.value.copy(saving=false,error=true) }
+            catch(e: Exception) {
+                if(owner==account && mutable.value.id==id) {
+                    // Checkpoints repeat twice a second, so a persistent failure is reported once.
+                    if(!mutable.value.error) toasts.show(R.string.local_save_failed,ToastTone.ERROR)
+                    mutable.value=mutable.value.copy(saving=false,error=true)
+                }
+            }
         }
     }
     fun restore() {
@@ -122,6 +139,7 @@ data class ExerciseSessionState(
         if(!rules.demo && mutable.value.cached.none { it.versionId==rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis() }) return
         engine=MovementAssessment(rules,ExerciseJson.snapshot(row.snapshotJson)); startedAt=row.startedAt
         mutable.value=mutable.value.copy(id=row.id,rules=rules,metrics=engine.snapshot,saved=false,error=false,recoverable=null)
+        toasts.show(R.string.toast_session_restored,ToastTone.INFO)
     }
     fun newSession() {
         if(mutable.value.saving) return

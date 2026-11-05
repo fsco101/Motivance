@@ -1,5 +1,8 @@
 package com.motivance.feature.admin
 
+import com.motivance.R
+import com.motivance.designsystem.Toaster
+import com.motivance.designsystem.ToastTone
 import com.motivance.domain.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
@@ -60,6 +63,17 @@ class AdministrationViewModelTest {
         assertNull(vm.state.value.activeAction)
         assertTrue(vm.state.value.updated)
         assertEquals(AdminAction.ACCOUNT,vm.state.value.completedAction)
+    }
+    @Test fun changesAndFailuresAreReportedButReadsAreNot()=runTest {
+        val remote=Remote();val toasts=Toaster();val vm=AdministrationViewModel(remote,toasts);vm.configure("admin")
+        vm.refresh();advanceUntilIdle()
+        assertNull(toasts.current.value)
+        vm.account("a",false)
+        assertEquals(R.string.toast_saving,toasts.current.value?.message);assertEquals(ToastTone.PENDING,toasts.current.value?.tone)
+        advanceUntilIdle()
+        assertEquals(R.string.admin_saved_account,toasts.current.value?.message);assertEquals(ToastTone.SUCCESS,toasts.current.value?.tone)
+        remote.failure=true;vm.refresh();advanceUntilIdle()
+        assertEquals(R.string.admin_failed,toasts.current.value?.message);assertEquals(ToastTone.ERROR,toasts.current.value?.tone)
     }
     @Test fun paginationDeduplicatesAndRepeatedClickWhileBusyDoesNotRepeatChange()=runTest {
         val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin");vm.refresh();advanceUntilIdle()

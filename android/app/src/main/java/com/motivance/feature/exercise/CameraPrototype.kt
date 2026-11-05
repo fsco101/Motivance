@@ -203,7 +203,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             }
         }
         MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
-            {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.interrupt()})
+            {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
         SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
         exercise.cached.firstOrNull { it.versionId==exercise.rules.prescriptionVersionId }?.let {
             Text(it.instructions,style=MaterialTheme.typography.bodyMedium,color=Color.White)
