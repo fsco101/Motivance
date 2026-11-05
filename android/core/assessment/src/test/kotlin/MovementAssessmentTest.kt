@@ -16,7 +16,7 @@ class MovementAssessmentTest {
         assertEquals(1,r.engine.snapshot.completed)
     }
     @Test fun completeRepetitionsWorkForDemoAndPrescribedExercisesOnBothSides() {
-        for(kind in ExerciseKind.entries) for(side in BodySide.entries) for(demo in listOf(true,false)) {
+        for(kind in listOf(ExerciseKind.ELBOW_FLEXION,ExerciseKind.SHOULDER_ABDUCTION)) for(side in BodySide.entries) for(demo in listOf(true,false)) {
             val r=ready(ExerciseRules(kind=kind,side=side,demo=demo,prescriptionVersionId=if(demo) null else "fixture-prescription"))
             listOf(10.0,10.0,40.0,60.0,100.0,100.0,100.0,70.0,40.0,10.0,10.0).forEach {
                 r.frame(pose(it,side,kind==ExerciseKind.SHOULDER_ABDUCTION))

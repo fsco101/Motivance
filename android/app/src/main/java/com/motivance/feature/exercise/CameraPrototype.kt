@@ -49,6 +49,7 @@ import com.motivance.R
 import com.motivance.designsystem.*
 import com.motivance.assessment.CameraDiagnostics
 import com.motivance.assessment.PerformancePolicy
+import com.motivance.data.local.ExerciseJson
 import androidx.compose.ui.semantics.*
 import com.motivance.domain.Landmark
 import com.motivance.domain.*
@@ -154,7 +155,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         lastCount=exercise.metrics.completed
     }
     LaunchedEffect(exercise.metrics.feedback) {if(exercise.metrics.feedback==RepFeedback.TARGET_REACHED) haptics.tick()}
-    val exerciseName=stringResource(if(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction)
+    val exerciseName=exercise.rules.displayName()
     DarkStage()
     SessionTheme {
     Column(Modifier.fillMaxSize().background(Motion.Night).verticalScroll(rememberScrollState()).padding(horizontal=16.dp,vertical=12.dp),
@@ -178,8 +179,11 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
                     BodySide.entries.forEach { side -> FilterChip(exercise.rules.side==side,{haptics.tick();session.select(exercise.rules.kind,side)},label={Text(stringResource(if(side==BodySide.LEFT) R.string.left_side else R.string.right_side))}) }
                 }
             }
-            exercise.cached.filter {it.expiresAt>System.currentTimeMillis()}.forEach { cached ->
-                OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.use_cached_prescription)) }
+            exercise.cached.filter {it.expiresAt>System.currentTimeMillis() && it.versionId!=exercise.rules.prescriptionVersionId}.forEach { cached ->
+                val rules=ExerciseJson.rules(cached.rulesJson)
+                OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) {
+                    Text(stringResource(R.string.use_cached_prescription,rules.displayName(),stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)))
+                }
             }
         }
         if(!permission) Surface(shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.surface) {

@@ -83,6 +83,8 @@ class ResultsDashboardTest {
         override suspend fun acceptInvitation(code: String) = error("unused")
         override suspend fun revokeLink(patientId: String) = error("unused")
         override suspend fun publishPrescription(draft: PrescriptionDraft) = error("unused")
+        override suspend fun createCustomExercise(draft:com.motivance.domain.CustomExerciseDraft)=error("unused")
+        override suspend fun archiveCustomExercise(exerciseId:String)=error("unused")
         override suspend fun requestPatientData(id: String, kind: String) = error("unused")
         override suspend fun uploadConsent(owner: String, id: String, event: String, version: String, occurredAt: Long) = error("unused")
         override suspend fun uploadSession(owner: String, payload: String) = error("unused")

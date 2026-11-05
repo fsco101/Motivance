@@ -51,6 +51,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
     RehabAction.ACCEPT -> R.string.ui_connecting_therapist
     RehabAction.REVOKE -> R.string.ui_revoking_access
     RehabAction.PRESCRIBE -> R.string.ui_publishing_prescription
+    RehabAction.CREATE_EXERCISE -> R.string.custom_exercise_saving
+    RehabAction.ARCHIVE_EXERCISE -> R.string.custom_exercise_removing
     RehabAction.SYNC -> R.string.ui_preparing_sync
     RehabAction.WITHDRAW -> R.string.ui_withdrawing_consent
     RehabAction.EXPORT, RehabAction.DELETE -> R.string.ui_submitting_request
@@ -228,9 +230,9 @@ internal fun RehabAction.loadingLabel()=when(this) {
         var details by rememberSaveable(p.versionId) {mutableStateOf(false)}
         ClinicalCard(accent=if(valid) MaterialTheme.colorScheme.primary else null) {
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-                ExerciseGlyph(if(rules.kind==ExerciseKind.ELBOW_FLEXION) "elbow-flexion-v1" else "shoulder-abduction-v1")
+                ExerciseGlyph(when(rules.kind) {ExerciseKind.ELBOW_FLEXION -> "elbow-flexion-v1"; ExerciseKind.SHOULDER_ABDUCTION -> "shoulder-abduction-v1"; ExerciseKind.CUSTOM -> null})
                 Column(Modifier.weight(1f)) {
-                    Text(stringResource(if(rules.kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction),style=MaterialTheme.typography.titleLarge)
+                    Text(rules.displayName(),style=MaterialTheme.typography.titleLarge)
                     Text(side,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if(!valid) StatusPill(stringResource(R.string.ui_expired),PillTone.ATTENTION)
@@ -270,7 +272,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
 // ---------------------------------------------------------------------------------------------
 
 @Composable fun ColumnScope.PrescriptionForm(state:RehabilitationState,vm:RehabilitationViewModel,patientId:String?,existing:PrescriptionSummary?=null,published:()->Unit) {
-    PrescriptionEditor(state,patientId,existing) {vm.prescribe(it,published)}
+    PrescriptionEditor(state,patientId,existing,{draft,created -> vm.createExercise(draft,created)},{vm.archiveExercise(it)}) {vm.prescribe(it,published)}
 }
 
 /**
@@ -278,7 +280,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
  * review card that summarises exactly what the publish button will send.
  */
 @OptIn(ExperimentalLayoutApi::class)
-@Composable internal fun ColumnScope.PrescriptionEditor(state:RehabilitationState,patientId:String?,existing:PrescriptionSummary?=null,onPublish:(PrescriptionDraft)->Unit) {
+@Composable internal fun ColumnScope.PrescriptionEditor(state:RehabilitationState,patientId:String?,existing:PrescriptionSummary?=null,
+    onCreateExercise:(CustomExerciseDraft,(String)->Unit)->Unit={_,_ ->},onArchiveExercise:(String)->Unit={},onPublish:(PrescriptionDraft)->Unit) {
     var patient by rememberSaveable {mutableStateOf(existing?.patientId ?: patientId.orEmpty())}
     var exercise by rememberSaveable {mutableStateOf(existing?.exerciseId ?: "")}
     var side by rememberSaveable {mutableStateOf(existing?.side ?: "left")}
@@ -294,6 +297,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
     var requestId by rememberSaveable {mutableStateOf(UUID.randomUUID().toString())}
     val assignmentId=rememberSaveable {existing?.assignmentId ?: UUID.randomUUID().toString()}
     var advanced by rememberSaveable {mutableStateOf(false)}
+    var addingExercise by rememberSaveable {mutableStateOf(false)}
+    var removing by remember {mutableStateOf<CatalogueExercise?>(null)}
     fun changed() {requestId=UUID.randomUUID().toString()}
     val enabled=!state.busy
     val patients=state.workspace.patients.filter {it.id!=state.owner}
@@ -315,14 +320,31 @@ internal fun RehabAction.loadingLabel()=when(this) {
     }
 
     StepCard(1,R.string.select_exercise,R.string.ui_step_exercise_help,complete=chosenExercise!=null) {
-        if(state.workspace.catalogue.isEmpty()) Text(stringResource(R.string.ui_no_catalogue),style=MaterialTheme.typography.bodyMedium,
+        val choices=state.workspace.catalogue.filter {it.selectable}
+        if(choices.isEmpty()) Text(stringResource(R.string.ui_no_catalogue),style=MaterialTheme.typography.bodyMedium,
             color=MaterialTheme.colorScheme.onSurfaceVariant)
         Column(Modifier.selectableGroup(),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-            state.workspace.catalogue.forEach {item ->
+            choices.forEach {item ->
+                val measures=item.joint?.let {stringResource(R.string.custom_exercise_measures,stringResource(it.label()))}
                 SelectionTile(exercise==item.id,{exercise=item.id; changed()},item.name,Modifier.fillMaxWidth(),
-                    description=item.instructions.ifBlank {null},enabled=enabled,leading={ExerciseGlyph(item.algorithm)})
+                    description=listOfNotNull(measures,item.instructions.ifBlank {null}).joinToString("\n").ifBlank {null},enabled=enabled,leading={ExerciseGlyph(item.algorithm)})
+                if(item.custom) TextButton({removing=item},enabled=enabled,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.custom_exercise_remove))}
             }
         }
+        if(addingExercise) CustomExerciseForm(enabled,state.activeAction==RehabAction.CREATE_EXERCISE,{addingExercise=false}) {draft ->
+            onCreateExercise(draft) {version -> exercise=version; addingExercise=false; changed()}
+        } else OutlinedButton({addingExercise=true},Modifier.fillMaxWidth().heightIn(min=48.dp),enabled=enabled,shape=MaterialTheme.shapes.medium) {
+            Icon(Icons.Default.Add,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.custom_exercise_add))
+        }
+    }
+    removing?.let {item ->
+        AlertDialog(onDismissRequest={removing=null},title={Text(stringResource(R.string.custom_exercise_remove_title,item.name))},
+            text={Text(stringResource(R.string.custom_exercise_remove_detail))},
+            confirmButton={TextButton({
+                if(exercise==item.id) {exercise=""; changed()}
+                removing=null; onArchiveExercise(item.exerciseId)
+            }) {Text(stringResource(R.string.custom_exercise_remove))}},
+            dismissButton={TextButton({removing=null}) {Text(stringResource(R.string.custom_exercise_keep))}})
     }
 
     StepCard(2,R.string.ui_step_side,R.string.ui_step_side_help,complete=true) {
@@ -343,6 +365,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
     }
 
     StepCard(3,R.string.ui_step_targets,R.string.ui_step_targets_help,complete=rangeValid && repsValid) {
+        chosenExercise?.joint?.let {Text(stringResource(it.zeroHint()),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
         val arcDescription=stringResource(R.string.ui_range_preview,low.ifBlank {"--"},high.ifBlank {"--"})
         Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally) {
             Column(Modifier.widthIn(max=340.dp).fillMaxWidth()) {

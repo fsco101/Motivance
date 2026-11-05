@@ -23,7 +23,7 @@ class SyntheticEvaluationTest {
     }
     @Test fun evaluateKnownAnglesAndRepetitionsAcrossAspectRatios() {
         val rows=mutableListOf<String>()
-        for(kind in ExerciseKind.entries) for(side in BodySide.entries) for((w,h) in listOf(1000 to 1000,1280 to 720,720 to 1280)) {
+        for(kind in listOf(ExerciseKind.ELBOW_FLEXION,ExerciseKind.SHOULDER_ABDUCTION)) for(side in BodySide.entries) for((w,h) in listOf(1000 to 1000,1280 to 720,720 to 1280)) {
             val rules=ExerciseRules(kind=kind,side=side)
             val errors=(0..170 step 10).map { expected ->
                 val engine=MovementAssessment(rules)

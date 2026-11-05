@@ -131,7 +131,7 @@
     <string name="shoulder_abduction">Pag-angat ng braso sa gilid</string>
     <string name="left_side">Kaliwang bahagi</string>
     <string name="right_side">Kanang bahagi</string>
-    <string name="use_cached_prescription">Gamitin ang na-download na reseta</string>
+    <string name="use_cached_prescription">Lumipat sa %1$s · %2$s</string>
     <string name="measured_angle">Anggulo: %1$s degrees</string>
     <string name="completed_reps">Pag-ulit: %1$d / %2$d</string>
     <string name="session_metrics">ROM: %1$s degrees | Hindi kumpleto: %2$d | Aktibo: %3$d s</string>
@@ -731,4 +731,26 @@
     <string name="toast_session_saved">Nai-save ang sesyon sa teleponong ito.</string>
     <string name="toast_session_saved_pending">Nai-save ang sesyon. Ia-upload ito kapag online ka.</string>
     <string name="toast_close">Isara ang abiso</string>
+    <string name="custom_exercise_add">Magdagdag ng custom na ehersisyo</string>
+    <string name="custom_exercise_title">Bagong custom na ehersisyo</string>
+    <string name="custom_exercise_help">Ilarawan ang galaw at piliin ang kasukasuang susukatin ng camera. Ikaw lamang ang makakapagtalaga ng ehersisyong ito.</string>
+    <string name="custom_exercise_name">Pangalan ng ehersisyo</string>
+    <string name="custom_exercise_joint">Kasukasuang susukatin ng camera</string>
+    <string name="custom_exercise_instructions">Mga tagubilin para sa pasyente</string>
+    <string name="custom_exercise_instructions_fil">Mga tagubilin sa Filipino (opsyonal)</string>
+    <string name="custom_exercise_save">I-save ang ehersisyo</string>
+    <string name="custom_exercise_saving">Sine-save ang ehersisyo</string>
+    <string name="custom_exercise_cancel">Kanselahin</string>
+    <string name="custom_exercise_measures">Custom · sinusukat ang %1$s</string>
+    <string name="custom_exercise_remove">Alisin sa aking mga ehersisyo</string>
+    <string name="custom_exercise_remove_title">Alisin ang %1$s?</string>
+    <string name="custom_exercise_remove_detail">Hindi mo na ito maitatalaga. Mananatili ito sa mga pasyenteng mayroon na nito, at mananatili ang kanilang mga resulta sa kasaysayan.</string>
+    <string name="custom_exercise_keep">Panatilihin</string>
+    <string name="custom_exercise_removing">Inaalis ang ehersisyo</string>
+    <string name="custom_zero_straight">0° kapag tuwid ang kasukasuan. Tumataas ang anggulo habang bumabaluktot ito.</string>
+    <string name="custom_zero_side">0° kapag nakababa ang braso sa tagiliran. Tumataas ang anggulo habang itinataas ito.</string>
+    <string name="custom_zero_ankle">Humigit-kumulang 90° kapag patag ang paa. Tumataas ang anggulo habang itinataas ang paa patungo sa binti.</string>
+    <string name="custom_camera_limit">Sumusukat ang camera sa 2D. Kailangang manatiling nakatayo nang tuwid ang pasyente, at kita ang balikat, balakang at kasukasuang ito.</string>
+    <string name="toast_exercise_created">Nai-save ang ehersisyo</string>
+    <string name="toast_exercise_removed">Naalis ang ehersisyo</string>
 </resources>

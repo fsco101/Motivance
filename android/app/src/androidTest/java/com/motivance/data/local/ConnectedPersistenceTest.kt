@@ -45,6 +45,8 @@ class ConnectedPersistenceTest {
         override suspend fun acceptInvitation(code:String) { }
         override suspend fun revokeLink(patientId:String) { }
         override suspend fun publishPrescription(draft:PrescriptionDraft) { }
+        override suspend fun createCustomExercise(draft:com.motivance.domain.CustomExerciseDraft)=error("unused")
+        override suspend fun archiveCustomExercise(exerciseId:String)=error("unused")
         override suspend fun requestPatientData(id:String,kind:String) { }
     }
     @Test fun lostAcknowledgementAndProcessReopenUseExactlyTheStoredPayload()=runBlocking {

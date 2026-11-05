@@ -131,7 +131,7 @@
     <string name="shoulder_abduction">Shoulder abduction</string>
     <string name="left_side">Left side</string>
     <string name="right_side">Right side</string>
-    <string name="use_cached_prescription">Use downloaded prescription</string>
+    <string name="use_cached_prescription">Switch to %1$s · %2$s</string>
     <string name="measured_angle">Angle: %1$s degrees</string>
     <string name="completed_reps">Repetitions: %1$d / %2$d</string>
     <string name="session_metrics">ROM: %1$s degrees | Incomplete: %2$d | Active: %3$d s</string>
@@ -731,4 +731,26 @@
     <string name="toast_session_saved">Session saved on this phone.</string>
     <string name="toast_session_saved_pending">Session saved. It will upload when you are online.</string>
     <string name="toast_close">Close notification</string>
+    <string name="custom_exercise_add">Add custom exercise</string>
+    <string name="custom_exercise_title">New custom exercise</string>
+    <string name="custom_exercise_help">Describe the movement and choose the joint the camera measures. Only you can assign this exercise.</string>
+    <string name="custom_exercise_name">Exercise name</string>
+    <string name="custom_exercise_joint">Joint the camera measures</string>
+    <string name="custom_exercise_instructions">Instructions for the patient</string>
+    <string name="custom_exercise_instructions_fil">Filipino instructions (optional)</string>
+    <string name="custom_exercise_save">Save exercise</string>
+    <string name="custom_exercise_saving">Saving exercise</string>
+    <string name="custom_exercise_cancel">Cancel</string>
+    <string name="custom_exercise_measures">Custom · measures %1$s</string>
+    <string name="custom_exercise_remove">Remove from my exercises</string>
+    <string name="custom_exercise_remove_title">Remove %1$s?</string>
+    <string name="custom_exercise_remove_detail">You can no longer assign it. Patients who already have it keep it, and their results stay in their history.</string>
+    <string name="custom_exercise_keep">Keep</string>
+    <string name="custom_exercise_removing">Removing exercise</string>
+    <string name="custom_zero_straight">0° is the joint held straight. The angle rises as it bends.</string>
+    <string name="custom_zero_side">0° is the arm resting at the side. The angle rises as it lifts.</string>
+    <string name="custom_zero_ankle">About 90° with the foot flat. The angle rises as the foot lifts toward the shin.</string>
+    <string name="custom_camera_limit">The camera measures in 2D. The patient needs to stay upright, with the shoulder, hip and this joint in view.</string>
+    <string name="toast_exercise_created">Exercise saved</string>
+    <string name="toast_exercise_removed">Exercise removed</string>
 </resources>

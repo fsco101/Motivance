@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 
-enum class RehabAction { REFRESH, INVITE, ACCEPT, REVOKE, PRESCRIBE, SYNC, WITHDRAW, EXPORT, DELETE }
+enum class RehabAction { REFRESH, INVITE, ACCEPT, REVOKE, PRESCRIBE, CREATE_EXERCISE, ARCHIVE_EXERCISE, SYNC, WITHDRAW, EXPORT, DELETE }
 
 data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=RehabWorkspace(),val busy:Boolean=false,val activeAction:RehabAction?=null,val failed:Boolean=false,val invitation:String?=null,val outbox:List<OutboxEntry> = emptyList(),val consents:List<LocalConsent> = emptyList())
 
@@ -28,6 +28,8 @@ private fun RehabAction.doneToast()=when(this) {
     RehabAction.ACCEPT -> R.string.toast_therapist_connected to ToastTone.SUCCESS
     RehabAction.REVOKE -> R.string.toast_access_revoked to ToastTone.SUCCESS
     RehabAction.PRESCRIBE -> R.string.ui_prescription_published to ToastTone.SUCCESS
+    RehabAction.CREATE_EXERCISE -> R.string.toast_exercise_created to ToastTone.SUCCESS
+    RehabAction.ARCHIVE_EXERCISE -> R.string.toast_exercise_removed to ToastTone.SUCCESS
     RehabAction.SYNC -> R.string.ui_sync_queued to ToastTone.PENDING
     RehabAction.WITHDRAW -> R.string.consent_withdrawn to ToastTone.SUCCESS
     RehabAction.EXPORT, RehabAction.DELETE -> R.string.request_pending to ToastTone.PENDING
@@ -129,6 +131,15 @@ private fun RehabAction.doneToast()=when(this) {
         ExerciseRules(side=draft.side,lowDegrees=draft.low,highDegrees=draft.high,targetRepetitions=draft.repetitions,minimumCycleMs=draft.minimumCycleMs,maximumCycleMs=draft.maximumCycleMs,peakHoldMs=draft.peakHoldMs,maxTrunkLeanDegrees=draft.maxTrunkLean,confidence=draft.confidence.toFloat())
         repository.publishPrescription(draft)
     }
+    /** [created] receives the published version, once the refreshed list contains it. */
+    fun createExercise(draft:CustomExerciseDraft,created:(String)->Unit={}) {
+        var version=""
+        perform(RehabAction.CREATE_EXERCISE,done={created(version)}) {
+            require(draft.valid)
+            version=repository.createCustomExercise(draft)
+        }
+    }
+    fun archiveExercise(exerciseId:String)=perform(RehabAction.ARCHIVE_EXERCISE) {repository.archiveCustomExercise(exerciseId)}
     fun synchronize()=perform(RehabAction.SYNC,false) {
         val owner=mutable.value.owner
         store.dao.retryFailed(owner); store.dao.retryConsents(owner); SyncScheduler.schedule(context,owner)
