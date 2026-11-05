@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -40,7 +41,7 @@ private const val REPETITION_MS=4200
 private class Outfit(val skin:Color,val skinFar:Color,val hair:Color,val top:Color,val topFar:Color,val shorts:Color,val shortsFar:Color,val shoe:Color,val shoeFar:Color,val sole:Color,val prop:Color,val shadow:Color,val floor:Color,val range:Color,val rangeBack:Color)
 
 private val OnLight=Outfit(Color(0xFFC98E66),Color(0xFFAE7650),Color(0xFF2B211C),Motion.Lagoon,Color(0xFF0A5F68),Motion.Ink,Color(0xFF28495A),Color.White,Color(0xFFD7E4E2),Motion.Amber,Color(0xFF8FB0AE),Color(0x220D2B36),Color(0x330D2B36),Motion.Sprout,Color(0x551B7F45))
-private val OnDark=Outfit(Color(0xFFD8A07A),Color(0xFFB98660),Color(0xFF17110E),Color(0xFF17A3AF),Color(0xFF0E7C86),Color(0xFFE9F3F1),Color(0xFFB6CCCA),Color.White,Color(0xFFC3D3D1),Motion.Amber,Motion.NightLine,Color(0x55000000),Color(0x55BFE3DD),Motion.SproutBright,Color(0x666FE08F))
+private val OnDark=Outfit(Color(0xFFD8A07A),Color(0xFFB98660),Color(0xFF3A2A22),Color(0xFF17A3AF),Color(0xFF0E7C86),Color(0xFFE9F3F1),Color(0xFFB6CCCA),Color.White,Color(0xFFC3D3D1),Motion.Amber,Motion.NightLine,Color(0x55000000),Color(0x55BFE3DD),Motion.SproutBright,Color(0x666FE08F))
 
 /** Follows the device's "remove animations" setting. */
 @Composable private fun animationsOff():Boolean {
@@ -89,112 +90,154 @@ private fun DrawScope.drawGuide(motion:GuideMotion,angle:Double,outfit:Outfit,ra
     fun at(point:GuidePoint)=Offset(size.width/2+((point.x-frame.centerX)*scale).toFloat(),size.height/2+((point.y-frame.centerY)*scale).toFloat())
     fun u(value:Double)=(value*scale).toFloat()
     val pose=motion.pose(angle)
+    val floor=at(GuidePoint(0.0,GuideBody.FLOOR)).y
     clipRect {
-        val floor=at(GuidePoint(0.0,GuideBody.FLOOR)).y
         drawLine(outfit.floor,Offset(0f,floor),Offset(size.width,floor),u(.6),StrokeCap.Round)
         val under=at(GuidePoint(if(pose.view==GuideView.SIDE) pose.hips.x+6*pose.facing else 0.0,GuideBody.FLOOR))
         drawOval(outfit.shadow,Offset(under.x-u(24.0),under.y-u(1.6)),Size(u(48.0),u(3.2)))
-        if(pose.view==GuideView.FRONT) drawFront(pose,outfit,::at,::u) else drawSide(pose,outfit,::at,::u)
+        val stage=Stage(::at,::u,floor,outfit)
+        if(pose.view==GuideView.FRONT) drawFront(pose,stage) else drawSide(pose,stage)
         if(range) drawRange(motion,angle,outfit,::at,::u)
     }
 }
 
-/** A limb segment that tapers from one joint to the next. */
-private fun DrawScope.limb(a:Offset,b:Offset,ra:Float,rb:Float,color:Color) {
-    val dx=b.x-a.x;val dy=b.y-a.y;val length=hypot(dx,dy)
-    if(length>.01f) {
-        val nx=-dy/length;val ny=dx/length
-        drawPath(Path().apply {
-            moveTo(a.x+nx*ra,a.y+ny*ra);lineTo(b.x+nx*rb,b.y+ny*rb);lineTo(b.x-nx*rb,b.y-ny*rb);lineTo(a.x-nx*ra,a.y-ny*ra);close()
-        },color)
+/** One rig unit is this many outline units, which makes the head the size the rig gives it. */
+private const val OUTLINE_UNIT=GuideBody.HEAD_RADIUS/40
+/** The rig's trunk is longer than the web figure's, so the front torso is drawn a little taller than it is wide. */
+private const val TORSO_UNIT=.19
+
+private class Stage(val at:(GuidePoint)->Offset,val u:(Double)->Float,val floor:Float,val outfit:Outfit) {
+    /** Lays an outline along a bone, so it turns and stretches with the rig. A [side] of -1 mirrors it. */
+    fun bone(from:GuidePoint,to:GuidePoint,length:Float,side:Int):(Offset)->Offset {
+        val start=at(from);val end=at(to)
+        val span=hypot(end.x-start.x,end.y-start.y).coerceAtLeast(.01f)
+        val ux=(end.x-start.x)/span;val uy=(end.y-start.y)/span
+        val along=span/length;val across=u(OUTLINE_UNIT)*side
+        return {start+Offset(ux*it.y*along+uy*it.x*across,uy*it.y*along-ux*it.x*across)}
     }
-    drawCircle(color,ra,a);drawCircle(color,rb,b)
-}
-
-private fun blend(a:Offset,b:Offset,share:Float)=Offset(a.x+(b.x-a.x)*share,a.y+(b.y-a.y)*share)
-
-private fun DrawScope.arm(limb:GuideLimb,skin:Color,sleeve:Color,at:(GuidePoint)->Offset,u:(Double)->Float) {
-    val shoulder=at(limb.root);val elbow=at(limb.middle);val wrist=at(limb.end);val tip=at(limb.tip)
-    limb(blend(wrist,tip,.15f),blend(wrist,tip,.75f),u(1.9),u(1.5),skin)
-    limb(elbow,wrist,u(2.5),u(1.8),skin)
-    limb(shoulder,elbow,u(3.3),u(2.6),skin)
-    limb(shoulder,blend(shoulder,elbow,.4f),u(3.5),u(3.0),sleeve)
-}
-
-private fun DrawScope.leg(limb:GuideLimb,skin:Color,shorts:Color,shoe:Color,sole:Color,at:(GuidePoint)->Offset,u:(Double)->Float) {
-    val hip=at(limb.root);val knee=at(limb.middle);val ankle=at(limb.end);val toe=at(limb.tip)
-    limb(knee,ankle,u(3.4),u(2.2),skin)
-    limb(hip,knee,u(4.5),u(3.5),skin)
-    limb(hip,blend(hip,knee,.55f),u(4.8),u(4.3),shorts)
-    val shin=hypot(ankle.x-knee.x,ankle.y-knee.y).coerceAtLeast(1f)
-    val down=Offset((ankle.x-knee.x)/shin*u(1.7),(ankle.y-knee.y)/shin*u(1.7))
-    limb(ankle+down*.2f,blend(ankle,toe,.95f)+down*.75f,u(1.2),u(.9),sole)
-    limb(ankle,blend(ankle,toe,.9f),u(2.4),u(1.7),shoe)
-}
-
-private fun DrawScope.drawSide(pose:GuidePose,outfit:Outfit,at:(GuidePoint)->Offset,u:(Double)->Float) {
-    val hips=at(pose.hips);val shoulders=at(pose.shoulders)
-    if(pose.posture==GuidePosture.SEATED) {
-        val seat=at(GuidePoint(pose.hips.x-3.0*pose.facing,GuideBody.SEAT_HEIGHT))
-        val floor=at(GuidePoint(0.0,GuideBody.FLOOR)).y
-        listOf(-9.0,9.0).forEach {drawLine(outfit.prop,Offset(seat.x+u(it),seat.y),Offset(seat.x+u(it*1.25),floor),u(1.6),StrokeCap.Round)}
-        limb(Offset(seat.x-u(12.0),seat.y+u(1.0)),Offset(seat.x+u(12.0),seat.y+u(1.0)),u(1.6),u(1.6),outfit.prop)
+    /** Stands an outline upright on a point of the body. */
+    fun upright(point:GuidePoint,side:Int=1):(Offset)->Offset {
+        val center=at(point);val unit=u(OUTLINE_UNIT)
+        return {center+Offset(it.x*unit*side,it.y*unit)}
     }
-    arm(pose.farArm,outfit.skinFar,outfit.topFar,at,u)
-    leg(pose.farLeg,outfit.skinFar,outfit.shortsFar,outfit.shoeFar,outfit.sole,at,u)
-    limb(hips,hips,u(5.6),u(5.6),outfit.shorts)
-    limb(blend(shoulders,hips,.02f),blend(shoulders,hips,.84f),u(6.4),u(5.5),outfit.top)
-    limb(at(pose.neck),blend(at(pose.neck),at(pose.head),.6f),u(2.5),u(2.5),outfit.skinFar)
-    head(pose,outfit,at,u)
-    leg(pose.nearLeg,outfit.skin,outfit.shorts,outfit.shoe,outfit.sole,at,u)
-    arm(pose.nearArm,outfit.skin,outfit.top,at,u)
 }
 
-private fun DrawScope.drawFront(pose:GuidePose,outfit:Outfit,at:(GuidePoint)->Offset,u:(Double)->Float) {
-    val hips=at(pose.hips);val shoulders=at(pose.shoulders)
-    leg(pose.nearLeg,outfit.skin,outfit.shorts,outfit.shoe,outfit.sole,at,u)
-    leg(pose.farLeg,outfit.skin,outfit.shorts,outfit.shoe,outfit.sole,at,u)
+/** A closed curve through the points, so the body has soft anatomical lines and no mechanical joints. */
+private fun DrawScope.shape(points:List<Offset>,place:(Offset)->Offset,color:Color) {
+    val corners=points.map(place)
+    fun at(index:Int)=corners[(index+corners.size)%corners.size]
     drawPath(Path().apply {
-        moveTo(shoulders.x-u(11.5),shoulders.y-u(.2))
-        quadraticTo(shoulders.x,shoulders.y-u(3.2),shoulders.x+u(11.5),shoulders.y-u(.2))
-        quadraticTo(shoulders.x+u(9.0),shoulders.y+u(14.0),hips.x+u(9.0),hips.y-u(4.0))
-        lineTo(hips.x+u(9.8),hips.y+u(4.0));lineTo(hips.x-u(9.8),hips.y+u(4.0));lineTo(hips.x-u(9.0),hips.y-u(4.0))
-        quadraticTo(shoulders.x-u(9.0),shoulders.y+u(14.0),shoulders.x-u(11.5),shoulders.y-u(.2));close()
-    },outfit.top)
-    limb(Offset(hips.x-u(5.5),hips.y+u(2.0)),Offset(hips.x+u(5.5),hips.y+u(2.0)),u(4.8),u(4.8),outfit.shorts)
-    limb(at(pose.neck),blend(at(pose.neck),at(pose.head),.6f),u(2.5),u(2.5),outfit.skinFar)
-    head(pose,outfit,at,u)
-    arm(pose.farArm,outfit.skin,outfit.top,at,u)
-    arm(pose.nearArm,outfit.skin,outfit.top,at,u)
+        moveTo(at(0).x,at(0).y)
+        corners.indices.forEach {
+            val a=at(it-1);val b=at(it);val c=at(it+1);val d=at(it+2)
+            cubicTo(b.x+(c.x-a.x)/6,b.y+(c.y-a.y)/6,c.x-(d.x-b.x)/6,c.y-(d.y-b.y)/6,c.x,c.y)
+        }
+        close()
+    },color)
 }
 
-private fun DrawScope.head(pose:GuidePose,outfit:Outfit,at:(GuidePoint)->Offset,u:(Double)->Float) {
-    val center=at(pose.head);val r=u(GuideBody.HEAD_RADIUS)
-    drawCircle(outfit.skin,r,center)
-    val hair=r*1.07f;val box=Offset(center.x-hair,center.y-hair);val area=Size(hair*2,hair*2)
-    if(pose.view==GuideView.FRONT) {
-        drawArc(outfit.hair,186f,168f,false,box,area)
-        val eye=r*.36f
-        listOf(-eye,eye).forEach {drawCircle(outfit.hair,r*.09f,Offset(center.x+it,center.y+r*.12f))}
-        drawArc(outfit.hair,25f,130f,false,Offset(center.x-r*.3f,center.y+r*.14f),Size(r*.6f,r*.42f),style=Stroke(r*.07f,cap=StrokeCap.Round))
-    } else {
-        val f=pose.facing
-        // A cap over the crown and the back of the head. It stops at the forehead and the nape, so the face stays clear.
-        drawPath(Path().apply {
-            val rad=hair
-            fun rim(degrees:Double)=Offset(center.x+f*rad*kotlin.math.cos(degrees*PI/180).toFloat(),center.y+rad*kotlin.math.sin(degrees*PI/180).toFloat())
-            val forehead=rim(-38.0);val nape=rim(118.0)
-            moveTo(forehead.x,forehead.y)
-            for(degrees in -38 downTo -242 step 6) rim(degrees.toDouble()).let {lineTo(it.x,it.y)}
-            lineTo(nape.x,nape.y)
-            quadraticTo(center.x-f*r*.32f,center.y-r*.02f,center.x-f*r*.02f,center.y-r*.3f)
-            quadraticTo(center.x+f*r*.3f,center.y-r*.46f,forehead.x,forehead.y)
-            close()
-        },outfit.hair)
-        drawCircle(outfit.skinFar,r*.17f,Offset(center.x-f*r*.12f,center.y+r*.14f))
-        drawCircle(outfit.hair,r*.09f,Offset(center.x+f*r*.56f,center.y+r*.06f))
-        drawCircle(outfit.skin,r*.17f,Offset(center.x+f*r*.97f,center.y+r*.24f))
+/** A brow or a mouth: a line that bends once. */
+private fun DrawScope.stroke(from:Offset,bend:Offset,to:Offset,place:(Offset)->Offset,color:Color,width:Float) {
+    val a=place(from);val b=place(bend);val c=place(to)
+    drawPath(Path().apply {moveTo(a.x,a.y);quadraticTo(b.x,b.y,c.x,c.y)},color,style=Stroke(width,cap=StrokeCap.Round))
+}
+
+private fun DrawScope.arm(limb:GuideLimb,side:Int,stage:Stage,skin:Color,shade:Color,sleeve:Color,profile:Boolean,sleeveShade:Color?=null) {
+    val upper=stage.bone(limb.root,limb.middle,GuideOutline.UpperArmLength,side)
+    val fore=stage.bone(limb.middle,limb.end,GuideOutline.ForearmLength,side)
+    val hand=stage.bone(limb.end,limb.tip,GuideOutline.HandLength,side)
+    shape(GuideOutline.Forearm,fore,skin)
+    shape(GuideOutline.Thumb,hand,shade)
+    shape(if(profile) GuideOutline.ProfileHand else GuideOutline.Hand,hand,skin)
+    if(profile) GuideOutline.ProfileFingers.forEach {(from,to) ->
+        drawLine(shade.copy(alpha=.6f),hand(from),hand(to),stage.u(.14),StrokeCap.Round)
     }
+    shape(GuideOutline.UpperArm,upper,skin)
+    // A crescent of shade under the sleeve keeps the arm apart from a shirt of the same colour.
+    if(sleeveShade!=null) shape(GuideOutline.Sleeve,{upper(it+Offset(-3f,4f))},sleeveShade)
+    shape(GuideOutline.Sleeve,upper,sleeve)
+}
+
+private fun DrawScope.frontLeg(limb:GuideLimb,side:Int,stage:Stage) {
+    val outfit=stage.outfit
+    shape(GuideOutline.Shank,stage.bone(limb.middle,limb.end,GuideOutline.ShankLength,side),outfit.skin)
+    shape(GuideOutline.Thigh,stage.bone(limb.root,limb.middle,GuideOutline.ThighLength,side),outfit.skin)
+    val foot=stage.upright(GuidePoint(limb.end.x,GuideBody.FLOOR),side)
+    shape(GuideOutline.Sole,foot,outfit.sole)
+    shape(GuideOutline.Shoe,foot,outfit.shoe)
+}
+
+private fun DrawScope.sideLeg(limb:GuideLimb,side:Int,stage:Stage,skin:Color,shorts:Color,shoe:Color) {
+    shape(GuideOutline.ProfileShank,stage.bone(limb.middle,limb.end,GuideOutline.ShankLength,side),skin)
+    val thigh=stage.bone(limb.root,limb.middle,GuideOutline.ThighLength,side)
+    shape(GuideOutline.ProfileThigh,thigh,skin)
+    shape(GuideOutline.ProfileShorts,thigh,shorts)
+    val foot=stage.bone(limb.end,limb.tip,GuideOutline.FootLength,side)
+    // A foot rocks on its heel, but the rig turns it around the ankle, so the shoe is lifted back out of the floor.
+    val sunk=(maxOf(foot(GuideOutline.Heel).y,foot(GuideOutline.Toe).y)-stage.floor).coerceAtLeast(0f)
+    val standing={point:Offset -> foot(point)-Offset(0f,sunk)}
+    shape(GuideOutline.ProfileSole,standing,stage.outfit.sole)
+    shape(GuideOutline.ProfileShoe,standing,shoe)
+}
+
+private fun DrawScope.drawSide(pose:GuidePose,stage:Stage) {
+    val outfit=stage.outfit;val u=stage.u;val facing=pose.facing
+    if(pose.posture==GuidePosture.SEATED) {
+        val seat=stage.at(GuidePoint(pose.hips.x-3.0*facing,GuideBody.SEAT_HEIGHT))
+        listOf(-9.0,9.0).forEach {drawLine(outfit.prop,Offset(seat.x+u(it),seat.y),Offset(seat.x+u(it*1.25),stage.floor),u(1.6),StrokeCap.Round)}
+        drawRoundRect(outfit.prop,Offset(seat.x-u(13.0),seat.y-u(.2)),Size(u(26.0),u(2.8)),CornerRadius(u(1.4)))
+    }
+    arm(pose.farArm,facing,stage,outfit.skinFar,outfit.skinFar,outfit.topFar,profile=true)
+    sideLeg(pose.farLeg,facing,stage,outfit.skinFar,outfit.shortsFar,outfit.shoeFar)
+    shape(GuideOutline.ProfilePelvis,stage.upright(pose.hips,facing),outfit.shorts)
+    sideLeg(pose.nearLeg,facing,stage,outfit.skin,outfit.shorts,outfit.shoe)
+    // The shirt comes after the leg, so it hangs over the shorts and falls across a raised thigh.
+    val trunk=stage.upright(pose.shoulders,facing)
+    shape(GuideOutline.ProfileNeck,trunk,outfit.skinFar)
+    shape(GuideOutline.ProfileTorso,trunk,outfit.top)
+    sideHead(pose,stage)
+    arm(pose.nearArm,facing,stage,outfit.skin,outfit.skinFar,outfit.top,profile=true,sleeveShade=outfit.topFar)
+}
+
+private fun DrawScope.drawFront(pose:GuidePose,stage:Stage) {
+    val outfit=stage.outfit;val working=pose.facing
+    frontLeg(pose.nearLeg,working,stage)
+    frontLeg(pose.farLeg,-working,stage)
+    val shoulder=stage.at(GuidePoint(pose.shoulders.x,pose.shoulders.y+1.5))
+    val across=stage.u(OUTLINE_UNIT);val down=stage.u(TORSO_UNIT)
+    val trunk={point:Offset -> shoulder+Offset(point.x*across,(point.y-GuideOutline.ShoulderY)*down)}
+    shape(GuideOutline.Shorts,trunk,outfit.shorts)
+    shape(GuideOutline.Neck,trunk,outfit.skinFar)
+    shape(GuideOutline.Shirt,trunk,outfit.top)
+    frontHead(pose,stage)
+    arm(pose.farArm,-working,stage,outfit.skin,outfit.skinFar,outfit.top,profile=false)
+    arm(pose.nearArm,working,stage,outfit.skin,outfit.skinFar,outfit.top,profile=false)
+}
+
+private fun DrawScope.frontHead(pose:GuidePose,stage:Stage) {
+    val outfit=stage.outfit;val u=stage.u
+    val head=stage.upright(pose.head)
+    shape(GuideOutline.Face,head,outfit.skin)
+    shape(GuideOutline.LeftEar,head,outfit.skinFar)
+    shape(GuideOutline.RightEar,head,outfit.skinFar)
+    shape(GuideOutline.Hair,head,outfit.hair)
+    shape(GuideOutline.LeftEye,head,outfit.hair)
+    shape(GuideOutline.RightEye,head,outfit.hair)
+    stroke(Offset(-19f,-9f),Offset(-12f,-13f),Offset(-6f,-9f),head,outfit.hair,u(.36))
+    stroke(Offset(6f,-9f),Offset(12f,-13f),Offset(19f,-9f),head,outfit.hair,u(.36))
+    stroke(Offset(-1f,5f),Offset(-3f,13f),Offset(1f,14f),head,outfit.hair.copy(alpha=.45f),u(.26))
+    stroke(Offset(-8f,23f),Offset(0f,29f),Offset(8f,23f),head,outfit.hair,u(.33))
+}
+
+private fun DrawScope.sideHead(pose:GuidePose,stage:Stage) {
+    val outfit=stage.outfit;val u=stage.u
+    val head=stage.upright(pose.head,pose.facing)
+    shape(GuideOutline.ProfileHead,head,outfit.skin)
+    shape(GuideOutline.ProfileEar,head,outfit.skinFar)
+    shape(GuideOutline.ProfileHair,head,outfit.hair)
+    shape(GuideOutline.ProfileEye,head,outfit.hair)
+    stroke(Offset(11f,-10f),Offset(18f,-14f),Offset(26f,-10f),head,outfit.hair,u(.36))
+    stroke(Offset(18f,26f),Offset(24f,28f),Offset(30f,25f),head,outfit.hair,u(.3))
 }
 
 /** The prescribed sweep around the working joint, with the current position filled in. */

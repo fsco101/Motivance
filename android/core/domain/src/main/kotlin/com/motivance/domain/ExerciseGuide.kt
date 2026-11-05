@@ -71,6 +71,10 @@ private fun typical(joint:BodyJoint)=when(joint) {
     BodyJoint.ANKLE -> 90.0 to 115.0
 }
 
+/** Sitting upright already bends the hip to 90 degrees, so a seated thigh can only lift from the chair. */
+private val SEATED_HIP=90.0..120.0
+private const val SEATED_HIP_LIFT=115.0
+
 /**
  * Builds the guide for one exercise. A prescribed range is shown as prescribed, within what a body can do. Knee and ankle work
  * is shown seated, and a therapist's own exercise can ask for either posture in its name.
@@ -84,10 +88,15 @@ fun guideMotion(joint:BodyJoint,side:BodySide=BodySide.LEFT,name:String?=null,lo
         listOf("seat","sit","upo").any {it in words} -> true
         else -> seatedByDefault
     }
-    val limits=anatomical(joint)
-    val (usualLow,usualHigh)=typical(joint)
+    val seatedHip=seated && joint==BodyJoint.HIP
+    val limits=if(seatedHip) SEATED_HIP else anatomical(joint)
+    val (usualLow,usualHigh)=if(seatedHip) SEATED_HIP.start to SEATED_HIP_LIFT else typical(joint)
+    val shownLow=(low ?: usualLow).coerceIn(limits)
+    val shownHigh=(high ?: usualHigh).coerceIn(limits)
+    // A range that lies wholly below the chair cannot be shown seated, so the usual lift stands in for it.
+    val belowTheChair=seatedHip && shownHigh<=shownLow
     return GuideMotion(joint,side,if(joint==BodyJoint.SHOULDER) GuideView.FRONT else GuideView.SIDE,if(seated) GuidePosture.SEATED else GuidePosture.STANDING,
-        (low ?: usualLow).coerceIn(limits),(high ?: usualHigh).coerceIn(limits))
+        if(belowTheChair) usualLow else shownLow,if(belowTheChair) usualHigh else shownHigh)
 }
 
 fun guideMotion(rules:ExerciseRules)=guideMotion(rules.measuredJoint,rules.side,rules.exerciseName,rules.lowDegrees,rules.highDegrees)
@@ -156,8 +165,9 @@ object GuideBody {
             BodyJoint.ELBOW -> {nearArm=arm(shoulder,0.0,angle,angle,f);pivot=nearArm.middle;reach=nearArm.end}
             BodyJoint.WRIST -> {nearArm=arm(shoulder,10.0,90.0,90.0+angle,f);pivot=nearArm.end;reach=nearArm.tip}
             BodyJoint.HIP -> {
-                // The knee relaxes as the thigh rises. The hip angle is measured to the knee, so this does not change it.
-                val shank=angle*.45
+                // Standing, the knee relaxes as the thigh rises. Seated, the shin stays upright, so the foot starts flat on the floor.
+                // The hip angle is measured to the knee, so neither changes it.
+                val shank=if(seated) 0.0 else angle*.45
                 nearLeg=leg(hips,angle,shank,shank+90,f);pivot=hips;reach=nearLeg.middle
             }
             BodyJoint.KNEE -> {

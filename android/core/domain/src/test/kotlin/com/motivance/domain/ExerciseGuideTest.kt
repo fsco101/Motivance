@@ -42,6 +42,30 @@ class ExerciseGuideTest {
         assertAngle(110.0,interior(pose.shoulders,pose.hips,pose.nearLeg.middle))
     }
 
+    @Test fun aSeatedHipLiftsFromTheChairAndMatchesTheCamera() {
+        val motion=guideMotion(BodyJoint.HIP,name="Seated hip flexion")
+        assertEquals(90.0,motion.low,0.0)
+        assertTrue("The thigh lifts",motion.high>motion.low)
+        val rest=motion.pose(motion.low)
+        assertEquals("The thigh rests level on the chair",rest.hips.y,rest.nearLeg.middle.y,.001)
+        assertEquals("The resting leg matches the other leg",rest.farLeg,rest.nearLeg)
+        for(angle in listOf(motion.low,100.0,motion.high)) {
+            val pose=motion.pose(angle)
+            assertAngle(180-angle,interior(pose.shoulders,pose.hips,pose.nearLeg.middle))
+            assertTrue("The leg stays above the floor at $angle",maxOf(pose.nearLeg.end.y,pose.nearLeg.tip.y)<=GuideBody.FLOOR)
+        }
+    }
+
+    @Test fun aSeatedHipNeverPassesThroughTheChair() {
+        val partly=guideMotion(BodyJoint.HIP,name="Seated hip flexion",low=60.0,high=110.0)
+        assertEquals(90.0,partly.low,0.0)
+        assertEquals(110.0,partly.high,0.0)
+        val below=guideMotion(BodyJoint.HIP,name="Pag-upo at pag-angat ng hita",low=10.0,high=80.0)
+        assertEquals(90.0,below.low,0.0)
+        assertTrue("A range below the chair still shows a lift",below.high>below.low)
+        assertEquals("A standing hip keeps its prescribed range",10.0,guideMotion(BodyJoint.HIP,low=10.0,high=80.0).low,0.0)
+    }
+
     @Test fun theKneeMatchesTheCameraSeatedAndStanding() {
         for(name in listOf(null,"Standing knee curl")) {
             val leg=guideMotion(BodyJoint.KNEE,name=name).pose(60.0).nearLeg
