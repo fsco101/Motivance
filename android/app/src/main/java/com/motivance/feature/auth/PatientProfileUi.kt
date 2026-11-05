@@ -72,12 +72,6 @@ import kotlinx.coroutines.flow.*
         keyboardOptions=KeyboardOptions(keyboardType=type,capitalization=capitalization,imeAction=if(multiline) ImeAction.Default else ImeAction.Next))
 }
 
-@Composable private fun FormSection(title:Int,description:Int) {
-    HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-    Text(stringResource(title),style=MaterialTheme.typography.titleMedium,color=MaterialTheme.colorScheme.primary)
-    Text(stringResource(description),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
 /** First/last name, birthdate with derived age, and gender. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable fun ColumnScope.PersonalFields(p:PatientProfile,enabled:Boolean,showErrors:Boolean=false,onChange:(PatientProfile)->Unit) {
@@ -89,14 +83,29 @@ import kotlinx.coroutines.flow.*
     if(p.age!=null) Text(stringResource(R.string.profile_age,p.age.toString()),style=MaterialTheme.typography.titleSmall,
         color=MaterialTheme.colorScheme.secondary,modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
     else if(showErrors) Text(stringResource(R.string.form_birthdate_required),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
-    Text(stringResource(R.string.profile_gender),style=MaterialTheme.typography.labelLarge)
-    FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
-        listOf("female" to R.string.profile_female,"male" to R.string.profile_male,"nonbinary" to R.string.profile_nonbinary,"prefer_not_to_say" to R.string.profile_private).forEach {(key,label)->
-            FilterChip(p.gender==key,{onChange(p.copy(gender=key))},enabled=enabled,label={Text(stringResource(label))},
-                leadingIcon=if(p.gender==key) {{Icon(Icons.Default.Check,null,Modifier.size(18.dp))}} else null)
+    GenderField(p.gender,enabled,showErrors) {onChange(p.copy(gender=it))}
+}
+
+private val GENDER_LABELS=listOf("female" to R.string.profile_female,"male" to R.string.profile_male,"nonbinary" to R.string.profile_nonbinary,"prefer_not_to_say" to R.string.profile_private)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable private fun GenderField(gender:String,enabled:Boolean,showErrors:Boolean,onChange:(String)->Unit) {
+    var expanded by remember {mutableStateOf(false)}
+    val selected=GENDER_LABELS.firstOrNull {it.first==gender}
+    val showError=showErrors && selected==null
+    ExposedDropdownMenuBox(expanded && enabled,{expanded=it}) {
+        OutlinedTextField(selected?.let {stringResource(it.second)}.orEmpty(),{},
+            Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable,enabled),enabled=enabled,readOnly=true,singleLine=true,
+            label={Text(stringResource(R.string.profile_gender))},placeholder={Text(stringResource(R.string.profile_gender_choose))},
+            trailingIcon={ExposedDropdownMenuDefaults.TrailingIcon(expanded)},isError=showError,
+            supportingText=if(showError) ({Text(stringResource(R.string.form_gender_required))}) else null,shape=RoundedCornerShape(12.dp))
+        ExposedDropdownMenu(expanded && enabled,{expanded=false}) {
+            GENDER_LABELS.forEach {(key,label) ->
+                DropdownMenuItem(text={Text(stringResource(label))},onClick={onChange(key);expanded=false},
+                    trailingIcon=if(key==gender) ({Icon(Icons.Default.Check,null)}) else null,contentPadding=ExposedDropdownMenuDefaults.ItemContentPadding)
+            }
         }
     }
-    if(showErrors && p.gender !in PatientProfile.GENDERS) Text(stringResource(R.string.form_gender_required),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
 }
 
 /** Address and contact number. */
@@ -118,14 +127,11 @@ import kotlinx.coroutines.flow.*
 }
 
 
-/** All profile fields in one column, used by the profile editor. */
+/** All profile fields in one column, in the same order as the web page. */
 @Composable fun ColumnScope.ProfileFields(p:PatientProfile,enabled:Boolean,onChange:(PatientProfile)->Unit) {
-    FormSection(R.string.form_identity,R.string.form_identity_help)
     PersonalFields(p,enabled,onChange=onChange)
-    FormSection(R.string.form_contact,R.string.form_contact_help)
-    ContactFields(p,enabled,onChange=onChange)
-    FormSection(R.string.form_account,R.string.form_account_help)
     IdentityFields(p,enabled,onChange=onChange)
+    ContactFields(p,enabled,onChange=onChange)
 }
 
 @Composable fun PrivacyAgreement(accepted:Boolean,enabled:Boolean,onChange:(Boolean)->Unit) {
@@ -202,49 +208,37 @@ internal fun photoFailure(e:Exception)=when {
     }
 }
 
-@Composable fun ColumnScope.PatientProfileEditor(vm:PatientProfileViewModel,onSaved:()->Unit) {
+/**
+ * The profile page, with the same three parts as the web app: who you are and your photo, your details, and your password.
+ * [fallbackName] names staff accounts that have no details yet, and [badge] shows their role.
+ */
+@Composable fun ColumnScope.PatientProfileEditor(vm:PatientProfileViewModel,fallbackName:String="",badge:(@Composable ()->Unit)?=null,onSaved:()->Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
-    if(state.busy) LoadingNotice(R.string.profile_loading)
+    if(state.busy && state.profile==null) LoadingNotice(R.string.profile_loading)
     if(state.failed) FeedbackNotice(R.string.profile_failed,error=true,retry={vm.refresh()})
     LaunchedEffect(state.message) {if(state.message==R.string.profile_saved)onSaved()}
-    state.profile?.let {ProfilePhotoCard(it,state,vm)}
-    // Keyed without the photo, so changing the photo does not discard an edit in progress.
-    state.profile?.let {loaded -> key(loaded.copy(photoUrl=null)) {
-        var draft by remember {mutableStateOf(loaded)}
-        var editing by remember {mutableStateOf(false)}
-        Text(stringResource(R.string.email),style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(loaded.email,style=MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.profile_email_fixed),style=MaterialTheme.typography.bodySmall)
-        if(!editing && loaded.username.isNotBlank()) PatientProfileSummary(loaded)
-        ActionButton(if(editing) R.string.cancel_action else R.string.profile_edit,{editing=!editing;draft=loaded},outlined=true,enabled=!state.busy)
-        if(editing || loaded.username.isBlank()) ClinicalCard {
-            ProfileFields(draft,!state.busy) {draft=it}
-            if(!loaded.consent) PrivacyAgreement(draft.consent,!state.busy) {draft=draft.copy(consent=it)}
-            Text(stringResource(R.string.profile_validation),style=MaterialTheme.typography.bodySmall)
-            ActionButton(R.string.profile_save,{vm.save(draft)},enabled=draft.valid() && !state.busy,busy=state.busy,busyLabel=R.string.profile_loading)
-        }
-    }}
-    var changing by remember {mutableStateOf(false)}
-    ActionButton(R.string.profile_change_password,{changing=!changing},outlined=true,enabled=!state.busy)
-    if(changing) key(state.message) {
-        var old by remember {mutableStateOf("")};var new by remember {mutableStateOf("")};var confirmation by remember {mutableStateOf("")}
-        ClinicalCard {
-            listOf(Triple(R.string.profile_current_password,old,{v:String->old=v}),Triple(R.string.auth_new_password,new,{v:String->new=v}),Triple(R.string.profile_confirm_password,confirmation,{v:String->confirmation=v})).forEach {(label,value,set)->
-                OutlinedTextField(value,set,enabled=!state.busy,label={Text(stringResource(label))},isError=label==R.string.profile_confirm_password && value.isNotEmpty() && value!=new,
-                    supportingText={if(label==R.string.profile_confirm_password && value.isNotEmpty() && value!=new)Text(stringResource(R.string.form_password_match)) else if(label==R.string.auth_new_password && value.isNotEmpty() && value.length<8)Text(stringResource(R.string.form_password_length))},
-                    visualTransformation=PasswordVisualTransformation(),singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password),modifier=Modifier.fillMaxWidth())
-            }
-            Text(stringResource(R.string.profile_password_help),style=MaterialTheme.typography.bodySmall)
-            ActionButton(R.string.profile_change_password,{vm.password(old,new);old="";new="";confirmation=""},enabled=!state.busy && old.isNotBlank() && new.length>=8 && new==confirmation && old!=new,busy=state.busy,busyLabel=R.string.profile_loading)
-        }
+    state.profile?.let {loaded ->
+        ProfileIdentityCard(loaded,fallbackName,badge,state,vm)
+        // Keyed without the photo, so changing the photo does not discard an edit in progress.
+        key(loaded.copy(photoUrl=null)) {ProfileDetailsCard(loaded,state.busy,vm)}
+        PasswordCard(state,vm)
+    }
+}
+
+/** A card title with an optional action in its corner, where the web app puts it. */
+@Composable private fun CardTitle(title:Int,action:(@Composable () -> Unit)?=null) {
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(title),style=MaterialTheme.typography.titleMedium,modifier=Modifier.weight(1f))
+        action?.invoke()
     }
 }
 
 /**
- * Photo picker, preview and removal. The system photo picker needs no storage permission. The picked image is
- * prepared on the device (see [preparePhoto]) and then uploaded through a server-signed Cloudinary request.
+ * Who is signed in, and their photo. The system photo picker needs no storage permission. The picked image is prepared on the
+ * device (see [preparePhoto]) and then uploaded through a server-signed Cloudinary request.
  */
-@Composable private fun ProfilePhotoCard(p:PatientProfile,state:ProfileState,vm:PatientProfileViewModel) {
+@OptIn(ExperimentalLayoutApi::class)
+@Composable private fun ProfileIdentityCard(p:PatientProfile,fallbackName:String,badge:(@Composable ()->Unit)?,state:ProfileState,vm:PatientProfileViewModel) {
     val resolver=LocalContext.current.contentResolver
     val scope=rememberCoroutineScope()
     var confirmRemove by remember {mutableStateOf(false)}
@@ -257,23 +251,29 @@ internal fun photoFailure(e:Exception)=when {
     ClinicalCard {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)) {
             Box(contentAlignment=Alignment.Center) {
-                ProfileAvatar(p,88.dp)
-                if(state.photoBusy) CircularProgressIndicator(Modifier.size(88.dp),strokeWidth=3.dp,color=MaterialTheme.colorScheme.secondary)
+                ProfileAvatar(p,72.dp)
+                if(state.photoBusy) CircularProgressIndicator(Modifier.size(72.dp),strokeWidth=3.dp,color=MaterialTheme.colorScheme.secondary)
             }
-            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                Text(stringResource(R.string.profile_photo),style=MaterialTheme.typography.titleMedium)
-                Text(stringResource(if(p.photoUrl==null) R.string.profile_photo_empty else R.string.profile_photo_set),
-                    style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
+                Text(p.displayName.ifBlank {fallbackName}.ifBlank {p.email},style=MaterialTheme.typography.titleLarge)
+                Text(p.email,style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                badge?.invoke()
             }
         }
+        Text(stringResource(R.string.profile_email_fixed),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+        CardTitle(R.string.profile_photo)
+        Text(stringResource(if(p.photoUrl==null) R.string.profile_photo_empty else R.string.profile_photo_set),
+            style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         state.photoError?.let {FeedbackNotice(it,error=true)}
         state.message?.takeIf {it==R.string.profile_photo_saved || it==R.string.profile_photo_removed}?.let {FeedbackNotice(it)}
-        ActionButton(if(p.photoUrl==null) R.string.profile_photo_add else R.string.profile_photo_change,
-            {picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))},
-            enabled=!state.busy,busy=state.photoBusy,busyLabel=R.string.profile_photo_uploading)
-        if(p.photoUrl!=null) OutlinedButton({confirmRemove=true},Modifier.fillMaxWidth().heightIn(min=48.dp),enabled=!state.busy,
-            shape=MaterialTheme.shapes.medium,colors=ButtonDefaults.outlinedButtonColors(contentColor=MaterialTheme.colorScheme.error)) {
-            Icon(Icons.Default.Delete,null,Modifier.size(18.dp));Spacer(Modifier.width(8.dp));Text(stringResource(R.string.profile_photo_remove))
+        FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+            OutlinedButton({picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))},Modifier.heightIn(min=48.dp),enabled=!state.busy,shape=MaterialTheme.shapes.medium) {
+                Text(stringResource(if(state.photoBusy) R.string.profile_photo_uploading else if(p.photoUrl==null) R.string.profile_photo_add else R.string.profile_photo_change))
+            }
+            if(p.photoUrl!=null) TextButton({confirmRemove=true},Modifier.heightIn(min=48.dp),enabled=!state.busy,colors=ButtonDefaults.textButtonColors(contentColor=MaterialTheme.colorScheme.error)) {
+                Text(stringResource(R.string.profile_photo_remove))
+            }
         }
         Text(stringResource(R.string.profile_photo_notice),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -283,4 +283,76 @@ internal fun photoFailure(e:Exception)=when {
         confirmButton={TextButton({confirmRemove=false;vm.removePhoto()},colors=ButtonDefaults.textButtonColors(contentColor=MaterialTheme.colorScheme.error)) {
             Text(stringResource(R.string.profile_photo_remove))}},
         dismissButton={TextButton({confirmRemove=false}) {Text(stringResource(R.string.cancel_action))}})
+}
+
+@Composable private fun ProfileFact(label:Int,value:String,modifier:Modifier=Modifier) {
+    Column(modifier,verticalArrangement=Arrangement.spacedBy(2.dp)) {
+        Text(stringResource(label),style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value,style=MaterialTheme.typography.bodyLarge)
+    }
+}
+
+/** Facts sit side by side when there is room, and stack on a narrow phone or with large text. */
+@Composable private fun ProfileFacts(p:PatientProfile) {
+    val facts=listOf(
+        R.string.profile_username to "@"+p.username,
+        R.string.profile_birthdate to displayDate(p.birthdate),
+        R.string.profile_gender to stringResource(GENDER_LABELS.firstOrNull {it.first==p.gender}?.second ?: R.string.profile_private),
+        R.string.profile_contact to p.contact,
+    )
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns=if(maxWidth>=320.dp && fieldIconsFit()) 2 else 1
+        Column(verticalArrangement=Arrangement.spacedBy(14.dp)) {
+            facts.chunked(columns).forEach {row ->
+                Row(horizontalArrangement=Arrangement.spacedBy(16.dp)) {row.forEach {(label,value) -> ProfileFact(label,value,Modifier.weight(1f))}}
+            }
+            ProfileFact(R.string.profile_address,p.address)
+        }
+    }
+}
+
+@Composable private fun ProfileDetailsCard(loaded:PatientProfile,busy:Boolean,vm:PatientProfileViewModel) {
+    var draft by remember {mutableStateOf(loaded)}
+    var editing by remember {mutableStateOf(false)}
+    val incomplete=loaded.username.isBlank()
+    ClinicalCard {
+        CardTitle(R.string.profile_details,if(editing || incomplete) null else ({
+            TextButton({editing=true;draft=loaded},Modifier.heightIn(min=48.dp),enabled=!busy) {
+                Icon(Icons.Default.Edit,null,Modifier.size(18.dp));Spacer(Modifier.width(6.dp));Text(stringResource(R.string.profile_edit))
+            }
+        }))
+        if(incomplete) Text(stringResource(R.string.profile_incomplete),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        if(editing || incomplete) {
+            ProfileFields(draft,!busy) {draft=it}
+            if(!loaded.consent) PrivacyAgreement(draft.consent,!busy) {draft=draft.copy(consent=it)}
+            Text(stringResource(R.string.profile_validation),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                if(!incomplete) ActionButton(R.string.cancel_action,{editing=false;draft=loaded},Modifier.weight(1f),outlined=true,enabled=!busy)
+                ActionButton(R.string.profile_save,{vm.save(draft)},Modifier.weight(1f),enabled=draft.valid() && !busy,busy=busy,busyLabel=R.string.profile_loading)
+            }
+        } else ProfileFacts(loaded)
+    }
+}
+
+@Composable private fun PasswordCard(state:ProfileState,vm:PatientProfileViewModel) {
+    key(state.message) {
+        var old by remember {mutableStateOf("")};var new by remember {mutableStateOf("")};var confirmation by remember {mutableStateOf("")}
+        val same=new.isNotEmpty() && new==old
+        val short=new.isNotEmpty() && new.length<8
+        val mismatch=confirmation.isNotEmpty() && confirmation!=new
+        @Composable fun field(label:Int,value:String,error:Int?,set:(String)->Unit) {
+            OutlinedTextField(value,set,enabled=!state.busy,label={Text(stringResource(label))},isError=error!=null,
+                supportingText=error?.let {message -> {Text(stringResource(message))}},visualTransformation=PasswordVisualTransformation(),singleLine=true,
+                keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password),shape=RoundedCornerShape(12.dp),modifier=Modifier.fillMaxWidth())
+        }
+        ClinicalCard {
+            CardTitle(R.string.profile_change_password)
+            Text(stringResource(R.string.profile_password_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            field(R.string.profile_current_password,old,null) {old=it}
+            field(R.string.auth_new_password,new,if(same) R.string.profile_password_same else if(short) R.string.form_password_length else null) {new=it}
+            field(R.string.profile_confirm_password,confirmation,if(mismatch) R.string.form_password_match else null) {confirmation=it}
+            ActionButton(R.string.profile_change_password,{vm.password(old,new);old="";new="";confirmation=""},outlined=true,
+                enabled=!state.busy && old.isNotBlank() && new.length>=8 && new==confirmation && old!=new,busy=state.busy,busyLabel=R.string.profile_loading)
+        }
+    }
 }

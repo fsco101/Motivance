@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -101,7 +102,7 @@ class PatientProfileTest {
     @Test fun profileEmailIsReadOnlyAndEditedDetailsSave() {
         val repository=Fixture();val vm=PatientProfileViewModel(repository)
         compose.runOnIdle {vm.configure("patient")}
-        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {PatientProfileEditor(vm) {}}}}}
+        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {PatientProfileEditor(vm,onSaved={})}}}}
         compose.waitUntil(10_000) {vm.state.value.profile!=null}
         compose.onNodeWithText(fixture.email).assert(hasSetTextAction().not())
         compose.onNodeWithText("@fixture_user").assertExists()
@@ -114,15 +115,43 @@ class PatientProfileTest {
     @Test fun passwordChangeRequiresMatchingConfirmation() {
         val repository=Fixture();val vm=PatientProfileViewModel(repository)
         compose.runOnIdle {vm.configure("patient")}
-        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {PatientProfileEditor(vm) {}}}}}
+        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {PatientProfileEditor(vm,onSaved={})}}}}
         compose.waitUntil(10_000) {vm.state.value.profile!=null}
-        compose.onNodeWithText(text(R.string.profile_change_password)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.profile_current_password)).performScrollTo().performTextInput("current-password")
         compose.onNodeWithText(text(R.string.auth_new_password)).performScrollTo().performTextInput("replacement-password")
         compose.onAllNodesWithText(text(R.string.profile_change_password)).filter(hasClickAction()).onLast().assertIsNotEnabled()
         compose.onNodeWithText(text(R.string.profile_confirm_password)).performScrollTo().performTextInput("replacement-password")
         compose.onAllNodesWithText(text(R.string.profile_change_password)).filter(hasClickAction()).onLast().performScrollTo().performClick()
         compose.waitUntil(10_000) {repository.passwordCalls==1}
+    }
+    @Test fun profilePageMatchesTheWebLayoutAndHasNoToggleButtons() {
+        val repository=Fixture();val vm=PatientProfileViewModel(repository)
+        compose.runOnIdle {vm.configure("patient")}
+        compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {PatientProfileEditor(vm,onSaved={})}}}}
+        compose.waitUntil(10_000) {vm.state.value.profile!=null}
+        compose.onNodeWithText(text(R.string.profile_details)).assertExists()
+        compose.onNodeWithText(text(R.string.profile_current_password)).performScrollTo().assertExists()
+        compose.onNodeWithText(text(R.string.profile_female)).assertExists()
+        capture("profile-mobile.png")
+        compose.onNodeWithText(text(R.string.profile_edit)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.profile_save)).performScrollTo().assertExists()
+        capture("profile-mobile-editing.png")
+        compose.onNodeWithText(text(R.string.cancel_action)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.profile_save)).assertDoesNotExist()
+    }
+    @Test fun genderIsADropdown() {
+        compose.setContent {MotivanceTheme {Surface {
+            var profile by remember {mutableStateOf(fixture.copy(gender=""))}
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                ProfileFields(profile,true) {profile=it}
+                Text("Chosen: ${profile.gender}")
+            }
+        }}}
+        compose.onNodeWithText(text(R.string.profile_nonbinary)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.profile_gender)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.profile_nonbinary)).performClick()
+        compose.onNodeWithText("Chosen: nonbinary").assertExists()
+        compose.onNodeWithText(text(R.string.profile_male)).assertDoesNotExist()
     }
     @Test fun therapistSummaryShowsUsernameAvatarAndDemographics() {
         compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {PatientProfileSummary(fixture)}}}}

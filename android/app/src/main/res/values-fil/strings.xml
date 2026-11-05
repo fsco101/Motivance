@@ -523,6 +523,10 @@
     <string name="profile_name">Buong pangalan</string>
     <string name="profile_username">Username</string>
     <string name="profile_username_help">Gumamit ng 3&#8211;30 titik, numero o underscore. Makikita ng nakakonektang therapist ang iyong username.</string>
+    <string name="profile_details">Iyong mga detalye</string>
+    <string name="profile_incomplete">Idagdag ang iyong mga detalye para matapos ang pag-set up ng account na ito.</string>
+    <string name="profile_gender_choose">Pumili ng isa</string>
+    <string name="profile_password_same">Gumamit ng password na iba sa kasalukuyan.</string>
     <string name="profile_gender">Kasarian</string>
     <string name="profile_female">Babae</string>
     <string name="profile_male">Lalaki</string>
@@ -563,7 +567,7 @@
     <string name="profile_save">I-save ang profile</string>
     <string name="profile_saved">Na-update ang profile.</string>
     <string name="profile_email_fixed">Hindi maaaring baguhin dito ang email na ginagamit sa pag-sign in.</string>
-    <string name="profile_validation">Kumpletuhin ang mga detalye, pumili ng wastong petsa ng kapanganakan at tanggapin ang kasunduan. Dapat natatangi ang username. Kailangan ng hindi bababa sa 8 character ang password.</string>
+    <string name="profile_validation">Kumpletuhin ang mga detalye, pumili ng wastong petsa ng kapanganakan at tanggapin ang kasunduan. Dapat natatangi ang username.</string>
     <string name="profile_change_password">Baguhin ang password</string>
     <string name="profile_current_password">Kasalukuyang password</string>
     <string name="profile_confirm_password">Kumpirmahin ang bagong password</string>
