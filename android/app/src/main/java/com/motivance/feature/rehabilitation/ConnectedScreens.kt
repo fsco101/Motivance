@@ -59,12 +59,13 @@ internal fun RehabAction.loadingLabel()=when(this) {
 }
 
 /** Workspace status notices plus a compact refresh action, so the page content stays the visual focus. */
-@Composable fun ConnectedStatus(state:RehabilitationState,refresh:()->Unit) {
+/** [showRefresh] is off on pages where pull-to-refresh is the only refresh people need. */
+@Composable fun ConnectedStatus(state:RehabilitationState,showRefresh:Boolean=true,refresh:()->Unit) {
     when {
         state.busy -> LoadingNotice(state.activeAction?.loadingLabel() ?: R.string.ui_loading_workspace)
         state.failed -> FeedbackNotice(R.string.connected_failed,error=true,retry=refresh)
     }
-    if(!state.failed) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+    if(!state.failed && showRefresh) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
         TextButton(refresh,enabled=!state.busy,modifier=Modifier.heightIn(min=48.dp)) {
             Icon(Icons.Default.Refresh,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.refresh_connected))
         }

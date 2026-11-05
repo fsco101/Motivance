@@ -63,6 +63,6 @@ Date: 2026-11-05. Local engineering evidence for MOT-43 to MOT-46: a development
 
 ## Known limits
 
-- Android and the web both reject `Ma. Teresa`, because their name rule does not allow a period followed by a space. The server accepts it. Fixing this means changing both apps together.
+- Android and the web both reject `Ma. Teresa`, because their name rule does not allow a period followed by a space. The owner confirmed on 2026-11-05 that this stays. The server's own rule is looser, so only the apps enforce it.
 - A real upload to Cloudinary from a browser has not been run, because no Cloudinary account is configured here.
 - New Filipino text has not had a native review.

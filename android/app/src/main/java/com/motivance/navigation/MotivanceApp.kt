@@ -191,25 +191,19 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                     again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"})
                 "PROFILE" -> {
                     PageHeader(R.string.nav_profile,R.string.account_and_access)
-                    ClinicalCard {
-                        // The photo editor below shows the avatar; this card only states who is signed in and in which role.
-                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                            Text(accountName,style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))
-                            StatusPill(stringResource(actualRole.title()),PillTone.PRIMARY)
-                        }
-                        auth.session?.roles?.filter {it!=actualRole}?.forEach {allowed -> ActionButton(allowed.title(),{selectedRole=allowed.name;route="HOME"},outlined=true)}
-                        if(actualRole==UserRole.ADMIN) ActionButton(R.string.admin_title,{route="ADMIN"})
+                    PatientProfileEditor(profile,accountName,{StatusPill(stringResource(actualRole.title()),PillTone.PRIMARY)}) {vm.loadOverview();rehabilitation.refresh()}
+                    // Only an account with more than one role has anywhere to switch to.
+                    auth.session?.roles?.filter {it!=actualRole}?.takeIf {it.isNotEmpty()}?.let {others ->
+                        ClinicalCard {others.forEach {allowed -> ActionButton(allowed.title(),{selectedRole=allowed.name;route="HOME"},outlined=true)}}
                     }
-                    PatientProfileEditor(profile) {vm.loadOverview();rehabilitation.refresh()}
                     ClinicalCard {LanguagePicker()}
                     SectionHeading(R.string.ui_account_actions)
                     ClinicalCard {
                         Text(stringResource(R.string.memory_session_notice),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-                        ActionButton(R.string.local_history,{route="LOCAL_HISTORY"},outlined=true)
-                        ActionButton(R.string.refresh_session,{vm.act(AuthAction.REFRESH)},outlined=true,enabled=!auth.busy,busy=auth.activeAction==AuthAction.REFRESH,busyLabel=R.string.ui_refreshing_session)
+                        if(actualRole==UserRole.PATIENT) ActionButton(R.string.local_history,{route="LOCAL_HISTORY"},outlined=true)
                         ActionButton(R.string.sign_out,{vm.act(AuthAction.SIGN_OUT)},outlined=true,enabled=!auth.busy,busy=auth.activeAction==AuthAction.SIGN_OUT,busyLabel=R.string.ui_signing_out)
                     }
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
+                    ConnectedStatus(connected,showRefresh=false) {rehabilitation.refreshNow(); vm.loadOverview()}
                     SyncAndPrivacy(connected,rehabilitation,actualRole==UserRole.PATIENT) {exercise.newSession(); rehabilitation.withdraw()}
                 }
                 "LOCAL_HISTORY" -> {
