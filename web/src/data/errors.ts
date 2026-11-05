@@ -19,10 +19,3 @@ export function failureKey(error: unknown): FailureKey {
   if (failure.name === 'AuthRetryableFetchError' || /failed to fetch|networkerror|load failed/i.test(failure.message ?? '')) return 'errors.offline'
   return 'errors.request'
 }
-
-/** Worth trying again by itself: a dropped connection or a server hiccup, never a rejected request. */
-export function isRetryable(error: unknown) {
-  const key = failureKey(error)
-  const status = (error as Failure | null)?.status ?? 0
-  return key === 'errors.offline' || status >= 500
-}

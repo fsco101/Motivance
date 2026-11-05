@@ -16,6 +16,7 @@ const SCREENS: ReadonlyArray<readonly [string, string]> = [
   ['patient-list', '/design/therapist/patients'],
   ['patient-record', '/design/therapist/patients/p1'],
   ['assignment-editor', '/design/therapist/patients/p1/assign'],
+  ['exercises', '/design/therapist/exercises'],
   ['progress', '/design/therapist/progress'],
   ['admin-overview', '/design/admin'],
   ['admin-accounts', '/design/admin/accounts'],

@@ -63,6 +63,38 @@ export async function link(therapist: TestUser, patient: TestUser) {
   if (accepted.error) throw accepted.error
 }
 
+export async function acceptInvitation(patient: TestUser, code: string) {
+  const person = await signedIn(patient)
+  const accepted = await person.rpc('accept_patient_invitation', { p_code: code })
+  if (accepted.error) throw accepted.error
+}
+
+type SessionFixture = {
+  kind: string; side: string; low: number; high: number; target: number; focusJoint: string
+  min: number; max: number; completed: number; valid?: number; invalid?: number
+}
+
+/** Uploads a session the way the phone does, through the same database function. */
+export async function ingestSession(patient: TestUser, prescription: string, session: SessionFixture) {
+  const person = await signedIn(patient)
+  const { data: version } = await person.from('prescription_versions').select('exercise_version_id').eq('id', prescription).single()
+  const now = Date.now()
+  const grant = randomUUID()
+  const consent = await person.rpc('record_consent', { p_id: grant, p_event: 'granted', p_version: 'movement-summary-v1', p_occurred_at: new Date(now - 30_000).toISOString() })
+  if (consent.error) throw consent.error
+  const uploaded = await person.rpc('ingest_session', {
+    p_payload: {
+      schemaVersion: 2, sessionId: randomUUID(), ownerId: patient.id, consentId: grant, startedAt: now - 20_000, endedAt: now - 10_000,
+      rules: {
+        kind: session.kind, side: session.side, low: session.low, high: session.high, target: session.target, focusJoint: session.focusJoint, confidence: 0.7, stableFrames: 5, minimumCycleMs: 600,
+        maximumCycleMs: 30000, peakHoldMs: 100, maxTrunkLean: 20, maxSpeed: 600, version: version!.exercise_version_id, prescription, demo: false,
+      },
+      metrics: { time: 1000, angle: 10, min: session.min, max: session.max, completed: session.completed, incomplete: 0, duration: 1000, valid: session.valid ?? 40, invalid: session.invalid ?? 2, reasons: {} },
+    },
+  })
+  if (uploaded.error) throw uploaded.error
+}
+
 export function removeUsers(users: readonly TestUser[]) {
   if (users.length === 0) return
   const ids = users.map((user) => `'${user.id}'`).join(',')
@@ -76,6 +108,6 @@ delete from public.exercises where owner_id in (${ids});
 delete from public.patient_invitations where therapist_id in (${ids});
 delete from public.therapist_patients where therapist_id in (${ids}) or patient_id in (${ids});
 delete from public.audit_events where actor_id in (${ids}) or target_id in (${ids});
-delete from public.patients where id in (${ids}); delete from public.user_roles where user_id in (${ids});
+delete from public.patient_profiles where user_id in (${ids}); delete from public.patients where id in (${ids}); delete from public.user_roles where user_id in (${ids});
 delete from public.profiles where id in (${ids}); delete from auth.users where id in (${ids}); commit;`)
 }

@@ -132,6 +132,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Have a Filipino speaker review the web text in `web/src/locales/fil.json`. Most of it comes from Android, but the sign-in, idle, home and assignment text is new.
 - [ ] Check the motion on a typical clinic computer. The 60 frames per second result came from a development machine.
 
+## Therapist web workspace follow-up (2026-11-05)
+
+- [ ] In the browser, invite a patient, create a custom exercise and assign it. On a physical phone, run it as that patient, then review the result and its charts in the browser. The automated check stops at Android's decoder. Evidence scope: [therapist web workspace](WEB-THERAPIST.md).
+- [ ] Have a therapist work through a normal day in the web workspace and confirm it fits how they work, including the editor's steps and the wording on the patient cards.
+- [ ] Have a Filipino speaker review the new web text in `web/src/locales/fil.json`, including the custom exercise, version and removed exercise messages.
+- [ ] Try the patient list and assignment editor with a screen reader. The automated checks cover keyboard use and the axe rules, not a person listening to the pages.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

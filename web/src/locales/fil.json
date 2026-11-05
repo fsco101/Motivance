@@ -35,6 +35,18 @@
     "demoLabel": "Halimbawang skeleton na sumusukat ng elbow flexion", "demoSlider": "Anggulo ng bisig", "demoHint": "Hawakan ang kamay at igalaw ang braso.", "demoSample": "Halimbawang galaw, hindi datos ng pasyente.",
     "demoStart": "Magsimula sa {{degrees}}° o mas mababa", "demoReach": "Abutin ang {{degrees}}°", "demoReturn": "Bumalik sa {{degrees}}°", "demoCount": "{{count}} sa {{target}}", "demoCountLabel": "Nabilang na ulit"
   },
+  "custom": {
+    "add": "Magdagdag ng custom na ehersisyo", "title": "Bagong custom na ehersisyo", "help": "Ilarawan ang galaw at piliin ang kasukasuang susukatin ng camera. Ikaw lamang ang makakapagtalaga ng ehersisyong ito.", "name": "Pangalan ng ehersisyo", "joint": "Kasukasuang susukatin ng camera",
+    "instructions": "Mga tagubilin para sa pasyente", "instructionsFil": "Mga tagubilin sa Filipino (opsyonal)", "save": "I-save ang ehersisyo", "saving": "Sine-save ang ehersisyo", "remove": "Alisin sa aking mga ehersisyo", "removeTitle": "Alisin ang {{name}}?",
+    "removeDetail": "Hindi mo na ito maitatalaga. Mananatili ito sa mga pasyenteng mayroon na nito, at mananatili ang kanilang mga resulta sa kasaysayan.", "zeroStraight": "0° kapag tuwid ang kasukasuan. Tumataas ang anggulo habang bumabaluktot ito.", "zeroSide": "0° kapag nakababa ang braso sa tagiliran. Tumataas ang anggulo habang itinataas ito.",
+    "zeroAnkle": "Humigit-kumulang 90° kapag patag ang paa. Tumataas ang anggulo habang itinataas ang paa patungo sa binti.", "cameraLimit": "Sumusukat ang camera sa 2D. Kailangang manatiling nakatayo nang tuwid ang pasyente, at kita ang balikat, balakang at kasukasuang ito."
+  },
+  "exercises": { "description": "Ang mga ehersisyong maitatalaga mo.", "mine": "Aking mga ehersisyo", "standard": "Mga karaniwang ehersisyo", "emptyTitle": "Wala pang custom na ehersisyo", "emptyDetail": "Magdagdag ng isa para masukat ang galaw na wala sa karaniwang listahan." },
+  "toast": {
+    "invitationCreated": "Nagawa ang imbitasyon. Ibahagi ang code sa iyong pasyente.", "accessRevoked": "Binawi ang access ng pasyente.", "published": "Nailathala ang reseta. Awtomatiko itong makakarating sa telepono ng pasyente kapag online siya.",
+    "exerciseCreated": "Nai-save ang ehersisyo", "exerciseRemoved": "Naalis ang ehersisyo"
+  },
+  "genders": { "female": "Babae", "male": "Lalaki", "nonbinary": "Non-binary", "prefer_not_to_say": "Mas gustong hindi sabihin" },
   "errors": {
     "credentials": "Hindi tugma ang email at password.", "rateLimited": "Masyadong maraming kahilingan. Maghintay muna bago humiling ng bagong code o muling subukan.",
     "unconfirmed": "Kumpirmahin ang email bago mag-sign in. Ilagay ang code mula sa email o humiling ng bago.", "invalidCode": "Hindi wasto o paso na ang code. Humiling ng bago at gamitin ang pinakabagong email.",
@@ -63,12 +75,15 @@
     "revokeTitle": "Bawiin ang access kay {{name}}?", "revokeMessage": "Mawawalan ka ng access sa mga tala ni {{name}}, at matatapos ang iyong aktibong takda para sa pasyenteng ito."
   },
   "record": {
+    "otherTherapist": "Itinalaga ng ibang therapist, kaya siya lamang ang makakapag-edit nito.",
+    "crumb": "Tala ng pasyente", "notFoundTitle": "Hindi nakaugnay sa iyo ang pasyenteng ito", "notFoundDetail": "Tingnan ang pahina ng Mga pasyente. Kung binawi ang ugnayan, imbitahan muli ang pasyente.",
     "planLine_one": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit", "planLine_other": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit",
     "version": "Bersiyon {{version}}", "custom": "Custom", "side": "Bahagi", "focus": "Pokus ng skeleton", "focusAutomatic": "Kasukasuan ng ehersisyo (awtomatiko)", "repetitions": "Mga ulit", "edit": "I-edit ang plano",
     "gender": "Kasarian", "birthdate": "Kaarawan", "contact": "Contact", "address": "Tirahan", "plans": "Plano ng ehersisyo", "assign": "Magtalaga ng ehersisyo",
     "noPlansTitle": "Wala pang nakatalagang ehersisyo", "noPlansDetail": "Magtalaga ng isa para simulang sukatin ang galaw ng pasyenteng ito.", "progress": "Pag-unlad", "allProgress": "Lahat ng pag-unlad"
   },
   "progress": {
+    "noPatientsTitle": "Wala pang pasyente", "noPatientsDetail": "Lalabas dito ang pag-unlad kapag may nakaugnay na pasyente sa iyo.",
     "description": "Nasukat na galaw sa paglipas ng panahon, isang pasyente sa bawat pagkakataon.", "rom": "Saklaw ng galaw", "notValidated": "Hindi pa clinically validated ang mga sukat.", "notMeasured": "Hindi nasukat",
     "chartLabel": "Chart ng {{title}} na may {{count}} sesyon. Gamitin ang kaliwa at kanang arrow key para basahin ang bawat sesyon.", "showTable": "Ipakita bilang talahanayan", "date": "Petsa", "unknown": "Hindi kilalang ehersisyo", "targets": "Nireseta", "result": "Resulta",
     "status": { "completed": "Natapos", "partial": "Bahagya", "interrupted": "Naantala", "empty": "Walang resulta", "invalid": "Hindi magagamit" },
@@ -76,7 +91,9 @@
     "noMatch": "Walang sesyong tumutugma sa mga filter na ito.", "seriesLine": "{{side}}, bersiyon {{version}}, nireseta {{low}}° hanggang {{high}}°", "sessions": "Mga sesyon", "shown_one": "{{count}} sesyon", "shown_other": "{{count}} sesyon", "loadOlder": "Mag-load ng mas lumang sesyon"
   },
   "assign": {
-    "title": "Magtalaga ng ehersisyo", "exercise": "Ehersisyo", "exerciseHelp": "Pumili ng galaw. Susundan ng pagbilang ng anggulo at ulit ang ehersisyong ito.", "addCustom": "Magdagdag ng custom na ehersisyo",
+    "editing": "Ine-edit ang bersyon {{version}}", "nextVersion": "Ang paglalathala ay gagawa ng bersyon {{version}}. Mananatili sa mga naunang sesyon ang target na ginamit noon.", "removed": "Inalis", "removedHint": "Inalis ang ehersisyong ito sa iyong listahan, kaya mailalathala lamang ang planong ito gamit ang ibang ehersisyo.",
+    "pinned": "Bersiyon sa planong ito",
+    "title": "Magtalaga ng ehersisyo", "exercise": "Ehersisyo", "exerciseHelp": "Pumili ng galaw. Susundan ng pagbilang ng anggulo at ulit ang ehersisyong ito.",
     "side": "Bahagi at pokus", "sideHelp": "Piliin ang susuriing bahagi ng katawan at ang ii-highlight sa skeleton.", "focus": "Pokus ng skeleton", "targets": "Mga target", "targetsHelp": "I-drag ang alinmang dulo ng arko, o i-type ang eksaktong anggulo.",
     "rangeLabel": "Nireseta na saklaw {{low}} hanggang {{high}} degrees", "low": "Simulang anggulo", "high": "Target na anggulo", "fewer": "Bawasan ang ulit", "more": "Dagdagan ang ulit", "gapHint": "Sumusunod ang arko sa bawat 5° at pinapanatili ang mga dulo na hindi bababa sa {{gap}}° ang pagitan.",
     "timing": "Oras", "timingHelp": "Angkop ang mga default sa karamihan ng pasyente.", "showTiming": "Baguhin ang oras", "hideTiming": "Itago ang oras", "minimumCycle": "Pinakamaikling oras ng ulit (ms)", "minimumCycleHint": "100 hanggang 30000", "maximumCycle": "Pinakamahabang oras ng ulit (ms)", "maximumCycleHint": "Higit sa pinakamaikli, hanggang 300000",

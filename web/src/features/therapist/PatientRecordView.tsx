@@ -13,11 +13,16 @@ import { TrendChart, type TrendPoint } from './TrendChart'
 export type PlanCard = {
   id: string; exercise: string; custom?: boolean; version: number; side: 'left' | 'right'; low: number; high: number; repetitions: number
   focus?: string | null; instructions: string; reached?: readonly [number, number] | null
+  /** Only the therapist who assigned a plan can publish to it. */
+  locked?: boolean
 }
 export type PatientRecord = {
   id: string; name: string; photo?: string | null; username?: string; gender?: string; birthdate?: string; contact?: string; address?: string
-  plans: PlanCard[]; trend: TrendPoint[]
+  plans: PlanCard[]; trend: RecordTrend | null
 }
+
+/** One series only, named, so a reader knows exactly what the line measures. */
+export type RecordTrend = { exercise: string; detail: string; points: TrendPoint[] }
 
 function Plan({ plan, editTo }: { plan: PlanCard; editTo: string }) {
   const { t } = useTranslation()
@@ -42,7 +47,9 @@ function Plan({ plan, editTo }: { plan: PlanCard; editTo: string }) {
         <Fact term={t('record.focus')}>{plan.focus ?? t('record.focusAutomatic')}</Fact>
         <Fact term={t('record.repetitions')}>{plan.repetitions}</Fact>
       </dl>
-      <ButtonLink to={editTo} variant="secondary" size="sm" className="mt-4" leading={<PencilSimpleIcon aria-hidden />}>{t('record.edit')}</ButtonLink>
+      {plan.locked
+        ? <p className="mt-4 text-sm text-slate">{t('record.otherTherapist')}</p>
+        : <ButtonLink to={`${editTo}?plan=${plan.id}`} variant="secondary" size="sm" className="mt-4" leading={<PencilSimpleIcon aria-hidden />}>{t('record.edit')}</ButtonLink>}
     </ExpandableCard>
   )
 }
@@ -60,7 +67,7 @@ export function PatientRecordView({ load, base }: { load: Load<PatientRecord>; b
             {patient.username && <p className="text-slate">@{patient.username}</p>}
             <dl className="mt-6 grid gap-3 border-t border-line pt-5">
               {patient.gender && <Fact term={t('record.gender')}>{patient.gender}</Fact>}
-              {patient.birthdate && <Fact term={t('record.birthdate')}>{format.date(patient.birthdate)}</Fact>}
+              {patient.birthdate && <Fact term={t('record.birthdate')}>{format.day(patient.birthdate)}</Fact>}
               {patient.contact && <Fact term={t('record.contact')}>{patient.contact}</Fact>}
               {patient.address && <Fact term={t('record.address')}>{patient.address}</Fact>}
             </dl>
@@ -73,10 +80,14 @@ export function PatientRecordView({ load, base }: { load: Load<PatientRecord>; b
                 : <div className="flex flex-col gap-3">{patient.plans.map((plan) => <Plan key={plan.id} plan={plan} editTo={`${base}/patients/${patient.id}/assign`} />)}</div>}
             </section>
             <section>
-              <SectionHeading title={t('record.progress')} action={<Link to={`${base}/progress`} className="font-semibold text-lagoon-deep hover:underline">{t('record.allProgress')}</Link>} />
-              {patient.trend.length === 0
-                ? <p className="text-slate">{t('patients.noSessions')}</p>
-                : <TrendChart title={t('progress.rom')} points={patient.trend} unit="°" />}
+              <SectionHeading title={t('record.progress')} action={<Link to={`${base}/progress?patient=${patient.id}`} className="font-semibold text-lagoon-deep hover:underline">{t('record.allProgress')}</Link>} />
+              {patient.trend === null ? <p className="text-slate">{t('patients.noSessions')}</p> : (
+                <>
+                  <h3 className="font-bold">{patient.trend.exercise}</h3>
+                  <p className="mb-3 text-sm text-slate">{patient.trend.detail}</p>
+                  <TrendChart title={t('progress.rom')} points={patient.trend.points} unit="°" />
+                </>
+              )}
               <p className="mt-3 max-w-[62ch] text-sm text-slate">{t('progress.notValidated')}</p>
             </section>
           </div>

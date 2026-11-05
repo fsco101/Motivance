@@ -34,13 +34,16 @@ export const record: PatientRecord = {
     { id: 'a1', exercise: elbow, version: 3, side: 'right', low: 20, high: 120, repetitions: 10, instructions: 'Keep your upper arm against your side and bend the elbow slowly, then lower with control.', reached: [14, 112] },
     { id: 'a2', exercise: knee, custom: true, version: 1, side: 'left', low: 15, high: 80, repetitions: 8, focus: 'Knee', instructions: 'Sit tall on a firm chair and straighten the knee, then lower it slowly.', reached: null },
   ],
-  trend: days.map((day, index) => ({ id: day, label: new Date(day).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }), value: index === 3 ? null : reach[index]! - 14 })),
+  trend: {
+    exercise: elbow, detail: 'Right side, version 3, prescribed 20° to 120°',
+    points: days.map((day, index) => ({ id: day, label: new Date(day).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }), value: index === 3 ? null : reach[index]! - 14 })),
+  },
 }
 
 export const catalogue: CatalogueExercise[] = [
-  { id: 'v1', name: elbow, algorithm: 'elbow-flexion-v1', instructions: 'Place the camera at chest height, side-on to the arm being measured.', exerciseId: 'e1', custom: false, selectable: true, joint: null },
-  { id: 'v2', name: shoulder, algorithm: 'shoulder-abduction-v1', instructions: 'Face the camera and raise the arm out to the side, keeping your trunk upright.', exerciseId: 'e2', custom: false, selectable: true, joint: null },
-  { id: 'v3', name: knee, algorithm: 'joint-angle-v1', instructions: 'Sit tall on a firm chair and straighten the knee, then lower it slowly.', exerciseId: 'e3', custom: true, selectable: true, joint: 'KNEE' },
+  { id: 'v1', name: elbow, algorithm: 'elbow-flexion-v1', instructions: 'Place the camera at chest height, side-on to the arm being measured.', exerciseId: 'e1', custom: false, selectable: true, retired: false, joint: null },
+  { id: 'v2', name: shoulder, algorithm: 'shoulder-abduction-v1', instructions: 'Face the camera and raise the arm out to the side, keeping your trunk upright.', exerciseId: 'e2', custom: false, selectable: true, retired: false, joint: null },
+  { id: 'v3', name: knee, algorithm: 'joint-angle-v1', instructions: 'Sit tall on a firm chair and straighten the knee, then lower it slowly.', exerciseId: 'e3', custom: true, selectable: true, retired: false, joint: 'KNEE' },
 ]
 
 const prescription = (id: string, version: number): NonNullable<HistoricalSession['prescription']> => ({

@@ -4,7 +4,7 @@
   "title": "S7 - Therapist web workspace",
   "description": "Weeks 13-14. Exit: a therapist can invite a patient, assign standard and custom exercises and review progress entirely in the browser, and what they publish runs unchanged in the Android app.",
   "goal": "Let therapists do all of their daily work comfortably on a large screen.",
-  "status": "planned",
+  "status": "completed",
   "weeks": {
     "start": 13,
     "end": 14
@@ -18,12 +18,26 @@
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/WEB-THERAPIST.md",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist and physical-device checks are deferred until after implementation and do not block engineering delivery.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "Engineering work is complete with local evidence. The phone run in this criterion is deferred; not a development blocker."
     },
     {
       "description": "In the browser, invite a patient, create a custom exercise and assign it. Run it in the Android app, then review the result and its charts back in the browser.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/WEB-THERAPIST.md",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist and physical-device checks are deferred until after implementation and do not block engineering delivery.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "Engineering work is complete with local evidence. The phone run in this criterion is deferred; not a development blocker."
     }
   ],
   "demo": "In the browser, invite a patient, create a custom exercise and assign it. Run it in the Android app, then review the result and its charts back in the browser.",
@@ -38,9 +52,13 @@
   },
   "total_estimate_points": 32,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-05T12:12:59.543862+00:00",
+    "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+    "acceptance_basis": "engineering-implementation",
+    "evidence": [
+      "docs/validation/WEB-THERAPIST.md",
+      "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+    ]
   },
   "issues": [
     {
@@ -48,7 +66,7 @@
       "github_issue": 48,
       "title": "Build the therapist home dashboard",
       "description": "Give therapists a clear starting point that uses the extra screen space well.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 3,
@@ -83,32 +101,51 @@
         {
           "id": "MOT-37-AC1",
           "description": "Shows linked patient, recent session (up to 20) and active assignment counts from server data, with distinct loading, empty and error states.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts",
+            "web/tests/e2e/therapist.spec.ts",
+            "web/tests/e2e/design.spec.ts"
+          ]
         },
         {
           "id": "MOT-37-AC2",
-          "description": "Metric and patient cards use the shared interactive card and open the matching page.",
-          "passed": false,
-          "evidence": []
+          "description": "Patient cards use the shared interactive card, metrics are plain linked readouts as in the approved design, and both open the matching page.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-37-AC3",
           "description": "Shows only existing measures, and adds no adherence or risk score that a therapist has not approved.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-37-AC4",
           "description": "Refreshing keeps current data on screen instead of flashing an empty page.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:12:59.543862+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/WEB-THERAPIST.md",
+          "web/tests/e2e/therapist.spec.ts",
+          "web/tests/e2e/therapist-caseload.spec.ts"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -117,7 +154,7 @@
       "github_issue": 49,
       "title": "Build the patient list, invitations and link revocation",
       "description": "Let therapists find patients quickly and manage who they are linked to.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 5,
@@ -157,38 +194,60 @@
         {
           "id": "MOT-38-AC1",
           "description": "The list can be searched and sorted, and shows each patient name, photo and plan count.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-38-AC2",
           "description": "A therapist sees only their own linked patients, proven by a test with two therapists.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/contract/queries.test.ts",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-38-AC3",
           "description": "Inviting by email shows the code with a Copy action that confirms in place.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-38-AC4",
           "description": "Revoking a link needs a confirmation that names the patient.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-38-AC5",
           "description": "The whole page works by keyboard alone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts",
+            "web/tests/e2e/design.spec.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:12:59.543862+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/WEB-THERAPIST.md",
+          "web/tests/e2e/therapist.spec.ts",
+          "web/tests/e2e/therapist-caseload.spec.ts"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -197,7 +256,7 @@
       "github_issue": 50,
       "title": "Build the patient record",
       "description": "Bring a patient profile, plans and recent progress together on one page, which a phone screen cannot do.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 5,
@@ -230,32 +289,50 @@
         {
           "id": "MOT-39-AC1",
           "description": "Shows the profile summary, assigned plans and recent progress together on wide screens, and stacks them on narrow ones.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-39-AC2",
           "description": "Each plan card shows its version, range, repetitions, side and focus, and opens the editor.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-39-AC3",
           "description": "A removed custom exercise stays named on existing plans.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-39-AC4",
           "description": "Loading, empty and error states are distinct, and opening another patient never shows the previous patient data, even briefly.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist-caseload.spec.ts",
+            "web/tests/e2e/design.spec.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:12:59.543862+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/WEB-THERAPIST.md",
+          "web/tests/e2e/therapist.spec.ts",
+          "web/tests/e2e/therapist-caseload.spec.ts"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -264,7 +341,7 @@
       "github_issue": 51,
       "title": "Build the exercise assignment editor",
       "description": "Make assigning an exercise faster and safer than on a phone, with the same rules and the same result for the patient.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + therapist input",
       "estimate_points": 8,
@@ -298,44 +375,71 @@
         {
           "id": "MOT-40-AC1",
           "description": "Follows the same steps as Android: exercise, side and focus, targets, timing, review. Wide screens show a live summary beside the form.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-40-AC2",
           "description": "Both ends of RangeArc can be dragged, snapping to 5 degrees and staying at least 15 degrees apart. Typed fields remain the precise and accessible input.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/design.spec.ts",
+            "web/src/motion/geometry.test.ts"
+          ]
         },
         {
           "id": "MOT-40-AC3",
           "description": "Validation matches the server: range 0-180 with high more than 10 above low, repetitions 1-1000, minimum cycle 100-30000 ms, maximum above minimum and up to 300000 ms, peak hold 0-5000 ms, trunk lean 0-90 degrees.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/src/data/therapist.test.ts",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-40-AC4",
           "description": "Publishing is retry-safe, an edit creates a new immutable version, and a new exercise always gets a new assignment ID so it cannot replace another one.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/contract/queries.test.ts",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-40-AC5",
           "description": "The picker shows each exercise once at its latest version, and editing a plan pinned to an older version still works.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-40-AC6",
           "description": "A test proves that a prescription published from the web downloads into the Android cache unchanged.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/contract/crossApp.test.ts",
+            "android/app/src/test/java/com/motivance/data/remote/WebPublishedPrescriptionTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:12:59.543862+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/WEB-THERAPIST.md",
+          "web/tests/e2e/therapist.spec.ts",
+          "web/tests/e2e/therapist-caseload.spec.ts"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -344,7 +448,7 @@
       "github_issue": 52,
       "title": "Add custom exercises to the web app",
       "description": "Give therapists the same custom exercises as Android, plus a page to manage them, which there is room for on a large screen.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 3,
@@ -377,38 +481,66 @@
         {
           "id": "MOT-41-AC1",
           "description": "Creating an exercise takes a name, one of the six joints, instructions and optional Filipino instructions, with the same limits as Android (120 and 4000 characters).",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/src/data/therapist.test.ts",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-41-AC2",
           "description": "Creation is retry-safe, the new exercise is selected automatically, and the form shows the per-joint angle hint and the 2D camera limits.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/contract/queries.test.ts",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-41-AC3",
           "description": "A My exercises page lists and removes exercises. Removal needs a confirmation and leaves existing assignments and history in place.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-41-AC4",
           "description": "Exercises owned by other therapists are never offered.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-41-AC5",
           "description": "An exercise created on the web runs in the Android app unchanged.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/contract/crossApp.test.ts",
+            "android/app/src/test/java/com/motivance/data/remote/WebPublishedPrescriptionTest.kt",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+          ],
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist and physical-device checks are deferred until after implementation and do not block engineering delivery.",
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Android decodes the web-created exercise in an automated test. Running it on a physical phone is deferred; not a development blocker."
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:12:59.543862+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/WEB-THERAPIST.md",
+          "web/tests/e2e/therapist.spec.ts",
+          "web/tests/e2e/therapist-caseload.spec.ts"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -417,7 +549,7 @@
       "github_issue": 53,
       "title": "Build progress and session history",
       "description": "Turn session results into charts a therapist can explore, with the same data rules as Android.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 8,
@@ -451,38 +583,61 @@
         {
           "id": "MOT-42-AC1",
           "description": "Queries one patient at a time in 50-record keyset pages, with filters for exercise, side and dates.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/contract/queries.test.ts",
+            "web/tests/e2e/therapist.spec.ts",
+            "web/tests/e2e/therapist-caseload.spec.ts"
+          ]
         },
         {
           "id": "MOT-42-AC2",
           "description": "Charts respond to hover and keyboard, draw in with motion that respects reduced-motion settings, and offer a table alternative for screen readers.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/design.spec.ts"
+          ]
         },
         {
           "id": "MOT-42-AC3",
           "description": "Series stay separated by exercise version, prescription, side, model and algorithm, as on Android, and are never merged.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/src/data/history.test.ts",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-42-AC4",
           "description": "Each session shows the targets prescribed at the time, and custom exercises show the therapist's name for them.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         },
         {
           "id": "MOT-42-AC5",
           "description": "Limited or invalid tracking is labelled, and pages keep the wording that measurements are not clinically validated.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-THERAPIST.md",
+            "web/tests/e2e/therapist.spec.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:12:59.543862+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "acceptance_basis": "engineering-implementation",
+        "evidence": [
+          "docs/validation/WEB-THERAPIST.md",
+          "web/tests/e2e/therapist.spec.ts",
+          "web/tests/e2e/therapist-caseload.spec.ts"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     }

@@ -5,21 +5,22 @@ import { EmptyState, Notice, PageHeader, SectionHeading, StatusPill } from '@/co
 import { SelectField, TextField } from '@/components/Field'
 import { rehabilitationProgress, resultStatus, rom, roundDegrees, usable, type HistoricalSession, type ResultStatus } from '@/data/history'
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
+import { romPoints } from './summaries'
 import { TrendChart } from './TrendChart'
 
 /** Applied by the query, not to loaded rows, so older matching sessions are never hidden behind a page boundary. */
 export type ProgressFilters = { exerciseVersionId: string; side: string; from: string; through: string }
 export const NO_FILTERS: ProgressFilters = { exerciseVersionId: 'all', side: 'all', from: '', through: '' }
 
-export type ProgressData = {
-  patients: Array<{ id: string; name: string }>; patientId: string; exercises: Array<{ id: string; name: string }>
-  sessions: HistoricalSession[]; more: boolean
-}
+export type ProgressChoices = { patients: Array<{ id: string; name: string }>; patientId: string; exercises: Array<{ id: string; name: string }> }
+export type ProgressResults = { sessions: HistoricalSession[]; more: boolean; loadingMore?: boolean }
 
 const statusTone: Record<ResultStatus, 'positive' | 'neutral' | 'caution' | 'danger'> = { completed: 'positive', partial: 'caution', interrupted: 'neutral', empty: 'neutral', invalid: 'danger' }
 
 type Props = {
-  load: Load<ProgressData>
+  /** Separate from the results, so the filters stay on screen and keep focus while a new query runs. */
+  choices: Load<ProgressChoices>
+  results: Load<ProgressResults>
   filters: ProgressFilters
   onFilters: (filters: ProgressFilters) => void
   /** The owner clears the filters here: one patient's exercise means nothing for the next. */
@@ -27,10 +28,10 @@ type Props = {
   onMore: () => void
 }
 
-export function ProgressView({ load, filters, onFilters, onPatient, onMore }: Props) {
+export function ProgressView({ choices, results, filters, onFilters, onPatient, onMore }: Props) {
   const { t } = useTranslation()
   const format = useFormat()
-  const sessions = load.status === 'ready' ? load.data.sessions : null
+  const sessions = results.status === 'ready' ? results.data.sessions : null
   const series = useMemo(() => rehabilitationProgress(sessions ?? []), [sessions])
   const filtered = filters.exerciseVersionId !== 'all' || filters.side !== 'all' || Boolean(filters.from) || Boolean(filters.through)
 
@@ -52,7 +53,7 @@ export function ProgressView({ load, filters, onFilters, onPatient, onMore }: Pr
   return (
     <>
       <PageHeader title={t('nav.progress')} description={t('progress.description')} />
-      <Loadable load={load} skeleton={<SkeletonLines />}>
+      <Loadable load={choices} skeleton={<SkeletonLines />}>
         {(data) => (
           <>
             <div className="mb-8 grid gap-4 tablet:grid-cols-2 wide:grid-cols-5">
@@ -63,26 +64,28 @@ export function ProgressView({ load, filters, onFilters, onPatient, onMore }: Pr
               <TextField label={t('progress.from')} type="date" value={filters.from} onChange={(event) => onFilters({ ...filters, from: event.target.value })} />
               <TextField label={t('progress.through')} type="date" value={filters.through} onChange={(event) => onFilters({ ...filters, through: event.target.value })} />
             </div>
-            {data.sessions.length === 0 ? (filtered ? <Notice tone="info">{t('progress.noMatch')}</Notice> : <EmptyState title={t('progress.emptyTitle')} detail={t('progress.emptyDetail')} />) : (
+            <Loadable load={results} skeleton={<SkeletonLines />}>
+              {(found) => (found.sessions.length === 0 ? (filtered ? <Notice tone="info">{t('progress.noMatch')}</Notice> : <EmptyState title={t('progress.emptyTitle')} detail={t('progress.emptyDetail')} />) : (
               <div className="flex flex-col gap-12">
                 {series.map((item) => (
                   <section key={item.key}>
                     <SectionHeading title={item.prescription.exerciseName} />
                     <p className="-mt-2 mb-4 text-slate">{t('progress.seriesLine', { side: t(`common.${item.side}`, item.side), version: item.prescription.version, low: item.prescription.low, high: item.prescription.high })}</p>
                     <div className="grid gap-8 desk:grid-cols-2">
-                      <TrendChart title={t('progress.rom')} unit="°" points={item.points.map((p) => ({ id: p.session.id, label: format.short(p.session.startedAt), value: p.rom === null ? null : roundDegrees(p.rom) }))} />
+                      <TrendChart title={t('progress.rom')} unit="°" points={romPoints(item, format.short)} />
                       <TrendChart title={t('record.repetitions')} unit="" max={Math.max(item.prescription.targetRepetitions * 2, 2)} points={item.points.map((p) => ({ id: p.session.id, label: format.short(p.session.startedAt), value: p.repetitions }))} />
                     </div>
                   </section>
                 ))}
                 <section>
                   <SectionHeading title={t('progress.sessions')} />
-                  <DataTable caption={t('progress.sessions')} columns={columns} rows={data.sessions} rowKey={(s) => s.id} />
-                  <LoadMore shown={t('progress.shown', { count: data.sessions.length })} onLoad={data.more ? onMore : undefined} label={t('progress.loadOlder')} />
+                  <DataTable caption={t('progress.sessions')} columns={columns} rows={found.sessions} rowKey={(s) => s.id} />
+                  <LoadMore shown={t('progress.shown', { count: found.sessions.length })} onLoad={found.more ? onMore : undefined} busy={found.loadingMore} label={t('progress.loadOlder')} />
                 </section>
                 <p className="max-w-[62ch] text-sm text-slate">{t('progress.notValidated')}</p>
               </div>
-            )}
+              ))}
+            </Loadable>
           </>
         )}
       </Loadable>

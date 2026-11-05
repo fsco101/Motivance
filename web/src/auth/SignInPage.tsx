@@ -74,7 +74,7 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
   const [sent, setSent] = useState(false)
   const [capsLock, setCapsLock] = useState(false)
   // A recovery code works once. Keeping the verified session lets someone correct a rejected password without a new code.
-  const verified = useRef<{ key: string; client: ReturnType<typeof recoveryClient> } | null>(null)
+  const verified = useRef<{ key: string; client: ReturnType<typeof recoveryClient>; saved?: string } | null>(null)
 
   const go = (next: Step) => {
     verified.current = null
@@ -126,8 +126,12 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
           if (failure) throw failure
           verified.current = { key, client }
         }
-        const changed = await verified.current.client.auth.updateUser({ password })
-        if (changed.error) throw changed.error
+        // If only the sign-in failed, the password is already saved, and saving it again would be refused as "same password".
+        if (verified.current.saved !== password) {
+          const changed = await verified.current.client.auth.updateUser({ password })
+          if (changed.error) throw changed.error
+          verified.current.saved = password
+        }
         await signIn(address, password)
       })
     }

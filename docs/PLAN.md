@@ -121,7 +121,7 @@ The stack is pinned in `web/package.json`. Each runtime dependency earns its pla
 
 Three proposed packages were dropped. Storybook became a development-only `/design` route, which renders the real views on sample data and is not bundled. Recharts became a small SVG chart, which keeps gaps honest and saves initial download. TanStack Table was not needed for the current tables; reconsider it if S8 needs more.
 
-Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. It is currently 278 KB, almost all of it libraries, so S7 must load feature screens lazily by route.
+Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. It is currently 286 KB, almost all of it libraries, so each feature page loads lazily by route.
 
 ## System architecture
 

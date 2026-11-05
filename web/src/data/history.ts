@@ -81,7 +81,7 @@ type RawMeasurement = {
   metric_key: string; side: string; minimum_degrees: number | null; maximum_degrees: number | null; completed_repetitions: number
   incomplete_repetitions: number; quality: string; valid_frames: number; invalid_frames: number
 }
-type RawSession = {
+export type RawSession = {
   id: string; patient_id: string; started_at: string; ended_at: string; status: string; model_version: string; algorithm_version: string
   prescription: {
     id: string; assignment_id: string; version: number; exercise_version_id: string; side: string; minimum_degrees: number
@@ -90,8 +90,8 @@ type RawSession = {
   session_measurements: RawMeasurement[]
 }
 
-export function decodeHistory(rows: readonly RawSession[]): HistoryPage {
-  const sessions = rows.slice(0, HISTORY_PAGE_SIZE).map((s): HistoricalSession => {
+export function decodeSessions(rows: readonly RawSession[]): HistoricalSession[] {
+  return rows.map((s): HistoricalSession => {
     const p = s.prescription
     const definition = (p?.exercise?.definition ?? {}) as Record<string, unknown>
     return {
@@ -107,6 +107,10 @@ export function decodeHistory(rows: readonly RawSession[]): HistoryPage {
       })),
     }
   })
+}
+
+export function decodeHistory(rows: readonly RawSession[]): HistoryPage {
+  const sessions = decodeSessions(rows.slice(0, HISTORY_PAGE_SIZE))
   const last = sessions.at(-1)
   return { sessions, next: rows.length > HISTORY_PAGE_SIZE && last ? { startedAt: last.startedAt, id: last.id } : null }
 }

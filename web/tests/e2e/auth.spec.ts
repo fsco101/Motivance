@@ -194,6 +194,30 @@ test('a rejected new password can be corrected without a new code', async ({ pag
   await expect(page).toHaveURL(/\/therapist$/)
 })
 
+test('a saved new password is not saved twice when only the sign-in failed', async ({ page }) => {
+  const user = await account(['therapist'])
+  await page.goto('/sign-in')
+  await stubRecoveryEmail(page)
+  await page.getByRole('button', { name: 'Forgot password?' }).click()
+  await page.getByLabel('Email').fill(user.email)
+  await page.getByRole('button', { name: 'Send reset code' }).click()
+  await page.getByLabel('Email code').fill(await recoveryCode(user.email))
+  await page.getByLabel('New password', { exact: true }).fill('a-new-password-3')
+  let saves = 0
+  page.on('request', (request) => { if (request.method() === 'PUT' && request.url().includes('/auth/v1/user')) saves += 1 })
+  let dropped = false
+  await page.route('**/auth/v1/token?grant_type=password', (route) => {
+    if (dropped) return route.continue()
+    dropped = true
+    return route.abort()
+  })
+  await page.getByRole('button', { name: 'Save new password' }).click()
+  await expect(page.getByRole('alert')).toBeVisible()
+  await page.getByRole('button', { name: 'Save new password' }).click()
+  await expect(page).toHaveURL(/\/therapist$/)
+  expect(saves).toBe(1)
+})
+
 test('returning to a tab on a bad connection leaves the workspace in place', async ({ page }) => {
   await signIn(page, await account(['therapist']))
   await expect(page).toHaveURL(/\/therapist$/)

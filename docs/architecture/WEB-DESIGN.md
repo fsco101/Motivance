@@ -104,6 +104,8 @@ Animations use transform and opacity, with two exceptions that do not disturb th
 
 WCAG 2.1 AA, checked with axe on every screen. Every interactive thing works by keyboard, including both ends of the range arc, which are real sliders. Charts have a table alternative. Colour never carries meaning alone.
 
+Motion's press gesture has two side effects worth knowing. It makes the element focusable, so a card surface sets `tabIndex={-1}` and leaves the tab stops to the link and buttons inside it. It also turns Enter into a pointer press, so a button that opens a Radix menu passes `press={false}`, or the menu opens and closes at once.
+
 ## Charts tell the truth
 
 Progress charts show range of motion, which is the difference between two angles. An early draft drew the prescribed band behind that line, but the band holds absolute angles, so a line inside it would have looked on target without showing that. The band was removed, matching Android. Gaps in a line stay gaps, and nothing is smoothed.

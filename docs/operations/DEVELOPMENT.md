@@ -114,6 +114,7 @@ Open `http://localhost:3000/design` to review every screen on sample data, with 
 | --- | --- | --- |
 | Types, lint, unit tests | `npm run typecheck`, `npm run lint`, `npm test` | Nothing |
 | Build and bundle check | `npm run build`, then `python ../scripts/check_web_bundle.py` | Nothing |
+| Refresh the prescription file Android's decoder test reads | `UPDATE_ANDROID_FIXTURE=1 npm run test:contract` | Local Supabase. Only after an intended change |
 | Queries against the real schema | `npm run test:contract` | Local Supabase |
 | Browser and accessibility tests | `npx playwright install chromium`, then `npm run e2e` | Local Supabase |
 | Regenerate database types after a migration | `npm run types:db` | Local Supabase |
