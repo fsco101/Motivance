@@ -61,13 +61,6 @@ internal fun RehabAction.loadingLabel()=when(this) {
     when {
         state.busy -> LoadingNotice(state.activeAction?.loadingLabel() ?: R.string.ui_loading_workspace)
         state.failed -> FeedbackNotice(R.string.connected_failed,error=true,retry=refresh)
-        state.notice && state.completedAction!=RehabAction.REFRESH -> FeedbackNotice(when(state.completedAction) {
-            RehabAction.SYNC -> R.string.ui_sync_queued
-            RehabAction.PRESCRIBE -> R.string.ui_prescription_published
-            RehabAction.EXPORT, RehabAction.DELETE -> R.string.request_pending
-            RehabAction.WITHDRAW -> R.string.consent_withdrawn
-            else -> R.string.ui_changes_saved
-        })
     }
     if(!state.failed) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
         TextButton(refresh,enabled=!state.busy,modifier=Modifier.heightIn(min=48.dp)) {
@@ -119,13 +112,14 @@ internal fun RehabAction.loadingLabel()=when(this) {
 @Composable private fun InvitationCode(code:String) {
     @Suppress("DEPRECATION") val clipboard=LocalClipboardManager.current
     val haptics=rememberHaptics()
+    val toaster=LocalToaster.current
     var copied by remember(code) {mutableStateOf(false)}
     LaunchedEffect(copied) {if(copied) {kotlinx.coroutines.delay(2400); copied=false}}
     Surface(color=MaterialTheme.colorScheme.primaryContainer.copy(alpha=.55f),shape=MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.invitation_share),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onPrimaryContainer)
             SelectionContainer {Text(code,style=MaterialTheme.typography.headlineMedium,color=MaterialTheme.colorScheme.onPrimaryContainer)}
-            FilledTonalButton({clipboard.setText(AnnotatedString(code)); haptics.confirm(); copied=true},Modifier.heightIn(min=48.dp)) {
+            FilledTonalButton({clipboard.setText(AnnotatedString(code)); haptics.confirm(); copied=true; toaster.show(R.string.code_copied)},Modifier.heightIn(min=48.dp)) {
                 AnimatedContent(copied,label="copied") {done ->
                     Row(verticalAlignment=Alignment.CenterVertically) {
                         Icon(if(done) Icons.Default.Check else Icons.Default.Share,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
@@ -275,8 +269,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
 // Therapist: exercise assignment editor
 // ---------------------------------------------------------------------------------------------
 
-@Composable fun ColumnScope.PrescriptionForm(state:RehabilitationState,vm:RehabilitationViewModel,patientId:String?,existing:PrescriptionSummary?=null) {
-    PrescriptionEditor(state,patientId,existing,vm::prescribe)
+@Composable fun ColumnScope.PrescriptionForm(state:RehabilitationState,vm:RehabilitationViewModel,patientId:String?,existing:PrescriptionSummary?=null,published:()->Unit) {
+    PrescriptionEditor(state,patientId,existing) {vm.prescribe(it,published)}
 }
 
 /**
@@ -412,7 +406,6 @@ internal fun RehabAction.loadingLabel()=when(this) {
         }
         if(!valid) Text(stringResource(R.string.ui_review_incomplete),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
         ActionButton(R.string.publish_prescription,{onPublish(PrescriptionDraft(assignmentId,requestId,patient,exercise,BodySide.valueOf(side.uppercase()),l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7),focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it)}))},enabled=valid && !state.busy,busy=state.activeAction==RehabAction.PRESCRIBE,busyLabel=R.string.ui_publishing_prescription)
-        if(state.completedAction==RehabAction.PRESCRIBE && state.notice) FeedbackNotice(R.string.ui_prescription_published)
         if(state.failed && !state.busy) FeedbackNotice(R.string.connected_failed,error=true)
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase:android.content.Context) {super.attachBaseContext(com.motivance.designsystem.AppLanguage.wrap(newBase))}
     private val auth: AuthViewModel by viewModels()
+    @javax.inject.Inject lateinit var toaster: com.motivance.designsystem.Toaster
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +37,7 @@ class MainActivity : ComponentActivity() {
                 androidx.compose.runtime.CompositionLocalProvider(com.motivance.designsystem.LocalStageColor provides stage) {
                     Surface(Modifier.fillMaxSize(),color=stage.value ?: androidx.compose.material3.MaterialTheme.colorScheme.background) {
                         Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                            MotivanceApp(auth)
+                            MotivanceApp(auth,toaster)
                         }
                     }
                 }

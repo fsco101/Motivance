@@ -2,6 +2,9 @@ package com.motivance.feature.admin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.motivance.R
+import com.motivance.designsystem.Toaster
+import com.motivance.designsystem.ToastTone
 import com.motivance.domain.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,7 +22,7 @@ data class AdministrationState(
     val owner:String="",val data:AdminWorkspace=AdminWorkspace(),val query:String="",val busy:Boolean=false,
     val activeAction:AdminAction?=null,val completedAction:AdminAction?=null,val updated:Boolean=false,val failed:Boolean=false,
 )
-@HiltViewModel class AdministrationViewModel @Inject constructor(private val repository:AdministrationRepository):ViewModel() {
+@HiltViewModel class AdministrationViewModel @Inject constructor(private val repository:AdministrationRepository,private val toasts:Toaster=Toaster()):ViewModel() {
     private val mutable=MutableStateFlow(AdministrationState())
     val state=mutable.asStateFlow()
     private var job:Job?=null
@@ -37,13 +40,22 @@ data class AdministrationState(
         if(current.owner.isBlank() || current.busy) return
         val ticket=++generation
         mutable.value=current.copy(busy=true,activeAction=kind,completedAction=null,updated=false,failed=false)
+        if(kind.mutates) toasts.show(R.string.toast_saving,ToastTone.PENDING)
         job=viewModelScope.launch {
             try {
                 change()
                 val data=load(current)
-                if(ticket==generation) mutable.value=current.copy(busy=false,activeAction=null,completedAction=kind,updated=kind.mutates,failed=false,data=data)
+                if(ticket==generation) {
+                    mutable.value=current.copy(busy=false,activeAction=null,completedAction=kind,updated=kind.mutates,failed=false,data=data)
+                    if(kind.mutates) toasts.show(kind.savedLabel())
+                }
             } catch(e:CancellationException) {throw e}
-            catch(_:Exception) {if(ticket==generation) mutable.value=AdministrationState(owner=current.owner,query=current.query,failed=true)}
+            catch(_:Exception) {
+                if(ticket==generation) {
+                    mutable.value=AdministrationState(owner=current.owner,query=current.query,failed=true)
+                    toasts.show(R.string.admin_failed,ToastTone.ERROR)
+                }
+            }
         }
     }
     fun refresh()=perform(AdminAction.REFRESH)

@@ -169,10 +169,6 @@ import java.time.Instant
         val patients=JSONArray(call("/rest/v1/patients?select=id",null,token,"GET"))
         val sessions=JSONArray(call("/rest/v1/sessions?select=id,patient_id,started_at,status&order=started_at.desc&limit=20",null,token,"GET"))
         val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id&active=eq.true",null,token,"GET"))
-        if(cache!=null) {
-            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
-            cache.replaceCache(id,PrescriptionCache.decode(id,details,System.currentTimeMillis()))
-        }
         WorkspaceOverview(
             displayName=if(profiles.length()>0) profiles.getJSONObject(0).optString("display_name") else "",
             patientIds=(0 until patients.length()).map { patients.getJSONObject(it).getString("id") }.filter { it!=id },
@@ -180,7 +176,12 @@ import java.time.Instant
             assignments=(0 until assignments.length()).map { val a=assignments.getJSONObject(it); AssignmentSummary(a.getString("id"),a.getString("patient_id")) }
         )
     }
-    override suspend fun loadWorkspace()=authorized { token,_ ->
+    override suspend fun loadWorkspace()=authorized { token,id ->
+        // The patient's exercise list reads this cache, so it is downloaded first: nothing below can hold it back.
+        if(cache!=null) {
+            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
+            cache.replaceCache(id,PrescriptionCache.decode(id,details,System.currentTimeMillis()))
+        }
         val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name,photo_url)",null,token,"GET"))
         val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))
         val profileById=(0 until details.length()).map {details.getJSONObject(it)}.associate {it.getString("user_id") to readProfile(it)}

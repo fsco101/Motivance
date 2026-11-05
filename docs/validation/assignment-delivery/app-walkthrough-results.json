@@ -1,0 +1,57 @@
+[
+ {
+  "check": "sign-in feedback stays up for 5s plus the request",
+  "passed": true,
+  "detail": "card on screen 5.1s; 11/15 frames, sampled every 0.94s or better"
+ },
+ {
+  "check": "patient starts with no exercise",
+  "passed": true,
+  "detail": ""
+ },
+ {
+  "check": "open patient app receives the exercise unprompted",
+  "passed": true,
+  "detail": "20s after publishing"
+ },
+ {
+  "check": "exercise listed on Exercises tab",
+  "passed": true,
+  "detail": ""
+ },
+ {
+  "check": "a toast with no pending stage lasts 5 seconds",
+  "passed": true,
+  "detail": "card on screen 4.5s; 12/22 frames, sampled every 0.49s or better"
+ },
+ {
+  "check": "returning to the app fetches at once",
+  "passed": true,
+  "detail": "toast appeared within the burst after resuming"
+ },
+ {
+  "check": "second exercise sits beside the first",
+  "passed": true,
+  "detail": ""
+ },
+ {
+  "check": "sign out toast",
+  "passed": true,
+  "detail": ""
+ },
+ {
+  "check": "publishing returns to the patient page",
+  "passed": true,
+  "detail": "['QA Patient', 'Patient management', 'Refresh assignments and results', 'Exercise plan', 'Assign exercise', 'Elbow flexion', 'Left side', 'Version 1']"
+ },
+ {
+  "check": "publish creates its own assignment",
+  "passed": true,
+  "detail": "2 -> 3"
+ },
+ {
+  "check": "a second publish does not replace the first",
+  "passed": true,
+  "detail": "3 -> 4"
+ }
+]

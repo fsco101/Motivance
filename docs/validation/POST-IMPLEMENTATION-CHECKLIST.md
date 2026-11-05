@@ -98,6 +98,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Confirm that patients and therapists discover pull-to-refresh, or use the Refresh button, on Home, Exercises, Patients, Progress and Profile. Check that the dark session stage and its light status-bar icons restore correctly after leaving the camera.
 - [ ] Have a Filipino speaker review the new copy (greeting, Today card, weekly strip, copy code, show/hide details, drag help, counting heading). Have a therapist confirm the Today card and "of 7 days" weekly wording do not imply adherence targets. Evidence so far is emulator-only: `MOTION-ARC-REDESIGN.md`.
 
+## Assignment delivery and action toasts follow-up (2026-11-05)
+
+- [ ] On two physical phones, keep a patient signed in on Home or Exercises while a therapist publishes. Confirm the exercise and its toast arrive within about 30 seconds, and again after leaving and reopening the app. Repeat on mobile data and with the network off then on. Emulator evidence only: `ASSIGNMENT-DELIVERY-AND-TOASTS.md`.
+- [ ] Check that all toasts stay readable for their full 5 seconds with representative users, including the two-line messages at large font sizes, and that TalkBack announces them. Check that TalkBack reaches the close button and that users understand the time bar. Decide with those users whether 5 seconds is long enough for people who read slowly, because a toast cannot be paused.
+- [ ] Have a Filipino speaker review the new `toast_*` strings and the revised `ui_prescription_published` text.
+- [ ] Exercise the session start, pause, save and upload toasts on a physical phone with a real person in frame, and confirm they do not obscure guidance during movement. Automated checks used synthetic landmarks.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

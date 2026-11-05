@@ -33,6 +33,19 @@ class ProfilePhotoTest {
         assertEquals(0f to true,exifTransform(ExifInterface.ORIENTATION_FLIP_HORIZONTAL))
         assertEquals(0f to false,exifTransform(ExifInterface.ORIENTATION_UNDEFINED))
     }
+    @Test fun profileChangesAreReportedButTheOpeningLoadIsNot()=runTest(dispatcher) {
+        val toasts=com.motivance.designsystem.Toaster();val fake=Fake();val vm=PatientProfileViewModel(fake,toasts)
+        vm.configure("owner");advanceUntilIdle()
+        assertNull(toasts.current.value)
+        vm.uploadPhoto(byteArrayOf(1))
+        assertEquals(com.motivance.designsystem.ToastTone.PENDING,toasts.current.value?.tone)
+        advanceUntilIdle()
+        assertEquals(R.string.profile_photo_saved,toasts.current.value?.message)
+        fake.uploadFailure=java.io.IOException("fixture")
+        vm.uploadPhoto(byteArrayOf(1));advanceUntilIdle()
+        assertEquals(com.motivance.designsystem.ToastTone.ERROR,toasts.current.value?.tone)
+        assertEquals(vm.state.value.photoError,toasts.current.value?.message)
+    }
     @Test fun photoFailuresNameTheirCause() {
         assertEquals(R.string.profile_photo_unconfigured,photoFailure(RemoteFailure(503)))
         assertEquals(R.string.profile_photo_limit,photoFailure(RemoteFailure(429)))
