@@ -30,7 +30,7 @@ All checks ran on the final code.
 | No sideways page scroll at 768, 1024, 1440 and 1920 px, and at 360 px on the two public pages | Passed on every page |
 | Card smoothness, 55 cards, pointer sweeping across them | 60.0 frames per second, 95th percentile frame 16.7 ms |
 | Shared transition | Measured: the avatar passes through intermediate sizes between 44 and 88 px |
-| Initial JavaScript | 271 KB compressed, budget 300 KB |
+| Initial JavaScript | 278 KB compressed, budget 300 KB |
 | Design gallery and sample data in the production build | Absent |
 | Secrets in the production build | None |
 | Disposable test accounts left behind | 0 |
@@ -63,3 +63,18 @@ Automated tests did not find most of these. They came from reviewing the rendere
 - MOT-31 and MOT-36 each have one acceptance item that needs the first CI run.
 - Initial JavaScript is mostly libraries, so S7 must load feature screens by route to stay in budget.
 - New Filipino text has had no native review.
+
+## Continuous integration
+
+`web-ci.yml` has run once, on `671217a` ([run 42007019276](https://github.com/fsco101/Motivance/actions/runs/42007019276)).
+
+| Check on CI | Result |
+| --- | --- |
+| Type check, lint, unit tests, build, bundle and secret check | Passed |
+| Database types match a fresh reset of the migrations | Passed |
+| Contract tests against the local Supabase stack | Passed |
+| Browser tests | 47 passed, 4 failed |
+
+The four failures were `no sideways page scroll`, at each width. That one test walks every screen, and it ran out of its 30 second limit on the shared runner. Every screen passed its own accessibility test in the same run, so no screen was stuck. `290f5de` raises that test's limit to 180 seconds, and it passes locally.
+
+**Not yet shown on CI.** The run for `290f5de` ([run 42021561527](https://github.com/fsco101/Motivance/actions/runs/42021561527)) never started: GitHub reported "The job was not started because your account is locked due to a billing issue". MOT-31 stays open until a full run passes.

@@ -113,7 +113,11 @@
           "id": "MOT-31-AC4",
           "description": "web-ci.yml runs on changes to web/ and fails on type, lint, test, build or bundle-size errors. Initial JavaScript stays under 300 KB compressed.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "https://github.com/fsco101/Motivance/actions/runs/42007019276: ran on a change to web/. Type check, lint, unit tests, build and bundle check passed, and the job failed on a real test failure.",
+            "https://github.com/fsco101/Motivance/actions/runs/42021561527: the fix could not be checked, because GitHub would not start the jobs.",
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-31-AC5",
@@ -143,7 +147,7 @@
         "docs/validation/WEB-FOUNDATION.md"
       ],
       "blockers": [
-        "Workflow written; it has not run because this work is not pushed."
+        "GitHub Actions cannot start any job: \"your account is locked due to a billing issue\". This needs one green Web checks run for 290f5de or later. The four failed browser tests hit the 30 second limit and pass locally with the longer limit, but that has not been shown on CI."
       ]
     },
     {
@@ -151,7 +155,7 @@
       "github_issue": 43,
       "title": "Create the web art direction and high-fidelity designs",
       "description": "Set the visual direction before feature screens are built, so the app looks designed rather than assembled from a template. It extends the Motivance motion arc brand to large screens; it does not start a new brand.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Product designer",
       "estimate_points": 8,
@@ -228,30 +232,35 @@
         {
           "id": "MOT-32-AC6",
           "description": "The project owner reviews and approves the designs before S7 feature screens start, and the approval is recorded.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "Owner decision, 2026-11-05: after reviewing the designs the owner replied \"Add landing page then proceed\" and \"improve also the signin page\". Both additions were made in 671217a.",
+            "docs/validation/WEB-FOUNDATION.md",
+            "docs/validation/web-design/"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T11:51:07.252486+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-FOUNDATION.md",
+          "https://github.com/fsco101/Motivance/actions/runs/42007019276"
+        ]
       },
       "plan_reference": "docs/PLAN.md",
       "implementation_status": "implemented",
       "implementation_evidence": [
         "docs/validation/WEB-FOUNDATION.md"
       ],
-      "blockers": [
-        "Waiting for the project owner to review the designs."
-      ]
+      "blockers": []
     },
     {
       "id": "MOT-33",
       "github_issue": 44,
       "title": "Build the web design system",
       "description": "Turn the approved designs into reusable tokens and components, so every screen shares one polished, consistent look.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web lead + product designer",
       "estimate_points": 8,
@@ -339,9 +348,12 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T11:51:07.252486+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-FOUNDATION.md",
+          "https://github.com/fsco101/Motivance/actions/runs/42007019276"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -350,7 +362,7 @@
       "github_issue": 45,
       "title": "Add interactive cards and the motion system",
       "description": "Make the interface feel responsive and alive without slowing clinical work: cards that react to the pointer, transitions that explain where you went, and numbers and arcs that move with meaning.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web lead + product designer",
       "estimate_points": 5,
@@ -449,9 +461,12 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T11:51:07.252486+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-FOUNDATION.md",
+          "https://github.com/fsco101/Motivance/actions/runs/42007019276"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -460,7 +475,7 @@
       "github_issue": 46,
       "title": "Add one sign-in, role routing and secure sessions",
       "description": "Use the same single sign-in rules as Android, and protect patient data on shared clinic computers.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + security",
       "estimate_points": 5,
@@ -556,9 +571,12 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T11:51:07.252486+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-FOUNDATION.md",
+          "https://github.com/fsco101/Motivance/actions/runs/42007019276"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -567,7 +585,7 @@
       "github_issue": 47,
       "title": "Add the typed data layer, app shell and English/Filipino support",
       "description": "Give every screen a safe, typed way to reach Supabase, a shared layout, and the same two languages as Android.",
-      "status": "review",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web lead",
       "estimate_points": 5,
@@ -614,8 +632,12 @@
         {
           "id": "MOT-36-AC1",
           "description": "Database types are generated from the migrations, and CI fails when they are out of date.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "https://github.com/fsco101/Motivance/actions/runs/42007019276: step \"Database types match the migrations\" regenerated the types from a fresh database reset and compared them with the committed file; it passed.",
+            ".github/workflows/web-ci.yml",
+            "docs/validation/WEB-FOUNDATION.md"
+          ]
         },
         {
           "id": "MOT-36-AC2",
@@ -651,14 +673,15 @@
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T11:51:07.252486+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-FOUNDATION.md",
+          "https://github.com/fsco101/Motivance/actions/runs/42007019276"
+        ]
       },
       "plan_reference": "docs/PLAN.md",
-      "blockers": [
-        "Types are generated; the CI freshness check has not run because this work is not pushed."
-      ]
+      "blockers": []
     }
   ],
   "plan_reference": "docs/PLAN.md"
