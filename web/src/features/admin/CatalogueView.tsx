@@ -57,7 +57,7 @@ function Exercise({ exercise, actions }: { exercise: AdminExercise; actions: Act
         )}
       </ExpandableCard>
       <ConfirmDialog open={confirm === 'publish'} onOpenChange={() => setConfirm(null)} title={t('admin.publishVersion', { version: next })} message={t('admin.confirmPublish', { name: exercise.name, version: next })}
-        confirmLabel={t('admin.publishVersion', { version: next })} onConfirm={() => { actions.onPublish(exercise.id, name.trim(), english.trim(), filipino.trim()); setEditing(false) }} />
+        confirmLabel={t('admin.publishVersion', { version: next })} onConfirm={() => actions.onPublish(exercise.id, name.trim(), english.trim(), filipino.trim())} />
       <ConfirmDialog open={confirm === 'status'} onOpenChange={() => setConfirm(null)} destructive={exercise.active} title={t(exercise.active ? 'admin.deactivate' : 'admin.activate')}
         message={t(exercise.active ? 'admin.confirmDeactivate' : 'admin.confirmActivate', { name: exercise.name })} confirmLabel={t(exercise.active ? 'admin.deactivateShort' : 'admin.activateShort')}
         onConfirm={() => actions.onActive(exercise.id, !exercise.active)} />

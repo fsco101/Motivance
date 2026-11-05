@@ -1,6 +1,7 @@
 import { DotsThreeIcon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu } from 'radix-ui'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar } from '@/components/Display'
 import { IconButton } from '@/components/Button'
@@ -18,6 +19,16 @@ export type PatientSummary = {
 export function PatientCard({ patient, to, onRevoke }: { patient: PatientSummary; to: string; onRevoke?: () => void }) {
   const { t } = useTranslation()
   const latest = patient.latest
+  const trigger = useRef<HTMLButtonElement>(null)
+  const chosen = useRef(false)
+  // The confirmation waits for the menu to close, so it opens from the button and focus can return there if cancelled.
+  const confirmAfterClose = (event: Event) => {
+    if (!chosen.current) return
+    chosen.current = false
+    event.preventDefault()
+    trigger.current?.focus()
+    onRevoke?.()
+  }
   return (
     <InteractiveCard to={to} linkLabel={t('patients.open', { name: patient.name })} className="h-full">
       <div className="flex items-start gap-4 p-5">
@@ -42,10 +53,10 @@ export function PatientCard({ patient, to, onRevoke }: { patient: PatientSummary
         <div className="flex flex-col items-end gap-2">
           {onRevoke ? (
             <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild><IconButton label={t('patients.actions', { name: patient.name })} className="-mr-2 -mt-2"><DotsThreeIcon weight="bold" aria-hidden /></IconButton></DropdownMenu.Trigger>
+              <DropdownMenu.Trigger asChild ref={trigger}><IconButton press={false} label={t('patients.actions', { name: patient.name })} className="-mr-2 -mt-2"><DotsThreeIcon weight="bold" aria-hidden /></IconButton></DropdownMenu.Trigger>
               <DropdownMenu.Portal>
-                <DropdownMenu.Content align="end" className="z-50 rounded-control border border-line bg-paper p-1 shadow-float">
-                  <DropdownMenu.Item onSelect={onRevoke} className="flex min-h-10 cursor-pointer items-center rounded-md px-3 text-alarm outline-none data-highlighted:bg-alarm-soft">{t('patients.revoke')}</DropdownMenu.Item>
+                <DropdownMenu.Content align="end" className="z-50 rounded-control border border-line bg-paper p-1 shadow-float" onCloseAutoFocus={confirmAfterClose}>
+                  <DropdownMenu.Item onSelect={() => { chosen.current = true }} className="flex min-h-10 cursor-pointer items-center rounded-md px-3 text-alarm outline-none data-highlighted:bg-alarm-soft">{t('patients.revoke')}</DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>

@@ -4,7 +4,7 @@
   "title": "S8 - Admin web workspace and web release",
   "description": "Weeks 15-16. Exit: every Android administrator feature works on the web, an automated check keeps the two apps matched, and the web app passes accessibility, security and performance checks and is deployed.",
   "goal": "Give administrators the same features on the web as on Android, then harden and release the web app.",
-  "status": "planned",
+  "status": "in-progress",
   "weeks": {
     "start": 15,
     "end": 16
@@ -48,7 +48,7 @@
       "github_issue": 54,
       "title": "Set the admin parity rule and its automated check",
       "description": "Android and web must have the same administrator features. Layout may differ for the screen; capabilities may not. This issue makes that an enforced rule rather than a promise.",
-      "status": "planned",
+      "status": "review",
       "owner": null,
       "suggested_owner_role": "Web lead + Android lead",
       "estimate_points": 3,
@@ -85,32 +85,51 @@
         {
           "id": "MOT-43-AC1",
           "description": "docs/architecture/ADMIN-PARITY.md lists every administrator capability with its Android code, web code and tests.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "docs/architecture/ADMIN-PARITY.md"
+          ]
         },
         {
           "id": "MOT-43-AC2",
           "description": "scripts/check_admin_parity.py fails when any admin_* database function is not called by both apps. Today there are 10: admin_accounts, admin_activity, admin_clear_photo, admin_links, admin_publish_exercise, admin_set_account, admin_set_exercise, admin_set_link, admin_set_role, admin_summary.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "scripts/check_admin_parity.py",
+            "scripts/test_admin_parity.py"
+          ]
         },
         {
           "id": "MOT-43-AC3",
           "description": "The check runs in Android, web and database CI whenever administrator code or migrations change.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            ".github/workflows/web-ci.yml",
+            ".github/workflows/android-ci.yml",
+            ".github/workflows/database-ci.yml"
+          ]
         },
         {
           "id": "MOT-43-AC4",
           "description": "docs/PLAN.md and AGENTS.md state the rule: a new administrator feature ships to both apps in the same change. A web-only bulk action or export counts as a new feature and needs Android too.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "AGENTS.md",
+            "docs/PLAN.md"
+          ]
         },
         {
           "id": "MOT-43-AC5",
           "description": "Any gap found while building the web pages is added to the matrix and closed in both apps.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "docs/architecture/ADMIN-PARITY.md"
+          ]
         }
       ],
       "completion": {
@@ -118,14 +137,23 @@
         "reviewed_by": null,
         "evidence": []
       },
-      "plan_reference": "docs/PLAN.md"
+      "plan_reference": "docs/PLAN.md",
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/WEB-ADMIN-PROFILE.md",
+        "docs/architecture/ADMIN-PARITY.md",
+        "scripts/check_admin_parity.py"
+      ],
+      "blockers": [
+        "GitHub Actions cannot start any job: \"your account is locked due to a billing issue\". The check is in all three workflows and passes locally, but has not run on CI."
+      ]
     },
     {
       "id": "MOT-44",
       "github_issue": 55,
       "title": "Build admin overview and account management",
       "description": "Match the Android administrator overview and accounts pages, using the larger screen for tables and side panels.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 8,
@@ -161,44 +189,70 @@
         {
           "id": "MOT-44-AC1",
           "description": "The overview shows the same counts as Android: accounts, patients, therapists, administrators, disabled accounts, active links, unlinked patients, active and total exercises, sessions this week and pending requests.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts",
+            "web/tests/contract/admin.test.ts"
+          ]
         },
         {
           "id": "MOT-44-AC2",
           "description": "Attention items cover unlinked patients, disabled accounts, the catalogue and data requests, and each opens its section. Recent activity is shown.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts"
+          ]
         },
         {
           "id": "MOT-44-AC3",
           "description": "The directory has server search across name, email, username and ID, filters for All, Patients, Therapists, Admins and Disabled, and loads 50 accounts at a time. Each account shows when it joined, last sign-in, roles and ID.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts",
+            "web/tests/contract/admin.test.ts",
+            "web/src/data/admin.test.ts"
+          ]
         },
         {
           "id": "MOT-44-AC4",
           "description": "An administrator can enable or disable an account, grant or revoke the therapist and administrator roles, and remove another account's photo. Every change needs a confirmation that names the account.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts"
+          ]
         },
         {
           "id": "MOT-44-AC5",
           "description": "As on Android, an administrator cannot change their own account, roles need an active account, and the reason is shown.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts",
+            "web/tests/contract/admin.test.ts"
+          ]
         },
         {
           "id": "MOT-44-AC6",
           "description": "A failed load clears sensitive lists instead of showing old data, and the server rejects every action from a non-administrator, proven by a test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts",
+            "web/tests/contract/admin.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:54:22.199882+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-ADMIN-PROFILE.md",
+          "docs/architecture/ADMIN-PARITY.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -207,7 +261,7 @@
       "github_issue": 56,
       "title": "Build admin links, catalogue and activity",
       "description": "Complete administrator parity with Android for therapist-patient links, the exercise catalogue and the audit trail.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 8,
@@ -247,38 +301,61 @@
         {
           "id": "MOT-45-AC1",
           "description": "Links are grouped by therapist and filtered by Active, Revoked and All. An administrator can pick a therapist and patient to link, unlink, and restore a link, with the same existing-link and limit messages as Android.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts",
+            "web/src/features/admin/links.test.ts"
+          ]
         },
         {
           "id": "MOT-45-AC2",
           "description": "The catalogue lists every exercise, including therapist custom exercises, with activate and deactivate.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts",
+            "web/tests/contract/admin.test.ts"
+          ]
         },
         {
           "id": "MOT-45-AC3",
           "description": "An administrator can edit the name and English and Filipino instructions and publish a new version, with an unsaved-changes state and a confirmation showing the next version number.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts"
+          ]
         },
         {
           "id": "MOT-45-AC4",
           "description": "Activity uses the same event wording as Android, filters by Accounts, Links, Catalogue, Clinical and Privacy, loads older events and labels system events.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/admin.spec.ts",
+            "web/src/data/admin.test.ts",
+            "web/tests/contract/admin.test.ts"
+          ]
         },
         {
           "id": "MOT-45-AC5",
           "description": "Every row in docs/architecture/ADMIN-PARITY.md is marked done with tests on both apps, and the same action in either app writes the same audit record.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "docs/architecture/ADMIN-PARITY.md",
+            "web/tests/contract/admin.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:54:22.199882+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-ADMIN-PROFILE.md",
+          "docs/architecture/ADMIN-PARITY.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },
@@ -287,7 +364,7 @@
       "github_issue": 57,
       "title": "Add staff profile settings",
       "description": "Let therapists and administrators manage their own account without going back to the phone.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 3,
@@ -326,32 +403,50 @@
         {
           "id": "MOT-46-AC1",
           "description": "Profile details can be edited with the same validation as Android, through save_my_profile.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/profile.spec.ts",
+            "web/src/data/profile.test.ts",
+            "web/tests/contract/admin.test.ts"
+          ]
         },
         {
           "id": "MOT-46-AC2",
           "description": "Photos are prepared as JPEG in the browser within the Android size limit and uploaded through profile_photo_upload. The Cloudinary API secret never reaches the browser.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/profile.spec.ts",
+            "web/src/features/profile/photo.test.ts"
+          ]
         },
         {
           "id": "MOT-46-AC3",
           "description": "A photo can be removed, and the avatar updates across the app.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/profile.spec.ts"
+          ]
         },
         {
           "id": "MOT-46-AC4",
           "description": "Changing the password requires the current password and a different new password that meets the account rules.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/WEB-ADMIN-PROFILE.md",
+            "web/tests/e2e/profile.spec.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-05T12:54:22.199882+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/WEB-ADMIN-PROFILE.md",
+          "docs/architecture/ADMIN-PARITY.md"
+        ]
       },
       "plan_reference": "docs/PLAN.md"
     },

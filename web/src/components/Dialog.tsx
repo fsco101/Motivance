@@ -1,6 +1,6 @@
 import { AnimatePresence, m as motion } from 'motion/react'
 import { AlertDialog, Dialog as RadixDialog } from 'radix-ui'
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { XIcon } from '@phosphor-icons/react'
 import { duration, ease, spring } from '@/motion/tokens'
@@ -10,10 +10,21 @@ const overlay = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opac
 const panel = { initial: { opacity: 0, y: 14, scale: 0.98 }, animate: { opacity: 1, y: 0, scale: 1 }, exit: { opacity: 0, y: 8, scale: 0.985 }, transition: spring.layout }
 const shell = 'fixed left-1/2 top-1/2 z-50 w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2'
 
+/** These dialogs open from state rather than a Radix trigger, so Radix has nowhere to return focus. Keyboard users go back to where they were. */
+function useReturnFocus(open: boolean) {
+  const origin = useRef<HTMLElement | null>(null)
+  useLayoutEffect(() => { if (open) origin.current = document.activeElement as HTMLElement | null }, [open])
+  return (event: Event) => {
+    event.preventDefault()
+    origin.current?.focus()
+  }
+}
+
 type DialogProps = { open: boolean; onOpenChange: (open: boolean) => void; title: string; description?: string; children: ReactNode }
 
 export function Dialog({ open, onOpenChange, title, description, children }: DialogProps) {
   const { t } = useTranslation()
+  const returnFocus = useReturnFocus(open)
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
@@ -21,7 +32,7 @@ export function Dialog({ open, onOpenChange, title, description, children }: Dia
           <RadixDialog.Portal forceMount>
             <RadixDialog.Overlay asChild forceMount><motion.div {...overlay} className="fixed inset-0 z-40 bg-night/55" /></RadixDialog.Overlay>
             <div className={shell}>
-              <RadixDialog.Content asChild forceMount aria-describedby={description ? undefined : undefined}>
+              <RadixDialog.Content asChild forceMount onCloseAutoFocus={returnFocus} {...(description ? {} : { 'aria-describedby': undefined })}>
                 <motion.div {...panel} className="rounded-card bg-paper p-6 shadow-float">
                   <div className="mb-3 flex items-start justify-between gap-4">
                     <RadixDialog.Title className="text-2xl font-bold">{title}</RadixDialog.Title>
@@ -52,6 +63,7 @@ type ConfirmProps = {
 
 export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel, destructive, onConfirm }: ConfirmProps) {
   const { t } = useTranslation()
+  const returnFocus = useReturnFocus(open)
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
@@ -59,7 +71,7 @@ export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel
           <AlertDialog.Portal forceMount>
             <AlertDialog.Overlay asChild forceMount><motion.div {...overlay} className="fixed inset-0 z-40 bg-night/55" /></AlertDialog.Overlay>
             <div className={shell}>
-              <AlertDialog.Content asChild forceMount>
+              <AlertDialog.Content asChild forceMount onCloseAutoFocus={returnFocus}>
                 <motion.div {...panel} className="rounded-card bg-paper p-6 shadow-float">
                   <AlertDialog.Title className="text-2xl font-bold">{title}</AlertDialog.Title>
                   <AlertDialog.Description className="mt-2 text-slate">{message}</AlertDialog.Description>

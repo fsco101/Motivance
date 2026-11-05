@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams, type RouteObject } from 'react-router'
 import { SignInPage } from '@/auth/SignInPage'
 import type { Workspace } from '@/auth/roles'
-import { EmptyState } from '@/components/Display'
 import { toast } from '@/components/Toast'
 import { AccountsView } from '@/features/admin/AccountsView'
 import { ActivityView } from '@/features/admin/ActivityView'
@@ -12,6 +10,8 @@ import { CatalogueView } from '@/features/admin/CatalogueView'
 import { LinksView } from '@/features/admin/LinksView'
 import { ready, type Load } from '@/features/shared'
 import { AssignmentEditorView } from '@/features/therapist/AssignmentEditorView'
+import { ProfileView, type ProfileActions } from '@/features/profile/ProfileView'
+import { ExercisesView } from '@/features/therapist/ExercisesView'
 import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
@@ -48,17 +48,17 @@ function Frame({ workspace }: { workspace: Workspace }) {
 const Home = () => <TherapistHomeView base={THERAPIST} load={useDemo(data.therapistHome, { ...data.therapistHome, patients: 0, latest: [], recent: [] })} />
 const many = data.patients.flatMap((patient, index) => Array.from({ length: 9 }, (_, copy) => ({ ...patient, id: `${patient.id}-${copy}`, name: `${patient.name} ${index * 9 + copy}` })))
 const Patients = () => <PatientsView base={THERAPIST} load={useDemo(useSearchParams()[0].has('many') ? many : data.patients, [])} onInvite={async () => 'f3a9c1d27b6e4c0588a1d2e3f4a5b6c7d8e9f0a1b2c3d4e5'} onRevoke={said('Access revoked')} />
-const Record = () => <PatientRecordView base={THERAPIST} load={useDemo(data.record, { ...data.record, plans: [], trend: [] })} />
-const Assign = () => <AssignmentEditorView load={useDemo({ patient: { id: 'p1', name: 'Ana Dela Cruz' }, catalogue: data.catalogue }, { patient: { id: 'p1', name: 'Ana Dela Cruz' }, catalogue: [] })} onPublish={said('Prescription published')} />
+const Record = () => <PatientRecordView base={THERAPIST} load={useDemo(data.record, { ...data.record, plans: [], trend: null })} />
+const Assign = () => <AssignmentEditorView load={useDemo({ patient: { id: 'p1', name: 'Ana Dela Cruz' }, catalogue: data.catalogue }, { patient: { id: 'p1', name: 'Ana Dela Cruz' }, catalogue: [] })} onPublish={said('Prescription published')} onCreateExercise={async () => 'v3'} />
 function Progress() {
   const [filters, setFilters] = useState(NO_FILTERS)
   const base = { patients: [{ id: 'p1', name: 'Ana Dela Cruz' }], patientId: 'p1', exercises: [{ id: 'v1', name: 'Elbow flexion' }] }
   // Sample data stands in for the query, which applies these filters on the server.
   const sessions = data.sessions.filter((s) => (filters.exerciseVersionId === 'all' || s.prescription?.exerciseVersionId === filters.exerciseVersionId)
     && (filters.side === 'all' || s.prescription?.side === filters.side) && (!filters.from || s.startedAt.slice(0, 10) >= filters.from) && (!filters.through || s.startedAt.slice(0, 10) <= filters.through))
-  return <ProgressView load={useDemo({ ...base, sessions, more: true }, { ...base, sessions: [], more: false })} filters={filters} onFilters={setFilters} onPatient={() => setFilters(NO_FILTERS)} onMore={said('Loaded older sessions')} />
+  return <ProgressView choices={useDemo(base, base)} results={useDemo({ sessions, more: true }, { sessions: [], more: false })} filters={filters} onFilters={setFilters} onPatient={() => setFilters(NO_FILTERS)} onMore={said('Loaded older sessions')} />
 }
-const Exercises = () => { const { t } = useTranslation(); return <EmptyState title={t('nav.exercises')} detail={t('pending.detail')} /> }
+const Exercises = () => <ExercisesView load={useDemo(data.catalogue, data.catalogue.filter((item) => !item.custom))} onCreate={async () => toast.show('Exercise saved')} onRemove={said('Exercise removed')} />
 
 const Overview = () => <AdminOverviewView base={ADMIN} load={useDemo({ summary: data.summary, recent: data.activity.slice(0, 5) }, { summary: { ...data.summary, unlinkedPatients: 0, disabled: 0, pendingRequests: 0 }, recent: [] })} />
 const Accounts = () => (
@@ -69,10 +69,15 @@ const Links = () => <LinksView load={useDemo({ links: data.links, accounts: data
 const Catalogue = () => <CatalogueView load={useDemo(data.exercises, [])} actions={{ onActive: said('Exercise availability updated.'), onPublish: said('New exercise version published.') }} />
 const Activity = () => <ActivityView load={useDemo({ events: data.activity, hasMore: true }, { events: [], hasMore: false })} onMore={said('Loaded older activity')} />
 
+const profileActions: ProfileActions = {
+  onSave: async () => toast.show('Profile updated.'), onPhoto: async () => toast.show('Profile photo updated.'), onRemovePhoto: async () => toast.show('Profile photo removed.'), onPassword: async () => toast.show('Password changed.'),
+}
+const Profile = () => <ProfileView load={useDemo(data.profile, { ...data.profile, complete: false, consent: false, username: '', photo: null })} actions={profileActions} />
+
 const SCREENS = [
   ['Landing', '/design/landing'], ['Sign-in', '/design/sign-in'], ['Components', '/design/components'],
-  ['Therapist home', THERAPIST], ['Patients', `${THERAPIST}/patients`], ['Patient record', `${THERAPIST}/patients/p1`], ['Assignment editor', `${THERAPIST}/patients/p1/assign`], ['Progress', `${THERAPIST}/progress`],
-  ['Admin overview', ADMIN], ['Accounts', `${ADMIN}/accounts`], ['Links', `${ADMIN}/links`], ['Catalogue', `${ADMIN}/catalogue`], ['Activity', `${ADMIN}/activity`],
+  ['Therapist home', THERAPIST], ['Patients', `${THERAPIST}/patients`], ['Patient record', `${THERAPIST}/patients/p1`], ['Assignment editor', `${THERAPIST}/patients/p1/assign`], ['Exercises', `${THERAPIST}/exercises`], ['Progress', `${THERAPIST}/progress`],
+  ['Admin overview', ADMIN], ['Accounts', `${ADMIN}/accounts`], ['Links', `${ADMIN}/links`], ['Catalogue', `${ADMIN}/catalogue`], ['Activity', `${ADMIN}/activity`], ['Profile', `${ADMIN}/profile`],
 ] as const
 
 function Index() {
@@ -105,6 +110,7 @@ export const galleryRoutes: RouteObject[] = [{
         ] },
         { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
+        { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
       ],
     },
     {
@@ -115,6 +121,7 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'links', element: <Links />, handle: { crumb: 'nav.links' } },
         { path: 'catalogue', element: <Catalogue />, handle: { crumb: 'nav.catalogue' } },
         { path: 'activity', element: <Activity />, handle: { crumb: 'nav.activity' } },
+        { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
       ],
     },
   ],

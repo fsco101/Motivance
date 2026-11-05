@@ -6,6 +6,12 @@ export type Load<T> = { status: 'loading' } | { status: 'error'; retry: () => vo
 
 export const ready = <T,>(data: T): Load<T> => ({ status: 'ready', data })
 
+/** A refresh keeps current data on screen. Only a first load shows the loading or error state. */
+export function asLoad<T>(query: { data: T | undefined; isError: boolean; refetch: () => unknown }): Load<T> {
+  if (query.data !== undefined) return ready(query.data)
+  return query.isError ? { status: 'error', retry: () => void query.refetch() } : { status: 'loading' }
+}
+
 /** Every screen has the same three moments: it is loading, it failed and says how to recover, or it shows data. */
 export function Loadable<T>({ load, skeleton, children }: { load: Load<T>; skeleton: ReactNode; children: (data: T) => ReactNode }) {
   const { t } = useTranslation()
@@ -29,7 +35,8 @@ export function useFormat() {
     const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' })
     const dateTime = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
     const short = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' })
-    return { date: (iso: string) => date.format(new Date(iso)), dateTime: (iso: string) => dateTime.format(new Date(iso)), short: (iso: string) => short.format(new Date(iso)) }
+    // A calendar day has no time zone. Read as UTC it would show a day early west of Greenwich.
+    return { day: (value: string) => date.format(new Date(`${value}T00:00:00`)), date: (iso: string) => date.format(new Date(iso)), dateTime: (iso: string) => dateTime.format(new Date(iso)), short: (iso: string) => short.format(new Date(iso)) }
   }, [locale])
 }
 

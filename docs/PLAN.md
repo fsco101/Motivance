@@ -99,7 +99,7 @@ Therapists and administrators work with a lot of data, which is cramped on a pho
 
 `web/` is a frontend only: a React and TypeScript single-page app on static hosting, with a public landing page at `/`. Supabase remains the only backend, so new tables, policies and functions go in `supabase/migrations/`, and anything needing a secret goes in `supabase/functions/`. The web app holds only the publishable key, never the service-role key.
 
-**Administrator parity.** Per the user's instruction, Android and web must have the same administrator features. Layout can differ for the screen, but capabilities cannot: a new administrator feature ships to both apps in the same change, and a web-only feature counts as a gap. MOT-43 enforces this with `docs/architecture/ADMIN-PARITY.md` and a CI check that both apps call every `admin_*` database function. Android keeps its therapist and administrator screens.
+**Administrator parity.** Per the user's instruction, Android and web must have the same administrator features. Layout can differ, but capabilities cannot. A new administrator feature ships to both apps in the same change, and a web-only bulk action or export counts as a new feature that needs Android too. [ADMIN-PARITY.md](architecture/ADMIN-PARITY.md) lists every capability, and `scripts/check_admin_parity.py` fails CI when an `admin_*` function is not called by both apps.
 
 **Design.** [WEB-DESIGN.md](architecture/WEB-DESIGN.md) owns the art direction, extending the motion arc system to large screens. Feature screens are presentational views that take data as props: the `/design` route runs them on sample data for review, and S7 and S8 wire the same views to live data. The launch theme is light only.
 
@@ -121,7 +121,7 @@ The stack is pinned in `web/package.json`. Each runtime dependency earns its pla
 
 Three proposed packages were dropped. Storybook became a development-only `/design` route, which renders the real views on sample data and is not bundled. Recharts became a small SVG chart, which keeps gaps honest and saves initial download. TanStack Table was not needed for the current tables; reconsider it if S8 needs more.
 
-Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. It is currently 278 KB, almost all of it libraries, so S7 must load feature screens lazily by route.
+Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. It is currently 293 KB, almost all of it libraries, so each feature page loads lazily by route.
 
 ## System architecture
 

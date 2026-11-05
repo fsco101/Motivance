@@ -94,9 +94,9 @@ export function MovementDemo() {
   const guidance = phase === 'target' ? t('landing.demoReturn', { degrees: DEMO.low }) : phase === 'seeking' ? t('landing.demoStart', { degrees: DEMO.low }) : t('landing.demoReach', { degrees: DEMO.high })
   return (
     <figure className="min-w-0">
-      <svg ref={svg} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={t('landing.demoLabel')} className="mx-auto w-full max-w-[28rem] touch-none select-none"
-        onPointerDown={(event) => { dragging.current = true; event.currentTarget.setPointerCapture(event.pointerId); pointer(event) }}
-        onPointerMove={(event) => { if (dragging.current) pointer(event) }} onPointerUp={() => { dragging.current = false }} onPointerCancel={() => { dragging.current = false }}>
+      <svg ref={svg} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={t('landing.demoLabel')} className="mx-auto w-full max-w-[28rem] touch-pan-y select-none"
+        onPointerDown={(event) => { dragging.current = true; event.currentTarget.setPointerCapture(event.pointerId); if (event.pointerType === 'mouse') pointer(event) }}
+        onPointerMove={(event) => { if (dragging.current) pointer(event) }} onPointerUp={(event) => { if (dragging.current) pointer(event); dragging.current = false }} onPointerCancel={() => { dragging.current = false }}>
         <circle cx={200} cy={72} r={34} fill="none" strokeWidth={3} className="stroke-night-ink" opacity={0.5} />
         <line x1={200} y1={106} x2={200} y2={132} strokeWidth={3} strokeLinecap="round" className="stroke-night-ink" opacity={0.5} />
         {BODY.map(([x1, y1, x2, y2], index) => <line key={index} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={3} strokeLinecap="round" className="stroke-night-ink" opacity={0.5} />)}

@@ -41,7 +41,8 @@ export function InteractiveCard({ children, to, linkLabel, dark, className }: Pr
   }
 
   return (
-    <motion.div ref={surface} data-active={active || undefined}
+    // whileTap makes an element focusable unless it says otherwise. The link and buttons inside are the tab stops, not the surface.
+    <motion.div ref={surface} data-active={active || undefined} tabIndex={-1}
       className={cn('relative isolate overflow-hidden rounded-card border transition-[border-color] transition-quick',
         dark ? 'on-dark border-night-line bg-night-panel text-paper' : 'border-line bg-paper',
         active && (dark ? 'border-sprout-bright' : 'border-lagoon'), className)}

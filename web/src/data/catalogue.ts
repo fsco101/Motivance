@@ -15,6 +15,8 @@ export type CatalogueExercise = {
   custom: boolean
   /** False for retired or superseded versions, which stay named on existing plans but cannot be newly assigned. */
   selectable: boolean
+  /** The exercise itself is gone, not just this version. The server refuses to publish it, so a plan on it must change exercise. */
+  retired: boolean
   joint: Joint | null
 }
 
@@ -52,6 +54,7 @@ export function decodeCatalogue(rows: readonly Row[], account: string): Catalogu
       exerciseId: parent?.id ?? '',
       custom,
       selectable: parent !== null && (owner === null || owner === account) && row.version === newest.get(parent.id),
+      retired: parent === null,
       joint,
     }]
   })

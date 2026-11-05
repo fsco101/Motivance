@@ -35,6 +35,23 @@
     "demoLabel": "A sample skeleton measuring elbow flexion", "demoSlider": "Forearm angle", "demoHint": "Take the hand and move the arm yourself.", "demoSample": "Sample movement, not patient data.",
     "demoStart": "Start at {{degrees}}° or below", "demoReach": "Reach {{degrees}}°", "demoReturn": "Return to {{degrees}}°", "demoCount": "{{count}} of {{target}}", "demoCountLabel": "Repetitions counted"
   },
+  "custom": {
+    "add": "Add custom exercise", "title": "New custom exercise", "help": "Describe the movement and choose the joint the camera measures. Only you can assign this exercise.", "name": "Exercise name", "joint": "Joint the camera measures",
+    "instructions": "Instructions for the patient", "instructionsFil": "Filipino instructions (optional)", "save": "Save exercise", "saving": "Saving exercise", "remove": "Remove from my exercises", "removeTitle": "Remove {{name}}?",
+    "removeDetail": "You can no longer assign it. Patients who already have it keep it, and their results stay in their history.", "zeroStraight": "0° is the joint held straight. The angle rises as it bends.", "zeroSide": "0° is the arm resting at the side. The angle rises as it lifts.",
+    "zeroAnkle": "About 90° with the foot flat. The angle rises as the foot lifts toward the shin.", "cameraLimit": "The camera measures in 2D. The patient needs to stay upright, with the shoulder, hip and this joint in view."
+  },
+  "exercises": { "description": "The exercises you can assign.", "mine": "My exercises", "standard": "Standard exercises", "emptyTitle": "No custom exercises yet", "emptyDetail": "Add one to measure a movement that is not in the standard list." },
+  "toast": {
+    "saving": "Saving…",
+    "invitationCreated": "Invitation created. Share the code with your patient.", "accessRevoked": "Patient access revoked.", "published": "Prescription published. It reaches the patient’s phone automatically while they are online.",
+    "exerciseCreated": "Exercise saved", "exerciseRemoved": "Exercise removed"
+  },
+  "genders": { "female": "Female", "male": "Male", "nonbinary": "Non-binary", "prefer_not_to_say": "Prefer not to say" },
+  "profile": {
+    "firstName": "First name", "lastName": "Last name", "username": "Username", "birthdate": "Birthdate", "gender": "Gender", "address": "Address", "contact": "Contact number", "edit": "Edit profile", "save": "Save profile", "saved": "Profile updated.", "failed": "Unable to complete the request. Check your connection, profile details, username availability or current password, then try again.", "emailFixed": "Your sign-in email is fixed and cannot be edited here.", "photo": "Profile photo", "photoEmpty": "No photo yet. Your initials are shown instead.", "photoSet": "Shown to you, your linked therapists and administrators.", "photoAdd": "Upload a photo", "photoChange": "Change photo", "photoRemove": "Remove photo", "photoRemoveConfirm": "Your initials will be shown instead. You can upload a new photo at any time.", "photoUploading": "Uploading photo…", "photoSaved": "Profile photo updated.", "photoRemoved": "Profile photo removed.", "password": "Change password", "currentPassword": "Current password", "newPassword": "New password", "confirmPassword": "Confirm new password", "passwordHelp": "Enter your current password. Use a different new password with at least 8 characters and matching confirmation.", "passwordMatch": "Passwords must match.", "nameError": "Enter 1 to 60 letters, with spaces, apostrophes, periods or hyphens.", "addressError": "Enter your address using 5 to 500 characters.", "contactError": "Enter 7 to 15 digits. Use + only at the beginning.", "contactHelp": "Include your country code, for example +63 912 345 6789.", "usernameError": "Use 3 to 30 letters, numbers or underscores.", "usernameBlocked": "Please choose a respectful username without offensive words.", "usernameHelp": "Use 3–30 letters, numbers or underscores. Your username is visible to your connected therapist.", "birthdateError": "Choose your birthdate.", "genderError": "Choose one option.", "privacyTitle": "Data privacy agreement", "privacyText": "Motivance will use your sign-in email, name, username, birthdate, gender, address, contact number and avatar to manage your account and support rehabilitation within this system. Your connected therapist can view these details to understand your patient profile and provide care. Your rehabilitation records are used for session tracking and progress review. We use these data only for these system purposes. You can edit your profile, request a copy or deletion of your data in Profile, and contact your care provider about your consent. Requests require review; they do not immediately erase existing care records. This agreement is separate from consent to record movement summaries. Privacy agreement version: system-purpose-v1.", "agree": "I have read this agreement and consent to the use of my data for these system purposes.", "age": "Age: {{age}}", "photoNotice": "Photos are cropped to a square and stripped of location details in this browser, then stored with Cloudinary, our image host.", "details": "Your details", "incomplete": "Add your details to finish setting up this account.", "genderChoose": "Choose one", "saving": "Saving", "usernameTaken": "That username is already in use. Choose another.", "agreeError": "Accept the agreement to save your details.", "passwordSame": "Use a password different from your current one.", "currentWrong": "That is not your current password.", "passwordSaved": "Password changed.",
+    "photoProblem": { "unconfigured": "Photo uploads are not available yet. Ask your administrator to finish the image setup.", "limit": "Too many uploads in the last hour. Try again later.", "unreadable": "That image could not be read. Choose a JPEG, PNG or WebP photo.", "failed": "The photo could not be uploaded. Check your connection and try again." }
+  },
   "errors": {
     "credentials": "That email and password do not match.", "rateLimited": "Too many requests. Wait a moment before requesting another code or trying again.",
     "unconfirmed": "Confirm your email before signing in. Enter your email code or request a new one.", "invalidCode": "The code is invalid or expired. Request a new code and use the latest email.",
@@ -46,7 +63,6 @@
     "message_one": "To protect patient information, you will be signed out in {{count}} second.", "message_other": "To protect patient information, you will be signed out in {{count}} seconds."
   },
   "useMobile": { "title": "Use the Motivance mobile app", "detail": "Your exercises need the phone camera, so they run in the mobile app. This website is for therapists and administrators." },
-  "pending": { "title": "This page is on its way", "detail": "It will open here once its design is approved and built." },
   "home": {
     "greeting": "Hello, {{name}}", "latestMovement": "Latest movement", "latestMovementDetail": "The pale band is the prescribed range. The bright arc is what was measured.",
     "targetBand": "Prescribed {{low}}° to {{high}}°", "patients": "Patients", "plans": "Active plans", "sessions": "Recent sessions", "sessionsDetail": "Up to the latest 20",
@@ -63,12 +79,15 @@
     "revokeTitle": "Revoke access to {{name}}?", "revokeMessage": "You will lose access to {{name}}’s records, and your active assignments for this patient will end."
   },
   "record": {
+    "otherTherapist": "Assigned by another therapist, so only they can edit it.",
+    "crumb": "Patient record", "notFoundTitle": "This patient is not linked to you", "notFoundDetail": "Check the Patients page. If the link was revoked, invite the patient again.",
     "planLine_one": "{{side}}, {{low}}° to {{high}}°, {{count}} repetition", "planLine_other": "{{side}}, {{low}}° to {{high}}°, {{count}} repetitions",
     "version": "Version {{version}}", "custom": "Custom", "side": "Side", "focus": "Skeleton focus", "focusAutomatic": "Exercise joint (automatic)", "repetitions": "Repetitions", "edit": "Edit plan",
     "gender": "Gender", "birthdate": "Birthdate", "contact": "Contact", "address": "Address", "plans": "Exercise plan", "assign": "Assign exercise",
     "noPlansTitle": "No exercise assigned yet", "noPlansDetail": "Assign one to start measuring this patient’s movement.", "progress": "Progress", "allProgress": "All progress"
   },
   "progress": {
+    "noPatientsTitle": "No patients yet", "noPatientsDetail": "Progress appears here once a patient is linked to you.",
     "description": "Measured movement over time, one patient at a time.", "rom": "Range of motion", "notValidated": "Movement estimates are not clinically validated.", "notMeasured": "Not measured",
     "chartLabel": "{{title}} chart with {{count}} sessions. Use the left and right arrow keys to read each session.", "showTable": "Show as a table", "date": "Date", "unknown": "Unknown exercise", "targets": "Prescribed", "result": "Result",
     "status": { "completed": "Completed", "partial": "Partial", "interrupted": "Interrupted", "empty": "No result", "invalid": "Not usable" },
@@ -76,7 +95,9 @@
     "noMatch": "No sessions match these filters.", "seriesLine": "{{side}}, version {{version}}, prescribed {{low}}° to {{high}}°", "sessions": "Sessions", "shown_one": "{{count}} session", "shown_other": "{{count}} sessions", "loadOlder": "Load older sessions"
   },
   "assign": {
-    "title": "Assign exercise", "exercise": "Exercise", "exerciseHelp": "Choose a movement. Angle and repetition counting follow this exercise.", "addCustom": "Add custom exercise",
+    "editing": "Editing version {{version}}", "nextVersion": "Publishing creates version {{version}}. Earlier sessions keep the targets they were recorded with.", "removed": "Removed", "removedHint": "This exercise was removed from your list, so this plan can only be published with another exercise.",
+    "pinned": "Version on this plan",
+    "title": "Assign exercise", "exercise": "Exercise", "exerciseHelp": "Choose a movement. Angle and repetition counting follow this exercise.",
     "side": "Side and focus", "sideHelp": "Pick the limb to assess and the body part to highlight on the skeleton.", "focus": "Skeleton focus", "targets": "Targets", "targetsHelp": "Drag either end of the arc, or type the exact angles.",
     "rangeLabel": "Prescribed range {{low}} to {{high}} degrees", "low": "Start angle", "high": "Target angle", "fewer": "Fewer repetitions", "more": "More repetitions", "gapHint": "The arc snaps to 5° and keeps the ends at least {{gap}}° apart.",
     "timing": "Timing", "timingHelp": "The defaults suit most patients.", "showTiming": "Adjust timing", "hideTiming": "Hide timing", "minimumCycle": "Minimum repetition time (ms)", "minimumCycleHint": "100 to 30000", "maximumCycle": "Maximum repetition time (ms)", "maximumCycleHint": "Above the minimum, up to 300000",
@@ -85,6 +106,7 @@
   },
   "joints": { "SHOULDER": "Shoulder", "ELBOW": "Elbow", "WRIST": "Wrist", "HIP": "Hip", "KNEE": "Knee", "ANKLE": "Ankle" },
   "admin": {
+    "roles": "Roles", "eventLink": "{{therapist}} → {{patient}}", "eventReference": "Reference {{reference}}", "failed": "The change could not be completed. Check your connection and administrator access, then try again.", "savedAccount": "Account status updated.", "savedRole": "Access updated. The change applies on the server immediately.", "savedLink": "Care-team link updated.", "savedExercise": "Exercise availability updated.", "savedPublish": "New exercise version published.", "savedPhoto": "Profile photo removed.",
     "title": "Administration", "scope": "Manage accounts, care-team links and the exercise catalogue. Every change is confirmed and audited.",
     "accounts": "Accounts", "patients": "Patients", "therapists": "Therapists", "admins": "Administrators", "activeLinks": "Active links", "activeExercises": "Active exercises", "sessions": "Sessions", "requests": "Privacy requests",
     "disabledCount": "{{count}} disabled", "unlinkedCount": "{{count}} without a therapist", "exercisesTotal": "{{count}} in catalogue", "sessionsWindow": "Last 7 days",
@@ -109,7 +131,7 @@
     "activityHelp": "Audit records are append-only. They show who made each change and when.", "activityEmpty": "No activity to show", "activityEmptyDetail": "Audited changes appear here as they happen.", "activityEmptyMore": "No loaded records match this filter. Load older activity to look further back.", "activityMore": "Load older activity",
     "category": { "accounts": "Accounts and roles", "links": "Links", "catalogue": "Catalogue", "clinical": "Clinical", "privacy": "Privacy" },
     "eventBy": "By {{actor}}", "eventSystem": "System",
-    "event": {
+    "event": { "roleChanged": "Role changed",
       "accountEnabled": "Account enabled", "accountDisabled": "Account disabled", "roleGranted": "Role granted", "roleRemoved": "Role removed", "linkCreated": "Link created", "linkUpdated": "Link updated", "invitation": "Patient invitation created",
       "exerciseActivated": "Exercise activated", "exerciseDeactivated": "Exercise deactivated", "versionPublished": "Exercise version published", "prescription": "Prescription published", "session": "Session recorded", "consent": "Consent recorded",
       "requestCreated": "Privacy request submitted", "requestUpdated": "Privacy request updated", "photoUpdated": "Profile photo updated", "photoRemoved": "Profile photo removed", "profileUpdated": "Profile details updated", "other": "Recorded change"

@@ -1,9 +1,9 @@
 name: Web checks
 on:
   push:
-    paths: ['web/**', 'supabase/**', 'scripts/check_web_bundle.py', '.github/workflows/web-ci.yml']
+    paths: ['web/**', 'supabase/**', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'android/app/src/main/java/com/motivance/feature/admin/**', 'scripts/check_web_bundle.py', '.github/workflows/web-ci.yml']
   pull_request:
-    paths: ['web/**', 'supabase/**', 'scripts/check_web_bundle.py', '.github/workflows/web-ci.yml']
+    paths: ['web/**', 'supabase/**', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'android/app/src/main/java/com/motivance/feature/admin/**', 'scripts/check_web_bundle.py', '.github/workflows/web-ci.yml']
 permissions:
   contents: read
 jobs:
@@ -26,6 +26,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - run: python ../scripts/test_admin_parity.py
+      - run: python ../scripts/check_admin_parity.py
       - run: npm run build
         env:
           VITE_SUPABASE_URL: https://build-check.invalid

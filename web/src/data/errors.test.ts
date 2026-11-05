@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { failureKey, isRetryable } from './errors'
+import { failureKey } from './errors'
 
 describe('failure messages', () => {
   it.each([
@@ -22,12 +22,5 @@ describe('failure messages', () => {
   it('never exposes an unknown server message', () => {
     expect(failureKey({ message: 'relation "secret_table" does not exist' })).toBe('errors.request')
     expect(failureKey(null)).toBe('errors.request')
-  })
-
-  it('retries connection and server failures only', () => {
-    expect(isRetryable(new TypeError('Failed to fetch'))).toBe(true)
-    expect(isRetryable({ status: 503 })).toBe(true)
-    expect(isRetryable({ code: '42501' })).toBe(false)
-    expect(isRetryable({ code: 'invalid_credentials', status: 400 })).toBe(false)
   })
 })

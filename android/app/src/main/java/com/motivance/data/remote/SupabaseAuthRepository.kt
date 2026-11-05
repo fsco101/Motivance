@@ -203,7 +203,7 @@ import java.time.Instant
         val query=search?.trim()?.takeIf {it.isNotEmpty()}
         val accounts=JSONArray(call("/rest/v1/rpc/admin_accounts",JSONObject().put("p_after",after ?: JSONObject.NULL).put("p_search",query ?: JSONObject.NULL),token))
         val links=JSONArray(call("/rest/v1/rpc/admin_links",JSONObject(),token))
-        val exercises=JSONArray(call("/rest/v1/exercises?select=id,code,active,exercise_versions(version,algorithm_key,definition)&order=code&limit=100",null,token,"GET"))
+        val exercises=JSONArray(call("/rest/v1/exercises?select=id,code,active,exercise_versions(version,algorithm_key,definition)&order=code&limit=500",null,token,"GET"))
         val summary=JSONObject(call("/rest/v1/rpc/admin_summary",JSONObject(),token))
         val activity=auditPage(JSONArray(call("/rest/v1/rpc/admin_activity",JSONObject(),token)))
         val rows=(0 until minOf(accounts.length(),ADMIN_PAGE)).map {val a=accounts.getJSONObject(it);val r=a.getJSONArray("roles")

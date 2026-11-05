@@ -23,7 +23,7 @@ export function TherapistHomeView({ load, base }: { load: Load<TherapistHome>; b
                 {data.latest.length > 0 ? <SessionFan sessions={data.latest} base={base} /> : <EmptyState title={t('home.noSessionsTitle')} detail={t('home.noSessionsDetail')} />}
                 <div className="flex flex-wrap gap-x-12 gap-y-6 wide:flex-col wide:justify-center">
                   <Readout value={data.patients} label={t('home.patients')} to={`${base}/patients`} />
-                  <Readout value={data.plans} label={t('home.plans')} />
+                  <Readout value={data.plans} label={t('home.plans')} to={`${base}/patients`} />
                   <Readout value={data.sessions} label={t('home.sessions')} detail={t('home.sessionsDetail')} to={`${base}/progress`} />
                 </div>
               </div>

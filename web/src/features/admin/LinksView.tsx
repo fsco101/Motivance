@@ -6,8 +6,8 @@ import { ConfirmDialog } from '@/components/Dialog'
 import { Avatar, EmptyState, Notice, PageHeader, StatusPill, Tabs } from '@/components/Display'
 import { TextField } from '@/components/Field'
 import { Loadable, SkeletonLines, type Load } from '@/features/shared'
-import { pickerValue, resolveAccount } from './links'
-import { primaryRole, type AdminAccount, type AdminLink } from './types'
+import { patientChoices, pickerValue, resolveAccount, therapistChoices } from './links'
+import type { AdminAccount, AdminLink } from './types'
 
 export const LINK_DISPLAY_LIMIT = 500
 /** Choose from the loaded directory or paste an ID, as on Android. */
@@ -25,7 +25,7 @@ function AccountPicker({ title, value, onChange, accounts, error }: { title: str
 type Filter = 'active' | 'revoked' | 'all'
 type Pending = { title: string; message: string; confirm: string; destructive: boolean; run: () => void }
 
-export function LinksView({ load, onLink }: { load: Load<{ links: AdminLink[]; accounts: AdminAccount[] }>; onLink: (therapist: string, patient: string, active: boolean) => void }) {
+export function LinksView({ load, onLink, onMore }: { load: Load<{ links: AdminLink[]; accounts: AdminAccount[]; hasMore?: boolean }>; onLink: (therapist: string, patient: string, active: boolean) => void; onMore?: () => void }) {
   const { t } = useTranslation()
   const [filter, setFilter] = useState<Filter>('active')
   const [needle, setNeedle] = useState('')
@@ -47,8 +47,8 @@ export function LinksView({ load, onLink }: { load: Load<{ links: AdminLink[]; a
     return account ? pickerValue(account) : id
   }
   const submit = () => {
-    const chosenTherapist = resolveAccount(therapist, accounts.filter((account) => account.roles.includes('therapist')))
-    const chosenPatient = resolveAccount(patient, accounts.filter((account) => primaryRole(account) === 'patient' || account.roles.includes('patient')))
+    const chosenTherapist = resolveAccount(therapist, therapistChoices(accounts))
+    const chosenPatient = resolveAccount(patient, patientChoices(accounts))
     setInvalid(!chosenTherapist || !chosenPatient)
     if (!chosenTherapist || !chosenPatient) return
     if (data?.links.some((link) => link.therapist === chosenTherapist && link.patient === chosenPatient && link.active)) return
@@ -64,11 +64,12 @@ export function LinksView({ load, onLink }: { load: Load<{ links: AdminLink[]; a
             <section aria-label={t('admin.newLink')} className="mb-8 rounded-card border border-line bg-paper p-5">
               <h2 className="mb-3 text-xl font-bold">{t('admin.newLink')}</h2>
               <div className="flex flex-wrap items-start gap-4">
-                <AccountPicker title={t('admin.roleTherapist')} value={therapist} onChange={setTherapist} accounts={accounts.filter((account) => account.roles.includes('therapist'))} error={invalid ? t('admin.pickerInvalid') : null} />
-                <AccountPicker title={t('admin.rolePatient')} value={patient} onChange={setPatient} accounts={accounts.filter((account) => account.roles.includes('patient'))} />
+                <AccountPicker title={t('admin.roleTherapist')} value={therapist} onChange={setTherapist} accounts={therapistChoices(accounts)} error={invalid ? t('admin.pickerInvalid') : null} />
+                <AccountPicker title={t('admin.rolePatient')} value={patient} onChange={setPatient} accounts={patientChoices(accounts)} />
                 <Button className="mt-7" onClick={submit} disabled={exists} leading={<LinkSimpleIcon weight="bold" aria-hidden />}>{t('admin.link')}</Button>
               </div>
               {exists && <p className="mt-2 text-sm text-slate">{t('admin.linkExists')}</p>}
+              {data?.hasMore && <Button variant="quiet" size="sm" className="mt-2" onClick={onMore}>{t('admin.more')}</Button>}
             </section>
             <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
               <Tabs className="flex-1" label={t('admin.filterLabel')} value={filter} onChange={(value) => setFilter(value as Filter)}
@@ -109,7 +110,7 @@ export function LinksView({ load, onLink }: { load: Load<{ links: AdminLink[]; a
                 })}
               </div>
             )}
-            {links.length > LINK_DISPLAY_LIMIT && <Notice tone="info" className="mt-4">{t('admin.linksLimit', { count: LINK_DISPLAY_LIMIT })}</Notice>}
+            {links.length >= LINK_DISPLAY_LIMIT && <Notice tone="info" className="mt-4">{t('admin.linksLimit', { count: LINK_DISPLAY_LIMIT })}</Notice>}
           </>
         )}
       </Loadable>

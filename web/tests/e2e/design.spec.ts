@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
 /** Runs against the design gallery, which uses the same components and views as the app. */
 const SCREENS = [
   '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
-  '/design/therapist/progress', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
+  '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
 ]
 
 for (const path of SCREENS) {
@@ -30,6 +30,104 @@ for (const width of [768, 1024, 1440, 1920]) {
     }
   })
 }
+
+for (const [path, empty] of [
+  ['/design/therapist', 'Invite your first patient'], ['/design/therapist/patients', 'No patients yet'], ['/design/therapist/patients/p1', 'No exercise assigned yet'], ['/design/therapist/progress', 'No sessions yet'],
+]) {
+  test(`${path} tells loading, failure and an empty list apart`, async ({ page }) => {
+    const retry = page.getByRole('button', { name: 'Try again' })
+    const nothing = page.getByRole('heading', { name: empty })
+    await page.goto(`${path}?state=loading`)
+    await expect(page.getByRole('status', { name: /^Loading/ }).first()).toBeVisible()
+    await expect(retry).toHaveCount(0)
+    await expect(nothing).toHaveCount(0)
+    await page.goto(`${path}?state=error`)
+    await expect(retry).toBeVisible()
+    await expect(page.getByRole('status', { name: /^Loading/ })).toHaveCount(0)
+    await expect(nothing).toHaveCount(0)
+    await page.goto(`${path}?state=empty`)
+    await expect(nothing).toBeVisible()
+    await expect(retry).toHaveCount(0)
+    await expect(page.getByRole('status', { name: /^Loading/ })).toHaveCount(0)
+  })
+}
+
+test('a swipe that starts on the movement demo still scrolls the page', async ({ page }) => {
+  await page.goto('/design/landing')
+  await expect(page.getByRole('group', { name: 'A sample skeleton measuring elbow flexion' })).toHaveCSS('touch-action', 'pan-y')
+})
+
+test('charts answer the keyboard and the pointer, and offer a table', async ({ page }) => {
+  await page.goto('/design/therapist/progress')
+  const chart = page.getByRole('img', { name: /Range of motion chart/ }).first()
+  const figure = page.locator('figure', { has: chart })
+  const reading = figure.locator('figcaption [aria-live="polite"]')
+  await chart.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(reading).toHaveText(/^.+: .+$/)
+  const first = await reading.textContent()
+  await page.keyboard.press('ArrowRight')
+  await expect(reading).not.toHaveText(first!)
+  await page.keyboard.press('Tab')
+  await expect(reading).toHaveText('')
+  const box = (await chart.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await expect(reading).toHaveText(/^.+: .+$/)
+  await figure.getByText('Show as a table').click()
+  await expect(figure.getByRole('table')).toBeVisible()
+  await expect(figure.getByRole('row')).not.toHaveCount(1)
+})
+
+for (const [reducedMotion, drawn] of [['reduce', false], ['no-preference', true]] as const) {
+  test(`a chart line ${drawn ? 'draws in' : 'appears at once'} with reduced motion set to ${reducedMotion}`, async ({ page }) => {
+    // Every length the line ever has, from the first paint, so a short animation cannot slip past.
+    await page.addInitScript(() => {
+      const seen = new Set<string>()
+      Object.assign(window, { lineLengths: seen })
+      new MutationObserver((changes) => { for (const change of changes) if (change.attributeName === 'stroke-dasharray') seen.add((change.target as Element).getAttribute('stroke-dasharray') ?? '') })
+        .observe(document, { subtree: true, attributes: true, attributeFilter: ['stroke-dasharray'] })
+    })
+    await page.emulateMedia({ reducedMotion })
+    // A page opened directly appears complete. The line draws when arriving from another page.
+    await page.goto('/design/therapist')
+    await page.getByRole('link', { name: 'Progress' }).first().click()
+    await expect(page.getByRole('img', { name: /Range of motion chart/ }).first()).toBeVisible()
+    await page.waitForTimeout(1200)
+    const lengths = await page.evaluate(() => [...(window as unknown as { lineLengths: Set<string> }).lineLengths].filter((value) => value !== '3 4'))
+    expect(lengths.some((value) => value !== '1 1')).toBe(drawn)
+  })
+}
+
+test('each card is one link and one menu in the tab order, with no empty stops', async ({ page }) => {
+  await page.goto('/design/therapist/patients')
+  await page.getByRole('link', { name: 'Open Ana Dela Cruz' }).focus()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('button', { name: 'Actions for Ana Dela Cruz' })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('link', { name: 'Open Grace Aquino' })).toBeFocused()
+})
+
+test.describe('the patient actions menu', () => {
+  for (const key of ['Enter', 'Space', 'ArrowDown']) {
+    test(`opens with ${key} and stays open`, async ({ page }) => {
+      await page.goto('/design/therapist/patients')
+      await page.getByRole('button', { name: 'Actions for Ana Dela Cruz' }).focus()
+      await page.keyboard.press(key)
+      await expect(page.getByRole('menuitem', { name: 'Revoke access' })).toBeFocused()
+    })
+  }
+})
+
+test('a dialog says what it is for, and returns focus when it closes', async ({ page }) => {
+  await page.goto('/design/therapist/patients')
+  const invite = page.getByRole('button', { name: 'Invite patient' }).first()
+  await invite.focus()
+  await page.keyboard.press('Enter')
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toHaveAccessibleDescription(/.+/)
+  await page.keyboard.press('Escape')
+  await expect(invite).toBeFocused()
+})
 
 test('a keyboard user gets the same card emphasis as a pointer user', async ({ page }) => {
   await page.goto('/design/therapist/patients')

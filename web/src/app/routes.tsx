@@ -1,20 +1,38 @@
 import { useQuery } from '@tanstack/react-query'
+import { lazy, Suspense, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useNavigate, type RouteObject } from 'react-router'
 import { useAuth, useSignedIn } from '@/auth/AuthProvider'
 import { IdleGuard } from '@/auth/IdleGuard'
 import { SignInPage } from '@/auth/SignInPage'
 import { homePath, workspacePath, workspacesOf, type Workspace } from '@/auth/roles'
-import { LandingPage } from '@/landing/LandingPage'
 import { Button } from '@/components/Button'
 import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
+import { SkeletonLines } from '@/features/shared'
 import { Shell } from '@/layout/Shell'
 import { MotionArc } from '@/motion/MotionArc'
 import { AnimatedOutlet } from '@/motion/AnimatedOutlet'
 
 // Development only: this condition is replaced at build time, so the gallery and its sample data are not bundled.
 const gallery: RouteObject[] = import.meta.env.DEV ? (await import('@/gallery/routes')).galleryRoutes : []
+
+/** Each page is its own download, which keeps the first load small. */
+const therapist = (name: keyof typeof import('@/features/therapist/pages')) => lazy(async () => ({ default: (await import('@/features/therapist/pages'))[name] as ComponentType }))
+const TherapistHome = therapist('TherapistHomePage')
+const Patients = therapist('PatientsPage')
+const PatientRecord = therapist('PatientRecordPage')
+const AssignExercise = therapist('AssignExercisePage')
+const Exercises = therapist('ExercisesPage')
+const Progress = therapist('ProgressPage')
+const admin = (name: keyof typeof import('@/features/admin/pages')) => lazy(async () => ({ default: (await import('@/features/admin/pages'))[name] as ComponentType }))
+const AdminOverview = admin('AdminOverviewPage')
+const Accounts = admin('AccountsPage')
+const Links = admin('LinksPage')
+const Catalogue = admin('CataloguePage')
+const Activity = admin('ActivityPage')
+const Profile = lazy(async () => ({ default: (await import('@/features/profile/pages')).ProfilePage }))
+const LandingPage = lazy(async () => ({ default: (await import('@/landing/LandingPage')).LandingPage }))
 
 function Splash() {
   const { t } = useTranslation()
@@ -56,7 +74,7 @@ function Front() {
   if (state.status === 'loading') return <Splash />
   if (state.status === 'unavailable') return <Unavailable />
   if (state.status === 'signedIn') return <Navigate to={homePath(state.roles)} replace />
-  return <LandingPage />
+  return <Suspense fallback={<Splash />}><LandingPage /></Suspense>
 }
 
 function UseMobile() {
@@ -89,19 +107,10 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   return (
     <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))}
       account={{ name: profile.data?.display_name || email, email, photo: profile.data?.photo_url, workspaces: held }}>
-      <AnimatedOutlet />
+      <Suspense fallback={<SkeletonLines />}><AnimatedOutlet /></Suspense>
     </Shell>
   )
 }
-
-/** Feature screens land in S7 and S8, after the designs are approved. */
-function Pending() {
-  const { t } = useTranslation()
-  return <EmptyState title={t('pending.title')} detail={t('pending.detail')} />
-}
-
-const pages = (entries: ReadonlyArray<readonly [string, string]>): RouteObject[] =>
-  entries.map(([path, crumb]) => ({ path, element: <Pending />, handle: { crumb } }))
 
 export const routes: RouteObject[] = [
   { index: true, element: <Front /> },
@@ -112,11 +121,33 @@ export const routes: RouteObject[] = [
       { path: 'use-mobile', element: <UseMobile /> },
       {
         path: 'therapist', element: <WorkspaceFrame workspace="therapist" />, handle: { crumb: 'nav.home' },
-        children: [{ index: true, element: <Pending /> }, ...pages([['patients', 'nav.patients'], ['exercises', 'nav.exercises'], ['progress', 'nav.progress'], ['profile', 'account.profile']])],
+        children: [
+          { index: true, element: <TherapistHome /> },
+          {
+            path: 'patients', handle: { crumb: 'nav.patients' },
+            children: [
+              { index: true, element: <Patients /> },
+              {
+                path: ':id', handle: { crumb: 'record.crumb' },
+                children: [{ index: true, element: <PatientRecord /> }, { path: 'assign', element: <AssignExercise />, handle: { crumb: 'assign.title' } }],
+              },
+            ],
+          },
+          { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
+          { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
+          { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
+        ],
       },
       {
         path: 'admin', element: <WorkspaceFrame workspace="admin" />, handle: { crumb: 'nav.overview' },
-        children: [{ index: true, element: <Pending /> }, ...pages([['accounts', 'nav.accounts'], ['links', 'nav.links'], ['catalogue', 'nav.catalogue'], ['activity', 'nav.activity'], ['profile', 'account.profile']])],
+        children: [
+          { index: true, element: <AdminOverview /> },
+          { path: 'accounts', element: <Accounts />, handle: { crumb: 'nav.accounts' } },
+          { path: 'links', element: <Links />, handle: { crumb: 'nav.links' } },
+          { path: 'catalogue', element: <Catalogue />, handle: { crumb: 'nav.catalogue' } },
+          { path: 'activity', element: <Activity />, handle: { crumb: 'nav.activity' } },
+          { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
+        ],
       },
     ],
   },

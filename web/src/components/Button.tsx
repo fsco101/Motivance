@@ -53,9 +53,10 @@ export function ButtonLink({ to, variant = 'primary', size = 'md', leading, chil
   )
 }
 
-export function IconButton({ label, children, className, ...rest }: Omit<HTMLMotionProps<'button'>, 'children'> & { label: string; children: ReactNode }) {
+/** Pass press={false} on a Radix menu trigger: Motion turns Enter into a pointer press, so the menu would open and close at once. */
+export function IconButton({ label, children, className, press = true, ...rest }: Omit<HTMLMotionProps<'button'>, 'children'> & { label: string; children: ReactNode; press?: boolean }) {
   return (
-    <motion.button type="button" aria-label={label} title={label} whileTap={{ scale: 0.92 }} transition={spring.press}
+    <motion.button type="button" aria-label={label} title={label} whileTap={press ? { scale: 0.92 } : undefined} transition={spring.press}
       className={cn('grid size-10 place-items-center rounded-control text-lg transition-colors transition-quick hover:bg-tide disabled:opacity-55', className)} {...rest}>
       {children}
     </motion.button>
