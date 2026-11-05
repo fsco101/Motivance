@@ -119,6 +119,12 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Decide whether therapist-written exercises need review before patient use. They currently reach a patient without one.
 - [ ] Have a Filipino speaker review the new `custom_*` and `toast_exercise_*` strings.
 
+## One sign-in page follow-up (2026-11-05)
+
+- [ ] On a physical phone, sign in as a patient, a therapist and an administrator and confirm each reaches the right workspace. Evidence scope: [one sign-in](ONE-SIGN-IN.md).
+- [ ] Run `CameraLifecycleTest` on a device with a working camera. It cannot pass on the current emulator, which reports no cameras.
+- [ ] Have a Filipino speaker review the revised `auth_sign_in_description` text.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

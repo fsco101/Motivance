@@ -39,10 +39,7 @@
     <string name="inference_summary">Pagsusuri: %1$d ms | %2$d x %3$d</string>
     <string name="diagnostics_summary">FPS: %1$s | p95: %2$d ms | Init: %3$d</string>
     <string name="pose_runtime_unavailable">Hindi ma-load ng device ang pose engine. Gumamit ng ARM phone o emulator na may ARM translation.</string>
-    <string name="clinical_portal">Portal ng klinika</string>
     <string name="rehabilitation_portal">Portal ng rehabilitasyon</string>
-    <string name="choose_role">Pumili ng ibang portal</string>
-    <string name="role_not_authorized">Walang pahintulot ang account na ito sa portal. Pumili ng pinapayagang lugar.</string>
     <string name="nav_home">Home</string>
     <string name="nav_patients">Mga pasyente</string>
     <string name="nav_exercises">Mga ehersisyo</string>
@@ -91,13 +88,8 @@
     <string name="markerless_rehabilitation">Rehabilitasyong walang marker</string>
     <string name="welcome_motivance">Maligayang pagdating sa Motivance</string>
     <string name="welcome_description">Gabay sa rehabilitasyon gamit ang camera upang masubaybayan ang paggalaw at paggaling.</string>
-    <string name="select_access_portal">Paano mo gagamitin ang Motivance?</string>
     <string name="patient_title">Pasyente</string>
     <string name="therapist_title">Physical therapist</string>
-    <string name="therapist_description">Pamahalaan ang mga nakatalagang pasyente at gabayan ang kanilang rehabilitasyon.</string>
-    <string name="patient_description">Hanapin ang iyong ehersisyo, ihanda ang camera at sundan ang iyong paggaling.</string>
-    <string name="enter_therapist">Pumasok bilang therapist</string>
-    <string name="continue_patient">Magpatuloy bilang pasyente</string>
     <string name="single_phone_camera">Camera ng telepono ? Walang naisusuot na sensor</string>
     <string name="authorized_access">Para sa mga awtorisadong tagapagbigay ng pangangalaga</string>
     <string name="try_camera">Subukan ang camera prototype</string>
@@ -257,8 +249,7 @@
     <string name="history_chart_scale">Iskala: 0–%1$s %2$s</string>
     <string name="history_chart_order">Ayos ng sesyon: pinakaluma hanggang pinakabago. Ang puwang ay kawalan ng maihahambing na wastong sukat.</string>
     <string name="auth_welcome_back">Maligayang pagbabalik.</string>
-    <string name="auth_patient_description">Mag-sign in para ipagpatuloy ang iyong rehabilitasyon.</string>
-    <string name="auth_therapist_description">Mga pasyente at kanilang progreso sa iisang workspace.</string>
+    <string name="auth_sign_in_description">Mag-sign in sa iyong Motivance account.</string>
     <string name="auth_signup_heading">Dito magsisimula ang susunod mong hakbang.</string>
     <string name="auth_signup_description">Gumawa ng patient account para makakonekta sa iyong therapist.</string>
     <string name="auth_confirm_heading">Tingnan ang iyong inbox.</string>
@@ -306,7 +297,6 @@
     <string name="admin_activate">I-activate ang ehersisyo</string>
     <string name="admin_deactivate_short">I-deactivate</string>
     <string name="admin_activate_short">I-activate</string>
-    <string name="admin_sign_in">Mag-sign in bilang administrator</string>
     <string name="admin_eyebrow">Administrator</string>
     <string name="admin_overview">Buod</string>
     <string name="admin_links_tab">Ugnayan</string>

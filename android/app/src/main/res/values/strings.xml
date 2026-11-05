@@ -39,10 +39,7 @@
     <string name="inference_summary">Inference: %1$d ms | %2$d x %3$d</string>
     <string name="diagnostics_summary">FPS: %1$s | p95: %2$d ms | Thermal: %3$d</string>
     <string name="pose_runtime_unavailable">This device cannot load the pose engine. Use an ARM phone or an emulator with ARM translation.</string>
-    <string name="clinical_portal">Clinical portal</string>
     <string name="rehabilitation_portal">Rehabilitation portal</string>
-    <string name="choose_role">Choose another portal</string>
-    <string name="role_not_authorized">This account does not have access to this portal. Choose an authorized workspace.</string>
     <string name="nav_home">Home</string>
     <string name="nav_patients">Patients</string>
     <string name="nav_exercises">Exercises</string>
@@ -91,13 +88,8 @@
     <string name="markerless_rehabilitation">Markerless rehabilitation</string>
     <string name="welcome_motivance">Welcome to Motivance</string>
     <string name="welcome_description">Guided rehabilitation with camera-based movement tracking and a clearer view of your recovery.</string>
-    <string name="select_access_portal">How will you use Motivance?</string>
     <string name="patient_title">Patient</string>
     <string name="therapist_title">Physical therapist</string>
-    <string name="therapist_description">Manage assigned patients, review their movement records and guide their rehabilitation.</string>
-    <string name="patient_description">Find your exercises, prepare your camera and follow your recovery journey.</string>
-    <string name="enter_therapist">Enter as therapist</string>
-    <string name="continue_patient">Continue as patient</string>
     <string name="single_phone_camera">Single phone camera / No wearables</string>
     <string name="authorized_access">Access for authorized care providers</string>
     <string name="try_camera">Try the camera prototype</string>
@@ -257,8 +249,7 @@
     <string name="history_chart_scale">Scale: 0–%1$s %2$s</string>
     <string name="history_chart_order">Session order: oldest to newest. Gaps mean no comparable valid measurement.</string>
     <string name="auth_welcome_back">Welcome back.</string>
-    <string name="auth_patient_description">Sign in to continue your rehabilitation journey.</string>
-    <string name="auth_therapist_description">Your patients, their progress, one workspace.</string>
+    <string name="auth_sign_in_description">Sign in to your Motivance account.</string>
     <string name="auth_signup_heading">Your next step starts here.</string>
     <string name="auth_signup_description">Create your patient account to connect with your therapist.</string>
     <string name="auth_confirm_heading">Check your inbox.</string>
@@ -306,7 +297,6 @@
     <string name="admin_activate">Activate exercise</string>
     <string name="admin_deactivate_short">Deactivate</string>
     <string name="admin_activate_short">Activate</string>
-    <string name="admin_sign_in">Administrator sign in</string>
     <string name="admin_eyebrow">Administrator</string>
     <string name="admin_overview">Overview</string>
     <string name="admin_links_tab">Links</string>
