@@ -45,7 +45,7 @@ test('a therapist who is also a patient lands on the staff workspace', async ({ 
 test('an administrator lands on the administrator workspace', async ({ page }) => {
   await signIn(page, await account(['patient', 'admin']))
   await expect(page).toHaveURL(/\/admin$/)
-  await expect(page.getByRole('link', { name: 'Accounts' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Accounts' })).toBeVisible()
 })
 
 test('someone with both staff roles can switch, and the choice ends at sign-out', async ({ page }) => {

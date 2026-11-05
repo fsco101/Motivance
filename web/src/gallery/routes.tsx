@@ -10,6 +10,7 @@ import { CatalogueView } from '@/features/admin/CatalogueView'
 import { LinksView } from '@/features/admin/LinksView'
 import { ready, type Load } from '@/features/shared'
 import { AssignmentEditorView } from '@/features/therapist/AssignmentEditorView'
+import { ProfileView, type ProfileActions } from '@/features/profile/ProfileView'
 import { ExercisesView } from '@/features/therapist/ExercisesView'
 import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
@@ -68,10 +69,15 @@ const Links = () => <LinksView load={useDemo({ links: data.links, accounts: data
 const Catalogue = () => <CatalogueView load={useDemo(data.exercises, [])} actions={{ onActive: said('Exercise availability updated.'), onPublish: said('New exercise version published.') }} />
 const Activity = () => <ActivityView load={useDemo({ events: data.activity, hasMore: true }, { events: [], hasMore: false })} onMore={said('Loaded older activity')} />
 
+const profileActions: ProfileActions = {
+  onSave: async () => toast.show('Profile updated.'), onPhoto: async () => toast.show('Profile photo updated.'), onRemovePhoto: async () => toast.show('Profile photo removed.'), onPassword: async () => toast.show('Password changed.'),
+}
+const Profile = () => <ProfileView load={useDemo(data.profile, { ...data.profile, complete: false, consent: false, username: '', photo: null })} actions={profileActions} />
+
 const SCREENS = [
   ['Landing', '/design/landing'], ['Sign-in', '/design/sign-in'], ['Components', '/design/components'],
   ['Therapist home', THERAPIST], ['Patients', `${THERAPIST}/patients`], ['Patient record', `${THERAPIST}/patients/p1`], ['Assignment editor', `${THERAPIST}/patients/p1/assign`], ['Exercises', `${THERAPIST}/exercises`], ['Progress', `${THERAPIST}/progress`],
-  ['Admin overview', ADMIN], ['Accounts', `${ADMIN}/accounts`], ['Links', `${ADMIN}/links`], ['Catalogue', `${ADMIN}/catalogue`], ['Activity', `${ADMIN}/activity`],
+  ['Admin overview', ADMIN], ['Accounts', `${ADMIN}/accounts`], ['Links', `${ADMIN}/links`], ['Catalogue', `${ADMIN}/catalogue`], ['Activity', `${ADMIN}/activity`], ['Profile', `${ADMIN}/profile`],
 ] as const
 
 function Index() {
@@ -104,6 +110,7 @@ export const galleryRoutes: RouteObject[] = [{
         ] },
         { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
+        { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
       ],
     },
     {
@@ -114,6 +121,7 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'links', element: <Links />, handle: { crumb: 'nav.links' } },
         { path: 'catalogue', element: <Catalogue />, handle: { crumb: 'nav.catalogue' } },
         { path: 'activity', element: <Activity />, handle: { crumb: 'nav.activity' } },
+        { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
       ],
     },
   ],

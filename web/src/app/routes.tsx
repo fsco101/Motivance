@@ -25,6 +25,13 @@ const PatientRecord = therapist('PatientRecordPage')
 const AssignExercise = therapist('AssignExercisePage')
 const Exercises = therapist('ExercisesPage')
 const Progress = therapist('ProgressPage')
+const admin = (name: keyof typeof import('@/features/admin/pages')) => lazy(async () => ({ default: (await import('@/features/admin/pages'))[name] as ComponentType }))
+const AdminOverview = admin('AdminOverviewPage')
+const Accounts = admin('AccountsPage')
+const Links = admin('LinksPage')
+const Catalogue = admin('CataloguePage')
+const Activity = admin('ActivityPage')
+const Profile = lazy(async () => ({ default: (await import('@/features/profile/pages')).ProfilePage }))
 const LandingPage = lazy(async () => ({ default: (await import('@/landing/LandingPage')).LandingPage }))
 
 function Splash() {
@@ -105,15 +112,6 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   )
 }
 
-/** Feature screens land in S7 and S8, after the designs are approved. */
-function Pending() {
-  const { t } = useTranslation()
-  return <EmptyState title={t('pending.title')} detail={t('pending.detail')} />
-}
-
-const pages = (entries: ReadonlyArray<readonly [string, string]>): RouteObject[] =>
-  entries.map(([path, crumb]) => ({ path, element: <Pending />, handle: { crumb } }))
-
 export const routes: RouteObject[] = [
   { index: true, element: <Front /> },
   { path: 'sign-in', element: <SignedOutOnly /> },
@@ -137,12 +135,19 @@ export const routes: RouteObject[] = [
           },
           { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
-          ...pages([['profile', 'account.profile']]),
+          { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
         ],
       },
       {
         path: 'admin', element: <WorkspaceFrame workspace="admin" />, handle: { crumb: 'nav.overview' },
-        children: [{ index: true, element: <Pending /> }, ...pages([['accounts', 'nav.accounts'], ['links', 'nav.links'], ['catalogue', 'nav.catalogue'], ['activity', 'nav.activity'], ['profile', 'account.profile']])],
+        children: [
+          { index: true, element: <AdminOverview /> },
+          { path: 'accounts', element: <Accounts />, handle: { crumb: 'nav.accounts' } },
+          { path: 'links', element: <Links />, handle: { crumb: 'nav.links' } },
+          { path: 'catalogue', element: <Catalogue />, handle: { crumb: 'nav.catalogue' } },
+          { path: 'activity', element: <Activity />, handle: { crumb: 'nav.activity' } },
+          { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
+        ],
       },
     ],
   },

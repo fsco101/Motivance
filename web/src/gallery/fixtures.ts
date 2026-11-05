@@ -1,5 +1,6 @@
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { HistoricalSession } from '@/data/history'
+import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent } from '@/features/admin/types'
 import type { PatientSummary } from '@/features/therapist/PatientCard'
 import type { PatientRecord } from '@/features/therapist/PatientRecordView'
@@ -90,3 +91,8 @@ export const activity: AuditEvent[] = [
   { id: 4, kind: 'accountDisabled', category: 'accounts', target: 'Liza Mercado', actor: 'Marco Santos', recordedAt: '2026-11-03T10:20:00Z' },
   { id: 3, kind: 'session', category: 'clinical', target: 'Ramon Bautista', actor: null, recordedAt: '2026-11-03T02:00:00Z' },
 ]
+
+export const profile: MyProfile = {
+  firstName: 'Dana', lastName: 'Reyes', username: 'dana_reyes', gender: 'female', birthdate: '1988-07-02', address: 'Quezon City', contact: '+63 917 555 0133', consent: true,
+  email: 'dana.reyes@example.test', photo: null, complete: true,
+}

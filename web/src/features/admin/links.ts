@@ -1,4 +1,4 @@
-import { label, type AdminAccount } from './types'
+import { label, primaryRole, type AdminAccount } from './types'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -10,3 +10,7 @@ export function resolveAccount(text: string, accounts: readonly AdminAccount[]) 
   const value = text.trim()
   return accounts.find((account) => pickerValue(account) === value || account.id === value)?.id ?? (UUID.test(value) ? value : null)
 }
+
+/** Who can be linked, as on Android: the server refuses disabled accounts, and staff are not patients. */
+export const therapistChoices = (accounts: readonly AdminAccount[]) => accounts.filter((account) => account.active && account.roles.includes('therapist'))
+export const patientChoices = (accounts: readonly AdminAccount[]) => accounts.filter((account) => account.active && primaryRole(account) === 'patient')

@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
 /** Runs against the design gallery, which uses the same components and views as the app. */
 const SCREENS = [
   '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
-  '/design/therapist/exercises', '/design/therapist/progress', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
+  '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
 ]
 
 for (const path of SCREENS) {

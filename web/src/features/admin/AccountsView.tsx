@@ -54,6 +54,8 @@ function Details({ account, self, actions, onClose, confirm }: { account: AdminA
       <dl className="mt-5 grid grid-cols-2 gap-3">
         <Fact term={t('admin.joined')}>{account.joined ? format.date(account.joined) : t('admin.never')}</Fact>
         <Fact term={t('admin.lastSignIn')}>{account.lastSignIn ? format.date(account.lastSignIn) : t('admin.never')}</Fact>
+        <Fact term={t('admin.roles')}>{account.roles.map((role) => t(`admin.role${role === 'admin' ? 'Admin' : role === 'therapist' ? 'Therapist' : 'Patient'}`)).join(', ')}</Fact>
+        {account.username && <Fact term={t('profile.username')}>{account.username}</Fact>}
       </dl>
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="min-w-0"><p className="text-sm text-slate">{t('admin.accountId')}</p><p className="truncate font-semibold">{account.id}</p></div>
@@ -98,7 +100,7 @@ function Details({ account, self, actions, onClose, confirm }: { account: AdminA
   )
 }
 
-export function AccountsView({ load, self, actions }: { load: Load<{ accounts: AdminAccount[]; hasMore: boolean }>; self: string; actions: AccountActions }) {
+export function AccountsView({ load, self, actions }: { load: Load<{ accounts: AdminAccount[]; hasMore: boolean; loadingMore?: boolean }>; self: string; actions: AccountActions }) {
   const { t } = useTranslation()
   const format = useFormat()
   const [params] = useSearchParams()
@@ -144,7 +146,7 @@ export function AccountsView({ load, self, actions }: { load: Load<{ accounts: A
             <div className="min-w-0">
               <DataTable caption={t('nav.accounts')} columns={columns} rows={shown} rowKey={(a) => a.id} onRowClick={(a) => setSelected(a.id === selected ? null : a.id)} selectedKey={selected}
                 empty={<EmptyState title={t('admin.accountsEmpty')} detail={t(data.hasMore ? 'admin.accountsEmptyMore' : 'admin.accountsEmptyDetail')} />} />
-              <LoadMore shown={t('admin.shownCount', { shown: shown.length, total: data.accounts.length })} onLoad={data.hasMore ? actions.onMore : undefined} label={t('admin.more')} />
+              <LoadMore shown={t('admin.shownCount', { shown: shown.length, total: data.accounts.length })} onLoad={data.hasMore ? actions.onMore : undefined} busy={data.loadingMore} label={t('admin.more')} />
             </div>
             <AnimatePresence>{chosen && <Details key={chosen.id} account={chosen} self={chosen.id === self} actions={actions} onClose={() => setSelected(null)} confirm={setPending} />}</AnimatePresence>
           </div>

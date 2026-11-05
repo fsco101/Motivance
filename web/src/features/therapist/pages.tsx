@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
@@ -10,7 +10,7 @@ import { failureKey } from '@/data/errors'
 import { loadHistory, usable, type HistoricalSession, type HistoryCursor } from '@/data/history'
 import { archiveCustomExercise, createCustomExercise, invitePatient, loadLatestSessions, loadPatientProfile, publishPrescription, revokePatientLink, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
 import { loadCatalogue, loadOverview, loadPatients, loadPlans } from '@/data/workspace'
-import { ready, useFormat, type Load } from '@/features/shared'
+import { asLoad, ready, useFormat, type Load } from '@/features/shared'
 import { AssignmentEditorView } from './AssignmentEditorView'
 import { ExercisesView } from './ExercisesView'
 import { PatientRecordView, type PatientRecord, type PlanCard } from './PatientRecordView'
@@ -20,11 +20,6 @@ import { TherapistHomeView, type TherapistHome } from './TherapistHomeView'
 import { latestMovement, latestSeries, nameOf, reachedBy, recentFirst, romPoints, summarisePatients } from './summaries'
 
 const BASE = '/therapist'
-
-function asLoad<T>(query: UseQueryResult<T>): Load<T> {
-  if (query.data !== undefined) return ready(query.data)
-  return query.isError ? { status: 'error', retry: () => void query.refetch() } : { status: 'loading' }
-}
 
 /** Everything the list pages share, read once, for this therapist's linked patients. */
 function useWorkspace() {

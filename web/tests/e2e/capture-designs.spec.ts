@@ -23,6 +23,7 @@ const SCREENS: ReadonlyArray<readonly [string, string]> = [
   ['admin-links', '/design/admin/links'],
   ['admin-catalogue', '/design/admin/catalogue'],
   ['admin-activity', '/design/admin/activity'],
+  ['profile', '/design/admin/profile'],
 ]
 
 async function settle(page: Page) {

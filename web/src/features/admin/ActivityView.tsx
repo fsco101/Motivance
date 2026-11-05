@@ -34,7 +34,7 @@ export function ActivityList({ events }: { events: readonly AuditEvent[] }) {
   )
 }
 
-export function ActivityView({ load, onMore }: { load: Load<{ events: AuditEvent[]; hasMore: boolean }>; onMore: () => void }) {
+export function ActivityView({ load, onMore }: { load: Load<{ events: AuditEvent[]; hasMore: boolean; loadingMore?: boolean }>; onMore: () => void }) {
   const { t } = useTranslation()
   const [category, setCategory] = useState<'all' | AuditCategory>('all')
   return (
@@ -43,12 +43,12 @@ export function ActivityView({ load, onMore }: { load: Load<{ events: AuditEvent
       <Tabs className="mb-6" label={t('admin.filterLabel')} value={category} onChange={(value) => setCategory(value as 'all' | AuditCategory)}
         tabs={[{ value: 'all', label: t('admin.filter.all') }, ...CATEGORIES.map((value) => ({ value, label: t(`admin.category.${value}`) }))]} />
       <Loadable load={load} skeleton={<SkeletonLines rows={8} />}>
-        {({ events, hasMore }) => {
+        {({ events, hasMore, loadingMore }) => {
           const shown = events.filter((event) => category === 'all' || event.category === category)
           return (
             <div className="max-w-3xl">
               {shown.length === 0 ? <EmptyState title={t('admin.activityEmpty')} detail={t(hasMore ? 'admin.activityEmptyMore' : 'admin.activityEmptyDetail')} /> : <ActivityList events={shown} />}
-              <LoadMore shown={t('admin.shownCount', { shown: shown.length, total: events.length })} onLoad={hasMore ? onMore : undefined} label={t('admin.activityMore')} />
+              <LoadMore shown={t('admin.shownCount', { shown: shown.length, total: events.length })} onLoad={hasMore ? onMore : undefined} busy={loadingMore} label={t('admin.activityMore')} />
             </div>
           )
         }}

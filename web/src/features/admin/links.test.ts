@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickerValue, resolveAccount } from './links'
+import { patientChoices, pickerValue, resolveAccount, therapistChoices } from './links'
 import type { AdminAccount } from './types'
 
 const person = (id: string, email: string): AdminAccount => ({ id, name: 'Maria Santos', email, active: true, roles: ['patient'] })
@@ -20,4 +20,12 @@ describe('choosing an account for a link', () => {
     expect(resolveAccount(first.id, [first, second])).toBe(first.id)
     expect(resolveAccount('00000000-0000-4000-8000-000000000009', [first])).toBe('00000000-0000-4000-8000-000000000009')
   })
+})
+
+describe('who can be linked', () => {
+  const person = (id: string, roles: AdminAccount['roles'], active = true): AdminAccount => ({ id, name: id, email: `${id}@example.test`, active, roles })
+  const accounts = [person('therapist', ['patient', 'therapist']), person('patient', ['patient']), person('admin', ['patient', 'admin']), person('off-therapist', ['therapist'], false), person('off-patient', ['patient'], false)]
+
+  it('offers active therapists only', () => expect(therapistChoices(accounts).map((account) => account.id)).toEqual(['therapist']))
+  it('offers active patients and never staff, though every account holds the patient role', () => expect(patientChoices(accounts).map((account) => account.id)).toEqual(['patient']))
 })

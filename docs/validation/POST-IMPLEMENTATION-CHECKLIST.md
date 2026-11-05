@@ -139,6 +139,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Have a Filipino speaker review the new web text in `web/src/locales/fil.json`, including the custom exercise, version and removed exercise messages.
 - [ ] Try the patient list and assignment editor with a screen reader. The automated checks cover keyboard use and the axe rules, not a person listening to the pages.
 
+## Administrator workspace and staff profile follow-up (2026-11-05)
+
+- [ ] Perform every administrator task side by side in Android and the browser, and compare the results and audit records. Evidence scope: [administrator workspace](WEB-ADMIN-PROFILE.md).
+- [ ] With a real Cloudinary account configured, upload a staff photo from a browser and confirm it appears across the app. The automated test stands in for Cloudinary's endpoint.
+- [ ] Have an administrator try the workspace and confirm it fits how they work.
+- [ ] Have a Filipino speaker review the new administrator and profile text in `web/src/locales/fil.json`.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
