@@ -523,6 +523,9 @@
     <string name="profile_name">Full name</string>
     <string name="profile_username">Username</string>
     <string name="profile_username_help">Use 3&#8211;30 letters, numbers or underscores. Your username is visible to your connected therapist.</string>
+    <string name="guide_description">Animated guide: %1$s, moving between %2$d° and %3$d°.</string>
+    <string name="guide_pause">Pause the guide</string>
+    <string name="guide_play">Play the guide</string>
     <string name="profile_details">Your details</string>
     <string name="profile_incomplete">Add your details to finish setting up this account.</string>
     <string name="profile_gender_choose">Choose one</string>

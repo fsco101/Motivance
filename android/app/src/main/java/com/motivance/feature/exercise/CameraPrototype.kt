@@ -206,6 +206,8 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
                 }
             }
         }
+        // A reminder of the movement before starting. Once running, the patient follows their own measured movement instead.
+        if(!exercise.metrics.running) GuideStage(guideMotion(exercise.rules),exerciseName,Modifier.height(220.dp),dark=true)
         MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
             {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
         SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
