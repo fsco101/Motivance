@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "id": "S12",
+  "title": "S12 - Front door, push and handover",
+  "description": "Weeks 23-24. Exit: the public page sells booking and accepts sign-ups, FCM push is ready for credentials, and the full feature passes final regression with its changes and settings written down.",
+  "goal": "Open the front door to patients and finish the feature.",
+  "status": "planned",
+  "weeks": {
+    "start": 23,
+    "end": 24
+  },
+  "github_milestone": 12,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Create an account from the landing page, book a session, and walk through the final regression and handover summary.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Create an account from the landing page, book a session, and walk through the final regression and handover summary.",
+  "risks": [
+    "Real FCM delivery cannot be tested until the owner supplies credentials.",
+    "The app is not on Google Play yet, so the store link stays unset until it is published."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and design risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 16,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-68",
+      "github_issue": 85,
+      "title": "Add web sign-up and redesign the landing page",
+      "description": "Turn the public page into the way in for patients, now that every role uses the web app.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web + Product designer",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:12"
+      ],
+      "dependencies": [
+        "MOT-53",
+        "MOT-52"
+      ],
+      "requirements": "Booking brief, section 10",
+      "target_paths": [
+        "web/src/landing/",
+        "web/src/auth/",
+        "web/src/locales/",
+        "docs/architecture/WEB-DESIGN.md"
+      ],
+      "functions": [
+        {
+          "name": "LandingPage",
+          "description": "Value proposition, booking steps, Book a Session, sign-in, sign-up and the mobile app section.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "SignUpPage",
+          "description": "Patient registration with the same rules as Android, then the emailed code.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-68-AC1",
+          "description": "The page has a clear value proposition, how booking works in 3 steps, a Book a Session action, sign-in and sign-up, and a mobile app section.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-68-AC2",
+          "description": "Web sign-up applies the same rules and consent as Android and finishes with the emailed code.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-68-AC3",
+          "description": "After sign-in, each role reaches its own dashboard: Admin, Scheduler, Therapist or Patient.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-68-AC4",
+          "description": "The page is responsive and passes WCAG AA contrast and keyboard checks with axe.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-68-AC5",
+          "description": "Every claim is something the product does today, in English and Filipino.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-69",
+      "github_issue": 86,
+      "title": "Set up FCM push, ready for credentials",
+      "description": "Build everything FCM needs, so that push starts working when the owner adds the credentials.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Android + Backend",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:mobile",
+        "priority:p1",
+        "sprint:12"
+      ],
+      "dependencies": [
+        "MOT-60"
+      ],
+      "requirements": "Booking brief, section 7; owner decision 2026-11-06: build the setup last, credentials follow later",
+      "target_paths": [
+        "android/app/",
+        "android/gradle/libs.versions.toml",
+        "android/.env.example",
+        "supabase/functions/notification-dispatch/",
+        "supabase/migrations/",
+        "docs/operations/NOTIFICATIONS.md"
+      ],
+      "functions": [
+        {
+          "name": "register_device",
+          "description": "Store the caller's FCM token.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "MotivanceMessagingService",
+          "description": "Receive tokens and messages, and show a system notification.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-69-AC1",
+          "description": "The app builds and runs normally with no Firebase values, and does nothing push-related until they are set.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-69-AC2",
+          "description": "With values set, the app asks for notification permission, registers its token through register_device, and shows received notifications.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-69-AC3",
+          "description": "notification-dispatch sends push through FCM HTTP v1 when FCM_SERVICE_ACCOUNT is set, and marks push deliveries skipped otherwise.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-69-AC4",
+          "description": "A stub FCM endpoint proves the request format, retries and removal of dead tokens.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-69-AC5",
+          "description": "docs/operations/NOTIFICATIONS.md lists the exact steps and values the owner needs to supply.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-69-AC6",
+          "description": "A real push reaches a real phone with the owner's Firebase credentials.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-70",
+      "github_issue": 87,
+      "title": "Run the final regression and write the handover summary",
+      "description": "Prove the whole feature works together, and write down what changed.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "QA",
+      "estimate_points": 3,
+      "labels": [
+        "type:validation",
+        "area:qa",
+        "priority:p0",
+        "sprint:12"
+      ],
+      "dependencies": [
+        "MOT-68",
+        "MOT-69",
+        "MOT-63",
+        "MOT-64",
+        "MOT-65",
+        "MOT-66",
+        "MOT-67",
+        "MOT-58",
+        "MOT-61"
+      ],
+      "requirements": "Booking brief, deliverables 4 and 5",
+      "target_paths": [
+        "docs/validation/BOOKING-REGRESSION.md",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "docs/PLAN.md",
+        "docs/architecture/DATABASE.md",
+        "docs/operations/ENVIRONMENT.md",
+        "docs/operations/DATA-LIFECYCLE.md"
+      ],
+      "functions": [
+        {
+          "name": "bookingRegression",
+          "description": "Run every suite together and record the results and the handover summary.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-70-AC1",
+          "description": "Permissions, conflict prevention including concurrent requests, holiday and closure blocking, and notifications all have passing tests, run together on a freshly reset local stack.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-70-AC2",
+          "description": "A summary lists the changed files and every new environment variable.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-70-AC3",
+          "description": "PLAN.md, DATABASE.md, ENVIRONMENT.md and DATA-LIFECYCLE.md describe the feature as built.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-70-AC4",
+          "description": "POST-IMPLEMENTATION-CHECKLIST.md lists every deferred check, none claimed as passed.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    }
+  ],
+  "plan_reference": "docs/architecture/BOOKING.md"
+}

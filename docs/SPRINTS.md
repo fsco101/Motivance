@@ -1,6 +1,6 @@
 # Sprint planning and synchronization
 
-The numbered JSON files contain the authoritative editable backlog for the Motivance implementation: the ten-week Android pilot (S1-S5) and the web workspace (S6-S8). Each sprint JSON includes goals, a demo, entry/exit criteria, estimates, risks and six mapped issues with function descriptions. Each function record indicates whether it describes a planned capability or an implemented entry point.
+The numbered JSON files contain the authoritative editable backlog for the Motivance implementation: the ten-week Android pilot (S1-S5), the web workspace (S6-S8) and in-center booking (S9-S12). Each sprint JSON includes goals, a demo, entry/exit criteria, estimates, risks and six mapped issues with function descriptions. Each function record indicates whether it describes a planned capability or an implemented entry point.
 
 Per the user's standing instruction, close solved GitHub issues as part of implementation and close fully implemented sprint milestones. Individual issues do not wait for the rest of their sprint. Therapist and physical-device checks explicitly deferred by the user remain in `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md`; they do not prevent engineering implementation closure and are never represented as passed clinical/device tests. Real engineering failures and unimplemented work stay open.
 
@@ -15,6 +15,10 @@ sprints/
   sprint-06.json
   sprint-07.json
   sprint-08.json
+  sprint-09.json
+  sprint-10.json
+  sprint-11.json
+  sprint-12.json
 ```
 
 The feature-complete MVP is targeted for week 8; weeks 9-10 cover final validation, fixes, deployment and handover. Confirm three to four contributors and therapist availability. Estimates are provisional points, not elapsed days; reserve approximately 20% of actual capacity for integration and defects. Calendar dates and owners remain unset until confirmed.
@@ -42,7 +46,7 @@ The second command is read-only preview. The third applies changes using the aut
 - `type:*` identifies feature, task, spike, validation or epic.
 - `area:*` identifies the main component.
 - `priority:p0` is release-critical; `priority:p1` is required supporting work; `priority:p2` is optional/deferred.
-- `sprint:01` through `sprint:08` provide searchable grouping alongside milestones.
+- `sprint:01` through `sprint:12` provide searchable grouping alongside milestones.
 
 `sync_sprints.py` updates existing issues and never creates them. To add a sprint, create its milestone and `[MOT-NN] Title` issues on GitHub, record their numbers in the sprint JSON, add the file and labels to `config.json`, then validate, preview and apply as usual.
 - `status:*` is derived from issue status. A done issue closes after its own evidence validates, even while its sprint is in progress.

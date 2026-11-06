@@ -1,0 +1,661 @@
+{
+  "schema_version": 1,
+  "id": "S10",
+  "title": "S10 - Schedules, calendar and notifications",
+  "description": "Weeks 19-20. Exit: patients and therapists see their confirmed schedule by specific time, Schedulers run the calendar, and every booking change reaches people in the app and by email.",
+  "goal": "Show people their confirmed schedule, let Schedulers run the calendar and keep everyone informed.",
+  "status": "planned",
+  "weeks": {
+    "start": 19,
+    "end": 20
+  },
+  "github_milestone": 10,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Confirm a session and show it on the patient's and therapist's My Schedule at its specific time. Add a closure over it, resolve the booking, and show the in-app notification and the email with its calendar link.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Confirm a session and show it on the patient's and therapist's My Schedule at its specific time. Add a closure over it, resolve the booking, and show the in-app notification and the email with its calendar link.",
+  "risks": [
+    "Port 465 from a hosted Edge Function can only be proved on a hosted project.",
+    "pg_cron and Edge Function secrets need separate hosted configuration.",
+    "Exports must stay out of the initial bundle, which has almost no room left."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and design risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 43,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-56",
+      "github_issue": 73,
+      "title": "Add My Schedule for patients and therapists",
+      "description": "Show patients and therapists the sessions a Scheduler has confirmed, laid out by specific time, on web and Android.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web + Android",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:10"
+      ],
+      "dependencies": [
+        "MOT-53",
+        "MOT-54",
+        "MOT-55"
+      ],
+      "requirements": "Owner request, 2026-11-06: My Schedule for patients and therapists, by specific time; therapists see who is scheduled on a date",
+      "target_paths": [
+        "supabase/migrations/",
+        "web/src/features/schedule/",
+        "android/app/src/main/java/com/motivance/feature/booking/",
+        "android/core/domain/"
+      ],
+      "functions": [
+        {
+          "name": "my_schedule",
+          "description": "The signed-in patient's confirmed sessions in a date range, with specific times.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "therapist_schedule",
+          "description": "The signed-in therapist's confirmed sessions in a date range, with each patient's name.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "MyScheduleView",
+          "description": "A month calendar marking session days, and the chosen date laid out by time.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-56-AC1",
+          "description": "my_schedule and therapist_schedule return only confirmed and rescheduled sessions belonging to the signed-in person, each with a specific start and end time.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-56-AC2",
+          "description": "A web month calendar marks days with sessions, and choosing a date lays that day out by time across the center's opening hours.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-56-AC3",
+          "description": "A therapist sees, for any date, the patient booked at each time, with the reference number.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-56-AC4",
+          "description": "A patient sees the specific time, therapist and location of each session.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-56-AC5",
+          "description": "Android shows the same schedule for patients and therapists.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-56-AC6",
+          "description": "Times show in Asia/Manila whatever the device's time zone, on both apps.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-56-AC7",
+          "description": "A booking alone grants no clinical access: a therapist opens a patient's record only through an existing link, proved by a test.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-57",
+      "github_issue": 74,
+      "title": "Build calendar management and closure resolution",
+      "description": "Let Schedulers run the calendar, and make sure a closure can never silently strand a booking.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web + Backend",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:10"
+      ],
+      "dependencies": [
+        "MOT-55"
+      ],
+      "requirements": "Booking brief, sections 4 and 5",
+      "target_paths": [
+        "web/src/features/scheduler/",
+        "supabase/migrations/",
+        "web/tests/e2e/"
+      ],
+      "functions": [
+        {
+          "name": "scheduler_save_settings",
+          "description": "Save center details, slot length, capacity and booking rules.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_save_hours",
+          "description": "Save opening days and daily time ranges.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_save_holiday",
+          "description": "Add or edit a holiday or seasonal break.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_closure_impact",
+          "description": "List the active bookings a proposed closure or holiday would touch.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_save_closure",
+          "description": "Save a closure with a resolution for every affected booking, in one transaction.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-57-AC1",
+          "description": "The Calendar page edits opening days and hours, slot length, capacity, booking rules, center name and location.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-57-AC2",
+          "description": "Schedulers add, edit and delete national and seasonal holidays, including multi-day breaks.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-57-AC3",
+          "description": "Schedulers add, edit and delete closures for a full day or a time range, with a required reason.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-57-AC4",
+          "description": "When a closure or holiday overlaps active bookings, the page lists them and requires each to be rescheduled or cancelled.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-57-AC5",
+          "description": "The server refuses to save while any overlapping booking is unresolved, and applies the closure and its resolutions in one transaction.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-57-AC6",
+          "description": "Contract, browser and axe tests pass.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-58",
+      "github_issue": 75,
+      "title": "Add therapist time off",
+      "description": "Stop a therapist being assigned while they are away.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web + Backend",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p1",
+        "sprint:10"
+      ],
+      "dependencies": [
+        "MOT-57"
+      ],
+      "requirements": "Owner-approved improvement, 2026-11-06",
+      "target_paths": [
+        "supabase/migrations/",
+        "web/src/features/scheduler/"
+      ],
+      "functions": [
+        {
+          "name": "scheduler_save_time_off",
+          "description": "Add or edit a therapist's leave, with the same resolution rule as closures.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_delete_time_off",
+          "description": "Remove a leave entry.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-58-AC1",
+          "description": "Schedulers add, edit and delete leave for a therapist as a specific time range.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-58-AC2",
+          "description": "A therapist on leave cannot be confirmed, assigned or rescheduled onto a session, enforced on the server.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-58-AC3",
+          "description": "The therapist picker marks who is on leave.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-58-AC4",
+          "description": "Leave that overlaps a therapist's active bookings must resolve each one first, as a closure does.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-58-AC5",
+          "description": "A therapist sees their own leave on My Schedule.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-59",
+      "github_issue": 76,
+      "title": "Add in-app notifications and scheduler alerts",
+      "description": "Tell people what changed, inside both apps, with a read and unread state.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Web + Android",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p0",
+        "sprint:10"
+      ],
+      "dependencies": [
+        "MOT-56",
+        "MOT-57"
+      ],
+      "requirements": "Booking brief, section 7; owner-approved scheduler alerts, 2026-11-06",
+      "target_paths": [
+        "supabase/migrations/",
+        "web/src/features/notifications/",
+        "web/src/layout/Shell.tsx",
+        "android/app/src/main/java/com/motivance/feature/notifications/",
+        "android/app/src/main/java/com/motivance/navigation/MotivanceApp.kt"
+      ],
+      "functions": [
+        {
+          "name": "notify_booking_change",
+          "description": "Trigger that creates notifications when a booking is confirmed, rejected, rescheduled or cancelled.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "mark_notifications_read",
+          "description": "Mark some or all of the caller's notifications as read.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "NotificationBell",
+          "description": "Unread count and list, on web and Android.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-59-AC1",
+          "description": "Confirming, rejecting, rescheduling or cancelling a booking notifies the patient and the assigned therapist, including changes made while resolving a closure.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-59-AC2",
+          "description": "New requests and patient cancellations alert every active Scheduler.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-59-AC3",
+          "description": "The web has a bell and list with read and unread state for patients, therapists and Schedulers.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-59-AC4",
+          "description": "Android has the same bell and list.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-59-AC5",
+          "description": "A person reads only their own notifications, proved by a test.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-59-AC6",
+          "description": "Notification text comes from the app, so it follows the reader's language, and shows the specific time in Asia/Manila.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-60",
+      "github_issue": 77,
+      "title": "Send queued Gmail email with calendar links",
+      "description": "Email people through Gmail without ever slowing a request, with a link that adds the session to their calendar.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend",
+      "estimate_points": 8,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p0",
+        "sprint:10"
+      ],
+      "dependencies": [
+        "MOT-59"
+      ],
+      "requirements": "Booking brief, sections 7 and 11 (add to calendar)",
+      "target_paths": [
+        "supabase/functions/notification-dispatch/",
+        "supabase/functions/booking-calendar/",
+        "supabase/migrations/",
+        "scripts/configure_notifications.py",
+        "docs/operations/NOTIFICATIONS.md"
+      ],
+      "functions": [
+        {
+          "name": "notification-dispatch",
+          "description": "Edge Function that claims queued deliveries and sends them through Gmail SMTP.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "booking-calendar",
+          "description": "Public Edge Function that returns an .ics file for an unguessable per-booking token.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-60-AC1",
+          "description": "A booking action only writes a queue row, so email can never block or fail the request.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-60-AC2",
+          "description": "notification-dispatch needs a shared secret, claims rows so two runs cannot send one email twice, and retries with backoff before stopping as failed.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-60-AC3",
+          "description": "Templates in English and Filipino show the session date, specific time, therapist, location and reference number, in the recipient's language.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-60-AC4",
+          "description": "Confirmation and reschedule emails include an add-to-calendar link, and the .ics file updates the same calendar entry after a reschedule.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-60-AC5",
+          "description": "A real send to local Mailpit proves the template, the calendar link and retry behaviour. pg_cron drains the queue.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-60-AC6",
+          "description": "SMTP secrets live only in Edge secrets, the port is a separate setting, and docs/operations/NOTIFICATIONS.md explains setup.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-60-AC7",
+          "description": "A real email reaches an inbox through Gmail from a hosted project on port 465.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-61",
+      "github_issue": 78,
+      "title": "Add reminders and expire old requests",
+      "description": "Remind people before sessions, and stop old requests sitting at Pending forever.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p1",
+        "sprint:10"
+      ],
+      "dependencies": [
+        "MOT-60"
+      ],
+      "requirements": "Booking brief, section 11; owner-approved auto-expiry, 2026-11-06",
+      "target_paths": [
+        "supabase/migrations/",
+        "scripts/test_booking.py"
+      ],
+      "functions": [
+        {
+          "name": "enqueue_booking_reminders",
+          "description": "Queue 24-hour and 1-hour reminders, once each per session time.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "expire_stale_bookings",
+          "description": "Reject pending requests whose session time has passed, and tell the patient.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-61-AC1",
+          "description": "Patients and therapists get reminders 24 hours and 1 hour before a confirmed session.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-61-AC2",
+          "description": "Each reminder is sent exactly once, even if the job runs repeatedly, proved by a test.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-61-AC3",
+          "description": "A rescheduled session gets fresh reminders, and a cancelled session gets none.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-61-AC4",
+          "description": "Pending requests whose time has passed are rejected automatically with a stated reason, and the patient is told.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-61-AC5",
+          "description": "Both jobs run on pg_cron, and the audit log records the system as the actor.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-62",
+      "github_issue": 79,
+      "title": "Build the confirmed schedule with XLSX and PDF export",
+      "description": "Give Schedulers a searchable confirmed schedule they can export.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p0",
+        "sprint:10"
+      ],
+      "dependencies": [
+        "MOT-57"
+      ],
+      "requirements": "Booking brief, section 9",
+      "target_paths": [
+        "web/src/features/scheduler/",
+        "web/src/features/scheduler/export.ts",
+        "web/package.json",
+        "supabase/migrations/",
+        "scripts/check_web_bundle.py"
+      ],
+      "functions": [
+        {
+          "name": "ScheduleView",
+          "description": "Confirmed sessions with search and filters.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "exportSchedule",
+          "description": "Export the current filtered result to XLSX or PDF.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_log_export",
+          "description": "Write each export to the audit log.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-62-AC1",
+          "description": "The view shows confirmed sessions with search and filters for date range, therapist, patient and status.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-62-AC2",
+          "description": "Export covers the whole filtered result, not only the visible page, to XLSX and PDF.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-62-AC3",
+          "description": "The PDF includes the center name and logo, the date range and the generation timestamp.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-62-AC4",
+          "description": "Every export is written to the audit log with its format and row count.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-62-AC5",
+          "description": "Export code loads only on export, and check_web_bundle.py passes.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-62-AC6",
+          "description": "Contract, browser and axe tests pass, and exported files are checked for content.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    }
+  ],
+  "plan_reference": "docs/architecture/BOOKING.md"
+}

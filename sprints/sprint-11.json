@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "id": "S11",
+  "title": "S11 - Self-service and scheduling tools",
+  "description": "Weeks 21-22. Exit: patients can wait for a full slot and move their own sessions, attendance is tracked, Schedulers can book a weekly course, and a dashboard shows the state of the center.",
+  "goal": "Reduce manual scheduling work for patients and staff.",
+  "status": "planned",
+  "weeks": {
+    "start": 21,
+    "end": 22
+  },
+  "github_milestone": 11,
+  "entry_criteria": [
+    "Confirm owners and realistic capacity before starting.",
+    "Required predecessor deliverables are available or scheduled in dependency order."
+  ],
+  "exit_criteria": [
+    {
+      "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
+      "passed": false,
+      "evidence": []
+    },
+    {
+      "description": "Join a waitlist and get told when the place opens, reschedule a session as a patient, mark a no-show, book a weekly course with one conflicting date, and read the dashboard.",
+      "passed": false,
+      "evidence": []
+    }
+  ],
+  "demo": "Join a waitlist and get told when the place opens, reschedule a session as a patient, mark a no-show, book a weekly course with one conflicting date, and read the dashboard.",
+  "risks": [
+    "Each feature here reaches both apps, so the Android work is as large as the web work.",
+    "A weekly series can partly conflict, so its results must be shown date by date."
+  ],
+  "execution_plan": {
+    "first_week": "Work prerequisites first; review integration and design risks midweek.",
+    "second_week": "Integrate, execute acceptance checks, fix defects and demonstrate the sprint outcome.",
+    "capacity_policy": "Estimates are provisional; reserve approximately 20% of actual team capacity for integration and defects."
+  },
+  "total_estimate_points": 21,
+  "completion": {
+    "completed_at": null,
+    "reviewed_by": null,
+    "evidence": []
+  },
+  "issues": [
+    {
+      "id": "MOT-63",
+      "github_issue": 80,
+      "title": "Add the waitlist",
+      "description": "Let patients wait for a full slot and hear when it opens.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Web + Android",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p1",
+        "sprint:11"
+      ],
+      "dependencies": [
+        "MOT-59"
+      ],
+      "requirements": "Booking brief, section 11",
+      "target_paths": [
+        "supabase/migrations/",
+        "web/src/features/patient/",
+        "android/app/src/main/java/com/motivance/feature/booking/"
+      ],
+      "functions": [
+        {
+          "name": "join_waitlist",
+          "description": "Join the waitlist for a full slot.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "leave_waitlist",
+          "description": "Leave the waitlist.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-63-AC1",
+          "description": "A patient can join the waitlist for a full slot, once, on web and Android, and leave it.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-63-AC2",
+          "description": "When a place opens, everyone waiting is notified, in the app and by email.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-63-AC3",
+          "description": "The first to book gets the place, and capacity rules still apply to everyone.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-63-AC4",
+          "description": "A waitlisted patient who books the slot leaves the waitlist automatically.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-64",
+      "github_issue": 81,
+      "title": "Add patient self-service reschedule",
+      "description": "Let patients move their own sessions within the rules, without calling the center.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Web + Android",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p1",
+        "sprint:11"
+      ],
+      "dependencies": [
+        "MOT-59"
+      ],
+      "requirements": "Booking brief, section 11",
+      "target_paths": [
+        "supabase/migrations/",
+        "web/src/features/patient/",
+        "android/app/src/main/java/com/motivance/feature/booking/"
+      ],
+      "functions": [
+        {
+          "name": "reschedule_my_booking",
+          "description": "Move the caller's own booking to another specific slot within the rules.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-64-AC1",
+          "description": "A patient can move their own pending or confirmed booking to another specific slot, on web and Android.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-64-AC2",
+          "description": "The server enforces the reschedule cut-off and the maximum number of self-reschedules.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-64-AC3",
+          "description": "A confirmed booking returns to Pending for the Scheduler to re-confirm, and keeps its therapist only if they are free at the new time.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-64-AC4",
+          "description": "The assigned therapist and Schedulers are notified.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-65",
+      "github_issue": 82,
+      "title": "Add attendance tracking to My Schedule",
+      "description": "Record who came, so no-shows are visible.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Web + Android",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p1",
+        "sprint:11"
+      ],
+      "dependencies": [
+        "MOT-56"
+      ],
+      "requirements": "Booking brief, section 11",
+      "target_paths": [
+        "supabase/migrations/",
+        "web/src/features/schedule/",
+        "android/app/src/main/java/com/motivance/feature/booking/"
+      ],
+      "functions": [
+        {
+          "name": "mark_attendance",
+          "description": "Record attended or no-show for a session that has started.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-65-AC1",
+          "description": "The assigned therapist or a Scheduler can mark a session attended or no-show, once it has started, and correct it.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-65-AC2",
+          "description": "Nobody else can, enforced on the server.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-65-AC3",
+          "description": "Therapists mark attendance from My Schedule on web and Android.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-65-AC4",
+          "description": "Attendance appears in the Scheduler's schedule, its filters and its exports, and every change is audited.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-66",
+      "github_issue": 83,
+      "title": "Add weekly repeat bookings",
+      "description": "Let a Scheduler book the same weekly time for a course of therapy in one step.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Backend + Web",
+      "estimate_points": 5,
+      "labels": [
+        "type:feature",
+        "area:backend",
+        "priority:p1",
+        "sprint:11"
+      ],
+      "dependencies": [
+        "MOT-62"
+      ],
+      "requirements": "Owner-approved improvement, 2026-11-06",
+      "target_paths": [
+        "supabase/migrations/",
+        "web/src/features/scheduler/"
+      ],
+      "functions": [
+        {
+          "name": "scheduler_series_preview",
+          "description": "Check every date of a proposed series and report any problem.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_series_create",
+          "description": "Create confirmed bookings for the dates that pass.",
+          "kind": "planned capability; implementation names may change"
+        },
+        {
+          "name": "scheduler_series_cancel",
+          "description": "Cancel the remaining sessions of a series with a reason.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-66-AC1",
+          "description": "A Scheduler chooses a patient, therapist, first session and number of weeks, and sees each date with any conflict before saving.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-66-AC2",
+          "description": "Saving creates confirmed bookings only for the dates that pass, each checked under the same rules as any booking.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-66-AC3",
+          "description": "The patient and therapist get one notification for the series, not one per date.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-66-AC4",
+          "description": "The remaining sessions of a series can be cancelled together, with a reason.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    },
+    {
+      "id": "MOT-67",
+      "github_issue": 84,
+      "title": "Build the Scheduler dashboard",
+      "description": "Open the Scheduler workspace on the numbers that need attention.",
+      "status": "planned",
+      "owner": null,
+      "suggested_owner_role": "Web + Backend",
+      "estimate_points": 3,
+      "labels": [
+        "type:feature",
+        "area:web",
+        "priority:p1",
+        "sprint:11"
+      ],
+      "dependencies": [
+        "MOT-62"
+      ],
+      "requirements": "Booking brief, section 11",
+      "target_paths": [
+        "web/src/features/scheduler/",
+        "supabase/migrations/"
+      ],
+      "functions": [
+        {
+          "name": "scheduler_summary",
+          "description": "Counts for pending requests, today's sessions and this week's utilization.",
+          "kind": "planned capability; implementation names may change"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "MOT-67-AC1",
+          "description": "The dashboard shows pending requests, today's sessions and utilization this week, all from the server.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-67-AC2",
+          "description": "Utilization is booked sessions as a share of available places in open slots this week, and the page says so.",
+          "passed": false,
+          "evidence": []
+        },
+        {
+          "id": "MOT-67-AC3",
+          "description": "Each figure opens the page that explains it.",
+          "passed": false,
+          "evidence": []
+        }
+      ],
+      "completion": {
+        "completed_at": null,
+        "reviewed_by": null,
+        "evidence": []
+      },
+      "plan_reference": "docs/architecture/BOOKING.md",
+      "blockers": []
+    }
+  ],
+  "plan_reference": "docs/architecture/BOOKING.md"
+}
