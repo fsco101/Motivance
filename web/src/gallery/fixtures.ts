@@ -1,4 +1,5 @@
 import type { Availability, Booking } from '@/data/booking'
+import type { AffectedBooking, CenterCalendar } from '@/data/calendar'
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
 import type { RequestDetail, RequestRow, TherapistChoice } from '@/data/scheduler'
@@ -140,6 +141,26 @@ export const therapistSchedule: Schedule = {
     { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', rows: [] },
   ],
 }
+
+export const calendar: CenterCalendar = {
+  settings: {
+    centerName: 'Motivance Therapy Center', location: 'Motivance Center, Quezon City', slotMinutes: 60, slotCapacity: 3, cancelCutoffHours: 24, rescheduleCutoffHours: 24, minimumNoticeHours: 24,
+    bookingHorizonDays: 60, maxActiveBookings: 5, maxSelfReschedules: 2,
+  },
+  hours: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, isOpen: weekday < 6, opensAt: '09:00', closesAt: '17:00' })),
+  holidays: [
+    { id: 'h1', name: 'Christmas Day', kind: 'regular', startsOn: '2026-12-25', endsOn: '2026-12-25' },
+    { id: 'h2', name: 'Year-end break', kind: 'seasonal', startsOn: '2026-12-28', endsOn: '2027-01-01' },
+  ],
+  closures: [
+    { id: 'c1', startsAt: '2026-12-11T16:00:00Z', endsAt: '2026-12-12T16:00:00Z', allDay: true, reason: 'Water supply maintenance' },
+    { id: 'c2', startsAt: '2026-12-09T05:00:00Z', endsAt: '2026-12-09T07:00:00Z', allDay: false, reason: 'Staff training' },
+  ],
+}
+export const affected: AffectedBooking[] = [
+  { id: 'q1', reference: 'BK-2026-000158', status: 'pending', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', patient: 'Ana Dela Cruz', therapistId: null, therapist: null },
+  { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', startsAt: '2026-12-14T03:00:00Z', endsAt: '2026-12-14T04:00:00Z', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes' },
+]
 
 export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 

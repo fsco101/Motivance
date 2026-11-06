@@ -93,6 +93,8 @@ delete from public.prescription_versions where patient_id in ({ids}); delete fro
 delete from public.patient_profiles where user_id in ({ids});
 delete from public.patient_invitations where therapist_id in ({ids});
 delete from public.therapist_patients where therapist_id in ({ids}) or patient_id in ({ids});
+delete from public.center_closures where created_by in ({ids}); delete from public.center_holidays where created_by in ({ids});
+update public.center_settings set updated_by=null where updated_by in ({ids});
 delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids});
 delete from public.patients where id in ({ids}); delete from public.user_roles where user_id in ({ids});
 delete from public.profiles where id in ({ids}); delete from auth.users where id in ({ids}); commit;""")
@@ -786,7 +788,178 @@ def schedule_checks(stack):
     stack.check(sessions(working(to))[0]['linked'] is False, 'A link that has ended no longer counts')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule}
+def calendar(stack):
+    """MOT-57: running the center's calendar, and a closure that cannot strand a booking."""
+    settings = stack.sql('select row_to_json(s) from public.center_settings s;')
+    hours = stack.sql("select json_agg(h) from public.center_hours h;")
+    try:
+        calendar_checks(stack)
+    finally:
+        stack.sql("delete from public.center_closures where reason like 'Booking test%';")
+        stack.sql("delete from public.center_holidays where name like 'Booking test%';")
+        stack.sql(f"""update public.center_settings s set (center_name,location,slot_minutes,slot_capacity,cancel_cutoff_hours,reschedule_cutoff_hours,minimum_notice_hours,booking_horizon_days,max_active_bookings,max_self_reschedules)=
+ (select center_name,location,slot_minutes,slot_capacity,cancel_cutoff_hours,reschedule_cutoff_hours,minimum_notice_hours,booking_horizon_days,max_active_bookings,max_self_reschedules
+  from json_populate_record(null::public.center_settings,$j${settings}$j$::json));""")
+        stack.sql(f"""update public.center_hours h set is_open=x.is_open,opens_at=x.opens_at,closes_at=x.closes_at from json_populate_recordset(null::public.center_hours,$j${hours}$j$::json) x where x.weekday=h.weekday;""")
+
+
+def calendar_checks(stack):
+    _, ts = stack.user('patient', 'scheduler')
+    tess, _ = stack.user('patient', 'therapist', name='Booking Tess Calendar')
+    omar, _ = stack.user('patient', 'therapist', name='Booking Omar Calendar')
+    ana, ta = stack.user('patient', name='Booking Ana Calendar')
+    ben, tb = stack.user('patient', name='Booking Ben Calendar')
+    cara, tc = stack.user('patient', name='Booking Cara Calendar')
+    fresh = working_days(stack)
+    day, spare, later, last, wide = next(fresh), next(fresh), next(fresh), next(fresh), next(fresh)
+
+    def request(token, start):
+        code, data = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)
+        assert code == 200, data
+        return data
+
+    def confirm(booking, therapist):
+        code, data = stack.rpc('scheduler_confirm', {'p_booking': booking['id'], 'p_therapist': therapist}, ts)
+        assert code == 200, data
+
+    def status(booking):
+        return stack.sql(f"select status from public.bookings where id='{booking['id']}';")
+
+    def starts_hour(booking):
+        return int(stack.sql(f"select extract(hour from starts_at at time zone 'Asia/Manila')::integer from public.bookings where id='{booking['id']}';"))
+
+    def day_status(token, date_value):
+        return stack.rpc('booking_availability', {'p_from': str(date_value), 'p_to': str(date_value)}, token)[1]['days'][0]['status']
+
+    def closures():
+        return int(stack.sql("select count(*) from public.center_closures where reason like 'Booking test%';"))
+
+    def whole_day(date_value):
+        return manila(date_value, 0), manila(date_value + timedelta(days=1), 0)
+
+    def closure(date_value, resolutions=(), closure_id=None, reason='Booking test outage'):
+        starts, ends = whole_day(date_value)
+        return stack.rpc('scheduler_save_closure', {'p_id': closure_id, 'p_starts': starts, 'p_ends': ends, 'p_all_day': True, 'p_reason': reason, 'p_resolutions': list(resolutions)}, ts)
+
+    def cancel(booking):
+        return {'booking': booking['id'], 'action': 'cancel', 'reason': 'Booking test outage'}
+
+    def move(booking, start, therapist=None):
+        return {'booking': booking['id'], 'action': 'reschedule', 'starts_at': start, 'therapist': therapist}
+
+    # Settings. Every rule a Scheduler can change, and what the table refuses.
+    rules = dict(p_center_name='Booking test center', p_location='12 Mabini Street', p_slot_minutes=60, p_slot_capacity=3, p_cancel_cutoff_hours=24, p_reschedule_cutoff_hours=24,
+                 p_minimum_notice_hours=24, p_booking_horizon_days=60, p_max_active_bookings=5, p_max_self_reschedules=2)
+    code, saved = stack.rpc('scheduler_save_settings', dict(rules, p_max_active_bookings=6), ts)
+    stack.check(code == 200 and saved['center_name'] == 'Booking test center' and saved['location'] == '12 Mabini Street' and saved['max_active_bookings'] == 6, 'A Scheduler saves the center and its rules')
+    stack.check(stack.sql('select updated_by is not null from public.center_settings;') == 't', 'The save records who made it')
+    for name, value in [('p_slot_capacity', 0), ('p_slot_minutes', 5), ('p_booking_horizon_days', 0), ('p_center_name', '   '), ('p_center_name', None)]:
+        stack.check(refused(stack.rpc('scheduler_save_settings', dict(rules, **{name: value}), ts), 'booking_invalid'), f'A bad value for {name} is refused')
+    stack.check(stack.sql('select max_active_bookings from public.center_settings;') == '6', 'A refused save changes nothing')
+    stack.check(stack.rpc('scheduler_save_settings', rules, ta)[0] == 403, 'A patient cannot change the rules')
+    stack.check(stack.rpc('scheduler_save_settings', dict(rules, p_max_active_bookings=5), ts)[0] == 200, 'The rules go back')
+
+    # Hours. A session already booked keeps its time, so the page is told what now falls outside them.
+    week = [{'weekday': number, 'is_open': number < 6, 'opens_at': '09:00', 'closes_at': '17:00'} for number in range(1, 8)]
+    late = request(ta, manila(last, 16))
+    shorter = [dict(item, closes_at='15:00') if item['weekday'] == last.isoweekday() else item for item in week]
+    code, saved = stack.rpc('scheduler_save_hours', {'p_hours': shorter}, ts)
+    stack.check(code == 200 and saved['outside_hours'] == 1, 'Shorter hours say how many sessions now fall outside them')
+    stack.check(status(late) == 'pending', 'A session outside the new hours keeps its place until someone decides')
+    stack.check(len(stack.rpc('booking_availability', {'p_from': str(last), 'p_to': str(last)}, tb)[1]['days'][0]['slots']) == 6, 'Availability follows the new hours')
+    stack.check(stack.rpc('scheduler_save_hours', {'p_hours': week}, ts)[1]['outside_hours'] == 0, 'Hours go back, and nothing is left outside them')
+    stack.check(refused(stack.rpc('scheduler_cancel', {'p_booking': late['id'], 'p_reason': 'x'}, ts), 'booking_reason_required'), 'Cancelling still needs a real reason')
+    stack.check(stack.rpc('scheduler_cancel', {'p_booking': late['id'], 'p_reason': 'Test'}, ts)[0] == 200, 'The test session is cleared away')
+    backwards = [dict(item, opens_at='18:00') if item['weekday'] == 1 else item for item in week]
+    for label, bad in [('six days', week[:6]), ('a day twice', week[:6] + [week[0]]), ('opening after closing', backwards), ('a time that is not one', [dict(week[0], opens_at='late')] + week[1:]), ('a weekday that is not one', [dict(week[0], weekday='x')] + week[1:])]:
+        stack.check(refused(stack.rpc('scheduler_save_hours', {'p_hours': bad}, ts), 'booking_invalid'), f'Hours with {label} are refused')
+    stack.check(stack.sql("select opens_at from public.center_hours where weekday=1;").startswith('09:00'), 'A refused save changes no day')
+
+    # Holidays, one day or a break.
+    code, break_days = stack.rpc('scheduler_save_holiday', {'p_id': None, 'p_name': 'Booking test break', 'p_kind': 'seasonal', 'p_starts_on': str(spare), 'p_ends_on': str(later)}, ts)
+    stack.check(code == 200 and day_status(tb, spare) == 'holiday' and day_status(tb, later) == 'holiday', 'A break closes every day in it')
+    code, edited = stack.rpc('scheduler_save_holiday', {'p_id': break_days['id'], 'p_name': 'Booking test break renamed', 'p_kind': 'special', 'p_starts_on': str(later), 'p_ends_on': str(later)}, ts)
+    stack.check(code == 200 and edited['name'] == 'Booking test break renamed' and edited['kind'] == 'special', 'A holiday can be edited')
+    stack.check(day_status(tb, spare) == 'open' and day_status(tb, later) == 'holiday', 'Editing the dates moves what is closed')
+    stack.check(stack.rpc('scheduler_delete_holiday', {'p_id': break_days['id']}, ts)[0] == 204 and day_status(tb, later) == 'open', 'Deleting a holiday opens the day again')
+    stack.check(refused(stack.rpc('scheduler_delete_holiday', {'p_id': break_days['id']}, ts), 'booking_unavailable'), 'A holiday already gone is refused')
+    for label, body in [('no name', {'p_name': '  ', 'p_kind': 'special', 'p_starts_on': str(day), 'p_ends_on': str(day)}), ('an unknown kind', {'p_name': 'Booking test', 'p_kind': 'party', 'p_starts_on': str(day), 'p_ends_on': str(day)})]:
+        stack.check(refused(stack.rpc('scheduler_save_holiday', dict(body, p_id=None), ts), 'booking_invalid'), f'A holiday with {label} is refused')
+    stack.check(refused(stack.rpc('scheduler_save_holiday', {'p_id': None, 'p_name': 'Booking test', 'p_kind': 'special', 'p_starts_on': str(later), 'p_ends_on': str(day)}, ts), 'booking_invalid_range'), 'A holiday ending before it starts is refused')
+    seeded = stack.sql("select id from public.center_holidays where source='seed' order by starts_on limit 1;")
+    stack.check(refused(stack.rpc('scheduler_save_holiday', {'p_id': str(uuid.uuid4()), 'p_name': 'Booking test', 'p_kind': 'special', 'p_starts_on': str(day), 'p_ends_on': str(day)}, ts), 'booking_unavailable'), 'A holiday that does not exist cannot be edited')
+    stack.check(bool(seeded), 'The seeded holidays are there to edit')
+
+    # What a closure would strand.
+    a, b, c = request(ta, manila(day, 9)), request(tb, manila(day, 10)), request(tc, manila(day, 11))
+    confirm(b, tess)
+    confirm(c, omar)
+    gone = request(ta, manila(day, 13))
+    stack.check(stack.rpc('scheduler_reject', {'p_booking': gone['id'], 'p_reason': 'Test'}, ts)[0] == 200, 'One request is already decided')
+    other_day = request(ta, manila(spare, 9))
+    past = str(uuid.uuid4())
+    stack.sql(f"insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values('{past}','BK-PAST-{past[:8]}','{ben}','{tess}',now()-interval '3 days',now()-interval '3 days'+interval '1 hour','confirmed');")
+    starts, ends = whole_day(day)
+    code, impact = stack.rpc('scheduler_calendar_impact', {'p_starts': starts, 'p_ends': ends}, ts)
+    stack.check(code == 200 and [row['id'] for row in impact] == [a['id'], b['id'], c['id']], 'The impact lists active bookings in the time, in order')
+    stack.check(impact[0]['patient_name'] == 'Booking Ana Calendar' and impact[1]['therapist_name'] == 'Booking Tess Calendar', 'The impact says who each one is')
+    stack.check(stack.rpc('scheduler_calendar_impact', {'p_starts': manila(day, 10), 'p_ends': manila(day, 11)}, ts)[1][0]['id'] == b['id'], 'A part of a day lists only what overlaps it')
+    yesterday = stack.rpc('scheduler_calendar_impact', {'p_starts': (datetime.now(timezone.utc) - timedelta(days=5)).isoformat(), 'p_ends': (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()}, ts)[1]
+    stack.check(past not in [row['id'] for row in yesterday], 'A session already over needs no decision')
+    stack.check(stack.rpc('scheduler_calendar_impact', {'p_starts': starts, 'p_ends': ends}, ta)[0] == 403, 'A patient cannot read the impact')
+    stack.check(refused(stack.rpc('scheduler_calendar_impact', {'p_starts': ends, 'p_ends': starts}, ts), 'booking_invalid_range'), 'A backward range is refused')
+
+    # The server, not the page, insists on a decision for each one.
+    stack.check(refused(closure(day), 'booking_unresolved'), 'A closure over active bookings is refused without decisions')
+    stack.check(refused(closure(day, [cancel(a)]), 'booking_unresolved'), 'A decision for only some of them is refused')
+    stack.check(refused(closure(day, [cancel(a), cancel(b), cancel(c), cancel(other_day)]), 'booking_invalid'), 'A decision for a booking outside the closure is refused')
+    stack.check(refused(closure(day, [cancel(a), cancel(a), cancel(b), cancel(c)]), 'booking_invalid'), 'Two decisions for one booking are refused')
+    stack.check(refused(closure(day, [cancel(a), cancel(b), {'booking': c['id'], 'action': 'ignore'}]), 'booking_invalid'), 'An unknown decision is refused')
+    stack.check(closures() == 0 and [status(item) for item in (a, b, c)] == ['pending', 'confirmed', 'confirmed'], 'Nothing changes while any booking is unresolved')
+
+    # One transaction: if any part fails, nothing happens.
+    stack.check(refused(closure(day, [cancel(a), move(b, manila(day, 15)), cancel(c)]), 'booking_closure'), 'A booking cannot be moved into the closure itself')
+    stack.check(closures() == 0 and status(a) == 'pending' and status(c) == 'confirmed', 'The failed move undoes the cancellations before it, and the closure')
+    stack.check(refused(closure(day, [move(a, manila(spare, 10)), cancel(b), cancel(c)]), 'booking_therapist_required'), 'A request with no therapist needs one to be moved')
+    stack.check(refused(closure(day, [cancel(a), cancel(b), cancel(c)], reason='x'), 'booking_reason_required'), 'A closure needs a real reason')
+
+    code, saved = closure(day, [cancel(a), move(b, manila(spare, 10)), move(c, manila(spare, 11))])
+    stack.check(code == 200 and closures() == 1 and saved['all_day'] is True, 'With a decision for each, the closure saves')
+    stack.check(status(a) == 'cancelled' and status(b) == 'rescheduled' and status(c) == 'rescheduled', 'Each decision is applied')
+    stack.check(starts_hour(b) == 10 and stack.sql(f"select starts_at::date='{spare}' from public.bookings where id='{b['id']}';") == 't', 'A moved booking is at its new time')
+    stack.check(day_status(ta, day) == 'closure', 'The day is closed to patients')
+    stack.check(next(item for item in stack.rpc('my_bookings', {}, ta)[1] if item['id'] == a['id'])['status_reason'] == 'Booking test outage', 'The patient can see why their booking was cancelled')
+    stack.check(stack.sql(f"select count(*) from public.booking_events where booking_id='{a['id']}' and action='cancelled' and actor_role='scheduler';") == '1', 'The audit log records the decision and who made it')
+
+    # A booking made after the list was read still cannot slip through.
+    stack.check(stack.rpc('scheduler_calendar_impact', {'p_starts': whole_day(later)[0], 'p_ends': whole_day(later)[1]}, ts)[1] == [], 'The next day has nothing in it yet')
+    arrived = request(tb, manila(later, 9))
+    stack.check(refused(closure(later), 'booking_unresolved'), 'A booking made after the list was read is caught at the save')
+    stack.check(closure(later, [cancel(arrived)])[0] == 200 and status(arrived) == 'cancelled', 'Once decided, that closure saves')
+
+    # Editing and deleting.
+    existing = stack.sql("select id from public.center_closures where reason like 'Booking test%' order by starts_at limit 1;")
+    stack.check(refused(closure(spare, closure_id=existing), 'booking_unresolved'), 'Moving a closure onto bookings needs decisions too')
+    stack.check(day_status(ta, day) == 'closure', 'The refused edit leaves the closure where it was')
+    stack.check(closure(wide, closure_id=existing, reason='Booking test moved')[0] == 200 and day_status(ta, wide) == 'closure' and day_status(ta, day) == 'open', 'A closure can be moved')
+    stack.check(closures() == 2, 'Moving one does not add another')
+    stack.check(refused(closure(wide, closure_id=str(uuid.uuid4())), 'booking_unavailable'), 'A closure that does not exist cannot be edited')
+    stack.check(stack.rpc('scheduler_delete_closure', {'p_id': existing}, ts)[0] == 204 and day_status(ta, wide) == 'open', 'Deleting a closure opens the time again')
+    stack.check(refused(stack.rpc('scheduler_delete_closure', {'p_id': existing}, ts), 'booking_unavailable'), 'A closure already gone is refused')
+    part = stack.rpc('scheduler_save_closure', {'p_id': None, 'p_starts': manila(wide, 13), 'p_ends': manila(wide, 15), 'p_all_day': False, 'p_reason': 'Booking test part', 'p_resolutions': []}, ts)
+    stack.check(part[0] == 200 and part[1]['all_day'] is False, 'A closure can cover part of a day')
+    found = stack.rpc('booking_availability', {'p_from': str(wide), 'p_to': str(wide)}, ta)[1]['days'][0]
+    stack.check(found['status'] == 'open' and len(found['slots']) == 6, 'The rest of that day stays open')
+
+    # A holiday resolves bookings the same way.
+    held = request(ta, manila(last, 9))
+    body = {'p_id': None, 'p_name': 'Booking test holiday', 'p_kind': 'special', 'p_starts_on': str(last), 'p_ends_on': str(last)}
+    stack.check(refused(stack.rpc('scheduler_save_holiday', dict(body, p_resolutions=[]), ts), 'booking_unresolved'), 'A holiday over an active booking is refused without a decision')
+    stack.check(stack.sql("select count(*) from public.center_holidays where name='Booking test holiday';") == '0', 'And is not saved')
+    stack.check(stack.rpc('scheduler_save_holiday', dict(body, p_resolutions=[cancel(held)]), ts)[0] == 200 and status(held) == 'cancelled', 'With a decision, the holiday saves')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar}
 
 
 def main():

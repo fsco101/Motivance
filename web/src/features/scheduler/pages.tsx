@@ -2,9 +2,11 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ButtonLink } from '@/components/Button'
+import { ConfirmDialog } from '@/components/Dialog'
 import { PageHeader, Panel } from '@/components/Display'
 import { toast } from '@/components/Toast'
 import { addDays, bookingFailureKey, CENTER_ZONE, isStale, todayAt } from '@/data/booking'
+import { deleteClosure, deleteHoliday, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, type CenterDay, type CenterSettings, type Closure, type Holiday } from '@/data/calendar'
 import { supabase } from '@/data/client'
 import {
   assignTherapist, bulkReject, cancelBooking, confirmBooking, loadDetail, loadRequests, loadStaffAvailability, loadTherapists, NO_FILTERS, PAGE_SIZE, rejectBooking, rescheduleBooking,
@@ -12,6 +14,8 @@ import {
 } from '@/data/scheduler'
 import { asLoad } from '@/features/shared'
 import '@/locales/booking'
+import { ClosureDialog, HolidayDialog, type CalendarActions } from './CalendarDialogs'
+import { CalendarView, type CalendarTab } from './CalendarView'
 import { BulkRejectDialog, RequestDialog, type RequestActionKind, type RequestActions } from './RequestDialogs'
 import { RequestsView } from './RequestsView'
 
@@ -21,14 +25,33 @@ export function SchedulerHomePage() {
   return (
     <>
       <PageHeader title={t('scheduler.title')} description={t('scheduler.scope')} />
-      <Panel><ButtonLink to="/scheduler/requests">{t('scheduler.requestsTitle')}</ButtonLink></Panel>
+      <Panel><div className="flex flex-wrap gap-2"><ButtonLink to="/scheduler/requests">{t('scheduler.requestsTitle')}</ButtonLink><ButtonLink variant="secondary" to="/scheduler/calendar">{t('calendar.title')}</ButtonLink></div></Panel>
     </>
   )
 }
 
-export function SchedulerRequestsPage() {
+/** Whatever happens, what is on screen reloads, so a Scheduler never acts on what another person has already changed. */
+function useSchedulerAction(onStale: () => void = () => undefined) {
   const { t } = useTranslation()
   const client = useQueryClient()
+  return async <T,>(work: () => Promise<T>, done: string | ((result: T) => string)) => {
+    let result: T
+    try {
+      result = await work()
+      toast.show(typeof done === 'string' ? done : done(result))
+    } catch (failure) {
+      toast.show(t(bookingFailureKey(failure)), 'error')
+      if (isStale(failure)) onStale()
+      await client.invalidateQueries({ queryKey: ['scheduler'] })
+      throw failure
+    }
+    await client.invalidateQueries({ queryKey: ['scheduler'] })
+    return result
+  }
+}
+
+export function SchedulerRequestsPage() {
+  const { t } = useTranslation()
   const [today] = useState(() => todayAt(CENTER_ZONE))
   const [filters, setFilters] = useState(NO_FILTERS)
   const [sort, setSort] = useState<RequestSort>({ key: 'created_at', direction: 'desc' })
@@ -53,29 +76,18 @@ export function SchedulerRequestsPage() {
   const reset = () => { setPage(0); setChecked([]) }
   const changeFilters = (next: RequestFilters) => { setFilters(next); reset() }
 
-  /** Whatever happens, the list reloads, so a Scheduler never acts on what another person has already changed. */
-  const act = async <T,>(work: () => Promise<T>, done: string | ((result: T) => string)) => {
-    try {
-      const result = await work()
-      toast.show(typeof done === 'string' ? done : done(result))
-    } catch (failure) {
-      toast.show(t(bookingFailureKey(failure)), 'error')
-      // A busy therapist can be swapped in the dialog. A booking someone else has changed cannot, so it closes to show what happened.
-      if (isStale(failure)) { setAction(null); setBulk(false) }
-      await client.invalidateQueries({ queryKey: ['scheduler'] })
-      throw failure
-    }
-    await client.invalidateQueries({ queryKey: ['scheduler'] })
-  }
+  // A busy therapist can be swapped in the dialog. A booking someone else has changed cannot, so it closes to show what happened.
+  const act = useSchedulerAction(() => { setAction(null); setBulk(false) })
+  const actAndForget = async <T,>(work: () => Promise<T>, done: string | ((result: T) => string)) => { await act(work, done) }
   const actions: RequestActions = {
     therapists: (booking, startsAt) => loadTherapists(supabase(), booking, startsAt),
     availability: (month) => loadStaffAvailability(supabase(), month),
-    confirm: (row, therapist) => act(() => confirmBooking(supabase(), row.id, therapist), t('scheduler.confirmed')),
-    assign: (row, therapist) => act(() => assignTherapist(supabase(), row.id, therapist), t('scheduler.assigned')),
-    reject: (row, reason) => act(() => rejectBooking(supabase(), row.id, reason), t('scheduler.rejected')),
-    cancel: (row, reason) => act(() => cancelBooking(supabase(), row.id, reason), t('booking.cancelled')),
-    reschedule: (row, startsAt, therapist) => act(() => rescheduleBooking(supabase(), row.id, startsAt, therapist), t('scheduler.rescheduled')),
-    bulkReject: (reason) => act(async () => { const count = await bulkReject(supabase(), selection, reason); setChecked([]); return count }, (count) => t('scheduler.bulkDone', { count })),
+    confirm: (row, therapist) => actAndForget(() => confirmBooking(supabase(), row.id, therapist), t('scheduler.confirmed')),
+    assign: (row, therapist) => actAndForget(() => assignTherapist(supabase(), row.id, therapist), t('scheduler.assigned')),
+    reject: (row, reason) => actAndForget(() => rejectBooking(supabase(), row.id, reason), t('scheduler.rejected')),
+    cancel: (row, reason) => actAndForget(() => cancelBooking(supabase(), row.id, reason), t('booking.cancelled')),
+    reschedule: (row, startsAt, therapist) => actAndForget(() => rescheduleBooking(supabase(), row.id, startsAt, therapist), t('scheduler.rescheduled')),
+    bulkReject: (reason) => actAndForget(async () => { const count = await bulkReject(supabase(), selection, reason); setChecked([]); return count }, (count) => t('scheduler.bulkDone', { count })),
   }
   return (
     <>
@@ -85,6 +97,51 @@ export function SchedulerRequestsPage() {
         onOutdated={() => changeFilters({ ...NO_FILTERS, search: filters.search, status: 'pending', to: addDays(today, -1) })} />
       {action && <RequestDialog kind={action.kind} row={action.row} actions={actions} onClose={() => setAction(null)} />}
       {bulk && <BulkRejectDialog count={selection.length} actions={actions} onClose={() => setBulk(false)} />}
+    </>
+  )
+}
+
+type Deleting = { kind: 'holiday'; item: Holiday; name: string } | { kind: 'closure'; item: Closure; name: string }
+
+export function SchedulerCalendarPage() {
+  const { t } = useTranslation()
+  const [today] = useState(() => todayAt(CENTER_ZONE))
+  const [tab, setTab] = useState<CalendarTab>('hours')
+  const [holiday, setHoliday] = useState<Holiday | null | undefined>()
+  const [closure, setClosure] = useState<Closure | null | undefined>()
+  const [deleting, setDeleting] = useState<Deleting | null>(null)
+  const [outsideHours, setOutsideHours] = useState(0)
+  const act = useSchedulerAction()
+  const calendar = useQuery({ queryKey: ['scheduler', 'calendar', today], queryFn: () => loadCalendar(supabase(), today) })
+  const actions: CalendarActions = {
+    impact: async ({ startsAt, endsAt }) => {
+      try {
+        return await loadImpact(supabase(), startsAt, endsAt)
+      } catch (failure) {
+        toast.show(t(bookingFailureKey(failure)), 'error')
+        throw failure
+      }
+    },
+    availability: (month) => loadStaffAvailability(supabase(), month),
+    therapists: (booking, startsAt) => loadTherapists(supabase(), booking, startsAt),
+    saveHoliday: (draft, resolutions) => act(() => saveHoliday(supabase(), draft, resolutions), t('calendar.holidaySaved')),
+    saveClosure: (draft, resolutions) => act(() => saveClosure(supabase(), draft, resolutions), t('calendar.closureSaved')),
+  }
+  const remove = (target: Deleting) => (target.kind === 'holiday'
+    ? act(() => deleteHoliday(supabase(), target.item.id), t('calendar.holidayDeleted'))
+    : act(() => deleteClosure(supabase(), target.item.id), t('calendar.closureDeleted')))
+  return (
+    <>
+      <CalendarView load={asLoad(calendar)} tab={tab} onTab={setTab} outsideHours={outsideHours}
+        onSaveHours={async (hours: CenterDay[]) => setOutsideHours(await act(() => saveHours(supabase(), hours), t('calendar.hoursSaved')))}
+        onSaveSettings={(settings: CenterSettings) => act(() => saveSettings(supabase(), settings), t('calendar.rulesSaved'))}
+        onEditHoliday={setHoliday} onDeleteHoliday={(item) => setDeleting({ kind: 'holiday', item, name: item.name })}
+        onEditClosure={setClosure} onDeleteClosure={(item) => setDeleting({ kind: 'closure', item, name: item.reason })} />
+      {holiday !== undefined && <HolidayDialog holiday={holiday} actions={actions} onClose={() => setHoliday(undefined)} />}
+      {closure !== undefined && <ClosureDialog closure={closure} actions={actions} onClose={() => setClosure(undefined)} />}
+      <ConfirmDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) setDeleting(null) }} destructive title={t(deleting?.kind === 'holiday' ? 'calendar.deleteHolidayTitle' : 'calendar.deleteClosureTitle')}
+        message={t('calendar.deleteMessage', { name: deleting?.name ?? '' })} confirmLabel={t('calendar.delete')} cancelLabel={t('calendar.keep')}
+        onConfirm={() => { if (deleting) void remove(deleting).catch(() => undefined); setDeleting(null) }} />
     </>
   )
 }

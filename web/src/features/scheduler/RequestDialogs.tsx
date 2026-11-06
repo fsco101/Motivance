@@ -39,7 +39,7 @@ function Actions({ onClose, keep, children }: { onClose: () => void; keep?: stri
 }
 
 /** Linked therapists come first from the server. A busy therapist cannot be chosen, so the conflict is seen before it is refused. */
-function TherapistPicker({ load, value, onChange, current }: { load: Load<TherapistChoice[]>; value: string | null; onChange: (id: string) => void; current: string | null }) {
+export function TherapistPicker({ load, value, onChange, current }: { load: Load<TherapistChoice[]>; value: string | null; onChange: (id: string) => void; current: string | null }) {
   const { t } = useTranslation()
   return (
     <Loadable load={load} skeleton={<SkeletonLines rows={3} />}>
@@ -65,12 +65,12 @@ function TherapistPicker({ load, value, onChange, current }: { load: Load<Therap
   )
 }
 
-function useTherapists(actions: RequestActions, row: RequestRow, startsAt?: string) {
+export function useTherapists(actions: Pick<RequestActions, 'therapists'>, row: { id: string }, startsAt?: string) {
   return useQuery({ queryKey: ['scheduler', 'choices', row.id, startsAt ?? null], queryFn: () => actions.therapists(row.id, startsAt) })
 }
 
 /** The first free therapist, unless one is already chosen and still free. */
-function pick(chosen: string | null, choices: readonly TherapistChoice[] | undefined, current: string | null) {
+export function pick(chosen: string | null, choices: readonly TherapistChoice[] | undefined, current: string | null) {
   const usable = (choices ?? []).filter((choice) => !choice.busy || choice.id === current)
   return usable.find((choice) => choice.id === chosen)?.id ?? usable.find((choice) => choice.id === current)?.id ?? usable[0]?.id ?? null
 }

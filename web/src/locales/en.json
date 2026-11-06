@@ -14,7 +14,8 @@
     "bookingsShort": "Bookings",
     "requests": "Requests",
     "schedule": "My Schedule",
-    "scheduleShort": "Schedule"
+    "scheduleShort": "Schedule",
+    "calendar": "Calendar"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",

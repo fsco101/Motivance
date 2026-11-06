@@ -1095,6 +1095,36 @@ export type Database = {
         Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
         Returns: Json
       }
+      calendar_affected: {
+        Args: { p_starts: string; p_ends: string }
+        Returns: {
+          attendance: string | null
+          attendance_at: string | null
+          attendance_by: string | null
+          calendar_token: string
+          client_request_id: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          patient_id: string
+          previous_starts_at: string | null
+          reference_no: string
+          self_reschedules: number
+          starts_at: string
+          status: string
+          status_reason: string | null
+          therapist_id: string | null
+          updated_at: string
+        }[]
+      }
+      calendar_outside_hours: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      calendar_resolve: {
+        Args: { p_starts: string; p_ends: string; p_resolutions: Json }
+        Returns: number
+      }
       can_prescribe: {
         Args: { target: string }
         Returns: boolean
@@ -1114,6 +1144,10 @@ export type Database = {
       center_availability: {
         Args: { p_from: string; p_to: string; p_staff: boolean }
         Returns: Json
+      }
+      center_day_start: {
+        Args: { p_day: string }
+        Returns: string
       }
       center_problem: {
         Args: { p_starts: string; p_ends: string }
@@ -1275,6 +1309,10 @@ export type Database = {
         Args: { p_bookings: string[]; p_reason: string }
         Returns: number
       }
+      scheduler_calendar_impact: {
+        Args: { p_starts: string; p_ends: string }
+        Returns: Json
+      }
       scheduler_cancel: {
         Args: { p_booking: string; p_reason: string }
         Returns: Json
@@ -1282,6 +1320,14 @@ export type Database = {
       scheduler_confirm: {
         Args: { p_booking: string; p_therapist?: string }
         Returns: Json
+      }
+      scheduler_delete_closure: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      scheduler_delete_holiday: {
+        Args: { p_id: string }
+        Returns: undefined
       }
       scheduler_patients: {
         Args: { p_search?: string; p_limit?: number }
@@ -1297,6 +1343,47 @@ export type Database = {
           p_starts: string
           p_therapist?: string
           p_reason?: string
+        }
+        Returns: Json
+      }
+      scheduler_save_closure: {
+        Args: {
+          p_id: string
+          p_starts: string
+          p_ends: string
+          p_all_day: boolean
+          p_reason: string
+          p_resolutions?: Json
+        }
+        Returns: Json
+      }
+      scheduler_save_holiday: {
+        Args: {
+          p_id: string
+          p_name: string
+          p_kind: string
+          p_starts_on: string
+          p_ends_on: string
+          p_resolutions?: Json
+        }
+        Returns: Json
+      }
+      scheduler_save_hours: {
+        Args: { p_hours: Json }
+        Returns: Json
+      }
+      scheduler_save_settings: {
+        Args: {
+          p_center_name: string
+          p_location: string
+          p_slot_minutes: number
+          p_slot_capacity: number
+          p_cancel_cutoff_hours: number
+          p_reschedule_cutoff_hours: number
+          p_minimum_notice_hours: number
+          p_booking_horizon_days: number
+          p_max_active_bookings: number
+          p_max_self_reschedules: number
         }
         Returns: Json
       }

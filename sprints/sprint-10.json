@@ -237,7 +237,7 @@
       "github_issue": 74,
       "title": "Build calendar management and closure resolution",
       "description": "Let Schedulers run the calendar, and make sure a closure can never silently strand a booking.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Backend",
       "estimate_points": 8,
@@ -287,47 +287,105 @@
         {
           "id": "MOT-57-AC1",
           "description": "The Calendar page edits opening days and hours, slot length, capacity, booking rules, center name and location.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060007_calendar_management.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "web/src/data/calendar.test.ts"
+          ]
         },
         {
           "id": "MOT-57-AC2",
           "description": "Schedulers add, edit and delete national and seasonal holidays, including multi-day breaks.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060007_calendar_management.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "web/src/data/calendar.test.ts"
+          ]
         },
         {
           "id": "MOT-57-AC3",
           "description": "Schedulers add, edit and delete closures for a full day or a time range, with a required reason.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060007_calendar_management.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "web/src/data/calendar.test.ts"
+          ]
         },
         {
           "id": "MOT-57-AC4",
           "description": "When a closure or holiday overlaps active bookings, the page lists them and requires each to be rescheduled or cancelled.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060007_calendar_management.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "web/src/data/calendar.test.ts"
+          ]
         },
         {
           "id": "MOT-57-AC5",
           "description": "The server refuses to save while any overlapping booking is unresolved, and applies the closure and its resolutions in one transaction.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060007_calendar_management.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "web/src/data/calendar.test.ts"
+          ]
         },
         {
           "id": "MOT-57-AC6",
           "description": "Contract, browser and axe tests pass.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060007_calendar_management.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "web/src/data/calendar.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T16:01:31.696225+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060007_calendar_management.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/calendar.spec.ts",
+          "web/tests/contract/calendar.test.ts",
+          "web/src/data/calendar.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060007_calendar_management.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/calendar.spec.ts",
+        "web/tests/contract/calendar.test.ts",
+        "web/src/data/calendar.test.ts"
+      ]
     },
     {
       "id": "MOT-58",

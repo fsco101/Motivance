@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams, type RouteObject } from 'react-router'
 import type { Slot } from '@/data/booking'
+import type { Closure, Holiday } from '@/data/calendar'
 import type { ScheduleAudience } from '@/data/schedule'
 import { NO_FILTERS as NO_REQUEST_FILTERS, type RequestRow } from '@/data/scheduler'
 import { SignInPage } from '@/auth/SignInPage'
@@ -25,6 +26,8 @@ import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
 import { ScheduleView } from '@/features/booking/ScheduleView'
+import { ClosureDialog, HolidayDialog, type CalendarActions } from '@/features/scheduler/CalendarDialogs'
+import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
 import { RequestsView } from '@/features/scheduler/RequestsView'
 import { TherapistHomeView } from '@/features/therapist/TherapistHomeView'
@@ -111,6 +114,24 @@ function Schedule({ audience }: { audience: ScheduleAudience }) {
   return <ScheduleView audience={audience} load={load} month="2026-12" onMonth={said('Changed month')} canGoBack canGoForward today="2026-12-01" date={date} onDate={setDate} recordPath={audience === 'therapist' ? (id) => `${THERAPIST}/patients/${id}` : undefined} />
 }
 
+const calendarActions: CalendarActions = {
+  impact: async () => data.affected, availability: async () => data.availability, therapists: async () => data.therapistChoices, saveHoliday: async () => toast.show('Saved'), saveClosure: async () => toast.show('Saved'),
+}
+function SchedulerCalendar() {
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState((params.get('tab') ?? 'hours') as CalendarTab)
+  const [holiday, setHoliday] = useState<Holiday | null | undefined>()
+  const [closure, setClosure] = useState<Closure | null | undefined>()
+  return (
+    <>
+      <CalendarView load={useDemo(data.calendar, data.calendar)} tab={tab} onTab={setTab} outsideHours={params.has('outside') ? 2 : 0} onSaveHours={async () => toast.show('Saved')} onSaveSettings={async () => toast.show('Saved')}
+        onEditHoliday={setHoliday} onDeleteHoliday={said('Deleted')} onEditClosure={setClosure} onDeleteClosure={said('Deleted')} />
+      {holiday !== undefined && <HolidayDialog holiday={holiday} actions={calendarActions} onClose={() => setHoliday(undefined)} />}
+      {closure !== undefined && <ClosureDialog closure={closure} actions={calendarActions} onClose={() => setClosure(undefined)} />}
+    </>
+  )
+}
+
 function SchedulerRequests() {
   const [selected, setSelected] = useState<RequestRow | null>(data.requests[0]!)
   const [checked, setChecked] = useState<readonly string[]>([])
@@ -194,7 +215,7 @@ export const galleryRoutes: RouteObject[] = [{
     },
     {
       path: 'scheduler', element: <Frame workspace="scheduler" />, handle: { crumb: 'nav.home' },
-      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }],
+      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
     },
     {
       path: 'admin', element: <Frame workspace="admin" />, handle: { crumb: 'nav.overview' },

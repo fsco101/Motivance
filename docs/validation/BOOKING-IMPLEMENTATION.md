@@ -199,3 +199,25 @@ On Android a therapist has a Schedule tab. A patient's five tabs are full, so th
 The first full browser run did not finish cleanly, because the machine ran out of memory with an emulator and Android Studio open. Five tests crashed, with no assertion failing: one browser crash, three workers that could not start, and one failed `docker` command. The 48 tests after them in the same serial files did not run. Those five files were run again on the same code with one worker, and all 63 of their tests passed. The other 125 tests had already passed. The crash also left 7 disposable accounts behind, which made `access_policies.test.sql` count a stray session. Removing them with the suite's own cleanup restored all 69 database tests.
 
 `LiveRoleRoutingTest` failed intermittently during this issue, so it was compared with the commit before MOT-56, in alternating runs: 5 of 6 passed without MOT-56 and 4 of 6 with it, so MOT-56 did not cause this. Failures landed on different sign-ins and never on a role check. One caught on screen showed the app's own connection error with the form still filled, and the gateway logged the client closing the connection (status 499) about a second after the previous sign-out. Why the emulator's link drops is not established. The app behaves correctly here, so the test now tries a sign-in again when the app reports that failure, up to three times, as a person would. Role routing is still checked after every sign-in.
+
+## MOT-57: Calendar management and closure resolution
+
+The Calendar page at `/scheduler/calendar` edits the opening days and hours, session length, capacity, booking rules, center name and location, and manages holidays and closures. A closure covers a full day or a time range, with a required reason, and a holiday can run for several days.
+
+A closure or holiday that overlaps active bookings opens a second step listing each one. Every booking needs a decision, to reschedule or cancel, before the save is offered. The server insists on this too: `calendar_resolve` refuses a save unless each affected booking has exactly one decision, and reuses `scheduler_cancel` and `scheduler_reschedule`, so every existing rule still applies. The closure is saved first, so a move into it is refused by the same check as any other, and any failure undoes the whole save, including cancellations already made in it. A booking made while the Scheduler is deciding is caught at the save, and joins the list.
+
+Changing the hours moves nothing. Sessions already booked keep their time, and the page keeps a notice on screen saying how many now fall outside the hours.
+
+Test cleanup turns off foreign keys, so a closure made by a test Scheduler would have stayed behind and kept closing the center. Both cleanups now remove them.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: settings, hours, holidays, closures, the impact list, refusal without a decision, partial and extra decisions, all-or-nothing saves, a booking that arrives late, editing and deleting | `python scripts/test_booking.py calendar` | 70 checks passed |
+| All sections, with the 403 guard covering the new `scheduler_` functions | `python scripts/test_booking.py` | 385 checks passed |
+| Contract tests | `npm run test:contract` | 51 passed |
+| Browser tests with axe: Calendar, Scheduler, booking and the design gallery | `npx playwright test tests/e2e/calendar.spec.ts tests/e2e/scheduler.spec.ts tests/e2e/booking.spec.ts tests/e2e/design.spec.ts --workers=1` | 96 passed, and the opt-in motion measurement did not run |
+| Web unit tests | `npm test` | 212 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
+
+Hours and rules are shared by every browser suite, so `calendar.spec.ts` intercepts those two saves and checks what the page sends. The live API test runs them for real, one at a time. The whole browser suite is not rerun for each issue, because of the memory limit on this machine, and runs again before the sprint closes.

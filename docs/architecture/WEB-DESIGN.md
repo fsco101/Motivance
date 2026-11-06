@@ -99,6 +99,8 @@ A Scheduler works through a queue, so Requests is one dense table: filters above
 
 The list can change under a Scheduler, so it never trusts what is on screen. A refused action always reloads the list. If the booking itself has changed, the dialog closes to show what happened. If only the choice is wrong, such as a therapist who has just become busy, it stays open with the updated choices. A selection counts only rows still pending, so the number in a bulk confirmation is the number that will change.
 
+The Calendar page keeps hours and rules together, with holidays and closures on tabs of their own. A closure or holiday that overlaps active bookings opens a second step listing each one, and it cannot save until every booking is rescheduled or cancelled. The time being closed is removed from the choices, so nobody can move a booking into it. Nothing is applied until the save, which either all happens or none of it does.
+
 ## Interaction
 
 - **Stat cards.** A card lifts, a soft light follows the pointer, and it settles under a press. Keyboard focus gets the same emphasis as hover.

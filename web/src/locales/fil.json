@@ -14,7 +14,8 @@
     "bookingsShort": "Mga booking",
     "requests": "Mga kahilingan",
     "schedule": "Iskedyul ko",
-    "scheduleShort": "Iskedyul"
+    "scheduleShort": "Iskedyul",
+    "calendar": "Kalendaryo"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",

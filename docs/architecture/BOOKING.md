@@ -33,6 +33,7 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 - **Admins are not Schedulers.** An admin gets a 403 on scheduling unless another admin grants them the role, because the existing rule blocks changing your own roles.
 - **The patient does not pick a therapist.** The Scheduler assigns one, and must before confirming. Therapists already linked to the patient are shown first.
 - **Closures and holidays must resolve every active booking they touch,** pending ones too. Otherwise a patient would keep a live request on a closed day and nobody would tell them.
+- **Changing the hours moves nothing.** Sessions already booked keep their time, because hours change far more often than people can be rung. The save reports how many now fall outside the hours, and the Calendar page keeps that on screen until someone looks at them. A closure or holiday is different: it means the center is shut, so each booking needs a decision first.
 - **Removing a therapist unassigns their future bookings.** Revoking the role or disabling the account returns those bookings to Pending for the Scheduler to reassign.
 - **The waitlist notifies everyone waiting** when a place opens, and the first to book gets it. Notifying in turn could stall on one person who never responds.
 - **Exports are built in the browser** from the same filtered query, and each export is written to the audit log.
@@ -71,7 +72,7 @@ All are `security definer` functions that re-check the caller. A failed role che
 | Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist` |
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
 | Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_log_export` |
-| Scheduler: calendar | `scheduler_save_settings`, `scheduler_save_hours`, `scheduler_save_holiday`, `scheduler_delete_holiday`, `scheduler_closure_impact`, `scheduler_save_closure` (takes the resolution for each affected booking, in one transaction), `scheduler_delete_closure`, `scheduler_save_time_off`, `scheduler_delete_time_off` |
+| Scheduler: calendar | `scheduler_save_settings`, `scheduler_save_hours`, `scheduler_save_holiday`, `scheduler_delete_holiday`, `scheduler_calendar_impact`, `scheduler_save_closure` (takes the resolution for each affected booking, in one transaction), `scheduler_delete_closure`, `scheduler_save_time_off`, `scheduler_delete_time_off` |
 | Scheduler: series and dashboard | `scheduler_series_preview`, `scheduler_series_create`, `scheduler_series_cancel`, `scheduler_summary` |
 | Scheduled jobs (`pg_cron`) | `enqueue_booking_reminders`, `expire_stale_bookings`, and a call to `notification-dispatch` |
 

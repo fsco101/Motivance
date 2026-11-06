@@ -1,4 +1,4 @@
-import { CalendarBlankIcon, CalendarCheckIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
 import type { ReactNode } from 'react'
@@ -31,6 +31,7 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
   scheduler: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
     { path: 'requests', label: 'nav.requests', icon: TrayIcon },
+    { path: 'calendar', label: 'nav.calendar', icon: CalendarDotsIcon },
   ],
   admin: [
     { path: '', label: 'nav.overview', icon: GaugeIcon, end: true },

@@ -110,6 +110,8 @@ delete from public.exercise_versions where exercise_id in (select id from public
 delete from public.exercises where owner_id in (${ids});
 delete from public.patient_invitations where therapist_id in (${ids});
 delete from public.therapist_patients where therapist_id in (${ids}) or patient_id in (${ids});
+delete from public.center_closures where created_by in (${ids}); delete from public.center_holidays where created_by in (${ids});
+update public.center_settings set updated_by=null where updated_by in (${ids});
 delete from public.audit_events where actor_id in (${ids}) or target_id in (${ids});
 delete from public.patient_profiles where user_id in (${ids}); delete from public.patients where id in (${ids}); delete from public.user_roles where user_id in (${ids});
 delete from public.profiles where id in (${ids}); delete from auth.users where id in (${ids}); commit;`)
