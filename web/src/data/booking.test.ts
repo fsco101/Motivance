@@ -36,7 +36,7 @@ describe('availability', () => {
   it('reads each date and its slots', () => {
     const { timeZone, days } = decodeAvailability({ time_zone: 'Asia/Manila', days: [{ date: '2026-12-07', status: 'open', holiday: null, slots: [{ starts_at: 'a', ends_at: 'b', remaining: 2, mine: true }] }] })
     expect(timeZone).toBe('Asia/Manila')
-    expect(days[0]?.slots[0]).toEqual({ startsAt: 'a', endsAt: 'b', remaining: 2, mine: true })
+    expect(days[0]?.slots[0]).toEqual({ startsAt: 'a', endsAt: 'b', remaining: 2, mine: true, waiting: false })
   })
 })
 

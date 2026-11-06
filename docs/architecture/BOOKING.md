@@ -39,6 +39,8 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 - **A request nobody decided ends by itself.** Once its time has passed nobody can act on it, so the system rejects it and tells the patient, with the reason written in each app's language.
 - **An export is on the record before it exists.** The audit entry is written before the file is built, because the rule is that every export is recorded. A file that then fails to build leaves one line too many, which is better than a file nobody recorded. Administrators see exports in Activity on both apps.
 - **The PDF covers Western European text only.** It uses a built-in font, which keeps the download small and handles Filipino names, but a name in another script would not draw correctly. The spreadsheet has no such limit.
+- **Waiting holds nothing.** A place on the waitlist reserves no capacity, so anyone can book a place that opens, whether they were waiting or not. A time that can no longer be booked, because it is closed or inside the notice period, drops off the list rather than leaving someone waiting for nothing.
+- **One opening is one message.** A burst of cancellations tells each person once. If the slot fills again, the next place is news.
 - **A notification never costs anyone their booking.** It runs inside the change it reports, so `notify` skips a recipient who disappeared part-way through rather than failing the whole change.
 - **Leave stays private.** A therapist's reason is seen only by Schedulers. A patient whose session is cancelled for it reads only that their therapist is away, and a therapist's own schedule shows the hours without the reason. Other therapists and patients do not see it at all.
 - **Leave resolves like a closure, with one more choice.** The center stays open, so a session can pass to another therapist at the same time. That is usually kinder than moving it.
@@ -78,9 +80,9 @@ All are `security definer` functions that re-check the caller. A failed role che
 | Who | Functions |
 | --- | --- |
 | Any active account | `booking_availability(from, to)`, `my_notifications(limit)`, `mark_notifications_read(ids)`, `set_my_language(language)`, `register_device(token, platform)` |
-| Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist` |
+| Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist`, `my_waitlist` |
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
-| Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_log_export` |
+| Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_schedule_patients`, `scheduler_log_export` |
 | Scheduler: calendar | `scheduler_save_settings`, `scheduler_save_hours`, `scheduler_save_holiday`, `scheduler_delete_holiday`, `scheduler_calendar_impact`, `scheduler_save_closure` (takes the resolution for each affected booking, in one transaction), `scheduler_delete_closure`, `scheduler_time_off`, `scheduler_save_time_off`, `scheduler_delete_time_off` |
 | Scheduler: series and dashboard | `scheduler_series_preview`, `scheduler_series_create`, `scheduler_series_cancel`, `scheduler_summary` |
 | Scheduled jobs (`pg_cron`) | `enqueue_booking_reminders`, `expire_stale_bookings`, and a call to `notification-dispatch` |

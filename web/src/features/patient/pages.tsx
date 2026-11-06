@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { ButtonLink } from '@/components/Button'
 import { toast } from '@/components/Toast'
-import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, loadAvailability, loadHorizonDays, loadMyBookings, nextBooking, requestBooking, todayAt, type Booking, type Slot } from '@/data/booking'
+import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, joinWaitlist, leaveWaitlist, loadAvailability, loadHorizonDays, loadMyBookings, loadMyWaitlist, nextBooking, requestBooking, todayAt, type Booking, type Slot, type WaitlistEntry } from '@/data/booking'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
 import {
@@ -104,8 +104,24 @@ export function PatientBookPage() {
       setBusy(false)
     }
   }
+  // Either way the slot on screen is out of date, so it goes back to the calendar to be read again.
+  const waitlist = async (work: (startsAt: string) => Promise<void>, done: string) => {
+    if (!chosen) return
+    setBusy(true)
+    try {
+      await work(chosen.startsAt)
+      toast.show(t(done))
+    } catch (failure) {
+      toast.show(t(bookingFailureKey(failure)), 'error')
+    } finally {
+      setChosen(null)
+      await client.invalidateQueries({ queryKey: ['booking'] })
+      setBusy(false)
+    }
+  }
   return (
     <BookSessionView load={asLoad(availability)} month={month} canGoBack={month > first} canGoForward={month < last} today={today} date={date} chosen={chosen} busy={busy} onRequest={() => void request()}
+      onJoin={() => void waitlist((startsAt) => joinWaitlist(supabase(), startsAt), 'booking.joinedWaitlist')} onLeave={() => void waitlist((startsAt) => leaveWaitlist(supabase(), startsAt), 'booking.leftWaitlist')}
       onMonth={(next) => { setMonth(next); setDate(null); setChosen(null) }} onDate={(next) => { setDate(next); setChosen(null) }} onChoose={setChosen} />
   )
 }
@@ -114,16 +130,21 @@ export function PatientBookingsPage() {
   const { t } = useTranslation()
   const client = useQueryClient()
   const bookings = useMyBookings()
-  const cancel = async (booking: Booking) => {
+  const waitlist = useQuery({ queryKey: ['booking', 'waitlist'], queryFn: () => loadMyWaitlist(supabase()) })
+  const act = async (work: () => Promise<unknown>, done: string) => {
     try {
-      await cancelMyBooking(supabase(), booking.id)
-      toast.show(t('booking.cancelled'))
+      await work()
+      toast.show(t(done))
     } catch (failure) {
       toast.show(t(bookingFailureKey(failure)), 'error')
     }
     await client.invalidateQueries({ queryKey: ['booking'] })
   }
-  return <MyBookingsView load={asLoad(bookings)} base={BASE} onCancel={(booking) => void cancel(booking)} />
+  return (
+    <MyBookingsView load={asLoad(bookings)} waitlist={waitlist.data ?? []} base={BASE} onCancel={(booking: Booking) => void act(() => cancelMyBooking(supabase(), booking.id), 'booking.cancelled')}
+      onBook={(entry: WaitlistEntry) => void act(() => requestBooking(supabase(), crypto.randomUUID(), entry.startsAt), 'booking.requested')}
+      onLeave={(entry: WaitlistEntry) => void act(() => leaveWaitlist(supabase(), entry.startsAt), 'booking.leftWaitlist')} />
+  )
 }
 
 export function PatientProgressPage() {

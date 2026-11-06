@@ -871,4 +871,21 @@
     <string name="booking_reason_expired">Lumipas ang oras bago makumpirma ang kahilingang ito.</string>
     <string name="admin_event_booking_exported">Na-export ang iskedyul</string>
     <string name="admin_event_export_target">%1$s, %2$s hanay</string>
+    <string name="booking_on_waitlist">Nasa waitlist</string>
+    <string name="booking_full_choice">Puno na ang oras na ito</string>
+    <string name="booking_waitlist_detail">Sumali sa waitlist at sasabihan ka namin kapag may nabakante. Makukuha ito ng unang mag-book.</string>
+    <string name="booking_waiting_detail">Sasabihan ka namin kapag may nabakante. Makukuha ito ng unang mag-book.</string>
+    <string name="booking_join_waitlist">Sumali sa waitlist</string>
+    <string name="booking_joining_waitlist">Sumasali</string>
+    <string name="booking_leave_waitlist">Umalis sa waitlist</string>
+    <string name="booking_leaving_waitlist">Umaalis</string>
+    <string name="booking_joined_waitlist">Nasa waitlist ka na.</string>
+    <string name="booking_left_waitlist">Umalis ka na sa waitlist.</string>
+    <string name="booking_waitlist">Waitlist</string>
+    <string name="booking_waiting">Naghihintay</string>
+    <string name="booking_place_open">May bakante</string>
+    <string name="booking_place_open_detail">May bakante ngayon. Makukuha ito ng unang mag-book.</string>
+    <string name="booking_book_place">I-book ang oras na ito</string>
+    <string name="booking_error_not_full">May bakante na ulit sa oras na ito, kaya maaari mo itong i-book.</string>
+    <string name="notification_place_open">May bakante na sa %1$s. Makukuha ito ng unang mag-book.</string>
 </resources>

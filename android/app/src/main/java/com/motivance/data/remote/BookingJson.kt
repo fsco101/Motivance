@@ -11,7 +11,7 @@ object BookingJson {
 
     fun availability(json:JSONObject)=BookingAvailability(json.getJSONArray("days").objects().map {day ->
         BookingDay(day.getString("date"),BookingDayStatus.of(day.getString("status")),day.text("holiday"),
-            day.getJSONArray("slots").objects().map {BookingSlot(it.getString("starts_at"),it.getString("ends_at"),it.getInt("remaining"),it.optBoolean("mine"))})
+            day.getJSONArray("slots").objects().map {BookingSlot(it.getString("starts_at"),it.getString("ends_at"),it.getInt("remaining"),it.optBoolean("mine"),it.optBoolean("waiting"))})
     })
 
     fun booking(json:JSONObject)=Booking(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.PENDING,json.text("status_reason"),
@@ -21,10 +21,12 @@ object BookingJson {
     fun bookings(json:JSONArray)=json.objects().map {booking(it)}
 
     /** A kind this version does not know is left out, so a newer server never shows a blank row. */
+    fun waitlist(json:JSONArray)=json.objects().map {WaitlistEntry(it.getString("id"),it.getString("starts_at"),it.getString("ends_at"),it.getBoolean("open"))}
+
     fun inbox(json:JSONObject)=NotificationInbox(json.getInt("unread"),json.getJSONArray("rows").objects().mapNotNull {row ->
         NotificationKind.of(row.getString("kind"))?.let {kind ->
             val data=row.getJSONObject("data")
-            AppNotification(row.getString("id"),kind,data.getString("reference_no"),data.getString("starts_at"),data.getString("ends_at"),data.text("previous_starts_at"),
+            AppNotification(row.getString("id"),kind,data.text("reference_no").orEmpty(),data.getString("starts_at"),data.getString("ends_at"),data.text("previous_starts_at"),
                 data.text("patient_name"),data.text("therapist_name"),data.text("reason"),row.text("read_at"),row.getString("created_at"))
         }
     })

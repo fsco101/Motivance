@@ -88,9 +88,9 @@ function PatientBook() {
   const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
   const [chosen, setChosen] = useState<Slot | null>(null)
   return <BookSessionView load={useDemo(data.availability, { ...data.availability, days: [] })} month={data.availability.days[0]!.date.slice(0, 7)} onMonth={said('Changed month')} canGoBack={false} canGoForward today={data.availability.days[0]!.date}
-    date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onRequest={said('Requested')} busy={false} />
+    date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onRequest={said('Requested')} onJoin={said('Joined the waitlist')} onLeave={said('Left the waitlist')} busy={false} />
 }
-const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.myBookings, [])} onCancel={said('Cancelled')} />
+const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.myBookings, [])} waitlist={data.waitlist} onCancel={said('Cancelled')} onBook={said('Requested')} onLeave={said('Left the waitlist')} />
 function PatientProgress() {
   const [filters, setFilters] = useState(NO_FILTERS)
   const base = { patients: [], patientId: 'p1', exercises: [{ id: 'v1', name: 'Elbow flexion' }] }

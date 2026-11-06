@@ -323,12 +323,38 @@ def sprint_demo(stack):
         stack.sql("delete from public.center_closures where reason='Demo closure';")
 
 
+def waitlist_mail(stack):
+    """MOT-63: a place opening reaches the inbox, through the same queue as everything else."""
+    capacity = stack.sql('select slot_capacity from public.center_settings;')
+    stack.sql('update public.center_settings set slot_capacity=1 where id;')
+    try:
+        ana, ta = stack.user('patient', name='Email Ana Waiting')
+        _, tb = stack.user('patient', name='Email Ben Holding')
+        address = stack.sql(f"select email from auth.users where id='{ana}';")
+        start = manila(next(working_days(stack, 9)), 9)
+        code, held = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, tb)
+        assert code == 200, held
+        assert stack.rpc('join_waitlist', {'p_starts': start}, ta)[0] == 200
+        clear_mail()
+        assert stack.rpc('cancel_my_booking', {'p_booking': held['id']}, tb)[0] == 200
+        for _ in range(12):
+            if dispatch()[1]['claimed'] == 0:
+                break
+        mail = [message(item) for item in inbox(address)]
+        opened = next((item for item in mail if item['Subject'] == 'A place has opened'), None)
+        stack.check(opened is not None, 'Waitlist: a place opening reaches the inbox')
+        stack.check('/patient/bookings' in opened['Text'] and 'Reference' not in opened['Text'] and 'booking-calendar' not in opened['Text'], 'Waitlist: it points straight to the place, with no session details')
+    finally:
+        stack.sql(f'update public.center_settings set slot_capacity={capacity} where id;')
+
+
 def main():
     stack = Stack()
     try:
         with Functions():
             checks(stack)
             sprint_demo(stack)
+            waitlist_mail(stack)
         REPORT.write_text(json.dumps({'generated_at': datetime.now(timezone.utc).isoformat(), 'checks_passed': len(stack.checks), 'checks': stack.checks,
                                       'environment': 'real local Auth, PostgREST, Edge Functions and Mailpit with disposable synthetic accounts'}, indent=2) + '\n', encoding='utf-8')
         print(f'{len(stack.checks)} checks passed.')

@@ -175,3 +175,4 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
+- [ ] On a physical phone, join a waitlist for a full time, watch the place open from a second account, and book it from My bookings. It passed on an emulator against the local backend; a real phone and a real network have not been tried.

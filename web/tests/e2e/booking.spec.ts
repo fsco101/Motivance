@@ -112,15 +112,17 @@ test('home shows the next session', async () => {
   await expect(panel).toContainText('Pending')
 })
 
-test('a full slot cannot be chosen', async () => {
+test('a full slot offers the waitlist, and never a request', async () => {
   const day = workingDay(8)
   sql(`update public.center_settings set slot_capacity=1`)
   try {
     await book(rival, manila(day, 10))
     await openDate(day)
     const slot = page.getByRole('region', { name: 'Choose a time' }).getByRole('button').nth(1)
-    await expect(slot).toBeDisabled()
     await expect(slot).toContainText('Full')
+    await slot.click()
+    await expect(page.getByRole('button', { name: 'Join the waitlist' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Request this time' })).toBeHidden()
   } finally {
     sql(`update public.center_settings set slot_capacity=3`)
   }

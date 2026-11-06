@@ -871,4 +871,21 @@
     <string name="booking_reason_expired">The time passed before this request could be confirmed.</string>
     <string name="admin_event_booking_exported">Schedule exported</string>
     <string name="admin_event_export_target">%1$s, %2$s rows</string>
+    <string name="booking_on_waitlist">On the waitlist</string>
+    <string name="booking_full_choice">This time is full</string>
+    <string name="booking_waitlist_detail">Join the waitlist and we will tell you if a place opens. The first to book gets it.</string>
+    <string name="booking_waiting_detail">We will tell you if a place opens. The first to book gets it.</string>
+    <string name="booking_join_waitlist">Join the waitlist</string>
+    <string name="booking_joining_waitlist">Joining</string>
+    <string name="booking_leave_waitlist">Leave the waitlist</string>
+    <string name="booking_leaving_waitlist">Leaving</string>
+    <string name="booking_joined_waitlist">You are on the waitlist.</string>
+    <string name="booking_left_waitlist">You left the waitlist.</string>
+    <string name="booking_waitlist">Waitlist</string>
+    <string name="booking_waiting">Waiting</string>
+    <string name="booking_place_open">Place open</string>
+    <string name="booking_place_open_detail">A place is open now. The first to book gets it.</string>
+    <string name="booking_book_place">Book this time</string>
+    <string name="booking_error_not_full">This time has places again, so you can book it.</string>
+    <string name="notification_place_open">A place has opened on %1$s. The first to book gets it.</string>
 </resources>

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T19:15:04.855615+00:00",
-  "checks_passed": 58,
+  "generated_at": "2026-11-06T19:47:06.812147+00:00",
+  "checks_passed": 60,
   "checks": [
     "A booking does not wait for email",
     "It leaves a row in the queue",
@@ -59,7 +59,9 @@
     "Demo: the session moved on My Schedule",
     "Demo: the patient has the in-app notification",
     "Demo: and the email with its calendar link",
-    "Demo: the calendar file has the new time"
+    "Demo: the calendar file has the new time",
+    "Waitlist: a place opening reaches the inbox",
+    "Waitlist: it points straight to the place, with no session details"
   ],
   "environment": "real local Auth, PostgREST, Edge Functions and Mailpit with disposable synthetic accounts"
 }

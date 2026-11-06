@@ -1,4 +1,4 @@
-import type { Availability, Booking } from '@/data/booking'
+import type { Availability, Booking, WaitlistEntry } from '@/data/booking'
 import type { AffectedBooking, CenterCalendar } from '@/data/calendar'
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
@@ -73,7 +73,7 @@ const today = new Date()
 const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7))
 const slotsOn = (date: string, left: readonly number[]) => left.map((remaining, index) => {
   const hour = String(9 + index).padStart(2, '0')
-  return { startsAt: `${date}T${hour}:00:00+08:00`, endsAt: `${date}T${String(10 + index).padStart(2, '0')}:00:00+08:00`, remaining, mine: index === 2 }
+  return { startsAt: `${date}T${hour}:00:00+08:00`, endsAt: `${date}T${String(10 + index).padStart(2, '0')}:00:00+08:00`, remaining, mine: index === 2, waiting: false }
 })
 const bookingDate = '2026-12-07'
 export const availability: Availability = {
@@ -85,6 +85,10 @@ export const availability: Availability = {
     { date: '2026-12-12', status: 'closed', holiday: null, slots: [] },
   ],
 }
+export const waitlist: WaitlistEntry[] = [
+  { id: 'w1', startsAt: '2026-12-09T02:00:00Z', endsAt: '2026-12-09T03:00:00Z', open: true },
+  { id: 'w2', startsAt: '2026-12-10T06:00:00Z', endsAt: '2026-12-10T07:00:00Z', open: false },
+]
 export const myBookings: Booking[] = [
   { id: 'k1', reference: 'BK-2026-000142', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', previousStartsAt: null, therapist: 'Dana Reyes', location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-06T01:00:00Z', canCancel: true },
   { id: 'k2', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-13T02:00:00Z', canCancel: true },

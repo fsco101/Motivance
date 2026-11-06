@@ -354,3 +354,29 @@ An exported PDF was also rendered and looked at: the logo, the header, the table
 ## S10 outcome
 
 All seven issues are implemented and closed. The sprint demo ran for real, in one sitting, through the same API the apps call, in `scripts/test_email.py`: a session was confirmed and shown on both My Schedules at its specific time, a closure was added over it, the booking was resolved, and the patient had the in-app notification and an email with a working calendar link. The issue criterion stays recorded as not passed, under a deferral the owner approved, because MOT-60 needs a real Gmail delivery from a hosted project.
+
+## MOT-63: Waitlist
+
+A full time can now be chosen, to wait for it, on the web and on Android. A place in line holds nothing: when a place opens, everyone waiting hears, in the app and by email, and the first to book gets it under the same rules as any booking. Someone who was not waiting can take it too.
+
+The trigger sits on `booking_events`, so a place cannot be missed by a new way of cancelling or moving a booking. A burst of cancellations is one message per person, and once the slot fills again the next place is news. Raising the capacity counts as a place opening. A place nobody could book is not news: a closed time, or one inside the notice period, says nothing and drops off the list. A disabled account is not told.
+
+An open place can be booked from My bookings in one step, because the first to book gets it.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: joining, refusals, who hears and how often, a race for one place, moving and closing | `python scripts/test_booking.py waitlist` | 40 checks passed, three runs in a row |
+| All sections | `python scripts/test_booking.py` | 589 checks passed |
+| A real send through the queue to Mailpit | `python scripts/test_email.py` | 60 checks passed |
+| Contract tests | `npm run test:contract` | 114 passed |
+| Browser tests with axe: joining, leaving, the place opening, booking it, losing it to someone else | `npx playwright test waitlist booking design patient scheduler notifications --workers=1` | 114 passed. 1 opt-in test did not run, as designed |
+| Web unit tests | `npm test` | 244 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 229 passed |
+| The app on a throwaway emulator, against the local backend | Driven through its UI, checking the screen and the server at each step | 15 checks passed: joining, leaving, the list, the notification, booking the place |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+Two older tests pinned the rule this changes, that a full slot cannot be chosen. The browser test now proves a full slot offers the waitlist and never a request. A held slot still cannot be chosen.
+
+The whole live suite also caught a fault in a new check: raising the capacity told one patient about two slots whenever that patient had lost an earlier race, which is correct, so the check now looks at one slot. It had passed alone only when that patient won.
+
+A physical phone is still to be tried, and is on the checklist.
