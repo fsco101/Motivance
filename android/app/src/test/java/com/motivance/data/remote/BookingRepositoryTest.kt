@@ -30,7 +30,8 @@ class BookingRepositoryTest {
                     {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null},
                     {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":$booking}]},
                     {"date":"2026-12-08","status":"holiday","holiday":"Feast","rows":[]}]}"""
-                path=="/rest/v1/rpc/therapist_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
+                path=="/rest/v1/rpc/therapist_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"on_leave":true,"rows":[
+                    {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null,"on_leave":true},
                     {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":{"id":"b1","reference_no":"BK-2026-000001","status":"rescheduled",
                     "starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","attendance":null,"location":"","patient_id":"p1","patient_name":"Ana Dela Cruz","linked":false}}]}]}"""
                 path=="/rest/v1/rpc/request_booking" -> booking
@@ -67,6 +68,13 @@ class BookingRepositoryTest {
         assertEquals("p1",session.patientId)
         assertFalse(session.linked)
         assertNull(session.therapist)
+    }
+
+    @Test fun aTherapistsScheduleKeepsTheirLeaveOnTheDayAndTheHour()=runBlocking {
+        val day=repository().loadSchedule("2026-12-01","2026-12-31",true).days[0]
+        assertTrue(day.onLeave)
+        assertEquals(listOf(true,false),day.rows.map {it.onLeave})
+        assertFalse("A patient's schedule has none",repository().loadSchedule("2026-12-01","2026-12-31",false).days[0].onLeave)
     }
 
     @Test fun availabilityKeepsEachDateAndItsSpecificTimes()=runBlocking {

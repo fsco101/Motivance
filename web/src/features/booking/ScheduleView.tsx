@@ -50,7 +50,7 @@ function Agenda({ day, audience, recordPath }: { day: ScheduleDay | undefined; a
           {day.rows.map((row) => (
             <li key={row.startsAt} className="flex flex-wrap items-start gap-x-4 gap-y-1 py-2.5">
               <span className={cn('w-40 shrink-0 text-sm', row.session ? 'font-semibold' : 'text-slate')}>{format.range(row.startsAt, row.endsAt)}</span>
-              {row.session ? <SessionDetails session={row.session} audience={audience} recordPath={recordPath} /> : <span className="text-sm text-slate">{t('booking.scheduleFree')}</span>}
+              {row.session ? <SessionDetails session={row.session} audience={audience} recordPath={recordPath} /> : <span className={cn('text-sm', row.onLeave ? 'font-semibold' : 'text-slate')}>{t(row.onLeave ? 'scheduler.onLeave' : 'booking.scheduleFree')}</span>}
             </li>
           ))}
         </ol>
@@ -65,8 +65,10 @@ export function ScheduleView({ audience, load, month, onMonth, canGoBack, canGoF
   const format = useCenterFormat()
   const days = load.status === 'ready' ? load.data.days : []
   const describe = (value: string): CalendarDay => {
-    const count = sessionsOn(days.find((item) => item.date === value)).length
-    return { enabled: true, quiet: count === 0, marked: count > 0, note: count > 0 ? t('booking.scheduleCount', { count }) : undefined }
+    const day = days.find((item) => item.date === value)
+    const count = sessionsOn(day).length
+    const notes = [count > 0 && t('booking.scheduleCount', { count }), day?.onLeave && t('scheduler.onLeave')].filter(Boolean)
+    return { enabled: true, quiet: count === 0 && !day?.onLeave, marked: count > 0, note: notes.join(', ') || undefined }
   }
   const nothing = load.status === 'ready' && !days.some((day) => sessionsOn(day).length > 0)
   return (

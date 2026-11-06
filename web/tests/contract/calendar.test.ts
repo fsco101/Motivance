@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { bookingFailureKey } from '../../src/data/booking'
-import { dayRange, deleteClosure, deleteHoliday, loadCalendar, loadImpact, saveClosure, saveHoliday } from '../../src/data/calendar'
+import { dayRange, deleteClosure, deleteHoliday, deleteTimeOff, loadCalendar, loadImpact, saveClosure, saveHoliday, saveTimeOff } from '../../src/data/calendar'
+import { loadTherapists } from '../../src/data/scheduler'
 import { createUser, removeUsers, signedIn, sql, type TestUser } from '../support/stack'
 
 /** Well past the booking window, so nothing here touches a date another suite is using. */
@@ -15,12 +16,13 @@ describe('the center calendar on the local backend', () => {
   const booking = randomUUID()
   let scheduler: TestUser
   let patient: TestUser
+  let therapist: TestUser
 
   beforeAll(async () => {
-    ;[scheduler, patient] = await Promise.all([createUser(['scheduler'], `Sol ${tag}`), createUser(['patient'], `Ana ${tag}`)])
+    ;[scheduler, patient, therapist] = await Promise.all([createUser(['scheduler'], `Sol ${tag}`), createUser(['patient'], `Ana ${tag}`), createUser(['therapist'], `Zed ${tag}`)])
     sql(`insert into public.bookings(id,reference_no,patient_id,starts_at,ends_at,status) values('${booking}','BK-CAL-${tag}','${patient.id}','${date}T09:00:00+08:00','${date}T10:00:00+08:00','pending')`)
   })
-  afterAll(() => removeUsers([scheduler, patient]))
+  afterAll(() => removeUsers([scheduler, patient, therapist]))
 
   it('reads the settings, hours and what is ahead', async () => {
     const calendar = await loadCalendar(await signedIn(scheduler), today)
@@ -62,6 +64,27 @@ describe('the center calendar on the local backend', () => {
     expect((await loadCalendar(db, today)).holidays.find((holiday) => holiday.id === saved.id)?.name).toBe(`${name} renamed`)
     await deleteHoliday(db, saved.id)
     expect((await loadCalendar(db, today)).holidays.some((holiday) => holiday.id === saved.id)).toBe(false)
+  })
+
+  it('saves time off, marks the therapist on leave and lists only their sessions', async () => {
+    const db = await signedIn(scheduler)
+    const day = farDay(150)
+    const range = { startsAt: `${day}T09:00:00+08:00`, endsAt: `${day}T12:00:00+08:00` }
+    const held = randomUUID()
+    sql(`insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values('${held}','BK-OFF-${tag}','${patient.id}','${therapist.id}','${day}T10:00:00+08:00','${day}T11:00:00+08:00','confirmed')`)
+    expect((await loadImpact(db, range.startsAt, range.endsAt, therapist.id)).map((row) => row.id)).toEqual([held])
+    expect(await loadImpact(db, range.startsAt, range.endsAt, scheduler.id)).toEqual([])
+    const draft = { id: null, therapistId: therapist.id, ...range, reason: `Leave ${tag}` }
+    expect(bookingFailureKey(await saveTimeOff(db, draft, []).catch((error: unknown) => error))).toBe('booking.errors.unresolved')
+    await saveTimeOff(db, draft, [{ booking: held, action: 'cancel', reason: `Away ${tag}` }])
+    const saved = (await loadCalendar(db, today)).timeOff.find((entry) => entry.reason === `Leave ${tag}`)!
+    expect(saved).toMatchObject({ therapistId: therapist.id, therapist: `Zed ${tag}` })
+    const open = randomUUID()
+    sql(`insert into public.bookings(id,reference_no,patient_id,starts_at,ends_at,status) values('${open}','BK-PICK-${tag}','${patient.id}','${day}T10:00:00+08:00','${day}T11:00:00+08:00','pending')`)
+    expect((await loadTherapists(db, open)).find((choice) => choice.id === therapist.id)).toMatchObject({ onLeave: true })
+    expect(bookingFailureKey(await db.rpc('scheduler_confirm', { p_booking: open, p_therapist: therapist.id }).then(({ error }) => error))).toBe('booking.errors.therapist_on_leave')
+    await deleteTimeOff(db, saved.id)
+    expect((await loadTherapists(db, open)).find((choice) => choice.id === therapist.id)).toMatchObject({ onLeave: false })
   })
 
   it('refuses everyone else', async () => {

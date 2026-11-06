@@ -108,37 +108,38 @@ export const requestDetail: RequestDetail = {
   events: [{ id: 1, action: 'requested', actorRole: 'patient', actor: 'Ana Dela Cruz', fromStatus: null, toStatus: 'pending', toStartsAt: '2026-12-14T02:00:00Z', reason: null, recordedAt: '2026-11-05T02:00:00Z' }],
 }
 export const therapistChoices: TherapistChoice[] = [
-  { id: 't1', name: 'Dana Reyes', linked: true, busy: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true }, { id: 't3', name: 'Grace Tan', linked: false, busy: false },
+  { id: 't1', name: 'Dana Reyes', linked: true, busy: false, onLeave: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true, onLeave: false }, { id: 't3', name: 'Grace Tan', linked: false, busy: false, onLeave: true },
+  { id: 't4', name: 'Rico Santos', linked: false, busy: false, onLeave: false },
 ]
 
 /** A working day by the hour, nine to five in Manila, with a session in the hours given. */
-const dayOf = (date: string, sessions: Record<number, Partial<ScheduleSession>>): ScheduleRow[] => Array.from({ length: 8 }, (_, index) => {
+const dayOf = (date: string, sessions: Record<number, Partial<ScheduleSession>>, leave: readonly number[] = []): ScheduleRow[] => Array.from({ length: 8 }, (_, index) => {
   const hour = 9 + index
   const at = (value: number) => `${date}T${String(value - 8).padStart(2, '0')}:00:00Z`
   const session = sessions[hour]
   return {
-    startsAt: at(hour), endsAt: at(hour + 1),
+    startsAt: at(hour), endsAt: at(hour + 1), onLeave: !session && leave.includes(hour),
     session: session ? { id: `s${date}${hour}`, reference: 'BK-2026-000158', status: 'confirmed', startsAt: at(hour), endsAt: at(hour + 1), location: 'Motivance Center, Quezon City', therapist: null, patientId: null, patient: null, linked: false, ...session } : null,
   }
 })
 export const schedule: Schedule = {
   days: [
-    { date: '2026-12-07', status: 'open', holiday: null, rows: dayOf('2026-12-07', { 9: { therapist: 'Dana Reyes', reference: 'BK-2026-000157' } }) },
-    { date: '2026-12-12', status: 'closed', holiday: null, rows: [] },
-    { date: '2026-12-14', status: 'open', holiday: null, rows: dayOf('2026-12-14', { 10: { therapist: 'Dana Reyes' } }) },
-    { date: '2026-12-15', status: 'open', holiday: null, rows: dayOf('2026-12-15', {}) },
-    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', rows: [] },
+    { date: '2026-12-07', status: 'open', holiday: null, onLeave: false, rows: dayOf('2026-12-07', { 9: { therapist: 'Dana Reyes', reference: 'BK-2026-000157' } }) },
+    { date: '2026-12-12', status: 'closed', holiday: null, onLeave: false, rows: [] },
+    { date: '2026-12-14', status: 'open', holiday: null, onLeave: false, rows: dayOf('2026-12-14', { 10: { therapist: 'Dana Reyes' } }) },
+    { date: '2026-12-15', status: 'open', holiday: null, onLeave: false, rows: dayOf('2026-12-15', {}) },
+    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', onLeave: false, rows: [] },
   ],
 }
 export const therapistSchedule: Schedule = {
   days: [
-    { date: '2026-12-12', status: 'closed', holiday: null, rows: [] },
+    { date: '2026-12-12', status: 'closed', holiday: null, onLeave: false, rows: [] },
     {
-      date: '2026-12-14', status: 'open', holiday: null, rows: dayOf('2026-12-14', {
+      date: '2026-12-14', status: 'open', holiday: null, onLeave: true, rows: dayOf('2026-12-14', {
         10: { patient: 'Ana Dela Cruz', patientId: 'p1', linked: true }, 13: { patient: 'Ramon Bautista', patientId: 'p2', linked: false, reference: 'BK-2026-000157', status: 'rescheduled' },
-      }),
+      }, [15, 16]),
     },
-    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', rows: [] },
+    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', onLeave: false, rows: [] },
   ],
 }
 
@@ -155,6 +156,10 @@ export const calendar: CenterCalendar = {
   closures: [
     { id: 'c1', startsAt: '2026-12-11T16:00:00Z', endsAt: '2026-12-12T16:00:00Z', allDay: true, reason: 'Water supply maintenance' },
     { id: 'c2', startsAt: '2026-12-09T05:00:00Z', endsAt: '2026-12-09T07:00:00Z', allDay: false, reason: 'Staff training' },
+  ],
+  timeOff: [
+    { id: 'o1', therapistId: 't1', therapist: 'Dana Reyes', startsAt: '2026-12-16T01:00:00Z', endsAt: '2026-12-16T05:00:00Z', reason: 'Conference' },
+    { id: 'o2', therapistId: 't2', therapist: 'Omar Lim', startsAt: '2026-12-21T01:00:00Z', endsAt: '2026-12-23T09:00:00Z', reason: 'Family leave' },
   ],
 }
 export const affected: AffectedBooking[] = [

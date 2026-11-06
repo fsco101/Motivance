@@ -38,8 +38,8 @@ data class ScheduleSession(
     val id:String,val reference:String,val status:BookingStatus,val startsAt:String,val endsAt:String,val location:String="",
     val therapist:String?=null,val patientId:String?=null,val patient:String?=null,val linked:Boolean=false,
 )
-data class ScheduleRow(val startsAt:String,val endsAt:String,val session:ScheduleSession?=null)
-data class ScheduleDay(val date:String,val status:BookingDayStatus,val holiday:String?=null,val rows:List<ScheduleRow> = emptyList()) {
+data class ScheduleRow(val startsAt:String,val endsAt:String,val session:ScheduleSession?=null,val onLeave:Boolean=false)
+data class ScheduleDay(val date:String,val status:BookingDayStatus,val holiday:String?=null,val rows:List<ScheduleRow> = emptyList(),val onLeave:Boolean=false) {
     val sessions get()=rows.mapNotNull {it.session}
 }
 data class Schedule(val days:List<ScheduleDay> = emptyList()) {

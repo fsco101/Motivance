@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/Dialog'
 import { PageHeader, Panel } from '@/components/Display'
 import { toast } from '@/components/Toast'
 import { addDays, bookingFailureKey, CENTER_ZONE, isStale, todayAt } from '@/data/booking'
-import { deleteClosure, deleteHoliday, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, type CenterDay, type CenterSettings, type Closure, type Holiday } from '@/data/calendar'
+import { deleteClosure, deleteHoliday, deleteTimeOff, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, saveTimeOff, type CenterDay, type CenterSettings, type Closure, type Holiday, type TimeOff } from '@/data/calendar'
 import { supabase } from '@/data/client'
 import {
   assignTherapist, bulkReject, cancelBooking, confirmBooking, loadDetail, loadRequests, loadStaffAvailability, loadTherapists, NO_FILTERS, PAGE_SIZE, rejectBooking, rescheduleBooking,
@@ -14,7 +14,7 @@ import {
 } from '@/data/scheduler'
 import { asLoad } from '@/features/shared'
 import '@/locales/booking'
-import { ClosureDialog, HolidayDialog, type CalendarActions } from './CalendarDialogs'
+import { ClosureDialog, HolidayDialog, TimeOffDialog, type CalendarActions } from './CalendarDialogs'
 import { CalendarView, type CalendarTab } from './CalendarView'
 import { BulkRejectDialog, RequestDialog, type RequestActionKind, type RequestActions } from './RequestDialogs'
 import { RequestsView } from './RequestsView'
@@ -101,7 +101,7 @@ export function SchedulerRequestsPage() {
   )
 }
 
-type Deleting = { kind: 'holiday'; item: Holiday; name: string } | { kind: 'closure'; item: Closure; name: string }
+type Deleting = { kind: 'holiday'; item: Holiday; name: string } | { kind: 'closure'; item: Closure; name: string } | { kind: 'timeoff'; item: TimeOff; name: string }
 
 export function SchedulerCalendarPage() {
   const { t } = useTranslation()
@@ -109,14 +109,16 @@ export function SchedulerCalendarPage() {
   const [tab, setTab] = useState<CalendarTab>('hours')
   const [holiday, setHoliday] = useState<Holiday | null | undefined>()
   const [closure, setClosure] = useState<Closure | null | undefined>()
+  const [timeOff, setTimeOff] = useState<TimeOff | null | undefined>()
   const [deleting, setDeleting] = useState<Deleting | null>(null)
   const [outsideHours, setOutsideHours] = useState(0)
   const act = useSchedulerAction()
   const calendar = useQuery({ queryKey: ['scheduler', 'calendar', today], queryFn: () => loadCalendar(supabase(), today) })
+  const therapists = useQuery({ queryKey: ['scheduler', 'therapists'], queryFn: () => loadTherapists(supabase()) })
   const actions: CalendarActions = {
-    impact: async ({ startsAt, endsAt }) => {
+    impact: async ({ startsAt, endsAt }, therapist) => {
       try {
-        return await loadImpact(supabase(), startsAt, endsAt)
+        return await loadImpact(supabase(), startsAt, endsAt, therapist)
       } catch (failure) {
         toast.show(t(bookingFailureKey(failure)), 'error')
         throw failure
@@ -126,21 +128,27 @@ export function SchedulerCalendarPage() {
     therapists: (booking, startsAt) => loadTherapists(supabase(), booking, startsAt),
     saveHoliday: (draft, resolutions) => act(() => saveHoliday(supabase(), draft, resolutions), t('calendar.holidaySaved')),
     saveClosure: (draft, resolutions) => act(() => saveClosure(supabase(), draft, resolutions), t('calendar.closureSaved')),
+    saveTimeOff: (draft, resolutions) => act(() => saveTimeOff(supabase(), draft, resolutions), t('calendar.timeOffSaved')),
   }
-  const remove = (target: Deleting) => (target.kind === 'holiday'
-    ? act(() => deleteHoliday(supabase(), target.item.id), t('calendar.holidayDeleted'))
-    : act(() => deleteClosure(supabase(), target.item.id), t('calendar.closureDeleted')))
+  const remove = (target: Deleting) => {
+    if (target.kind === 'holiday') return act(() => deleteHoliday(supabase(), target.item.id), t('calendar.holidayDeleted'))
+    if (target.kind === 'closure') return act(() => deleteClosure(supabase(), target.item.id), t('calendar.closureDeleted'))
+    return act(() => deleteTimeOff(supabase(), target.item.id), t('calendar.timeOffDeleted'))
+  }
+  const deleteTitle = { holiday: 'calendar.deleteHolidayTitle', closure: 'calendar.deleteClosureTitle', timeoff: 'calendar.deleteTimeOffTitle' }[deleting?.kind ?? 'closure']
   return (
     <>
       <CalendarView load={asLoad(calendar)} tab={tab} onTab={setTab} outsideHours={outsideHours}
         onSaveHours={async (hours: CenterDay[]) => setOutsideHours(await act(() => saveHours(supabase(), hours), t('calendar.hoursSaved')))}
         onSaveSettings={(settings: CenterSettings) => act(() => saveSettings(supabase(), settings), t('calendar.rulesSaved'))}
         onEditHoliday={setHoliday} onDeleteHoliday={(item) => setDeleting({ kind: 'holiday', item, name: item.name })}
-        onEditClosure={setClosure} onDeleteClosure={(item) => setDeleting({ kind: 'closure', item, name: item.reason })} />
+        onEditClosure={setClosure} onDeleteClosure={(item) => setDeleting({ kind: 'closure', item, name: item.reason })}
+        onEditTimeOff={setTimeOff} onDeleteTimeOff={(item) => setDeleting({ kind: 'timeoff', item, name: item.therapist })} />
       {holiday !== undefined && <HolidayDialog holiday={holiday} actions={actions} onClose={() => setHoliday(undefined)} />}
       {closure !== undefined && <ClosureDialog closure={closure} actions={actions} onClose={() => setClosure(undefined)} />}
-      <ConfirmDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) setDeleting(null) }} destructive title={t(deleting?.kind === 'holiday' ? 'calendar.deleteHolidayTitle' : 'calendar.deleteClosureTitle')}
-        message={t('calendar.deleteMessage', { name: deleting?.name ?? '' })} confirmLabel={t('calendar.delete')} cancelLabel={t('calendar.keep')}
+      {timeOff !== undefined && <TimeOffDialog entry={timeOff} therapists={therapists.data ?? []} actions={actions} onClose={() => setTimeOff(undefined)} />}
+      <ConfirmDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) setDeleting(null) }} destructive title={t(deleteTitle)}
+        message={t(deleting?.kind === 'timeoff' ? 'calendar.deleteTimeOffMessage' : 'calendar.deleteMessage', { name: deleting?.name ?? '' })} confirmLabel={t('calendar.delete')} cancelLabel={t('calendar.keep')}
         onConfirm={() => { if (deleting) void remove(deleting).catch(() => undefined); setDeleting(null) }} />
     </>
   )

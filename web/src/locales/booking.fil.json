@@ -61,7 +61,8 @@
     "bulkDetail_one": "Tanggihan ang {{count}} nakabinbing kahilingan. Ang nakabinbin pa lang ang magbabago.",
     "bulkDetail_other": "Tanggihan ang {{count}} nakabinbing kahilingan. Ang mga nakabinbin pa lang ang magbabago.",
     "bulkDone_one": "Natanggihan ang {{count}} kahilingan.",
-    "bulkDone_other": "Natanggihan ang {{count}} kahilingan."
+    "bulkDone_other": "Natanggihan ang {{count}} kahilingan.",
+    "onLeave": "Naka-leave"
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
@@ -196,7 +197,8 @@
       "too_late": "Huli na para baguhin ang booking na ito online. Kontakin ang center.",
       "invalid": "Hindi mabasa ang kahilingan. Subukang muli.",
       "invalid_range": "Hindi mabasa ang mga petsang iyan.",
-      "unresolved": "May mga bagong booking sa oras na ito. Suriin ang mga ito at subukang muli."
+      "unresolved": "May mga bagong booking sa oras na ito. Suriin ang mga ito at subukang muli.",
+      "therapist_on_leave": "Naka-leave ang therapist na iyon sa oras na iyon."
     },
     "keep": "Panatilihin ang booking",
     "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
@@ -289,6 +291,24 @@
     "willMove": "Ililipat sa {{when}}",
     "useTime": "Gamitin ang oras na ito",
     "saveResolved": "I-save at ilapat",
-    "closedFor": "Sarado ang center: {{name}}"
+    "closedFor": "Sarado ang center: {{name}}",
+    "timeOffTab": "Leave ng therapist",
+    "timeOffTitle": "Leave ng therapist",
+    "timeOffDetail": "Hindi mabibigyan ng session ang therapist na naka-leave. Sa scheduling lang ang dahilan.",
+    "addTimeOff": "Magdagdag ng leave",
+    "editTimeOff": "Baguhin ang leave",
+    "noTimeOff": "Walang paparating na leave",
+    "noTimeOffDetail": "Idagdag dito para walang mag-book sa therapist na wala.",
+    "chooseTherapist": "Pumili ng therapist",
+    "awayFrom": "Wala mula",
+    "backAt": "Babalik sa",
+    "timeOffReasonHint": "Mga Scheduler lang ang makakakita nito. Hindi ito makikita ng mga pasyente at ibang staff.",
+    "timeOffSaved": "Na-save ang leave.",
+    "timeOffDeleted": "Nabura ang leave.",
+    "deleteTimeOffTitle": "Burahin ang leave na ito?",
+    "deleteTimeOffMessage": "Mabibigyan muli ng session si {{name}} sa oras na ito.",
+    "useTherapist": "Gamitin ang therapist na ito",
+    "willPass": "Ililipat kay {{name}}",
+    "therapistAway": "Wala ang iyong therapist sa oras na ito."
   }
 }

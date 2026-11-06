@@ -22,7 +22,7 @@ private const val MONTHS_EITHER_WAY=12L
     val muted=MaterialTheme.colorScheme.onSurfaceVariant
     Row(Modifier.fillMaxWidth().heightIn(min=44.dp).semantics(mergeDescendants=true) {},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
         Text(format.range(row.startsAt,row.endsAt),Modifier.weight(1f),style=MaterialTheme.typography.bodyMedium,color=muted)
-        Text(stringResource(R.string.schedule_free),style=MaterialTheme.typography.bodySmall,color=muted)
+        Text(stringResource(if(row.onLeave) R.string.schedule_on_leave else R.string.schedule_free),style=MaterialTheme.typography.bodySmall,color=if(row.onLeave) MaterialTheme.colorScheme.onSurface else muted)
     }
     HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
 }
@@ -59,8 +59,11 @@ private const val MONTHS_EITHER_WAY=12L
     MonthCalendar(state.month,state.date,today,state.month>first.minusMonths(MONTHS_EITHER_WAY),state.month<first.plusMonths(MONTHS_EITHER_WAY),{vm.showMonth(it)},
         enabled={true},
         marked={state.schedule.day(it.toString())?.sessions?.isNotEmpty()==true},
-        quiet={state.schedule.day(it.toString())?.sessions.isNullOrEmpty()},
-        note={date -> state.schedule.day(date.toString())?.sessions?.size?.takeIf {it>0}?.let {stringResource(R.string.schedule_count,it)}}) {vm.selectDate(it.toString())}
+        quiet={date -> state.schedule.day(date.toString()).let {it?.sessions.isNullOrEmpty() && it?.onLeave!=true}},
+        note={date -> state.schedule.day(date.toString())?.let {day -> listOfNotNull(
+            day.sessions.size.takeIf {it>0}?.let {stringResource(R.string.schedule_count,it)},
+            if(day.onLeave) stringResource(R.string.schedule_on_leave) else null,
+        ).joinToString(", ").ifBlank {null}}}) {vm.selectDate(it.toString())}
     if(state.loading) LoadingNotice(R.string.booking_loading)
     if(state.failed && !state.loaded) FeedbackNotice(R.string.booking_load_failed,error=true) {vm.open()}
     if(state.loaded && state.schedule.days.all {it.sessions.isEmpty()}) Text(stringResource(R.string.schedule_none),style=MaterialTheme.typography.bodyMedium,color=muted)

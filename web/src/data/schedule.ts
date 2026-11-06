@@ -13,15 +13,15 @@ export type ScheduleSession = {
   id: string; reference: string; status: BookingStatus; startsAt: string; endsAt: string; location: string
   therapist: string | null; patientId: string | null; patient: string | null; linked: boolean
 }
-export type ScheduleRow = { startsAt: string; endsAt: string; session: ScheduleSession | null }
-export type ScheduleDay = { date: string; status: ScheduleDayStatus; holiday: string | null; rows: ScheduleRow[] }
+export type ScheduleRow = { startsAt: string; endsAt: string; session: ScheduleSession | null; onLeave: boolean }
+export type ScheduleDay = { date: string; status: ScheduleDayStatus; holiday: string | null; rows: ScheduleRow[]; onLeave: boolean }
 export type Schedule = { days: ScheduleDay[] }
 
 type RawSession = {
   id: string; reference_no: string; status: BookingStatus; starts_at: string; ends_at: string; location: string | null
   therapist_name?: string | null; patient_id?: string | null; patient_name?: string | null; linked?: boolean
 }
-type RawDay = { date: string; status: ScheduleDayStatus; holiday: string | null; rows: Array<{ starts_at: string; ends_at: string; session: RawSession | null }> }
+type RawDay = { date: string; status: ScheduleDayStatus; holiday: string | null; on_leave?: boolean; rows: Array<{ starts_at: string; ends_at: string; session: RawSession | null; on_leave?: boolean }> }
 
 const decodeSession = (raw: RawSession): ScheduleSession => ({
   id: raw.id, reference: raw.reference_no, status: raw.status, startsAt: raw.starts_at, endsAt: raw.ends_at, location: raw.location ?? '',
@@ -30,8 +30,8 @@ const decodeSession = (raw: RawSession): ScheduleSession => ({
 
 export const decodeSchedule = (raw: { days: RawDay[] }): Schedule => ({
   days: raw.days.map((day) => ({
-    date: day.date, status: day.status, holiday: day.holiday,
-    rows: day.rows.map((row) => ({ startsAt: row.starts_at, endsAt: row.ends_at, session: row.session ? decodeSession(row.session) : null })),
+    date: day.date, status: day.status, holiday: day.holiday, onLeave: day.on_leave ?? false,
+    rows: day.rows.map((row) => ({ startsAt: row.starts_at, endsAt: row.ends_at, session: row.session ? decodeSession(row.session) : null, onLeave: row.on_leave ?? false })),
   })),
 })
 

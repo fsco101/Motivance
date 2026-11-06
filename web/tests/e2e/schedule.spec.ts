@@ -158,6 +158,21 @@ test('a month opens on the next session, and the schedule follows a cancellation
   await expect(hour(page, '9:00 AM – 10:00 AM')).toContainText('No session')
 })
 
+test('a therapist sees their own leave without the reason, and a patient sees none of it', async ({ browser }) => {
+  sql(`insert into public.therapist_time_off(therapist_id,starts_at,ends_at,reason) values('${therapist.id}','${manila(date, 15)}','${manila(date, 17)}','Private ${tag}')`)
+  const staff = await signIn(browser, therapist, /\/therapist$/)
+  await openDate(staff, '/therapist/schedule', date)
+  await expect(hour(staff, '3:00 PM – 4:00 PM')).toContainText('On leave')
+  await expect(hour(staff, '4:00 PM – 5:00 PM')).toContainText('On leave')
+  await expect(hour(staff, '2:00 PM – 3:00 PM')).toContainText('No session')
+  await expect(staff.locator(`[data-date="${date}"]`)).toHaveAccessibleName(/On leave$/)
+  await expect(staff.getByText(`Private ${tag}`)).toHaveCount(0)
+  await noViolations(staff)
+  const patient = await signIn(browser, ben, /\/patient$/)
+  await openDate(patient, '/patient/schedule', date)
+  await expect(hour(patient, '3:00 PM – 4:00 PM')).toContainText('No session')
+})
+
 test('on a phone the schedule fits, and booking stays one tap away', async ({ browser }) => {
   const page = await signIn(browser, ben, /\/patient$/, { viewport: { width: 360, height: 740 } })
   await openDate(page, '/patient/schedule', date)

@@ -843,4 +843,5 @@
     <string name="schedule_not_linked">Hindi ka naka-link sa pasyenteng ito, kaya sarado pa rin ang kanilang rekord.</string>
     <string name="schedule_open_record">Buksan ang rekord</string>
     <string name="schedule_count">Mga session: %1$d</string>
+    <string name="schedule_on_leave">Naka-leave</string>
 </resources>

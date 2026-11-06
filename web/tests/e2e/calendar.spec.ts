@@ -18,6 +18,7 @@ const status = (booking: string) => sql(`select status from public.bookings wher
 
 let scheduler: TestUser
 let therapist: TestUser
+let cover: TestUser
 let ana: TestUser
 let ben: TestUser
 let cara: TestUser
@@ -50,8 +51,8 @@ async function startClosure(date: string, reason: string) {
 
 test.beforeAll(async ({ browser }) => {
   test.setTimeout(60_000)
-  ;[scheduler, therapist, ana, ben, cara] = await Promise.all([
-    createUser(['scheduler'], `Sol ${tag}`), createUser(['therapist'], `Zed ${tag}`), createUser(['patient'], `Ana ${tag}`), createUser(['patient'], `Ben ${tag}`), createUser(['patient'], `Cara ${tag}`),
+  ;[scheduler, therapist, cover, ana, ben, cara] = await Promise.all([
+    createUser(['scheduler'], `Sol ${tag}`), createUser(['therapist'], `Zed ${tag}`), createUser(['therapist'], `Amy ${tag}`), createUser(['patient'], `Ana ${tag}`), createUser(['patient'], `Ben ${tag}`), createUser(['patient'], `Cara ${tag}`),
   ])
   page = await (await browser.newContext()).newPage()
   await page.goto('/sign-in')
@@ -63,7 +64,7 @@ test.beforeAll(async ({ browser }) => {
 
 test.afterAll(async () => {
   await page.close()
-  removeUsers([scheduler, therapist, ana, ben, cara])
+  removeUsers([scheduler, therapist, cover, ana, ben, cara])
 })
 
 test('a closure lists what it would strand, and saves only once each has a decision', async () => {
@@ -211,6 +212,75 @@ test('a holiday over a booking needs a decision too', async () => {
   await dialog.getByRole('button', { name: 'Save and apply' }).click()
   await expect(page.getByText('Holiday saved.')).toBeVisible()
   expect(sql(`select status_reason from public.bookings where id='${held}'`)).toBe(`Center closed: Feast ${tag}`)
+})
+
+test('time off passes a session on, and keeps its reason from the patient', async () => {
+  const date = farDay(215)
+  const passed = book(ana, date, 9, therapist.id)
+  const cancelled = book(ben, date, 10, therapist.id)
+  const reason = `Surgery ${tag}`
+  await openTab('Therapist time off')
+  await page.getByRole('button', { name: 'Add time off' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Add time off' })
+  await dialog.getByLabel('Therapist').click()
+  await page.getByRole('option', { name: `Zed ${tag}` }).click()
+  await dialog.getByLabel('Away from').fill(`${date}T08:00`)
+  await dialog.getByLabel('Back at').fill(`${date}T17:00`)
+  await expect(dialog.getByRole('button', { name: 'Save', exact: true })).toBeDisabled()
+  await dialog.getByLabel('Reason').fill(reason)
+  await noViolations()
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click()
+
+  await expect(dialog).toContainText('2 active bookings fall in this time')
+  const first = dialog.getByRole('listitem', { name: `Ana ${tag}` })
+  await first.getByRole('button', { name: 'Change therapist' }).click()
+  await expect(dialog).toContainText(`Ana ${tag}, `)
+  await expect(dialog.locator('label').filter({ hasText: `Amy ${tag}` })).toBeVisible()
+  await expect(dialog.locator('label').filter({ hasText: `Zed ${tag}` })).toHaveCount(0)
+  await dialog.locator('label').filter({ hasText: `Amy ${tag}` }).click()
+  await dialog.getByRole('button', { name: 'Use this therapist' }).click()
+  await expect(first).toContainText(`Passes to Amy ${tag}`)
+  await dialog.getByRole('listitem', { name: `Ben ${tag}` }).getByRole('button', { name: 'Cancel booking' }).click()
+  await noViolations()
+  await dialog.getByRole('button', { name: 'Save and apply' }).click()
+  await expect(page.getByText('Time off saved.')).toBeVisible()
+
+  expect(sql(`select therapist_id from public.bookings where id='${passed}'`)).toBe(cover.id)
+  expect(status(passed)).toBe('confirmed')
+  expect(status(cancelled)).toBe('cancelled')
+  expect(sql(`select status_reason from public.bookings where id='${cancelled}'`)).toBe('Your therapist is away at this time.')
+
+  const row = page.getByRole('table').getByRole('row').filter({ hasText: reason })
+  await expect(row).toContainText(`Zed ${tag}`)
+  await noViolations()
+  await row.getByRole('button', { name: /^Edit/ }).click()
+  const edit = page.getByRole('dialog', { name: 'Edit time off' })
+  await expect(edit.getByLabel('Away from')).toHaveValue(`${date}T08:00`)
+  await edit.getByLabel('Back at').fill(`${date}T12:00`)
+  await edit.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(row).toContainText('8:00 AM – 12:00 PM')
+  await row.getByRole('button', { name: /^Delete/ }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click()
+  await expect(page.getByText('Time off deleted.')).toBeVisible()
+  await expect(row).toHaveCount(0)
+})
+
+test('the therapist picker marks who is on leave, and will not offer them', async () => {
+  const date = farDay(230)
+  const waiting = book(cara, date, 11)
+  sql(`insert into public.therapist_time_off(therapist_id,starts_at,ends_at,reason) values('${cover.id}','${manila(date, 9)}','${manila(date, 13)}','Booking test')`)
+  await page.goto('/scheduler/requests')
+  await page.getByLabel('Search patient, therapist or reference').fill(`BK-CAL-${waiting.slice(0, 8)}`)
+  await page.getByRole('button', { name: 'Search bookings' }).click()
+  await page.getByRole('table').getByRole('button', { name: `Cara ${tag}` }).click()
+  await page.getByRole('complementary').getByRole('button', { name: 'Confirm', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Confirm booking' })
+  const away = dialog.locator('label').filter({ hasText: `Amy ${tag}` })
+  await expect(away).toContainText('On leave')
+  await expect(away.getByRole('radio')).toBeDisabled()
+  await expect(dialog.locator('label').filter({ hasText: `Zed ${tag}` }).getByRole('radio')).toBeEnabled()
+  await noViolations()
+  await page.keyboard.press('Escape')
 })
 
 test('opening hours save every day, and warn about sessions left outside them', async () => {

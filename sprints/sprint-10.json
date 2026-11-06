@@ -392,7 +392,7 @@
       "github_issue": 75,
       "title": "Add therapist time off",
       "description": "Stop a therapist being assigned while they are away.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Backend",
       "estimate_points": 3,
@@ -426,41 +426,99 @@
         {
           "id": "MOT-58-AC1",
           "description": "Schedulers add, edit and delete leave for a therapist as a specific time range.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060008_therapist_time_off.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-58-AC2",
           "description": "A therapist on leave cannot be confirmed, assigned or rescheduled onto a session, enforced on the server.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060008_therapist_time_off.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-58-AC3",
           "description": "The therapist picker marks who is on leave.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060008_therapist_time_off.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-58-AC4",
           "description": "Leave that overlaps a therapist's active bookings must resolve each one first, as a closure does.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060008_therapist_time_off.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-58-AC5",
           "description": "A therapist sees their own leave on My Schedule.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060008_therapist_time_off.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/calendar.spec.ts",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/calendar.test.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T16:22:09.369850+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060008_therapist_time_off.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/calendar.spec.ts",
+          "web/tests/e2e/schedule.spec.ts",
+          "web/tests/contract/calendar.test.ts",
+          "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060008_therapist_time_off.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/calendar.spec.ts",
+        "web/tests/e2e/schedule.spec.ts",
+        "web/tests/contract/calendar.test.ts",
+        "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+      ]
     },
     {
       "id": "MOT-59",

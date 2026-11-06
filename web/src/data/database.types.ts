@@ -980,6 +980,54 @@ export type Database = {
           },
         ]
       }
+      therapist_time_off: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          reason: string
+          starts_at: string
+          therapist_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          reason: string
+          starts_at: string
+          therapist_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          reason?: string
+          starts_at?: string
+          therapist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_time_off_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "therapist_time_off_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           role: string
@@ -1096,7 +1144,7 @@ export type Database = {
         Returns: Json
       }
       calendar_affected: {
-        Args: { p_starts: string; p_ends: string }
+        Args: { p_starts: string; p_ends: string; p_therapist?: string }
         Returns: {
           attendance: string | null
           attendance_at: string | null
@@ -1122,7 +1170,12 @@ export type Database = {
         Returns: number
       }
       calendar_resolve: {
-        Args: { p_starts: string; p_ends: string; p_resolutions: Json }
+        Args: {
+          p_starts: string
+          p_ends: string
+          p_resolutions: Json
+          p_therapist?: string
+        }
         Returns: number
       }
       can_prescribe: {
@@ -1310,7 +1363,7 @@ export type Database = {
         Returns: number
       }
       scheduler_calendar_impact: {
-        Args: { p_starts: string; p_ends: string }
+        Args: { p_starts: string; p_ends: string; p_therapist?: string }
         Returns: Json
       }
       scheduler_cancel: {
@@ -1326,6 +1379,10 @@ export type Database = {
         Returns: undefined
       }
       scheduler_delete_holiday: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      scheduler_delete_time_off: {
         Args: { p_id: string }
         Returns: undefined
       }
@@ -1387,8 +1444,23 @@ export type Database = {
         }
         Returns: Json
       }
+      scheduler_save_time_off: {
+        Args: {
+          p_id: string
+          p_therapist: string
+          p_starts: string
+          p_ends: string
+          p_reason: string
+          p_resolutions?: Json
+        }
+        Returns: Json
+      }
       scheduler_therapists: {
         Args: { p_booking?: string; p_starts?: string }
+        Returns: Json
+      }
+      scheduler_time_off: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       set_my_profile_photo: {

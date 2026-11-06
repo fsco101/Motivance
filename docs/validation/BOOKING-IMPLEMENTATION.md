@@ -221,3 +221,24 @@ Test cleanup turns off foreign keys, so a closure made by a test Scheduler would
 | Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
 
 Hours and rules are shared by every browser suite, so `calendar.spec.ts` intercepts those two saves and checks what the page sends. The live API test runs them for real, one at a time. The whole browser suite is not rerun for each issue, because of the memory limit on this machine, and runs again before the sprint closes.
+
+## MOT-58: Therapist time off
+
+Schedulers add, edit and delete a therapist's leave on the Calendar page, as a specific time range. `booking_check_therapist` is the one gate for confirming, assigning and rescheduling, so a single check there refuses all three. The therapist picker marks who is on leave and will not offer them.
+
+Leave resolves like a closure, through the same `calendar_resolve`, but only that therapist's sessions need a decision. Because the center stays open, there is one more choice: a session can pass to another therapist at the same time.
+
+The reason stays with scheduling. A patient whose session is cancelled for leave reads only that their therapist is away, because they can see a cancellation's reason and a therapist's reason for being away is their own. A therapist's own schedule shows the hours without the reason. Other therapists and patients do not see it at all.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: adding and refusing leave, all three ways onto a session, the picker, only that therapist's sessions needing a decision, all-or-nothing saves, what My Schedule shows and to whom, editing and deleting | `python scripts/test_booking.py time_off` | 48 checks passed |
+| All sections | `python scripts/test_booking.py` | 445 checks passed |
+| Contract tests | `npm run test:contract` | 52 passed |
+| Browser tests with axe: Calendar, schedule, Scheduler and the design gallery | `npx playwright test tests/e2e/calendar.spec.ts tests/e2e/schedule.spec.ts tests/e2e/scheduler.spec.ts tests/e2e/design.spec.ts --workers=1` | 96 passed, and the opt-in motion measurement did not run |
+| Web unit tests | `npm test` | 213 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 201 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
+
+On Android, leave on My Schedule is covered by unit tests of the data it reads, and has not yet been seen on an emulator screen. That check runs before the sprint closes.

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams, type RouteObject } from 'react-router'
 import type { Slot } from '@/data/booking'
-import type { Closure, Holiday } from '@/data/calendar'
+import type { Closure, Holiday, TimeOff } from '@/data/calendar'
 import type { ScheduleAudience } from '@/data/schedule'
 import { NO_FILTERS as NO_REQUEST_FILTERS, type RequestRow } from '@/data/scheduler'
 import { SignInPage } from '@/auth/SignInPage'
@@ -26,7 +26,7 @@ import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
 import { ScheduleView } from '@/features/booking/ScheduleView'
-import { ClosureDialog, HolidayDialog, type CalendarActions } from '@/features/scheduler/CalendarDialogs'
+import { ClosureDialog, HolidayDialog, TimeOffDialog, type CalendarActions } from '@/features/scheduler/CalendarDialogs'
 import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
 import { RequestsView } from '@/features/scheduler/RequestsView'
@@ -115,19 +115,21 @@ function Schedule({ audience }: { audience: ScheduleAudience }) {
 }
 
 const calendarActions: CalendarActions = {
-  impact: async () => data.affected, availability: async () => data.availability, therapists: async () => data.therapistChoices, saveHoliday: async () => toast.show('Saved'), saveClosure: async () => toast.show('Saved'),
+  impact: async () => data.affected, availability: async () => data.availability, therapists: async () => data.therapistChoices, saveHoliday: async () => toast.show('Saved'), saveClosure: async () => toast.show('Saved'), saveTimeOff: async () => toast.show('Saved'),
 }
 function SchedulerCalendar() {
   const [params] = useSearchParams()
   const [tab, setTab] = useState((params.get('tab') ?? 'hours') as CalendarTab)
   const [holiday, setHoliday] = useState<Holiday | null | undefined>()
   const [closure, setClosure] = useState<Closure | null | undefined>()
+  const [timeOff, setTimeOff] = useState<TimeOff | null | undefined>()
   return (
     <>
       <CalendarView load={useDemo(data.calendar, data.calendar)} tab={tab} onTab={setTab} outsideHours={params.has('outside') ? 2 : 0} onSaveHours={async () => toast.show('Saved')} onSaveSettings={async () => toast.show('Saved')}
-        onEditHoliday={setHoliday} onDeleteHoliday={said('Deleted')} onEditClosure={setClosure} onDeleteClosure={said('Deleted')} />
+        onEditHoliday={setHoliday} onDeleteHoliday={said('Deleted')} onEditClosure={setClosure} onDeleteClosure={said('Deleted')} onEditTimeOff={setTimeOff} onDeleteTimeOff={said('Deleted')} />
       {holiday !== undefined && <HolidayDialog holiday={holiday} actions={calendarActions} onClose={() => setHoliday(undefined)} />}
       {closure !== undefined && <ClosureDialog closure={closure} actions={calendarActions} onClose={() => setClosure(undefined)} />}
+      {timeOff !== undefined && <TimeOffDialog entry={timeOff} therapists={data.therapistChoices} actions={calendarActions} onClose={() => setTimeOff(undefined)} />}
     </>
   )
 }

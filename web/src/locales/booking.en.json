@@ -61,7 +61,8 @@
     "bulkDetail_one": "Reject {{count}} pending request. Only a request still pending will change.",
     "bulkDetail_other": "Reject {{count}} pending requests. Only requests still pending will change.",
     "bulkDone_one": "{{count}} request rejected.",
-    "bulkDone_other": "{{count}} requests rejected."
+    "bulkDone_other": "{{count}} requests rejected.",
+    "onLeave": "On leave"
   },
   "patient": {
     "greeting": "Hello, {{name}}",
@@ -196,7 +197,8 @@
       "too_late": "It is too late to change this booking online. Contact the center.",
       "invalid": "That request could not be read. Try again.",
       "invalid_range": "Those dates could not be read.",
-      "unresolved": "New bookings fall in this time. Review them and try again."
+      "unresolved": "New bookings fall in this time. Review them and try again.",
+      "therapist_on_leave": "That therapist is on leave at that time."
     },
     "keep": "Keep booking",
     "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
@@ -289,6 +291,24 @@
     "willMove": "Moves to {{when}}",
     "useTime": "Use this time",
     "saveResolved": "Save and apply",
-    "closedFor": "Center closed: {{name}}"
+    "closedFor": "Center closed: {{name}}",
+    "timeOffTab": "Therapist time off",
+    "timeOffTitle": "Therapist time off",
+    "timeOffDetail": "A therapist on leave cannot be given a session. The reason stays with scheduling.",
+    "addTimeOff": "Add time off",
+    "editTimeOff": "Edit time off",
+    "noTimeOff": "No time off ahead",
+    "noTimeOffDetail": "Add it here, so nobody books a therapist who is away.",
+    "chooseTherapist": "Choose a therapist",
+    "awayFrom": "Away from",
+    "backAt": "Back at",
+    "timeOffReasonHint": "Only Schedulers see this. Patients and other staff do not.",
+    "timeOffSaved": "Time off saved.",
+    "timeOffDeleted": "Time off deleted.",
+    "deleteTimeOffTitle": "Delete this time off?",
+    "deleteTimeOffMessage": "{{name}} can be given sessions at this time again.",
+    "useTherapist": "Use this therapist",
+    "willPass": "Passes to {{name}}",
+    "therapistAway": "Your therapist is away at this time."
   }
 }

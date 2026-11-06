@@ -25,7 +25,7 @@ object BookingJson {
 
     fun schedule(json:JSONObject)=Schedule(json.getJSONArray("days").objects().map {day ->
         ScheduleDay(day.getString("date"),BookingDayStatus.of(day.getString("status")),day.text("holiday"),day.getJSONArray("rows").objects().map {row ->
-            ScheduleRow(row.getString("starts_at"),row.getString("ends_at"),if(row.isNull("session")) null else session(row.getJSONObject("session")))
-        })
+            ScheduleRow(row.getString("starts_at"),row.getString("ends_at"),if(row.isNull("session")) null else session(row.getJSONObject("session")),row.optBoolean("on_leave"))
+        },day.optBoolean("on_leave"))
     })
 }

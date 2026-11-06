@@ -5,11 +5,11 @@ import { Button, IconButton } from '@/components/Button'
 import { DataTable, type Column } from '@/components/DataTable'
 import { EmptyState, Notice, PageHeader, Panel, StatusPill, Tabs } from '@/components/Display'
 import { SelectField, TextArea, TextField } from '@/components/Field'
-import type { CenterCalendar, CenterDay, CenterSettings, Closure, Holiday } from '@/data/calendar'
+import type { CenterCalendar, CenterDay, CenterSettings, Closure, Holiday, TimeOff } from '@/data/calendar'
 import { useCenterFormat } from '@/features/booking/format'
 import { Loadable, SkeletonLines, type Load } from '@/features/shared'
 
-export type CalendarTab = 'hours' | 'holidays' | 'closures'
+export type CalendarTab = 'hours' | 'holidays' | 'closures' | 'timeoff'
 
 type Props = {
   load: Load<CenterCalendar>; tab: CalendarTab; onTab: (tab: CalendarTab) => void
@@ -18,6 +18,7 @@ type Props = {
   onSaveHours: (hours: CenterDay[]) => Promise<void>; onSaveSettings: (settings: CenterSettings) => Promise<void>
   onEditHoliday: (holiday: Holiday | null) => void; onDeleteHoliday: (holiday: Holiday) => void
   onEditClosure: (closure: Closure | null) => void; onDeleteClosure: (closure: Closure) => void
+  onEditTimeOff: (entry: TimeOff | null) => void; onDeleteTimeOff: (entry: TimeOff) => void
 }
 
 const SLOT_LENGTHS = [15, 30, 45, 60, 90, 120]
@@ -127,20 +128,46 @@ function ClosuresPanel({ closures, onEdit, onDelete }: { closures: Closure[]; on
   )
 }
 
-export function CalendarView({ load, tab, onTab, outsideHours, onSaveHours, onSaveSettings, onEditHoliday, onDeleteHoliday, onEditClosure, onDeleteClosure }: Props) {
+function TimeOffPanel({ entries, onEdit, onDelete }: { entries: TimeOff[]; onEdit: Props['onEditTimeOff']; onDelete: Props['onDeleteTimeOff'] }) {
+  const { t } = useTranslation()
+  const format = useCenterFormat()
+  const when = (row: TimeOff) => {
+    const [from, to] = [format.day(row.startsAt), format.day(row.endsAt)]
+    return from === to ? `${from}, ${format.range(row.startsAt, row.endsAt)}` : `${from}, ${format.time(row.startsAt)} – ${to}, ${format.time(row.endsAt)}`
+  }
+  const columns: ReadonlyArray<Column<TimeOff>> = [
+    { key: 'therapist', header: t('booking.therapist'), cell: (row) => <span className="font-semibold">{row.therapist}</span> },
+    { key: 'when', header: t('scheduler.when'), cell: (row) => when(row) },
+    { key: 'reason', header: t('booking.reason'), cell: (row) => row.reason },
+    { key: 'actions', header: t('calendar.actions'), align: 'end', cell: (row) => (
+      <span className="inline-flex gap-1">
+        <IconButton label={t('calendar.editNamed', { name: `${row.therapist}, ${when(row)}` })} onClick={() => onEdit(row)}><PencilSimpleIcon aria-hidden /></IconButton>
+        <IconButton label={t('calendar.deleteNamed', { name: `${row.therapist}, ${when(row)}` })} onClick={() => onDelete(row)}><TrashIcon aria-hidden /></IconButton>
+      </span>
+    ) },
+  ]
+  return (
+    <Panel flush title={t('calendar.timeOffTitle')} description={t('calendar.timeOffDetail')} action={<Button size="sm" leading={<PlusIcon aria-hidden />} onClick={() => onEdit(null)}>{t('calendar.addTimeOff')}</Button>}>
+      <DataTable caption={t('calendar.timeOffTitle')} columns={columns} rows={entries} rowKey={(row) => row.id} empty={<div className="p-5"><EmptyState title={t('calendar.noTimeOff')} detail={t('calendar.noTimeOffDetail')} /></div>} />
+    </Panel>
+  )
+}
+
+export function CalendarView({ load, tab, onTab, outsideHours, onSaveHours, onSaveSettings, onEditHoliday, onDeleteHoliday, onEditClosure, onDeleteClosure, onEditTimeOff, onDeleteTimeOff }: Props) {
   const { t } = useTranslation()
   return (
     <>
       <PageHeader title={t('calendar.title')} description={t('calendar.detail')} />
       <Tabs className="mb-4" label={t('calendar.sections')} value={tab} onChange={(value) => onTab(value as CalendarTab)}
-        tabs={[{ value: 'hours', label: t('calendar.hoursTab') }, { value: 'holidays', label: t('calendar.holidaysTab') }, { value: 'closures', label: t('calendar.closuresTab') }]} />
+        tabs={[{ value: 'hours', label: t('calendar.hoursTab') }, { value: 'holidays', label: t('calendar.holidaysTab') }, { value: 'closures', label: t('calendar.closuresTab') }, { value: 'timeoff', label: t('calendar.timeOffTab') }]} />
       <Loadable load={load} skeleton={<SkeletonLines />}>
-        {({ settings, hours, holidays, closures }) => (
+        {({ settings, hours, holidays, closures, timeOff }) => (
           <div className="grid gap-5">
             {tab === 'hours' && <HoursPanel key={JSON.stringify(hours)} hours={hours} outside={outsideHours} onSave={onSaveHours} />}
             {tab === 'hours' && <RulesPanel key={JSON.stringify(settings)} settings={settings} onSave={onSaveSettings} />}
             {tab === 'holidays' && <HolidaysPanel holidays={holidays} onEdit={onEditHoliday} onDelete={onDeleteHoliday} />}
             {tab === 'closures' && <ClosuresPanel closures={closures} onEdit={onEditClosure} onDelete={onDeleteClosure} />}
+            {tab === 'timeoff' && <TimeOffPanel entries={timeOff} onEdit={onEditTimeOff} onDelete={onDeleteTimeOff} />}
           </div>
         )}
       </Loadable>

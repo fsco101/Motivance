@@ -5,9 +5,9 @@ const session = { id: 's1', reference_no: 'BK-2026-000001', status: 'confirmed' 
 const free = { starts_at: '2026-12-14T01:00:00+00:00', ends_at: '2026-12-14T02:00:00+00:00', session: null }
 
 const day = (date: string, sessions: number): ScheduleDay => ({
-  date, status: 'open', holiday: null,
+  date, status: 'open', holiday: null, onLeave: false,
   rows: Array.from({ length: sessions }, (_, index) => ({
-    startsAt: `${date}T01:00:00Z`, endsAt: `${date}T02:00:00Z`,
+    startsAt: `${date}T01:00:00Z`, endsAt: `${date}T02:00:00Z`, onLeave: false,
     session: { id: `${date}${index}`, reference: 'BK', status: 'confirmed', startsAt: `${date}T01:00:00Z`, endsAt: `${date}T02:00:00Z`, location: '', therapist: null, patientId: null, patient: null, linked: false },
   })),
 })
@@ -28,6 +28,12 @@ describe('reading a schedule', () => {
   it('treats a missing location as none, so nothing shows an empty label', () => {
     const { days } = decodeSchedule({ days: [{ date: '2026-12-14', status: 'open', holiday: null, rows: [{ starts_at: session.starts_at, ends_at: session.ends_at, session: { ...session, location: null } }] }] })
     expect(days[0]!.rows[0]!.session?.location).toBe('')
+  })
+
+  it('keeps a therapist\'s leave on the day and the hour, and reads its absence as none', () => {
+    const { days } = decodeSchedule({ days: [{ date: '2026-12-14', status: 'open', holiday: null, on_leave: true, rows: [{ ...free, on_leave: true }, free] }] })
+    expect(days[0]!.onLeave).toBe(true)
+    expect(days[0]!.rows.map((row) => row.onLeave)).toEqual([true, false])
   })
 
   it('counts the sessions on a day, and none on an unknown one', () => {

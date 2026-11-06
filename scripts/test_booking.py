@@ -94,6 +94,7 @@ delete from public.patient_profiles where user_id in ({ids});
 delete from public.patient_invitations where therapist_id in ({ids});
 delete from public.therapist_patients where therapist_id in ({ids}) or patient_id in ({ids});
 delete from public.center_closures where created_by in ({ids}); delete from public.center_holidays where created_by in ({ids});
+delete from public.therapist_time_off where therapist_id in ({ids}) or created_by in ({ids});
 update public.center_settings set updated_by=null where updated_by in ({ids});
 delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids});
 delete from public.patients where id in ({ids}); delete from public.user_roles where user_id in ({ids});
@@ -959,7 +960,123 @@ def calendar_checks(stack):
     stack.check(stack.rpc('scheduler_save_holiday', dict(body, p_resolutions=[cancel(held)]), ts)[0] == 200 and status(held) == 'cancelled', 'With a decision, the holiday saves')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar}
+def time_off(stack):
+    """MOT-58: a therapist on leave cannot take a session, and leave cannot strand one."""
+    _, ts = stack.user('patient', 'scheduler')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Leave')
+    omar, to = stack.user('patient', 'therapist', name='Booking Omar Cover')
+    ana, ta = stack.user('patient', name='Booking Ana Leave')
+    ben, tb = stack.user('patient', name='Booking Ben Leave')
+    plain, tp = stack.user('patient', name='Booking Plain Patient')
+    fresh = working_days(stack)
+    day, other, later, last = next(fresh), next(fresh), next(fresh), next(fresh)
+
+    def request(token, start):
+        code, data = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)
+        assert code == 200, data
+        return data
+
+    def leave(start, end, therapist=tess, resolutions=(), leave_id=None, reason='Booking test leave'):
+        return stack.rpc('scheduler_save_time_off', {'p_id': leave_id, 'p_therapist': therapist, 'p_starts': start, 'p_ends': end, 'p_reason': reason, 'p_resolutions': list(resolutions)}, ts)
+
+    def status(booking):
+        return stack.sql(f"select status from public.bookings where id='{booking['id']}';")
+
+    def assigned(booking):
+        return stack.sql(f"select therapist_id from public.bookings where id='{booking['id']}';")
+
+    def rows():
+        return int(stack.sql(f"select count(*) from public.therapist_time_off where therapist_id='{tess}';"))
+
+    def choice(booking, person, starts=None):
+        found = stack.rpc('scheduler_therapists', {'p_booking': booking['id'], 'p_starts': starts}, ts)[1]
+        return next(item for item in found if item['id'] == person)
+
+    # Adding it, and who can see it.
+    code, saved = leave(manila(day, 9), manila(day, 12))
+    stack.check(code == 200 and saved['therapist_id'] == tess, 'A Scheduler adds leave for a specific time')
+    listed = stack.rpc('scheduler_time_off', {}, ts)[1]
+    stack.check([item['therapist_name'] for item in listed if item['id'] == saved['id']] == ['Booking Tess Leave'], 'The list names the therapist')
+    stack.check(next(item for item in listed if item['id'] == saved['id'])['reason'] == 'Booking test leave', 'A Scheduler sees the reason')
+    stack.check(stack.rpc('scheduler_time_off', {}, tt)[0] == 403, 'A therapist cannot open the list')
+    stack.check(stack.rpc('scheduler_time_off', {}, ta)[0] == 403, 'A patient cannot open the list')
+    code, found = stack.api('/rest/v1/therapist_time_off?select=*', token=tt)
+    stack.check(code in (401, 403) or found == [], 'Nor can anyone read the table directly')
+    for label, result in [('a short reason', leave(manila(later, 9), manila(later, 10), reason='x')), ('no reason', leave(manila(later, 9), manila(later, 10), reason=None))]:
+        stack.check(refused(result, 'booking_reason_required'), f'Leave with {label} is refused')
+    stack.check(refused(leave(manila(later, 10), manila(later, 9)), 'booking_invalid_range'), 'Leave ending before it starts is refused')
+    stack.check(refused(leave(manila(later, 9), manila(later, 10), therapist=plain), 'booking_therapist_unavailable'), 'Leave is only for a therapist')
+    stack.check(refused(leave(manila(later, 9), manila(later, 10), leave_id=str(uuid.uuid4())), 'booking_unavailable'), 'Leave that does not exist cannot be edited')
+
+    # All three ways of putting a therapist on a session.
+    a = request(ta, manila(day, 10))
+    stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': a['id'], 'p_therapist': tess}, ts), 'booking_therapist_on_leave'), 'A therapist on leave cannot be confirmed onto a session')
+    stack.check(refused(stack.rpc('scheduler_assign_therapist', {'p_booking': a['id'], 'p_therapist': tess}, ts), 'booking_therapist_on_leave'), 'Nor assigned to one')
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': a['id'], 'p_therapist': omar}, ts)[0] == 200, 'Someone else can take it')
+    stack.check(refused(stack.rpc('scheduler_reschedule', {'p_booking': a['id'], 'p_starts': manila(day, 11), 'p_therapist': tess}, ts), 'booking_therapist_on_leave'), 'Nor rescheduled onto their leave')
+    edge = request(tb, manila(day, 12))
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': edge['id'], 'p_therapist': tess}, ts)[0] == 200, 'A session starting as leave ends is fine')
+
+    # The picker.
+    waiting = request(tb, manila(other, 9))
+    stack.check(choice(waiting, tess)['on_leave'] is False, 'The picker shows a therapist free on another day')
+    stack.check(choice(waiting, tess, manila(day, 10))['on_leave'] is True, 'And marks them on leave at that time')
+    stack.check(choice(waiting, omar, manila(day, 10))['on_leave'] is False, 'And nobody else')
+
+    # Leave cannot strand a session: only that therapist's sessions need a decision.
+    b = request(ta, manila(later, 9))
+    c = request(tb, manila(later, 10))
+    d = request(tp, manila(later, 11))
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': b['id'], 'p_therapist': tess}, ts)[0] == 200, 'A session is confirmed for the therapist')
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': c['id'], 'p_therapist': tess}, ts)[0] == 200, 'And another')
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': d['id'], 'p_therapist': omar}, ts)[0] == 200, 'And one for someone else')
+    start, end = manila(later, 8), manila(later, 16)
+    impact = stack.rpc('scheduler_calendar_impact', {'p_starts': start, 'p_ends': end, 'p_therapist': tess}, ts)[1]
+    stack.check([item['id'] for item in impact] == [b['id'], c['id']], "The impact lists only that therapist's sessions")
+    stack.check(len(stack.rpc('scheduler_calendar_impact', {'p_starts': start, 'p_ends': end}, ts)[1]) == 3, 'Without a therapist it still lists the whole center')
+    before = rows()
+    stack.check(refused(leave(start, end), 'booking_unresolved'), 'Leave over active sessions is refused without decisions')
+    stack.check(rows() == before, 'And is not saved')
+    assign = {'booking': b['id'], 'action': 'assign', 'therapist': omar}
+    cancel = {'booking': c['id'], 'action': 'cancel', 'reason': 'Booking test leave'}
+    stack.check(refused(leave(start, end, resolutions=[assign]), 'booking_unresolved'), 'A decision for only some of them is refused')
+    stack.check(refused(leave(start, end, resolutions=[assign, cancel, {'booking': d['id'], 'action': 'cancel', 'reason': 'Test'}]), 'booking_invalid'), "A decision for someone else's session is refused")
+    same = {'booking': c['id'], 'action': 'reschedule', 'starts_at': manila(later, 14), 'therapist': tess}
+    stack.check(refused(leave(start, end, resolutions=[assign, same]), 'booking_therapist_on_leave'), 'A session cannot move to a time inside the same leave')
+    stack.check(rows() == before and assigned(b) == tess and status(c) == 'confirmed', 'The failed move undoes the whole save')
+    moved = {'booking': c['id'], 'action': 'reschedule', 'starts_at': manila(last, 9), 'therapist': tess}
+    code, saved_leave = leave(start, end, resolutions=[assign, moved])
+    stack.check(code == 200 and rows() == before + 1, 'With a decision for each, leave saves')
+    stack.check(assigned(b) == omar and status(b) == 'confirmed', 'A session can pass to another therapist at the same time')
+    stack.check(status(c) == 'rescheduled' and assigned(c) == tess, 'Or move to a time they are back')
+    stack.check(status(d) == 'confirmed', "Someone else's session is left alone")
+    late = request(ta, manila(last, 11))
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': late['id'], 'p_therapist': tess}, ts)[0] == 200, 'A session is confirmed for a day still free')
+    stack.check(refused(leave(manila(last, 8), manila(last, 16), leave_id=saved_leave['id']), 'booking_unresolved'), 'Moving leave onto sessions needs decisions too')
+
+    # What a therapist sees on My Schedule.
+    days = stack.rpc('therapist_schedule', {'p_from': str(day), 'p_to': str(day)}, tt)[1]['days'][0]
+    stack.check(days['on_leave'] is True, 'A therapist sees the day has leave in it')
+    by_hour = {manila_hour(row['starts_at']): row for row in days['rows']}
+    stack.check(by_hour[9]['on_leave'] is True and by_hour[11]['on_leave'] is True, 'Their leave is on the hours it covers')
+    stack.check(by_hour[13]['on_leave'] is False, 'And not after it')
+    stack.check(by_hour[12]['session'] is not None and by_hour[12]['on_leave'] is False, 'A session beside it still shows')
+    stack.check('Booking test leave' not in json.dumps(days), 'The reason stays with scheduling')
+    stack.check(stack.rpc('therapist_schedule', {'p_from': str(day), 'p_to': str(day)}, to)[1]['days'][0]['on_leave'] is False, "Another therapist does not see it")
+    patient_day = stack.rpc('my_schedule', {'p_from': str(day), 'p_to': str(day)}, ta)[1]['days'][0]
+    stack.check(patient_day['on_leave'] is False and not any(row['on_leave'] for row in patient_day['rows']), 'A patient never sees it')
+
+    # Editing and deleting.
+    first = saved['id']
+    code, edited = leave(manila(day, 9), manila(day, 10), leave_id=first, reason='Booking test shorter')
+    stack.check(code == 200 and edited['reason'] == 'Booking test shorter', 'Leave can be edited')
+    stack.check(choice(waiting, tess, manila(day, 11))['on_leave'] is False, 'The hours it no longer covers free up')
+    stack.check(stack.rpc('scheduler_delete_time_off', {'p_id': first}, ts)[0] == 204, 'Leave can be deleted')
+    stack.check(choice(waiting, tess, manila(day, 9))['on_leave'] is False, 'And the therapist is free again')
+    stack.check(refused(stack.rpc('scheduler_delete_time_off', {'p_id': first}, ts), 'booking_unavailable'), 'Leave already gone is refused')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off}
 
 
 def main():

@@ -843,4 +843,5 @@
     <string name="schedule_not_linked">You are not linked to this patient, so their record stays closed.</string>
     <string name="schedule_open_record">Open record</string>
     <string name="schedule_count">Sessions: %1$d</string>
+    <string name="schedule_on_leave">On leave</string>
 </resources>
