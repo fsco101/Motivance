@@ -44,6 +44,171 @@ export type Database = {
           },
         ]
       }
+      center_closures: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          reason: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          reason: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          reason?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_closures_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      center_holidays: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_on: string
+          id: string
+          kind: string
+          name: string
+          source: string
+          starts_on: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_on: string
+          id?: string
+          kind: string
+          name: string
+          source?: string
+          starts_on: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string
+          id?: string
+          kind?: string
+          name?: string
+          source?: string
+          starts_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_holidays_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      center_hours: {
+        Row: {
+          closes_at: string
+          is_open: boolean
+          opens_at: string
+          weekday: number
+        }
+        Insert: {
+          closes_at?: string
+          is_open?: boolean
+          opens_at?: string
+          weekday: number
+        }
+        Update: {
+          closes_at?: string
+          is_open?: boolean
+          opens_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
+      center_settings: {
+        Row: {
+          booking_horizon_days: number
+          cancel_cutoff_hours: number
+          center_name: string
+          id: boolean
+          location: string
+          max_active_bookings: number
+          max_self_reschedules: number
+          minimum_notice_hours: number
+          reschedule_cutoff_hours: number
+          slot_capacity: number
+          slot_minutes: number
+          time_zone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          booking_horizon_days?: number
+          cancel_cutoff_hours?: number
+          center_name?: string
+          id?: boolean
+          location?: string
+          max_active_bookings?: number
+          max_self_reschedules?: number
+          minimum_notice_hours?: number
+          reschedule_cutoff_hours?: number
+          slot_capacity?: number
+          slot_minutes?: number
+          time_zone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          booking_horizon_days?: number
+          cancel_cutoff_hours?: number
+          center_name?: string
+          id?: boolean
+          location?: string
+          max_active_bookings?: number
+          max_self_reschedules?: number
+          minimum_notice_hours?: number
+          reschedule_cutoff_hours?: number
+          slot_capacity?: number
+          slot_minutes?: number
+          time_zone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consents: {
         Row: {
           client_event_id: string | null
@@ -751,6 +916,10 @@ export type Database = {
         Args: { p_exercise: string }
         Returns: undefined
       }
+      booking_availability: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
       can_prescribe: {
         Args: { target: string }
         Returns: boolean
@@ -762,6 +931,10 @@ export type Database = {
       can_read_patient: {
         Args: { target: string }
         Returns: boolean
+      }
+      center_problem: {
+        Args: { p_starts: string; p_ends: string }
+        Returns: string
       }
       clear_my_profile_photo: {
         Args: Record<PropertyKey, never>
@@ -858,6 +1031,14 @@ export type Database = {
       }
       set_my_profile_photo: {
         Args: { p_public_id: string; p_version: number; p_signature: string }
+        Returns: string
+      }
+      slot_load: {
+        Args: { p_starts: string; p_ends: string }
+        Returns: number
+      }
+      slot_problem: {
+        Args: { p_starts: string }
         Returns: string
       }
       username_allowed: {

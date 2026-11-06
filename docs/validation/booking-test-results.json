@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T11:52:56.361114+00:00",
-  "checks_passed": 40,
+  "generated_at": "2026-11-06T11:56:04.950353+00:00",
+  "checks_passed": 60,
   "checks": [
     "A patient cannot grant the Scheduler role",
     "A therapist cannot grant the Scheduler role",
@@ -41,7 +41,27 @@
     "The linked therapist can still read profiles, so the empty result above is real",
     "A Scheduler reads no measurements",
     "A Scheduler reads no audit records",
-    "A Scheduler cannot open the administrator directory"
+    "A Scheduler cannot open the administrator directory",
+    "Anonymous callers cannot read availability",
+    "A range over two months is refused",
+    "A backwards range is refused",
+    "A working day offers eight hourly slots from nine to five",
+    "Nine in Manila is stored as 01:00 UTC",
+    "The last slot ends at five in Manila, 09:00 UTC",
+    "Each slot reports the places left",
+    "A slot says nothing about who holds it",
+    "A closed weekend offers no slots",
+    "A national holiday offers no slots and is named",
+    "A seasonal break offers no slots",
+    "A time-range closure removes only the slots it overlaps",
+    "A patient never sees why the center is closed",
+    "A full-day closure closes the whole day",
+    "A past day offers nothing",
+    "Nothing inside the 24-hour minimum notice is offered",
+    "Nothing beyond the booking horizon is offered",
+    "A patient cannot change the settings",
+    "A patient cannot add a holiday",
+    "A patient can read the hours"
   ],
   "environment": "real local Auth and PostgREST with disposable synthetic accounts"
 }

@@ -3,7 +3,7 @@
 Run after `supabase start` and `supabase migration up --local`. Existing records are left alone: every account this
 creates is removed again. Pass a section name, such as `python scripts/test_booking.py roles`, to run one section.
 """
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
@@ -167,7 +167,95 @@ insert into public.consents(patient_id,consent_type,version,event) values('{pati
     stack.check(stack.rpc('admin_accounts', {}, ts)[0] == 403, 'A Scheduler cannot open the administrator directory')
 
 
-SECTIONS = {'roles': roles}
+def next_weekday(day, weekday, after=0):
+    """The first date on or after `after` days from `day` that falls on an ISO weekday."""
+    candidate = day + timedelta(days=after)
+    while candidate.isoweekday() != weekday:
+        candidate += timedelta(days=1)
+    return candidate
+
+
+def manila_today(stack):
+    return date.fromisoformat(stack.sql("select (now() at time zone 'Asia/Manila')::date;"))
+
+
+def working_day(stack, after=3):
+    """A plain working day inside the booking horizon, clear of holidays."""
+    day = manila_today(stack) + timedelta(days=after)
+    while True:
+        if day.isoweekday() <= 5 and stack.sql(f"select count(*) from public.center_holidays where '{day}' between starts_on and ends_on;") == '0':
+            return day
+        day += timedelta(days=1)
+
+
+def availability(stack):
+    """MOT-50: what a patient can see."""
+    _, patient = stack.user('patient')
+    today = manila_today(stack)
+
+    def days(start, end):
+        code, data = stack.rpc('booking_availability', {'p_from': str(start), 'p_to': str(end)}, patient)
+        assert code == 200, (code, data)
+        return {row['date']: row for row in data['days']}
+
+    stack.check(stack.rpc('booking_availability', {'p_from': str(today), 'p_to': str(today)})[0] == 401, 'Anonymous callers cannot read availability')
+    stack.check(stack.rpc('booking_availability', {'p_from': str(today), 'p_to': str(today + timedelta(days=90))}, patient)[0] == 400, 'A range over two months is refused')
+    stack.check(stack.rpc('booking_availability', {'p_from': str(today), 'p_to': str(today - timedelta(days=1))}, patient)[0] == 400, 'A backwards range is refused')
+
+    day = working_day(stack)
+    row = days(day, day)[str(day)]
+    stack.check(row['status'] == 'open' and len(row['slots']) == 8, 'A working day offers eight hourly slots from nine to five')
+    first, last = row['slots'][0], row['slots'][-1]
+    stack.check(datetime.fromisoformat(first['starts_at']).astimezone(timezone.utc).hour == 1, 'Nine in Manila is stored as 01:00 UTC')
+    stack.check(datetime.fromisoformat(last['ends_at']).astimezone(timezone.utc).hour == 9, 'The last slot ends at five in Manila, 09:00 UTC')
+    stack.check(all(slot['remaining'] == 3 for slot in row['slots']), 'Each slot reports the places left')
+    stack.check(set(first) == {'starts_at', 'ends_at', 'remaining'}, 'A slot says nothing about who holds it')
+
+    saturday = next_weekday(today, 6, 3)
+    row = days(saturday, saturday)[str(saturday)]
+    stack.check(row['status'] == 'closed' and row['slots'] == [], 'A closed weekend offers no slots')
+
+    holiday = date.fromisoformat(stack.sql("select min(starts_on) from public.center_holidays where starts_on>current_date+2 and extract(isodow from starts_on)<6;"))
+    row = days(holiday, holiday)[str(holiday)]
+    stack.check(row['status'] == 'holiday' and row['slots'] == [] and row['holiday'], 'A national holiday offers no slots and is named')
+
+    season = working_day(stack, 12)
+    stack.sql(f"insert into public.center_holidays(name,kind,starts_on,ends_on) values('Booking test break','seasonal','{season}','{season}');")
+    try:
+        row = days(season, season)[str(season)]
+        stack.check(row['status'] == 'holiday' and row['holiday'] == 'Booking test break', 'A seasonal break offers no slots')
+    finally:
+        stack.sql("delete from public.center_holidays where name='Booking test break';")
+
+    closed = working_day(stack, 13)
+    stack.sql(f"""insert into public.center_closures(starts_at,ends_at,reason) values(('{closed} 13:00'::timestamp) at time zone 'Asia/Manila',('{closed} 15:00'::timestamp) at time zone 'Asia/Manila','Booking test closure');""")
+    try:
+        row = days(closed, closed)[str(closed)]
+        hours = [datetime.fromisoformat(slot['starts_at']).astimezone(timezone.utc).hour for slot in row['slots']]
+        stack.check(row['status'] == 'open' and len(hours) == 6 and 5 not in hours and 6 not in hours, 'A time-range closure removes only the slots it overlaps')
+        stack.check('Booking test closure' not in json.dumps(row), 'A patient never sees why the center is closed')
+        stack.sql(f"""update public.center_closures set starts_at=('{closed} 00:00'::timestamp) at time zone 'Asia/Manila',ends_at=('{closed} 23:59'::timestamp) at time zone 'Asia/Manila',all_day=true where reason='Booking test closure';""")
+        row = days(closed, closed)[str(closed)]
+        stack.check(row['status'] == 'closure' and row['slots'] == [], 'A full-day closure closes the whole day')
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test closure';")
+
+    yesterday = today - timedelta(days=1)
+    stack.check(days(yesterday, yesterday)[str(yesterday)]['status'] == 'past', 'A past day offers nothing')
+    earliest = datetime.fromisoformat(stack.sql("select to_char((now()+interval '24 hours') at time zone 'UTC','YYYY-MM-DD\"T\"HH24:MI:SS+00:00');"))
+    offered = [slot for row in days(today, today + timedelta(days=5)).values() for slot in row['slots']]
+    stack.check(offered and all(datetime.fromisoformat(slot['starts_at']) >= earliest for slot in offered), 'Nothing inside the 24-hour minimum notice is offered')
+    beyond = today + timedelta(days=62)
+    horizon = date.fromisoformat(stack.sql("select (now() at time zone 'Asia/Manila')::date + booking_horizon_days from public.center_settings;"))
+    late = {key: value for key, value in days(today + timedelta(days=58), beyond).items() if date.fromisoformat(key) > horizon}
+    stack.check(late and all(row['slots'] == [] for row in late.values()), 'Nothing beyond the booking horizon is offered')
+
+    stack.check(stack.api('/rest/v1/center_settings?id=eq.true', {'slot_capacity': 99}, patient, method='PATCH')[0] == 403, 'A patient cannot change the settings')
+    stack.check(stack.api('/rest/v1/center_holidays', {'name': 'x', 'kind': 'regular', 'starts_on': str(today), 'ends_on': str(today)}, patient)[0] == 403, 'A patient cannot add a holiday')
+    stack.check(stack.api('/rest/v1/center_hours?select=*', token=patient)[0] == 200, 'A patient can read the hours')
+
+
+SECTIONS = {'roles': roles, 'availability': availability}
 
 
 def main():

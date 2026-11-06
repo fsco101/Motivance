@@ -30,3 +30,14 @@ Android also parsed roles with `UserRole.valueOf`, which throws on a role it doe
 Both languages sit in the first download, so booking text would have broken the 300 KB budget. It now lives in `booking.en.json` and `booking.fil.json`, which load with the booking pages. Initial JavaScript is 290 KB, down from 293 KB.
 
 **Not run.** The Scheduler note on Android compiled but was not seen on a device. The only emulator was the owner's Android Studio session, with the app open, and `scripts/test_role_routing.py` clears app data. The machine had too little free memory for a second emulator. `LiveRoleRoutingTest` now covers this case and is ready to run on a spare emulator.
+
+## MOT-50: center calendar and availability
+
+The migration `202611060002_center_calendar.sql` adds `center_settings`, `center_hours`, `center_holidays` and `center_closures`, and seeds them with the defaults in the design and all 36 holidays from Proclamations 1006 and 1427. Eid'l Fitr and Eid'l Adha are not seeded, because their dates are proclaimed separately.
+
+`booking_availability` returns each date's status and specific slots. A patient sees that the center is closed, but not why. Slot times are absolute, so the phone's or browser's zone cannot move them: the tests set the database session to New York and still get Manila's answers.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: slots, weekends, holidays, seasonal breaks, full and partial closures, notice, horizon, write refusal | `python scripts/test_booking.py availability` | 21 checks passed |
+| Database rules, including every seeded holiday count and time zone independence | `npx supabase@2.20.12 test db` | 54 tests passed |

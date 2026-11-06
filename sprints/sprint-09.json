@@ -206,7 +206,7 @@
       "github_issue": 67,
       "title": "Model center hours, holidays, closures and availability",
       "description": "Give the database one source of truth for when the center can see patients, and a function that lists specific bookable times.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend",
       "estimate_points": 5,
@@ -242,47 +242,97 @@
         {
           "id": "MOT-50-AC1",
           "description": "Migrations create center_settings, center_hours, center_holidays and center_closures, seeded with 60-minute slots, capacity 3, 24-hour cut-offs and Monday to Friday 09:00-17:00.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC2",
           "description": "Every holiday in Proclamation 1006 (2026) and Proclamation 1427 (2027) is seeded. February 25, a special working day, is not, so it stays bookable.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC3",
           "description": "booking_availability returns specific slots with a start and end time and places remaining, and hides past times, times inside the minimum notice and times beyond the booking horizon.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC4",
           "description": "Weekends when closed, national holidays, seasonal holidays and closures are not bookable. A time-range closure removes only the slots it overlaps. Tests cover each case.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC5",
           "description": "Times are stored in UTC and slot boundaries are correct in Asia/Manila whatever the client's time zone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC6",
           "description": "Clients cannot write these tables directly, and closure reasons are visible to Schedulers only.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T11:56:38.492519+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/booking-test-results.json",
+          "scripts/test_booking.py",
+          "supabase/tests/center_calendar.test.sql",
+          "supabase/migrations/202611060002_center_calendar.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "scripts/test_booking.py",
+        "supabase/tests/center_calendar.test.sql",
+        "supabase/migrations/202611060002_center_calendar.sql"
+      ]
     },
     {
       "id": "MOT-51",
