@@ -93,3 +93,23 @@ Two problems came up that the existing checks did not catch:
 | Bundle | `python scripts/check_web_bundle.py` | 290 KB of 300 KB |
 
 **Not run.** `SessionStoreTest.aWithdrawalMadeOnTheWebMeansTheNextSessionRecordsANewGrant` compiled but needs a device, for the reason under MOT-49. The decision it relies on is covered by the `ServerConsentTest` unit tests.
+
+## MOT-53: patient booking on the web
+
+Patients choose a date, then a specific time, on `/patient/book`, and follow it on `/patient/bookings`. Home shows the next session. The calendar and slot list live in `features/booking/`, because My Schedule and rescheduling need them too.
+
+The server works out whether a booking can still be cancelled and until when, so the web and Android cannot drift apart on the rule. The client request ID is kept per chosen time, so trying again after a lost response returns the same booking. A refused request names its reason, the choice is cleared because the time may be gone, and the times reload.
+
+All times are formatted in the center's zone. A browser test set to New York still reads 9:00 AM.
+
+Reviewing the screens by eye found three things the tests had not: Upcoming relied on input order rather than sorting, the bottom bar cut off "My bookings", and a rejected booking said its therapist was "To be assigned". All three are fixed.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: `my_bookings`, the cut-off, reasons, slots a patient already holds | `python scripts/test_booking.py my_bookings` | 13 checks passed |
+| All sections | `python scripts/test_booking.py` | 179 checks passed |
+| Contract tests, including retry and refusal wording | `npm run test:contract` | 36 passed |
+| Browser tests, with axe, at desktop and phone width, by keyboard and in another time zone | `npx playwright test tests/e2e/booking.spec.ts tests/e2e/patient.spec.ts --workers=2` | 22 passed |
+| Design screens, with axe | `npx playwright test tests/e2e/design.spec.ts --workers=2` | 58 passed |
+| Web unit tests | `npm test` | 198 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 291 KB of 300 KB |

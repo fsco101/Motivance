@@ -1157,6 +1157,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      my_booking_view: {
+        Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
+        Returns: Json
+      }
+      my_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       profile_photo_upload: {
         Args: Record<PropertyKey, never>
         Returns: Json

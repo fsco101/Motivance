@@ -35,6 +35,8 @@ const scheduler = (name: keyof typeof import('@/features/scheduler/pages')) => l
 const SchedulerHome = scheduler('SchedulerHomePage')
 const patient = (name: keyof typeof import('@/features/patient/pages')) => lazy(async () => ({ default: (await import('@/features/patient/pages'))[name] as ComponentType }))
 const PatientHome = patient('PatientHomePage')
+const PatientBook = patient('PatientBookPage')
+const PatientBookings = patient('PatientBookingsPage')
 const PatientExercises = patient('PatientExercisesPage')
 const PatientProgress = patient('PatientProgressPage')
 const PatientProfile = patient('PatientProfilePage')
@@ -147,6 +149,8 @@ export const routes: RouteObject[] = [
         path: 'patient', element: <WorkspaceFrame workspace="patient" />, handle: { crumb: 'nav.home' },
         children: [
           { index: true, element: <PatientHome /> },
+          { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
+          { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
           { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
           { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },

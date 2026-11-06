@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams, type RouteObject } from 'react-router'
+import type { Slot } from '@/data/booking'
 import { SignInPage } from '@/auth/SignInPage'
 import type { Workspace } from '@/auth/roles'
 import { toast } from '@/components/Toast'
@@ -8,6 +9,8 @@ import { ActivityView } from '@/features/admin/ActivityView'
 import { AdminOverviewView } from '@/features/admin/AdminOverviewView'
 import { CatalogueView } from '@/features/admin/CatalogueView'
 import { LinksView } from '@/features/admin/LinksView'
+import { BookSessionView } from '@/features/patient/BookSessionView'
+import { MyBookingsView } from '@/features/patient/MyBookingsView'
 import { ConnectPanel, PrivacyPanel } from '@/features/patient/PatientCareView'
 import { PatientExercisesView } from '@/features/patient/PatientExercisesView'
 import { PatientHomeView } from '@/features/patient/PatientHomeView'
@@ -69,6 +72,13 @@ function PatientHome() {
   return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, next: null, exerciseCount: 0, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.next?.name} /></>
 }
 const PatientExercises = () => <PatientExercisesView base={PATIENT} load={useDemo(data.myExercises, [])} onStart={said('Suggested the phone')} onCamera={said('Suggested the phone')} />
+function PatientBook() {
+  const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
+  const [chosen, setChosen] = useState<Slot | null>(null)
+  return <BookSessionView load={useDemo(data.availability, { ...data.availability, days: [] })} month={data.availability.days[0]!.date.slice(0, 7)} onMonth={said('Changed month')} canGoBack={false} canGoForward today={data.availability.days[0]!.date}
+    date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onRequest={said('Requested')} busy={false} />
+}
+const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.myBookings, [])} onCancel={said('Cancelled')} />
 function PatientProgress() {
   const [filters, setFilters] = useState(NO_FILTERS)
   const base = { patients: [], patientId: 'p1', exercises: [{ id: 'v1', name: 'Elbow flexion' }] }
@@ -144,6 +154,8 @@ export const galleryRoutes: RouteObject[] = [{
       path: 'patient', element: <Frame workspace="patient" />, handle: { crumb: 'nav.home' },
       children: [
         { index: true, element: <PatientHome /> },
+        { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
+        { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
         { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },

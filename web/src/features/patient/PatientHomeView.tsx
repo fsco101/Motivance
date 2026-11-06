@@ -1,14 +1,17 @@
-import { CheckIcon, DeviceMobileIcon } from '@phosphor-icons/react'
+import { CalendarPlusIcon, CheckIcon, DeviceMobileIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { Button } from '@/components/Button'
+import { Button, ButtonLink } from '@/components/Button'
 import { EmptyState, PageHeader, Panel, Skeleton, StatusPill } from '@/components/Display'
+import type { Booking } from '@/data/booking'
 import type { MyExercise, RecentSession } from '@/data/patient'
+import { useCenterFormat } from '@/features/booking/format'
 import { cn } from '@/lib/cn'
 import { Loadable, useFormat, type Load } from '@/features/shared'
+import { statusTone } from './MyBookingsView'
 
-export type PatientHome = { name: string; next: MyExercise | null; exerciseCount: number; week: ReadonlyArray<{ day: Date; done: boolean }>; recent: readonly RecentSession[] }
+export type PatientHome = { name: string; next: MyExercise | null; exerciseCount: number; week: ReadonlyArray<{ day: Date; done: boolean }>; recent: readonly RecentSession[]; session: Booking | null }
 
 /** The next exercise is the page's one bold element. Starting it leads to the phone, because that is where it runs. */
 function NextExercise({ exercise, count, base, onStart }: { exercise: MyExercise | null; count: number; base: string; onStart: (exercise: MyExercise) => void }) {
@@ -23,6 +26,33 @@ function NextExercise({ exercise, count, base, onStart }: { exercise: MyExercise
         <Button variant="bright" leading={<DeviceMobileIcon aria-hidden />} onClick={() => onStart(exercise)}>{t('patient.startExercise')}</Button>
         {count > 1 && <Link to={`${base}/exercises`} className="font-semibold underline-offset-4 hover:underline">{t('patient.allExercises', { count })}</Link>}
       </div>
+    </section>
+  )
+}
+
+function NextSession({ session, base }: { session: Booking | null; base: string }) {
+  const { t } = useTranslation()
+  const format = useCenterFormat()
+  return (
+    <section aria-label={t('booking.nextSession')}>
+      <Panel title={t('booking.nextSession')}>
+        {session ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold">{format.day(session.startsAt)}</p>
+              <StatusPill tone={statusTone[session.status]}>{t(`booking.status.${session.status}`)}</StatusPill>
+            </div>
+            <p className="text-lg font-semibold text-lagoon-deep">{format.range(session.startsAt, session.endsAt)}</p>
+            <p className="mt-1 text-sm text-slate">{session.therapist ?? t('booking.noTherapist')}</p>
+            <Link to={`${base}/bookings`} className="mt-3 inline-block text-sm font-semibold text-lagoon-deep underline underline-offset-4">{t('booking.viewAll')}</Link>
+          </>
+        ) : (
+          <>
+            <p className="mb-3 text-sm text-slate">{t('booking.noneNext')}</p>
+            <ButtonLink to={`${base}/book`} leading={<CalendarPlusIcon aria-hidden />}>{t('booking.title')}</ButtonLink>
+          </>
+        )}
+      </Panel>
     </section>
   )
 }
@@ -76,7 +106,10 @@ export function PatientHomeView({ load, base, onStart }: { load: Load<PatientHom
               <NextExercise exercise={home.next} count={home.exerciseCount} base={base} onStart={onStart} />
               <ThisWeek week={home.week} />
             </div>
-            <Recent sessions={home.recent} />
+            <div className="flex min-w-0 flex-col gap-5">
+              <NextSession session={home.session} base={base} />
+              <Recent sessions={home.recent} />
+            </div>
           </div>
         </>
       )}

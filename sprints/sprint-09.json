@@ -688,7 +688,7 @@
       "github_issue": 70,
       "title": "Add patient booking on the web",
       "description": "Let patients find a specific time, request it, follow its status and cancel it, in the browser.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 5,
@@ -725,47 +725,97 @@
         {
           "id": "MOT-53-AC1",
           "description": "Book a session shows working days and specific time slots with start and end times. Closed days say why, and full or unavailable slots cannot be chosen.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC2",
           "description": "Submitting is safe to retry, and a refused request explains why in plain words, in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC3",
           "description": "My bookings shows Pending, Confirmed, Rejected, Cancelled and Rescheduled, with reference number, specific time, therapist, location and any reason.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC4",
           "description": "Cancel works up to the cut-off. After it, the action is disabled with an explanation, and the server refuses it too.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC5",
           "description": "Times show in Asia/Manila whatever the browser's time zone, proved by a browser test in another zone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC6",
           "description": "Contract, browser and axe tests pass, and the pages work at phone width.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T12:57:08.155208+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/tests/e2e/booking.spec.ts",
+          "web/tests/contract/booking.test.ts",
+          "web/src/data/booking.test.ts",
+          "scripts/test_booking.py"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/tests/e2e/booking.spec.ts",
+        "web/tests/contract/booking.test.ts",
+        "web/src/data/booking.test.ts",
+        "scripts/test_booking.py"
+      ]
     },
     {
       "id": "MOT-54",

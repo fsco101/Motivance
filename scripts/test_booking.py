@@ -222,7 +222,7 @@ def availability(stack):
     stack.check(datetime.fromisoformat(first['starts_at']).astimezone(timezone.utc).hour == 1, 'Nine in Manila is stored as 01:00 UTC')
     stack.check(datetime.fromisoformat(last['ends_at']).astimezone(timezone.utc).hour == 9, 'The last slot ends at five in Manila, 09:00 UTC')
     stack.check(all(slot['remaining'] == 3 for slot in row['slots']), 'Each slot reports the places left')
-    stack.check(set(first) == {'starts_at', 'ends_at', 'remaining'}, 'A slot says nothing about who holds it')
+    stack.check(set(first) == {'starts_at', 'ends_at', 'remaining', 'mine'}, 'A slot says nothing about who else holds it')
 
     saturday = next_weekday(today, 6, 3)
     row = days(saturday, saturday)[str(saturday)]
@@ -503,7 +503,51 @@ def bookings(stack):
     stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': held['id'], 'p_therapist': disabled}, ts), 'booking_therapist_unavailable'), 'A disabled therapist cannot be assigned')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings}
+def my_bookings(stack):
+    """MOT-53: what a patient sees of their own bookings."""
+    _, ts = stack.user('patient', 'scheduler')
+    therapist, _ = stack.user('patient', 'therapist')
+    patient, tp = stack.user('patient')
+    _, to = stack.user('patient')
+    stack.sql("update public.center_settings set location='12 Mabini Street, Quezon City';")
+    fresh = working_days(stack)
+    day, later = next(fresh), next(fresh)
+
+    def request(token, start):
+        return stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)[1]
+
+    try:
+        stack.check(stack.rpc('my_bookings', {}, tp) == (200, []), 'A patient with no bookings gets an empty list')
+        stack.check(stack.rpc('my_bookings', {})[0] == 401, 'Anonymous callers cannot list bookings')
+        first = request(tp, manila(day, 9))
+        second = request(tp, manila(later, 10))
+        request(to, manila(day, 9))
+        code, mine = stack.rpc('my_bookings', {}, tp)
+        stack.check(code == 200 and [row['id'] for row in mine] == [second['id'], first['id']], 'A patient sees only their own bookings, newest first')
+        row = mine[1]
+        stack.check(row['location'] == '12 Mabini Street, Quezon City' and row['can_cancel'] is True, 'Each booking carries the location and whether it can be cancelled')
+        stack.check(datetime.fromisoformat(row['cancel_until']) == datetime.fromisoformat(row['starts_at']) - timedelta(hours=24), 'The cut-off is 24 hours before the session')
+        stack.check('calendar_token' not in row and 'patient_id' not in row, 'Internal fields stay behind')
+        stack.check(stack.rpc('scheduler_confirm', {'p_booking': first['id'], 'p_therapist': therapist}, ts)[0] == 200, 'A Scheduler confirms the first booking')
+        row = {item['id']: item for item in stack.rpc('my_bookings', {}, tp)[1]}[first['id']]
+        stack.check(row['status'] == 'confirmed' and row['therapist_name'].startswith('Booking Fixture'), 'The patient sees the new status and the therapist\'s name')
+        stack.sql('update public.center_settings set cancel_cutoff_hours=336;')
+        try:
+            row = {item['id']: item for item in stack.rpc('my_bookings', {}, tp)[1]}[first['id']]
+            stack.check(row['can_cancel'] is False, 'After the cut-off the booking says it cannot be cancelled')
+        finally:
+            stack.sql('update public.center_settings set cancel_cutoff_hours=24;')
+        stack.check(stack.rpc('scheduler_reject', {'p_booking': second['id'], 'p_reason': 'Fully booked that week'}, ts)[0] == 200, 'A Scheduler rejects the second booking')
+        row = {item['id']: item for item in stack.rpc('my_bookings', {}, tp)[1]}[second['id']]
+        stack.check(row['status'] == 'rejected' and row['status_reason'] == 'Fully booked that week' and row['can_cancel'] is False, 'A rejected booking shows its reason and cannot be cancelled')
+        slots = stack.rpc('booking_availability', {'p_from': str(day), 'p_to': str(day)}, tp)[1]['days'][0]['slots']
+        stack.check(slots[0]['mine'] is True and slots[1]['mine'] is False, 'Availability marks the slot the patient already holds')
+        stack.check(stack.rpc('booking_availability', {'p_from': str(day), 'p_to': str(day)}, to)[1]['days'][0]['slots'][0]['remaining'] == 1, 'Two bookings leave one place of three')
+    finally:
+        stack.sql("update public.center_settings set location='';")
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings}
 
 
 def main():

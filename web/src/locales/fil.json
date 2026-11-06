@@ -8,7 +8,10 @@
   "nav": {
     "workspace": { "admin": "Pangangasiwa", "therapist": "Workspace ng therapist", "scheduler": "Pag-iiskedyul", "patient": "Iyong pangangalaga" },
     "main": "Pangunahin", "home": "Home", "patients": "Mga pasyente", "exercises": "Mga ehersisyo", "progress": "Pag-unlad", "overview": "Buod", "accounts": "Mga account",
-    "links": "Ugnayan", "catalogue": "Katalogo", "activity": "Aktibidad", "skip": "Lumaktaw sa nilalaman", "breadcrumbs": "Narito ka"
+    "links": "Ugnayan", "catalogue": "Katalogo", "activity": "Aktibidad", "skip": "Lumaktaw sa nilalaman", "breadcrumbs": "Narito ka",
+    "book": "Mag-book",
+    "bookings": "Mga booking ko",
+    "bookingsShort": "Mga booking"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",

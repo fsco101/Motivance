@@ -8,7 +8,10 @@
   "nav": {
     "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling", "patient": "Your care" },
     "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
-    "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here"
+    "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here",
+    "book": "Book",
+    "bookings": "My bookings",
+    "bookingsShort": "Bookings"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",

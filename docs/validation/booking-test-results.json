@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T12:05:46.743972+00:00",
-  "checks_passed": 166,
+  "generated_at": "2026-11-06T12:57:08.033426+00:00",
+  "checks_passed": 179,
   "checks": [
     "A patient cannot grant the Scheduler role",
     "A therapist cannot grant the Scheduler role",
@@ -73,7 +73,7 @@
     "Nine in Manila is stored as 01:00 UTC",
     "The last slot ends at five in Manila, 09:00 UTC",
     "Each slot reports the places left",
-    "A slot says nothing about who holds it",
+    "A slot says nothing about who else holds it",
     "A closed weekend offers no slots",
     "A national holiday offers no slots and is named",
     "A seasonal break offers no slots",
@@ -167,7 +167,20 @@
     "The session is reassigned",
     "An administrator disables that therapist",
     "Disabling a therapist also returns their sessions to Pending",
-    "A disabled therapist cannot be assigned"
+    "A disabled therapist cannot be assigned",
+    "A patient with no bookings gets an empty list",
+    "Anonymous callers cannot list bookings",
+    "A patient sees only their own bookings, newest first",
+    "Each booking carries the location and whether it can be cancelled",
+    "The cut-off is 24 hours before the session",
+    "Internal fields stay behind",
+    "A Scheduler confirms the first booking",
+    "The patient sees the new status and the therapist's name",
+    "After the cut-off the booking says it cannot be cancelled",
+    "A Scheduler rejects the second booking",
+    "A rejected booking shows its reason and cannot be cancelled",
+    "Availability marks the slot the patient already holds",
+    "Two bookings leave one place of three"
   ],
   "environment": "real local Auth and PostgREST with disposable synthetic accounts"
 }

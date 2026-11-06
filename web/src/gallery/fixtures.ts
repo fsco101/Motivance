@@ -1,3 +1,4 @@
+import type { Availability, Booking } from '@/data/booking'
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { HistoricalSession } from '@/data/history'
 import type { MyExercise } from '@/data/patient'
@@ -66,9 +67,29 @@ export const myExercises: MyExercise[] = [
 ]
 const today = new Date()
 const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7))
+const slotsOn = (date: string, left: readonly number[]) => left.map((remaining, index) => {
+  const hour = String(9 + index).padStart(2, '0')
+  return { startsAt: `${date}T${hour}:00:00+08:00`, endsAt: `${date}T${String(10 + index).padStart(2, '0')}:00:00+08:00`, remaining, mine: index === 2 }
+})
+const bookingDate = '2026-12-07'
+export const availability: Availability = {
+  timeZone: 'Asia/Manila',
+  days: [
+    { date: bookingDate, status: 'open', holiday: null, slots: slotsOn(bookingDate, [3, 1, 2, 0, 3, 2, 1, 3]) },
+    { date: '2026-12-08', status: 'holiday', holiday: 'Feast of the Immaculate Conception of Mary', slots: [] },
+    { date: '2026-12-09', status: 'open', holiday: null, slots: slotsOn('2026-12-09', [2, 2, 2, 2, 2, 2, 2, 2]) },
+    { date: '2026-12-12', status: 'closed', holiday: null, slots: [] },
+  ],
+}
+export const myBookings: Booking[] = [
+  { id: 'k1', reference: 'BK-2026-000142', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', previousStartsAt: null, therapist: 'Dana Reyes', location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-06T01:00:00Z', canCancel: true },
+  { id: 'k2', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-13T02:00:00Z', canCancel: true },
+  { id: 'k3', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: null, canCancel: false },
+]
 export const patientHome: PatientHome = {
   name: 'Ana Dela Cruz', next: myExercises[0]!, exerciseCount: 2,
   week: Array.from({ length: 7 }, (_, index) => ({ day: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index), done: index < 2 })),
+  session: myBookings[0]!,
   recent: [{ id: 'r1', startedAt: '2026-11-04T01:30:00Z', status: 'completed' }, { id: 'r2', startedAt: '2026-11-03T02:10:00Z', status: 'interrupted' }, { id: 'r3', startedAt: '2026-11-02T01:45:00Z', status: 'completed' }],
 }
 export const privacy: PrivacyState = { consent: 'granted', requests: [{ id: 'd1', kind: 'export', status: 'requested', createdAt: '2026-11-04T01:30:00Z' }, { id: 'd2', kind: 'delete', status: 'declined', createdAt: '2026-10-20T01:30:00Z' }] }

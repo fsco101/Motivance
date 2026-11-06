@@ -1,4 +1,4 @@
-import { CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { CalendarBlankIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
 import type { ReactNode } from 'react'
@@ -10,7 +10,7 @@ import { cn } from '@/lib/cn'
 import { spring } from '@/motion/tokens'
 import { LanguageSwitch } from './LanguageSwitch'
 
-type NavItem = { path: string; label: string; icon: Icon; end?: boolean }
+type NavItem = { path: string; label: string; icon: Icon; end?: boolean; /** For the bottom bar, where a long label would be cut off. */ short?: string }
 
 const NAV: Record<Workspace, readonly NavItem[]> = {
   therapist: [
@@ -21,6 +21,8 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
   ],
   patient: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
+    { path: 'book', label: 'nav.book', icon: CalendarPlusIcon },
+    { path: 'bookings', label: 'nav.bookings', short: 'nav.bookingsShort', icon: CalendarBlankIcon },
     { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
     { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
   ],
@@ -83,7 +85,7 @@ function BottomBar({ workspace, base }: { workspace: Workspace; base: string }) 
       {NAV[workspace].map((item) => (
         <NavLink key={item.label} to={item.path ? `${base}/${item.path}` : base} end={item.end}
           className={({ isActive }) => cn('flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold', isActive ? 'text-lagoon-deep' : 'text-slate')}>
-          {({ isActive }) => <><item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="text-xl" /><span className="max-w-full truncate px-1">{t(item.label)}</span></>}
+          {({ isActive }) => <><item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="text-xl" /><span className="max-w-full truncate px-1">{t(item.short ?? item.label)}</span></>}
         </NavLink>
       ))}
     </nav>
