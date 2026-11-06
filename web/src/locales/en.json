@@ -11,7 +11,8 @@
     "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here",
     "book": "Book",
     "bookings": "My bookings",
-    "bookingsShort": "Bookings"
+    "bookingsShort": "Bookings",
+    "requests": "Requests"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",

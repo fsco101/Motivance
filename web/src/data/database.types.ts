@@ -1111,6 +1111,10 @@ export type Database = {
         Args: { p_booking: string; p_reason?: string }
         Returns: Json
       }
+      center_availability: {
+        Args: { p_from: string; p_to: string; p_staff: boolean }
+        Returns: Json
+      }
       center_problem: {
         Args: { p_starts: string; p_ends: string }
         Returns: string
@@ -1224,6 +1228,29 @@ export type Database = {
         Args: { p_booking: string; p_therapist: string }
         Returns: Json
       }
+      scheduler_availability: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      scheduler_booking_detail: {
+        Args: { p_booking: string }
+        Returns: Json
+      }
+      scheduler_bookings: {
+        Args: {
+          p_search?: string
+          p_statuses?: string[]
+          p_from?: string
+          p_to?: string
+          p_therapist?: string
+          p_patient?: string
+          p_sort?: string
+          p_descending?: boolean
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
       scheduler_bulk_reject: {
         Args: { p_bookings: string[]; p_reason: string }
         Returns: number
@@ -1251,6 +1278,10 @@ export type Database = {
           p_therapist?: string
           p_reason?: string
         }
+        Returns: Json
+      }
+      scheduler_therapists: {
+        Args: { p_booking?: string; p_starts?: string }
         Returns: Json
       }
       set_my_profile_photo: {

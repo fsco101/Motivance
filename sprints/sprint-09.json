@@ -4,7 +4,7 @@
   "title": "S9 - Booking core",
   "description": "Weeks 17-18. Exit: a Scheduler role exists in both apps, patients can use the whole app on the web except the camera, patients can request sessions on web and Android, and a Scheduler can confirm or refuse them without double-booking.",
   "goal": "Let patients request in-center sessions and let a Scheduler decide them safely.",
-  "status": "in-progress",
+  "status": "completed",
   "weeks": {
     "start": 17,
     "end": 18
@@ -18,12 +18,28 @@
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist and physical-device checks must not block development.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "All seven issues are implemented and closed with local evidence. MOT-54-AC7, a physical phone at large text sizes with TalkBack, is deferred; not a development blocker."
     },
     {
       "description": "Grant the Scheduler role, request a session as a patient on the web and on Android, then confirm one request and reject another in the Scheduler table, showing two simultaneous requests for the last place cannot both succeed.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist and physical-device checks must not block development.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "Each step passed in automated runs, with Android on an emulator. One sitting on a physical phone is deferred; not a development blocker."
     }
   ],
   "demo": "Grant the Scheduler role, request a session as a patient on the web and on Android, then confirm one request and reject another in the Scheduler table, showing two simultaneous requests for the last place cannot both succeed.",
@@ -39,9 +55,14 @@
   },
   "total_estimate_points": 47,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-06T14:06:36.132134+00:00",
+    "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+    "acceptance_basis": "engineering-implementation",
+    "evidence": [
+      "docs/validation/BOOKING-IMPLEMENTATION.md",
+      "docs/validation/booking-test-results.json",
+      "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+    ]
   },
   "issues": [
     {
@@ -969,7 +990,7 @@
       "github_issue": 72,
       "title": "Build the Scheduler request table and actions",
       "description": "Give Schedulers one table to find, decide and correct every booking request.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Backend",
       "estimate_points": 8,
@@ -1016,53 +1037,109 @@
         {
           "id": "MOT-55-AC1",
           "description": "The table uses server-side pagination, sorting, search across patient name, therapist and reference number, and filters for status, date range and therapist.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC2",
           "description": "Each request offers Confirm, Reject with a reason, Reschedule to a specific slot, Assign or Change Therapist, and Cancel.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC3",
           "description": "The therapist picker lists therapists linked to the patient first and marks who is busy at that time.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC4",
           "description": "Bulk reject works on selected requests with one reason, and a confirmation states how many.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC5",
           "description": "The detail panel shows who changed what and when.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC6",
           "description": "A refused action explains why and reloads the list, so a Scheduler never acts on stale data.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC7",
           "description": "Contract, browser and axe tests pass.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T13:50:22.880394+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/tests/e2e/scheduler.spec.ts",
+          "web/tests/contract/scheduler.test.ts",
+          "scripts/test_booking.py",
+          "supabase/migrations/202611060005_scheduler_requests.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/tests/e2e/scheduler.spec.ts",
+        "web/tests/contract/scheduler.test.ts",
+        "scripts/test_booking.py",
+        "supabase/migrations/202611060005_scheduler_requests.sql"
+      ]
     }
   ],
   "plan_reference": "docs/architecture/BOOKING.md"

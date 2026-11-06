@@ -33,6 +33,7 @@ const Catalogue = admin('CataloguePage')
 const Activity = admin('ActivityPage')
 const scheduler = (name: keyof typeof import('@/features/scheduler/pages')) => lazy(async () => ({ default: (await import('@/features/scheduler/pages'))[name] as ComponentType }))
 const SchedulerHome = scheduler('SchedulerHomePage')
+const SchedulerRequests = scheduler('SchedulerRequestsPage')
 const patient = (name: keyof typeof import('@/features/patient/pages')) => lazy(async () => ({ default: (await import('@/features/patient/pages'))[name] as ComponentType }))
 const PatientHome = patient('PatientHomePage')
 const PatientBook = patient('PatientBookPage')
@@ -160,6 +161,7 @@ export const routes: RouteObject[] = [
         path: 'scheduler', element: <WorkspaceFrame workspace="scheduler" />, handle: { crumb: 'nav.home' },
         children: [
           { index: true, element: <SchedulerHome /> },
+          { path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } },
           { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
         ],
       },

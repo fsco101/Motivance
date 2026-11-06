@@ -1,6 +1,10 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CENTER_ZONE } from '@/data/booking'
+import { CENTER_ZONE, type BookingStatus } from '@/data/booking'
+
+export const statusTone: Record<BookingStatus, 'positive' | 'neutral' | 'caution' | 'danger' | 'primary'> = {
+  pending: 'caution', confirmed: 'positive', rescheduled: 'primary', rejected: 'danger', cancelled: 'neutral',
+}
 
 /** Session times always read in the center's zone, so a patient travelling or a browser set elsewhere still sees the real time. */
 export function useCenterFormat(zone = CENTER_ZONE) {

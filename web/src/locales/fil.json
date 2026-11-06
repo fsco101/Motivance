@@ -11,7 +11,8 @@
     "links": "Ugnayan", "catalogue": "Katalogo", "activity": "Aktibidad", "skip": "Lumaktaw sa nilalaman", "breadcrumbs": "Narito ka",
     "book": "Mag-book",
     "bookings": "Mga booking ko",
-    "bookingsShort": "Mga booking"
+    "bookingsShort": "Mga booking",
+    "requests": "Mga kahilingan"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",

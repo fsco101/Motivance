@@ -6,10 +6,9 @@ import { Button, ButtonLink } from '@/components/Button'
 import { EmptyState, PageHeader, Panel, Skeleton, StatusPill } from '@/components/Display'
 import type { Booking } from '@/data/booking'
 import type { MyExercise, RecentSession } from '@/data/patient'
-import { useCenterFormat } from '@/features/booking/format'
+import { statusTone, useCenterFormat } from '@/features/booking/format'
 import { cn } from '@/lib/cn'
 import { Loadable, useFormat, type Load } from '@/features/shared'
-import { statusTone } from './MyBookingsView'
 
 export type PatientHome = { name: string; next: MyExercise | null; exerciseCount: number; week: ReadonlyArray<{ day: Date; done: boolean }>; recent: readonly RecentSession[]; session: Booking | null }
 

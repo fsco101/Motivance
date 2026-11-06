@@ -547,7 +547,96 @@ def my_bookings(stack):
         stack.sql("update public.center_settings set location='';")
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings}
+def requests(stack):
+    """MOT-55: what a Scheduler needs to find and decide requests."""
+    _, ts = stack.user('patient', 'scheduler')
+    linked, tl = stack.user('patient', 'therapist', name='Booking Zed Linked')
+    other, _ = stack.user('patient', 'therapist', name='Booking Amy Other')
+    ana, ta = stack.user('patient', name='Booking Ana Findable')
+    ben, tb = stack.user('patient', name='Booking Ben Searchable')
+    cara, tc = stack.user('patient', name='Booking Cara 50%')
+    stack.sql(f"insert into public.therapist_patients(therapist_id,patient_id,assigned_by) values('{linked}','{ana}','{linked}');")
+    fresh = working_days(stack)
+    first, second, third = next(fresh), next(fresh), next(fresh)
+
+    def request(token, start):
+        return stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)[1]
+
+    def table(**filters):
+        code, data = stack.rpc('scheduler_bookings', filters, ts)
+        assert code == 200, data
+        return data
+
+    a = request(ta, manila(first, 9))
+    b = request(tb, manila(second, 10))
+    c = request(tc, manila(third, 11))
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': b['id'], 'p_therapist': other}, ts)[0] == 200, 'A request is confirmed so the table has a mix')
+
+    mine = {a['id'], b['id'], c['id']}
+    rows = table(p_search='Booking', p_limit=50)['rows']
+    stack.check(mine <= {row['id'] for row in rows}, 'The table lists requests from every patient')
+    stack.check({'patient_id', 'patient_name', 'therapist_name', 'reference_no', 'status', 'starts_at', 'ends_at'} <= set(rows[0]), 'Each row has what the table shows')
+    stack.check('calendar_token' not in rows[0] and 'position' not in rows[0], 'Internal fields stay behind')
+
+    stack.check([row['id'] for row in table(p_search='ana findable')['rows']] == [a['id']], 'Search finds a patient by name, ignoring case')
+    stack.check([row['id'] for row in table(p_search='amy other')['rows']] == [b['id']], 'Search finds a booking by therapist')
+    stack.check([row['id'] for row in table(p_search=a['reference_no'])['rows']] == [a['id']], 'Search finds a booking by reference number')
+    stack.check([row['id'] for row in table(p_search='50%')['rows']] == [c['id']], 'Search takes wildcards literally')
+    stack.check(table(p_search='no such person')['total'] == 0, 'A search with no match reports zero')
+    stack.check(stack.rpc('scheduler_bookings', {'p_search': 'x' * 101}, ts)[0] == 400, 'An overlong search is refused')
+
+    stack.check({row['id'] for row in table(p_search='Booking', p_statuses=['confirmed'])['rows']} == {b['id']}, 'The status filter works')
+    stack.check({row['id'] for row in table(p_search='Booking', p_statuses=['pending', 'confirmed'])['rows']} == mine, 'Several statuses can be chosen')
+    stack.check([row['id'] for row in table(p_therapist=other)['rows']] == [b['id']], 'The therapist filter works')
+    stack.check([row['id'] for row in table(p_patient=ben)['rows']] == [b['id']], 'The patient filter works')
+    stack.check([row['id'] for row in table(p_search='Booking', p_from=str(second), p_to=str(second))['rows']] == [b['id']], 'The date range covers a whole day in Manila')
+    stack.check(table(p_search='Booking', p_from=str(third + timedelta(days=1)))['total'] == 0, 'The date range leaves out earlier dates')
+
+    order = [row['id'] for row in table(p_search='Booking', p_sort='starts_at')['rows']]
+    stack.check(order == [a['id'], b['id'], c['id']], 'The table sorts by time')
+    stack.check([row['id'] for row in table(p_search='Booking', p_sort='starts_at', p_descending=True)['rows']] == order[::-1], 'The sort can be reversed')
+    stack.check([row['patient_name'] for row in table(p_search='Booking', p_sort='patient')['rows']] == ['Booking Ana Findable', 'Booking Ben Searchable', 'Booking Cara 50%'], 'The table sorts by patient')
+    stack.check(table(p_search='Booking', p_sort='therapist')['rows'][0]['id'] == b['id'], 'Sorting by therapist puts unassigned requests last')
+    stack.check(stack.rpc('scheduler_bookings', {'p_sort': 'id; drop table public.bookings'}, ts)[0] == 400, 'Only known columns can be sorted')
+
+    page = table(p_search='Booking', p_sort='starts_at', p_limit=2)
+    stack.check(page['total'] == 3 and len(page['rows']) == 2, 'A page holds its limit, and the total counts every match')
+    last = table(p_search='Booking', p_sort='starts_at', p_limit=2, p_offset=2)
+    stack.check(last['total'] == 3 and [row['id'] for row in last['rows']] == [c['id']], 'The last page holds the remainder')
+    stack.check(table(p_search='Booking', p_limit=2, p_offset=10) == {'total': 3, 'rows': []}, 'A page past the end is empty and keeps the total')
+
+    code, detail = stack.rpc('scheduler_booking_detail', {'p_booking': b['id']}, ts)
+    stack.check(code == 200 and detail['patient_name'] == 'Booking Ben Searchable', 'The detail names the patient')
+    stack.check([event['action'] for event in detail['events']] == ['confirmed', 'requested'], 'The detail shows the history, newest first')
+    stack.check(detail['events'][0]['actor_role'] == 'scheduler' and detail['events'][1]['actor_name'] == 'Booking Ben Searchable', 'The history says who did each thing')
+    stack.check(stack.rpc('scheduler_booking_detail', {'p_booking': str(uuid.uuid4())}, ts)[1]['message'] == 'booking_unavailable', 'An unknown booking is refused')
+
+    code, choices = stack.rpc('scheduler_therapists', {'p_booking': a['id']}, ts)
+    names = [row['id'] for row in choices]
+    stack.check(code == 200 and names.index(linked) < names.index(other), 'A therapist linked to the patient comes first, though their name sorts later')
+    flags = {row['id']: row for row in choices}
+    stack.check(flags[linked]['linked'] is True and flags[other]['linked'] is False, 'Linked therapists are marked')
+    stack.check(flags[other]['busy'] is False, 'A free therapist is not marked busy')
+    stack.check({row['id']: row for row in stack.rpc('scheduler_therapists', {'p_booking': a['id'], 'p_starts': manila(second, 10)}, ts)[1]}[other]['busy'] is True, 'A therapist with a session at that time is marked busy')
+    all_therapists = {row['id'] for row in stack.rpc('scheduler_therapists', {}, ts)[1]}
+    stack.check({linked, other} <= all_therapists, 'With no booking, every therapist is listed for the filter')
+
+    direct = {'p_from': str(first), 'p_to': str(first), 'p_staff': True}
+    stack.check(stack.rpc('center_availability', direct, ta)[0] in (403, 404), 'A patient cannot ask for the staff view directly')
+    stack.check(stack.rpc('scheduler_availability', {'p_from': str(first), 'p_to': str(first)}, ta)[0] == 403, 'Nor through the Scheduler function')
+
+    stack.sql('update public.center_settings set minimum_notice_hours=336;')
+    try:
+        staff = stack.rpc('scheduler_availability', {'p_from': str(first), 'p_to': str(first)}, ts)[1]['days'][0]
+        patient = stack.rpc('booking_availability', {'p_from': str(first), 'p_to': str(first)}, ta)[1]['days'][0]
+        stack.check(staff['status'] == 'open' and len(staff['slots']) == 8, 'A Scheduler sees slots inside the notice window')
+        stack.check(patient['status'] == 'too_soon' and patient['slots'] == [], 'A patient does not')
+    finally:
+        stack.sql('update public.center_settings set minimum_notice_hours=24;')
+    stack.check('mine' in staff['slots'][0] and staff['slots'][0]['mine'] is False, 'A Scheduler holds no slots themselves')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests}
 
 
 def main():

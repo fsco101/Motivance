@@ -94,6 +94,9 @@ export const upcomingBookings = (bookings: readonly Booking[], now = Date.now())
 
 export const nextBooking = (bookings: readonly Booking[], now = Date.now()) => upcomingBookings(bookings, now)[0] ?? null
 
+/** Someone else has already changed this booking, so whatever is on screen no longer applies. */
+export const isStale = (error: unknown) => ['booking_state', 'booking_unavailable'].includes((error as { message?: string } | null)?.message ?? '')
+
 /** The server refuses with a stable booking_* message, which has its own wording. Anything else is an ordinary failure. */
 export function bookingFailureKey(error: unknown) {
   const message = (error as { message?: string } | null)?.message ?? ''

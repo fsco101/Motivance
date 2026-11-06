@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams, type RouteObject } from 'react-router'
 import type { Slot } from '@/data/booking'
+import { NO_FILTERS as NO_REQUEST_FILTERS, type RequestRow } from '@/data/scheduler'
 import { SignInPage } from '@/auth/SignInPage'
 import type { Workspace } from '@/auth/roles'
 import { toast } from '@/components/Toast'
@@ -22,6 +23,8 @@ import { ExercisesView } from '@/features/therapist/ExercisesView'
 import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
+import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
+import { RequestsView } from '@/features/scheduler/RequestsView'
 import { TherapistHomeView } from '@/features/therapist/TherapistHomeView'
 import { LandingPage } from '@/landing/LandingPage'
 import '@/locales/booking'
@@ -33,6 +36,7 @@ import * as data from './fixtures'
 const THERAPIST = '/design/therapist'
 const ADMIN = '/design/admin'
 const PATIENT = '/design/patient'
+const SCHEDULER = '/design/scheduler'
 
 /** Any screen can be reviewed in any state: add ?state=loading, ?state=error or ?state=empty to its address. */
 function useDemo<T>(value: T, empty: T): Load<T> {
@@ -47,7 +51,7 @@ const said = (message: string) => () => toast.show(message)
 
 function Frame({ workspace }: { workspace: Workspace }) {
   return (
-    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : THERAPIST} onSignOut={said('Signed out')} onSwitch={said('Switched workspace')}
+    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : workspace === 'scheduler' ? SCHEDULER : THERAPIST} onSignOut={said('Signed out')} onSwitch={said('Switched workspace')}
       account={{ name: 'Dana Reyes', email: 'dana.reyes@example.test', workspaces: ['admin', 'therapist', 'patient'] }}>
       <AnimatedOutlet />
     </Shell>
@@ -92,6 +96,23 @@ function PatientProfile() {
         <ConnectPanel onConnect={async () => toast.show('Connected')} />
         <PrivacyPanel load={useDemo(data.privacy, { consent: null, requests: [] })} onWithdraw={async () => toast.show('Withdrawn')} onRequest={async () => toast.show('Requested')} />
       </div>
+    </>
+  )
+}
+const requestActions: RequestActions = {
+  therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),
+  reject: async () => toast.show('Rejected'), cancel: async () => toast.show('Cancelled'), reschedule: async () => toast.show('Rescheduled'), bulkReject: async () => toast.show('Rejected'),
+}
+function SchedulerRequests() {
+  const [selected, setSelected] = useState<RequestRow | null>(data.requests[0]!)
+  const [checked, setChecked] = useState<readonly string[]>([])
+  const [action, setAction] = useState<{ kind: RequestActionKind; row: RequestRow } | null>(null)
+  const [filters, setFilters] = useState(NO_REQUEST_FILTERS)
+  return (
+    <>
+      <RequestsView load={useDemo({ rows: data.requests, total: data.requests.length }, { rows: [], total: 0 })} therapists={data.therapistChoices} filters={filters} onFilters={setFilters} sort={{ key: 'created_at', direction: 'desc' }} onSort={said('Sorted')}
+        page={0} onPage={said('Paged')} selected={selected} onSelect={setSelected} detail={ready(data.requestDetail)} checked={checked} onChecked={setChecked} onAct={(kind, row) => setAction({ kind, row })} onBulk={said('Bulk')} onOutdated={said('Outdated')} />
+      {action && <RequestDialog kind={action.kind} row={action.row} actions={requestActions} onClose={() => setAction(null)} />}
     </>
   )
 }
@@ -160,6 +181,10 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
         { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },
       ],
+    },
+    {
+      path: 'scheduler', element: <Frame workspace="scheduler" />, handle: { crumb: 'nav.home' },
+      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }],
     },
     {
       path: 'admin', element: <Frame workspace="admin" />, handle: { crumb: 'nav.overview' },

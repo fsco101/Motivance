@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, bookingFailureKey, decodeAvailability, decodeBooking, isUpcoming, monthRange, nextBooking, shiftMonth, todayAt, upcomingBookings, type Booking, type RawBooking } from './booking'
+import { addDays, bookingFailureKey, decodeAvailability, decodeBooking, isStale, isUpcoming, monthRange, nextBooking, shiftMonth, todayAt, upcomingBookings, type Booking, type RawBooking } from './booking'
 
 const row = (extra: Partial<RawBooking> = {}): RawBooking => ({
   id: 'b1', reference_no: 'BK-2026-000001', status: 'pending', status_reason: null, starts_at: '2026-12-07T01:00:00+00:00', ends_at: '2026-12-07T02:00:00+00:00',
@@ -68,6 +68,13 @@ describe('bookings', () => {
 })
 
 describe('a refused booking', () => {
+  it('counts as stale only when the booking itself has changed', () => {
+    expect(isStale({ message: 'booking_state' })).toBe(true)
+    expect(isStale({ message: 'booking_unavailable' })).toBe(true)
+    expect(isStale({ message: 'booking_therapist_busy' })).toBe(false)
+    expect(isStale(null)).toBe(false)
+  })
+
   it('uses its own wording', () => {
     expect(bookingFailureKey({ message: 'booking_full' })).toBe('booking.errors.full')
     expect(bookingFailureKey({ message: 'booking_too_soon' })).toBe('booking.errors.too_soon')

@@ -135,7 +135,7 @@ Running it found six things the unit tests could not:
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Domain and app unit tests, 36 of them new | `gradlew :core:domain:test :app:testDebugUnitTest` | Passed |
+| Domain and app unit tests, 32 of them new | `gradlew :core:domain:test :app:testDebugUnitTest` | Passed |
 | Lint | `gradlew :app:lintDebug` | Passed |
 | Live role routing on the spare emulator, including the Scheduler | `python scripts/test_role_routing.py` | 3 of 3 on the final build |
 | Consent and storage on the spare emulator | `am instrument -e class com.motivance.data.local.SessionStoreTest` | 9 passed |
@@ -143,3 +143,31 @@ Running it found six things the unit tests could not:
 | Web after the shared fixes | `npx playwright test tests/e2e/booking.spec.ts` | 12 passed |
 
 **Not run.** A physical phone, large text sizes and TalkBack.
+
+## MOT-55: Scheduler request table
+
+The Requests page at `/scheduler/requests` lists every booking. Search, filters, sorting and paging all happen in `scheduler_bookings`, so the table stays correct however many bookings exist. Sort columns come from a fixed list, so the parameter cannot carry anything else into the query.
+
+Each booking opens beside the table with its history, and Confirm, Reject, Reschedule, Assign or Change Therapist and Cancel each happen in a dialog that names the patient and the time. The therapist list puts linked therapists first and marks who is busy, so a conflict is visible before it is refused. A Scheduler can reschedule inside the patient notice window, through `scheduler_availability`.
+
+When an action is refused, the list always reloads. If the booking itself has changed, the dialog closes to show what happened. If only the choice is wrong, such as a therapist who has just become busy, it stays open with the updated choices.
+
+`center_availability` now holds the slot calculation once, for both audiences, instead of a third copy.
+
+A review before closing found problems the first tests had missed, and each now has a test. A selection could outlive its rows, so the confirmation could count a request already decided. Deciding the only row on the last page left an empty page reading "26 to 25 of 25". The Outdated filter dropped a search while its text stayed in the box. A count of one read "1 pending requests". The first two tests were shown to fail with their fix removed.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: search, filters, sorting, paging, history, therapist choices, short-notice slots, a sort injection attempt, and a patient asking for the staff view | `python scripts/test_booking.py requests` | 38 checks passed |
+| All sections, with the 403 guard now covering every `scheduler_` function | `python scripts/test_booking.py` | 233 checks passed |
+| Contract tests | `npm run test:contract` | 41 passed |
+| Whole browser suite with axe, including 11 Scheduler tests | `npx playwright test --workers=2` | 178 passed. 83 opt-in tests did not run, as designed: 82 design captures need `CAPTURE_DESIGNS` and 1 motion measurement needs `MEASURE_MOTION` |
+| Web unit tests | `npm test` | 199 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
+
+## S9 outcome
+
+All seven issues are implemented and closed. Both sprint exit criteria stay recorded as not passed, under a deferral the user authorised, because part of each needs a physical phone: MOT-54-AC7 (booking at large text sizes and with TalkBack) and the sprint demo in one sitting.
+
+Every step of the demo has passed in automated runs, though never as one continuous run. An administrator grants the Scheduler role in `web/tests/e2e/admin.spec.ts`. Patients request sessions in the browser tests, and in the real Android app on an emulator. Requests are confirmed and rejected in `web/tests/e2e/scheduler.spec.ts`. The live API test sends 10 parallel requests for the last place, and exactly 1 succeeds.

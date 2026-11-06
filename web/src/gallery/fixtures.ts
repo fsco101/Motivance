@@ -1,5 +1,6 @@
 import type { Availability, Booking } from '@/data/booking'
 import type { CatalogueExercise } from '@/data/catalogue'
+import type { RequestDetail, RequestRow, TherapistChoice } from '@/data/scheduler'
 import type { HistoricalSession } from '@/data/history'
 import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
@@ -93,6 +94,20 @@ export const patientHome: PatientHome = {
   recent: [{ id: 'r1', startedAt: '2026-11-04T01:30:00Z', status: 'completed' }, { id: 'r2', startedAt: '2026-11-03T02:10:00Z', status: 'interrupted' }, { id: 'r3', startedAt: '2026-11-02T01:45:00Z', status: 'completed' }],
 }
 export const privacy: PrivacyState = { consent: 'granted', requests: [{ id: 'd1', kind: 'export', status: 'requested', createdAt: '2026-11-04T01:30:00Z' }, { id: 'd2', kind: 'delete', status: 'declined', createdAt: '2026-10-20T01:30:00Z' }] }
+
+export const requests: RequestRow[] = [
+  { id: 'q1', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, createdAt: '2026-11-05T02:00:00Z' },
+  { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', patientId: 'p2', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes', attendance: null, createdAt: '2026-11-04T02:00:00Z' },
+  { id: 'q3', reference: 'BK-2026-000149', status: 'rescheduled', reason: 'Therapist training', startsAt: '2026-12-09T05:00:00Z', endsAt: '2026-12-09T06:00:00Z', patientId: 'p3', patient: 'Liza Mendoza', therapistId: 't2', therapist: 'Omar Lim', attendance: null, createdAt: '2026-11-02T02:00:00Z' },
+  { id: 'q4', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, createdAt: '2026-10-12T02:00:00Z' },
+]
+export const requestDetail: RequestDetail = {
+  id: 'q1',
+  events: [{ id: 1, action: 'requested', actorRole: 'patient', actor: 'Ana Dela Cruz', fromStatus: null, toStatus: 'pending', toStartsAt: '2026-12-14T02:00:00Z', reason: null, recordedAt: '2026-11-05T02:00:00Z' }],
+}
+export const therapistChoices: TherapistChoice[] = [
+  { id: 't1', name: 'Dana Reyes', linked: true, busy: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true }, { id: 't3', name: 'Grace Tan', linked: false, busy: false },
+]
 
 export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 

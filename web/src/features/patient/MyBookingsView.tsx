@@ -3,13 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { ButtonLink, Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/Dialog'
 import { EmptyState, PageHeader, Panel, StatusPill } from '@/components/Display'
-import { ACTIVE, isUpcoming, upcomingBookings, type Booking, type BookingStatus } from '@/data/booking'
-import { useCenterFormat } from '@/features/booking/format'
+import { ACTIVE, isUpcoming, upcomingBookings, type Booking } from '@/data/booking'
+import { statusTone, useCenterFormat } from '@/features/booking/format'
 import { Fact, Loadable, SkeletonCards, type Load } from '@/features/shared'
-
-export const statusTone: Record<BookingStatus, 'positive' | 'neutral' | 'caution' | 'danger' | 'primary'> = {
-  pending: 'caution', confirmed: 'positive', rescheduled: 'primary', rejected: 'danger', cancelled: 'neutral',
-}
 
 function BookingCard({ booking, onCancel }: { booking: Booking; onCancel: (booking: Booking) => void }) {
   const { t } = useTranslation()
