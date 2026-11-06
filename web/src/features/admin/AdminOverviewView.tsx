@@ -1,4 +1,4 @@
-import { BookOpenIcon, CaretRightIcon, EnvelopeIcon, LinkSimpleIcon, LockIcon, PulseIcon, StethoscopeIcon, UserIcon, UsersThreeIcon, WarningIcon, type Icon } from '@phosphor-icons/react'
+import { BookOpenIcon, CalendarCheckIcon, CaretRightIcon, EnvelopeIcon, LinkSimpleIcon, LockIcon, PulseIcon, ShieldCheckIcon, StethoscopeIcon, UserIcon, UsersThreeIcon, WarningIcon, type Icon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { BarList } from '@/components/Charts'
@@ -69,13 +69,15 @@ export function AdminOverviewView({ load, base }: { load: Load<AdminOverview>; b
   return (
     <>
       <PageHeader title={t('admin.title')} description={t('admin.scope')} />
-      <Loadable load={load} skeleton={<div className="flex flex-col gap-5"><div className="grid gap-4 tablet:grid-cols-3 wide:grid-cols-6">{[0, 1, 2, 3, 4, 5].map((index) => <Skeleton key={index} className="h-28 rounded-card" />)}</div><SkeletonLines rows={6} /></div>}>
+      <Loadable load={load} skeleton={<div className="flex flex-col gap-5"><div className="grid gap-4 tablet:grid-cols-4">{[0, 1, 2, 3, 4, 5, 6, 7].map((index) => <Skeleton key={index} className="h-28 rounded-card" />)}</div><SkeletonLines rows={6} /></div>}>
         {({ summary, recent }) => (
           <div className="flex flex-col gap-5">
-            <div className="grid gap-4 tablet:grid-cols-3 wide:grid-cols-6">
+            <div className="grid gap-4 tablet:grid-cols-4">
               <StatCard icon={UsersThreeIcon} value={summary.accounts} label={t('admin.accounts')} detail={t('admin.disabledCount', { count: summary.disabled })} to={`${base}/accounts`} />
               <StatCard icon={UserIcon} value={summary.patients} label={t('admin.patients')} detail={t('admin.unlinkedCount', { count: summary.unlinkedPatients })} to={`${base}/accounts?filter=patients`} />
-              <StatCard icon={StethoscopeIcon} value={summary.therapists} label={t('admin.therapists')} detail={t('admin.adminsCount', { count: summary.admins })} to={`${base}/accounts?filter=therapists`} />
+              <StatCard icon={StethoscopeIcon} value={summary.therapists} label={t('admin.therapists')} to={`${base}/accounts?filter=therapists`} />
+              <StatCard icon={CalendarCheckIcon} value={summary.schedulers} label={t('admin.schedulers')} to={`${base}/accounts?filter=schedulers`} />
+              <StatCard icon={ShieldCheckIcon} value={summary.admins} label={t('admin.admins')} to={`${base}/accounts?filter=admins`} />
               <StatCard icon={LinkSimpleIcon} value={summary.activeLinks} label={t('admin.activeLinks')} to={`${base}/links`} />
               <StatCard icon={BookOpenIcon} value={summary.activeExercises} label={t('admin.activeExercises')} detail={t('admin.exercisesTotal', { count: summary.exercises })} to={`${base}/catalogue`} />
               <StatCard icon={PulseIcon} value={summary.sessionsWeek} label={t('admin.sessions')} detail={t('admin.sessionsWindow')} />
@@ -85,7 +87,7 @@ export function AdminOverviewView({ load, base }: { load: Load<AdminOverview>; b
               <Panel title={t('admin.accountsByRole')}>
                 <BarList items={[
                   { label: t('admin.patients'), value: summary.patients }, { label: t('admin.therapists'), value: summary.therapists },
-                  { label: t('admin.admins'), value: summary.admins }, { label: t('admin.filter.disabled'), value: summary.disabled },
+                  { label: t('admin.schedulers'), value: summary.schedulers }, { label: t('admin.admins'), value: summary.admins }, { label: t('admin.filter.disabled'), value: summary.disabled },
                 ]} />
               </Panel>
               <Panel title={t('admin.coverage')}><Coverage summary={summary} /></Panel>

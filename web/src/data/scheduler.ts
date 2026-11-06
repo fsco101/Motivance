@@ -1,0 +1,76 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { decodeAvailability, monthRange, type Availability, type BookingStatus } from './booking'
+import type { Database } from './database.types'
+import { must } from './workspace'
+
+type Db = SupabaseClient<Database>
+
+export const PAGE_SIZE = 25
+
+export type RequestRow = {
+  id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; patientId: string; patient: string
+  therapistId: string | null; therapist: string | null; attendance: string | null; createdAt: string
+}
+
+export type RequestFilters = { search: string; status: BookingStatus | 'all'; from: string; to: string; therapist: string }
+export const NO_FILTERS: RequestFilters = { search: '', status: 'all', from: '', to: '', therapist: 'all' }
+
+export type SortKey = 'starts_at' | 'created_at' | 'reference_no' | 'status' | 'patient' | 'therapist'
+export type RequestSort = { key: SortKey; direction: 'asc' | 'desc' }
+
+type RawRow = {
+  id: string; reference_no: string; status: BookingStatus; status_reason: string | null; starts_at: string; ends_at: string; patient_id: string; patient_name: string | null
+  therapist_id: string | null; therapist_name: string | null; attendance: string | null; created_at: string
+}
+
+export const decodeRow = (row: RawRow): RequestRow => ({
+  id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, startsAt: row.starts_at, endsAt: row.ends_at, patientId: row.patient_id, patient: row.patient_name ?? '',
+  therapistId: row.therapist_id, therapist: row.therapist_name, attendance: row.attendance, createdAt: row.created_at,
+})
+
+export const queryOf = (filters: RequestFilters, sort: RequestSort, page: number) => ({
+  p_search: filters.search.trim() || undefined, p_statuses: filters.status === 'all' ? undefined : [filters.status], p_from: filters.from || undefined, p_to: filters.to || undefined,
+  p_therapist: filters.therapist === 'all' ? undefined : filters.therapist, p_sort: sort.key, p_descending: sort.direction === 'desc', p_limit: PAGE_SIZE, p_offset: page * PAGE_SIZE,
+})
+
+export async function loadRequests(db: Db, filters: RequestFilters, sort: RequestSort, page: number) {
+  const { rows, total } = must(await db.rpc('scheduler_bookings', queryOf(filters, sort, page))) as unknown as { rows: RawRow[]; total: number }
+  return { rows: rows.map(decodeRow), total }
+}
+
+export type BookingEvent = { id: number; action: string; actorRole: string; actor: string | null; fromStatus: string | null; toStatus: string | null; toStartsAt: string | null; reason: string | null; recordedAt: string }
+export type RequestDetail = { id: string; events: BookingEvent[] }
+
+type RawDetail = {
+  id: string
+  events: Array<{ id: number; action: string; actor_role: string; actor_name: string | null; from_status: string | null; to_status: string | null; to_starts_at: string | null; reason: string | null; recorded_at: string }>
+}
+
+export async function loadDetail(db: Db, booking: string): Promise<RequestDetail> {
+  const row = must(await db.rpc('scheduler_booking_detail', { p_booking: booking })) as unknown as RawDetail
+  return {
+    id: row.id,
+    events: row.events.map((event) => ({
+      id: event.id, action: event.action, actorRole: event.actor_role, actor: event.actor_name, fromStatus: event.from_status, toStatus: event.to_status, toStartsAt: event.to_starts_at, reason: event.reason, recordedAt: event.recorded_at,
+    })),
+  }
+}
+
+export type TherapistChoice = { id: string; name: string; linked: boolean; busy: boolean }
+
+/** With no booking, every active therapist, for the filter. With one, those who could take it, linked ones first. */
+export async function loadTherapists(db: Db, booking?: string, startsAt?: string) {
+  return must(await db.rpc('scheduler_therapists', { p_booking: booking, p_starts: startsAt })) as unknown as TherapistChoice[]
+}
+
+export async function loadStaffAvailability(db: Db, month: string): Promise<Availability> {
+  const { from, to } = monthRange(month)
+  return decodeAvailability(must(await db.rpc('scheduler_availability', { p_from: from, p_to: to })) as unknown as Parameters<typeof decodeAvailability>[0])
+}
+
+export const confirmBooking = async (db: Db, booking: string, therapist: string) => { must(await db.rpc('scheduler_confirm', { p_booking: booking, p_therapist: therapist })) }
+export const rejectBooking = async (db: Db, booking: string, reason: string) => { must(await db.rpc('scheduler_reject', { p_booking: booking, p_reason: reason })) }
+export const rescheduleBooking = async (db: Db, booking: string, startsAt: string, therapist: string) => { must(await db.rpc('scheduler_reschedule', { p_booking: booking, p_starts: startsAt, p_therapist: therapist })) }
+export const assignTherapist = async (db: Db, booking: string, therapist: string) => { must(await db.rpc('scheduler_assign_therapist', { p_booking: booking, p_therapist: therapist })) }
+export const cancelBooking = async (db: Db, booking: string, reason: string) => { must(await db.rpc('scheduler_cancel', { p_booking: booking, p_reason: reason })) }
+export const bulkReject = async (db: Db, bookings: readonly string[], reason: string) => must(await db.rpc('scheduler_bulk_reject', { p_bookings: [...bookings], p_reason: reason })) as number

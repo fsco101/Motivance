@@ -1,4 +1,4 @@
-import { BookOpenIcon, HeartbeatIcon, LinkSimpleIcon, ShieldCheckIcon, UsersIcon, type Icon } from '@phosphor-icons/react'
+import { BookOpenIcon, CalendarCheckIcon, HeartbeatIcon, LinkSimpleIcon, ShieldCheckIcon, UsersIcon, type Icon } from '@phosphor-icons/react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
@@ -6,8 +6,8 @@ import { EmptyState, PageHeader, Panel, StatusPill, Tabs } from '@/components/Di
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import type { AuditCategory, AuditEvent } from './types'
 
-const icons: Record<AuditCategory, Icon> = { accounts: UsersIcon, links: LinkSimpleIcon, catalogue: BookOpenIcon, clinical: HeartbeatIcon, privacy: ShieldCheckIcon }
-const CATEGORIES: readonly AuditCategory[] = ['accounts', 'links', 'catalogue', 'clinical', 'privacy']
+const icons: Record<AuditCategory, Icon> = { accounts: UsersIcon, links: LinkSimpleIcon, catalogue: BookOpenIcon, clinical: HeartbeatIcon, privacy: ShieldCheckIcon, bookings: CalendarCheckIcon }
+const CATEGORIES: readonly AuditCategory[] = ['accounts', 'links', 'catalogue', 'clinical', 'privacy', 'bookings']
 
 export function ActivityTable({ events, empty }: { events: readonly AuditEvent[]; empty?: ReactNode }) {
   const { t } = useTranslation()

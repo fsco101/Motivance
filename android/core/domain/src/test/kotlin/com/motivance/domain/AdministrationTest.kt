@@ -7,13 +7,15 @@ class AdministrationTest {
     private val patient=AdminAccount("p","Pat",true,setOf("patient"))
     private val therapist=AdminAccount("t","Thea",true,setOf("patient","therapist"))
     private val admin=AdminAccount("a","Ada",true,setOf("admin","patient"))
+    private val scheduler=AdminAccount("s","Sol",true,setOf("patient","scheduler"))
     private val disabled=AdminAccount("d","",false,setOf("patient"),email="d@example.test")
 
     @Test fun primaryRolePrefersTheMostPrivilegedRoleBecauseEveryAccountIsAlsoAPatient() {
         assertEquals("patient",patient.primaryRole)
         assertEquals("therapist",therapist.primaryRole)
         assertEquals("admin",admin.primaryRole)
-        assertFalse(patient.staff);assertTrue(therapist.staff);assertTrue(admin.staff)
+        assertFalse(patient.staff);assertTrue(therapist.staff);assertTrue(admin.staff);assertTrue(scheduler.staff)
+        assertEquals("scheduler",scheduler.primaryRole)
     }
     @Test fun labelFallsBackFromNameToEmailToShortId() {
         assertEquals("Pat",patient.label)
@@ -24,6 +26,8 @@ class AdministrationTest {
         val all=listOf(patient,therapist,admin,disabled)
         assertEquals(listOf(patient,disabled),all.filter {AccountFilter.PATIENTS.accepts(it)})
         assertEquals(listOf(therapist),all.filter {AccountFilter.THERAPISTS.accepts(it)})
+        assertTrue(AccountFilter.SCHEDULERS.accepts(scheduler));assertFalse(AccountFilter.SCHEDULERS.accepts(therapist))
+        assertFalse("A Scheduler is staff, not a patient",AccountFilter.PATIENTS.accepts(scheduler))
         assertEquals(listOf(admin),all.filter {AccountFilter.ADMINS.accepts(it)})
         assertEquals(listOf(disabled),all.filter {AccountFilter.DISABLED.accepts(it)})
         assertEquals(all,all.filter {AccountFilter.ALL.accepts(it)})
@@ -52,6 +56,14 @@ class AdministrationTest {
             ("consents" to "insert") to (AuditKind.CONSENT_RECORDED to AuditCategory.PRIVACY),
             ("data_requests" to "insert") to (AuditKind.REQUEST_CREATED to AuditCategory.PRIVACY),
             ("data_requests" to "update") to (AuditKind.REQUEST_UPDATED to AuditCategory.PRIVACY),
+            ("bookings" to "requested") to (AuditKind.BOOKING_REQUESTED to AuditCategory.BOOKINGS),
+            ("bookings" to "confirmed") to (AuditKind.BOOKING_CONFIRMED to AuditCategory.BOOKINGS),
+            ("bookings" to "rejected") to (AuditKind.BOOKING_REJECTED to AuditCategory.BOOKINGS),
+            ("bookings" to "cancelled") to (AuditKind.BOOKING_CANCELLED to AuditCategory.BOOKINGS),
+            ("bookings" to "rescheduled") to (AuditKind.BOOKING_RESCHEDULED to AuditCategory.BOOKINGS),
+            ("bookings" to "returned_to_pending") to (AuditKind.BOOKING_RETURNED to AuditCategory.BOOKINGS),
+            ("bookings" to "therapist_changed") to (AuditKind.BOOKING_THERAPIST to AuditCategory.BOOKINGS),
+            ("bookings" to "attendance_marked") to (AuditKind.BOOKING_ATTENDANCE to AuditCategory.BOOKINGS),
         )
         cases.forEach {(input,expected) ->
             val e=event(input.first,input.second)

@@ -24,6 +24,17 @@ class SessionStoreTest {
         store.save(owner,id,rules,metrics,100,"COMPLETED")
         assertEquals("ELBOW",org.json.JSONObject(store.dao.outbox(owner).single().payloadJson).getJSONObject("rules").getString("focusJoint"))
     }
+    @Test fun aWithdrawalMadeOnTheWebMeansTheNextSessionRecordsANewGrant()=runBlocking {
+        val first=store.recordConsent(owner,true)
+        val withdrawn=ServerConsent(UUID.randomUUID().toString(),"withdrawn",first.occurredAt+1000)
+        store.reconcileConsent(owner,withdrawn)
+        assertEquals("withdrawn",store.dao.latestConsent(owner)!!.event)
+        assertEquals("SYNCED",store.dao.latestConsent(owner)!!.state)
+        store.reconcileConsent(owner,withdrawn)
+        val next=store.recordConsent(owner,true)
+        assertNotEquals(first.id,next.id)
+        assertTrue(next.occurredAt>withdrawn.occurredAt)
+    }
     @Test fun therapistSelectedFocusStaysPinnedThroughDatabaseReopen()=runBlocking {
         val prescribed=rules.copy(demo=false,prescriptionVersionId=UUID.randomUUID().toString(),side=BodySide.RIGHT,focusJoint=BodyJoint.KNEE)
         val grant=store.recordConsent(owner,true);val id=UUID.randomUUID().toString()

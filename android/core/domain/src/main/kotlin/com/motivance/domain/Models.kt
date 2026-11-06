@@ -2,10 +2,15 @@ package com.motivance.domain
 
 data class Landmark(val x: Float, val y: Float, val visibility: Float)
 data class PoseFrame(val points: List<Landmark>, val width: Int, val height: Int, val timestampMs: Long, val latencyMs: Long)
-enum class UserRole { PATIENT, THERAPIST, ADMIN }
+enum class UserRole { PATIENT, THERAPIST, SCHEDULER, ADMIN;
+    companion object {
+        /** Null for a role this build does not know, so a newer server can never stop an older app signing in. */
+        fun of(value:String)=entries.firstOrNull {it.name.equals(value,ignoreCase=true)}
+    }
+}
 data class UserSession(val userId: String, val roles: Set<UserRole>) {
     /** Every account starts as a patient, so staff also hold that role: the most senior role decides where they land. */
-    val primaryRole:UserRole? get()=listOf(UserRole.ADMIN,UserRole.THERAPIST,UserRole.PATIENT).firstOrNull {it in roles}
+    val primaryRole:UserRole? get()=listOf(UserRole.ADMIN,UserRole.SCHEDULER,UserRole.THERAPIST,UserRole.PATIENT).firstOrNull {it in roles}
     /** The workspace to show: the one [chosen] on the profile page while the account still holds it, else [primaryRole]. */
     fun workspace(chosen:UserRole?)=chosen?.takeIf {it in roles} ?: primaryRole
 }

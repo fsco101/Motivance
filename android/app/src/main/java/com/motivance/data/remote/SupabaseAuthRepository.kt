@@ -18,6 +18,7 @@ import com.motivance.data.local.SessionStore
 import com.motivance.data.local.SessionVault
 import java.io.IOException
 import java.time.Instant
+import java.time.OffsetDateTime
 
 /** Authenticated GoTrue/PostgREST adapter with protected session persistence. */
 @Singleton class SupabaseAuthRepository internal constructor(
@@ -28,7 +29,7 @@ import java.time.Instant
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null,
     private val cloudinaryApi:String=CLOUDINARY_API,
-) : AuthRepository, RehabilitationRepository, AdministrationRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -42,7 +43,7 @@ import java.time.Instant
         val stored=vault?.read() ?: return
         try {
             val j=JSONObject(stored); require(j.getString("backend")==baseUrl); access=j.getString("access_token"); refreshToken=j.getString("refresh_token"); userId=j.getString("id"); expiresAt=j.getLong("expires_at")
-            cachedRoles=j.getJSONArray("roles").let { a -> (0 until a.length()).map {UserRole.valueOf(a.getString(it))}.toSet() }
+            cachedRoles=j.getJSONArray("roles").let { a -> (0 until a.length()).mapNotNull {UserRole.of(a.getString(it))}.toSet() }
         } catch(_:Exception) {clearSession()}
     }
     private suspend fun <T> authorized(owner:String?=null,action:suspend (String,String)->T):T=mutex.withLock {
@@ -66,8 +67,10 @@ import java.time.Instant
         if (method == "GET") builder.get() else builder.method(method, (body ?: JSONObject()).toString().toRequestBody("application/json".toMediaType()))
         http.newCall(builder.build()).execute().use { response ->
             if(!response.isSuccessful) {
-                val code=runCatching {JSONObject(response.body?.string().orEmpty()).optString("code")}.getOrNull()
-                    ?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
+                val failure=runCatching {JSONObject(response.body?.string().orEmpty())}.getOrNull()
+                // Only known codes pass: other server messages can name tables and columns.
+                val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
+                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_")}
                 throw RemoteFailure(response.code,code)
             }
             response.body?.string().orEmpty()
@@ -78,7 +81,7 @@ import java.time.Instant
         val token = value.getString("access_token")
         val id = value.getJSONObject("user").getString("id")
         val roles = JSONArray(call("/rest/v1/user_roles?select=role&user_id=eq.$id", null, token, "GET"))
-        val mapped = (0 until roles.length()).map { UserRole.valueOf(roles.getJSONObject(it).getString("role").uppercase()) }.toSet()
+        val mapped = (0 until roles.length()).mapNotNull { UserRole.of(roles.getJSONObject(it).getString("role")) }.toSet()
         access = token; refreshToken = value.getString("refresh_token"); userId = id
         cachedRoles=mapped; expiresAt=value.optLong("expires_at",System.currentTimeMillis()/1000+value.optLong("expires_in",3600))
         vault?.write(JSONObject().put("backend",baseUrl).put("id",id).put("access_token",token).put("refresh_token",refreshToken).put("expires_at",expiresAt).put("roles",JSONArray(mapped.map {it.name})).toString())
@@ -181,6 +184,8 @@ import java.time.Instant
         if(cache!=null) {
             val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
             cache.replaceCache(id,PrescriptionCache.decode(id,details,System.currentTimeMillis()))
+            val consent=JSONArray(call("/rest/v1/consents?select=client_event_id,event,occurred_at&patient_id=eq.$id&consent_type=eq.movement-summary&client_event_id=not.is.null&order=occurred_at.desc&limit=1",null,token,"GET"))
+            if(consent.length()>0) cache.reconcileConsent(id,consent.getJSONObject(0).let {ServerConsent(it.getString("client_event_id"),it.getString("event"),OffsetDateTime.parse(it.getString("occurred_at")).toInstant().toEpochMilli())})
         }
         val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name,photo_url)",null,token,"GET"))
         val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))
@@ -216,7 +221,7 @@ import java.time.Instant
             if(accounts.length()>ADMIN_PAGE) rows.last().id else null,
             AdminSummary(summary.optInt("accounts"),summary.optInt("disabled"),summary.optInt("patients"),summary.optInt("therapists"),summary.optInt("admins"),
                 summary.optInt("active_links"),summary.optInt("unlinked_patients"),summary.optInt("exercises"),summary.optInt("active_exercises"),
-                summary.optInt("sessions_week"),summary.optInt("pending_requests")),
+                summary.optInt("sessions_week"),summary.optInt("pending_requests"),summary.optInt("schedulers")),
             activity.events,activity.next)
     }
     override suspend fun clearPhoto(user:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_clear_photo",JSONObject().put("p_user",user),t)}}
@@ -232,6 +237,10 @@ import java.time.Instant
     override suspend fun setLink(therapist:String,patient:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_link",JSONObject().put("p_therapist",therapist).put("p_patient",patient).put("p_active",active),t)}}
     override suspend fun setExercise(exercise:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_exercise",JSONObject().put("p_exercise",exercise).put("p_active",active),t)}}
     override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_publish_exercise",JSONObject().put("p_exercise",exercise).put("p_name",name).put("p_english",english).put("p_filipino",filipino),t)}}
+    override suspend fun loadAvailability(from:String,to:String)=authorized {token,_ -> BookingJson.availability(JSONObject(call("/rest/v1/rpc/booking_availability",JSONObject().put("p_from",from).put("p_to",to),token)))}
+    override suspend fun requestBooking(requestId:String,startsAt:String)=authorized {token,_ -> BookingJson.booking(JSONObject(call("/rest/v1/rpc/request_booking",JSONObject().put("p_request",requestId).put("p_starts",startsAt),token)))}
+    override suspend fun loadMyBookings()=authorized {token,_ -> BookingJson.bookings(JSONArray(call("/rest/v1/rpc/my_bookings",JSONObject(),token)))}
+    override suspend fun cancelBooking(id:String) {authorized {token,_ -> call("/rest/v1/rpc/cancel_my_booking",JSONObject().put("p_booking",id),token)}}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }

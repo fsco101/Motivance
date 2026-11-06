@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import bookingEn from './booking.en.json'
+import bookingFil from './booking.fil.json'
 import en from './en.json'
 import fil from './fil.json'
 
@@ -14,11 +16,15 @@ function flatten(tree: Tree, prefix = ''): Record<string, string> {
 const placeholders = (text: string) => [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort()
 
 describe('English and Filipino', () => {
-  const english = flatten(en)
-  const filipino = flatten(fil)
+  const english = { ...flatten(en), ...flatten(bookingEn) }
+  const filipino = { ...flatten(fil), ...flatten(bookingFil) }
 
   it('have the same keys', () => {
     expect(Object.keys(filipino).sort()).toEqual(Object.keys(english).sort())
+  })
+
+  it('keep booking text apart, so loading it can never replace other text', () => {
+    expect(Object.keys(bookingEn).filter((section) => section in en)).toEqual([])
   })
 
   it('use the same placeholders', () => {

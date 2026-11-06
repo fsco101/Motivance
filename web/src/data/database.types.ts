@@ -44,6 +44,316 @@ export type Database = {
           },
         ]
       }
+      booking_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string
+          booking_id: string
+          from_starts_at: string | null
+          from_status: string | null
+          from_therapist: string | null
+          id: number
+          reason: string | null
+          recorded_at: string
+          to_starts_at: string | null
+          to_status: string | null
+          to_therapist: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role: string
+          booking_id: string
+          from_starts_at?: string | null
+          from_status?: string | null
+          from_therapist?: string | null
+          id?: never
+          reason?: string | null
+          recorded_at?: string
+          to_starts_at?: string | null
+          to_status?: string | null
+          to_therapist?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string
+          booking_id?: string
+          from_starts_at?: string | null
+          from_status?: string | null
+          from_therapist?: string | null
+          id?: never
+          reason?: string | null
+          recorded_at?: string
+          to_starts_at?: string | null
+          to_status?: string | null
+          to_therapist?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          attendance: string | null
+          attendance_at: string | null
+          attendance_by: string | null
+          calendar_token: string
+          client_request_id: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          patient_id: string
+          previous_starts_at: string | null
+          reference_no: string
+          self_reschedules: number
+          starts_at: string
+          status: string
+          status_reason: string | null
+          therapist_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attendance?: string | null
+          attendance_at?: string | null
+          attendance_by?: string | null
+          calendar_token?: string
+          client_request_id?: string | null
+          created_at?: string
+          ends_at: string
+          id?: string
+          patient_id: string
+          previous_starts_at?: string | null
+          reference_no: string
+          self_reschedules?: number
+          starts_at: string
+          status?: string
+          status_reason?: string | null
+          therapist_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attendance?: string | null
+          attendance_at?: string | null
+          attendance_by?: string | null
+          calendar_token?: string
+          client_request_id?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          patient_id?: string
+          previous_starts_at?: string | null
+          reference_no?: string
+          self_reschedules?: number
+          starts_at?: string
+          status?: string
+          status_reason?: string | null
+          therapist_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_attendance_by_fkey"
+            columns: ["attendance_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      center_closures: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          reason: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          reason: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          reason?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_closures_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      center_holidays: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_on: string
+          id: string
+          kind: string
+          name: string
+          source: string
+          starts_on: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_on: string
+          id?: string
+          kind: string
+          name: string
+          source?: string
+          starts_on: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string
+          id?: string
+          kind?: string
+          name?: string
+          source?: string
+          starts_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_holidays_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      center_hours: {
+        Row: {
+          closes_at: string
+          is_open: boolean
+          opens_at: string
+          weekday: number
+        }
+        Insert: {
+          closes_at?: string
+          is_open?: boolean
+          opens_at?: string
+          weekday: number
+        }
+        Update: {
+          closes_at?: string
+          is_open?: boolean
+          opens_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
+      center_settings: {
+        Row: {
+          booking_horizon_days: number
+          cancel_cutoff_hours: number
+          center_name: string
+          id: boolean
+          location: string
+          max_active_bookings: number
+          max_self_reschedules: number
+          minimum_notice_hours: number
+          reschedule_cutoff_hours: number
+          slot_capacity: number
+          slot_minutes: number
+          time_zone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          booking_horizon_days?: number
+          cancel_cutoff_hours?: number
+          center_name?: string
+          id?: boolean
+          location?: string
+          max_active_bookings?: number
+          max_self_reschedules?: number
+          minimum_notice_hours?: number
+          reschedule_cutoff_hours?: number
+          slot_capacity?: number
+          slot_minutes?: number
+          time_zone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          booking_horizon_days?: number
+          cancel_cutoff_hours?: number
+          center_name?: string
+          id?: boolean
+          location?: string
+          max_active_bookings?: number
+          max_self_reschedules?: number
+          minimum_notice_hours?: number
+          reschedule_cutoff_hours?: number
+          slot_capacity?: number
+          slot_minutes?: number
+          time_zone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consents: {
         Row: {
           client_event_id: string | null
@@ -751,6 +1061,40 @@ export type Database = {
         Args: { p_exercise: string }
         Returns: undefined
       }
+      booking_availability: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      booking_check_patient: {
+        Args: {
+          p_patient: string
+          p_starts: string
+          p_ends: string
+          p_booking: string
+        }
+        Returns: undefined
+      }
+      booking_check_slot: {
+        Args: { p_starts: string; p_ends: string; p_booking: string }
+        Returns: undefined
+      }
+      booking_check_therapist: {
+        Args: {
+          p_therapist: string
+          p_starts: string
+          p_ends: string
+          p_booking: string
+        }
+        Returns: undefined
+      }
+      booking_reason: {
+        Args: { p_reason: string }
+        Returns: string
+      }
+      booking_view: {
+        Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
+        Returns: Json
+      }
       can_prescribe: {
         Args: { target: string }
         Returns: boolean
@@ -762,6 +1106,18 @@ export type Database = {
       can_read_patient: {
         Args: { target: string }
         Returns: boolean
+      }
+      cancel_my_booking: {
+        Args: { p_booking: string; p_reason?: string }
+        Returns: Json
+      }
+      center_availability: {
+        Args: { p_from: string; p_to: string; p_staff: boolean }
+        Returns: Json
+      }
+      center_problem: {
+        Args: { p_starts: string; p_ends: string }
+        Returns: string
       }
       clear_my_profile_photo: {
         Args: Record<PropertyKey, never>
@@ -805,6 +1161,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      my_booking_view: {
+        Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
+        Returns: Json
+      }
+      my_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       profile_photo_upload: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -832,11 +1196,23 @@ export type Database = {
         }
         Returns: string
       }
+      release_therapist_bookings: {
+        Args: { p_therapist: string }
+        Returns: undefined
+      }
+      request_booking: {
+        Args: { p_request: string; p_starts: string }
+        Returns: Json
+      }
       request_patient_data: {
         Args: { p_id: string; p_kind: string }
         Returns: string
       }
       require_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      require_scheduler: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -848,8 +1224,80 @@ export type Database = {
         Args: { p_details: Json }
         Returns: undefined
       }
+      scheduler_assign_therapist: {
+        Args: { p_booking: string; p_therapist: string }
+        Returns: Json
+      }
+      scheduler_availability: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      scheduler_booking_detail: {
+        Args: { p_booking: string }
+        Returns: Json
+      }
+      scheduler_bookings: {
+        Args: {
+          p_search?: string
+          p_statuses?: string[]
+          p_from?: string
+          p_to?: string
+          p_therapist?: string
+          p_patient?: string
+          p_sort?: string
+          p_descending?: boolean
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      scheduler_bulk_reject: {
+        Args: { p_bookings: string[]; p_reason: string }
+        Returns: number
+      }
+      scheduler_cancel: {
+        Args: { p_booking: string; p_reason: string }
+        Returns: Json
+      }
+      scheduler_confirm: {
+        Args: { p_booking: string; p_therapist?: string }
+        Returns: Json
+      }
+      scheduler_patients: {
+        Args: { p_search?: string; p_limit?: number }
+        Returns: Json
+      }
+      scheduler_reject: {
+        Args: { p_booking: string; p_reason: string }
+        Returns: Json
+      }
+      scheduler_reschedule: {
+        Args: {
+          p_booking: string
+          p_starts: string
+          p_therapist?: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
+      scheduler_therapists: {
+        Args: { p_booking?: string; p_starts?: string }
+        Returns: Json
+      }
       set_my_profile_photo: {
         Args: { p_public_id: string; p_version: number; p_signature: string }
+        Returns: string
+      }
+      slot_load: {
+        Args: { p_starts: string; p_ends: string }
+        Returns: number
+      }
+      slot_on_grid: {
+        Args: { p_starts: string }
+        Returns: boolean
+      }
+      slot_problem: {
+        Args: { p_starts: string }
         Returns: string
       }
       username_allowed: {

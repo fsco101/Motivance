@@ -50,8 +50,10 @@ import com.motivance.domain.ExerciseKind
 import com.motivance.domain.BodySide
 import com.motivance.domain.UserRole
 import com.motivance.domain.WorkspaceOverview
+import com.motivance.domain.nextSession
 import com.motivance.feature.admin.*
 import com.motivance.feature.auth.*
+import com.motivance.feature.booking.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.rehabilitation.*
@@ -87,6 +89,8 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
     val connected by rehabilitation.state.collectAsStateWithLifecycle()
     val history:HistoryViewModel=viewModel()
     val administration:AdministrationViewModel=viewModel()
+    val booking:BookingViewModel=viewModel()
+    val bookingState by booking.state.collectAsStateWithLifecycle()
     val haptics=rememberHaptics()
     LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
     LaunchedEffect(Unit) {vm.restore()}
@@ -95,6 +99,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         exercise.configure(auth.session?.userId ?: "local-demo")
         rehabilitation.configure(auth.session?.userId)
         history.configure(auth.session?.userId)
+        booking.configure(auth.session?.userId)
     }
     var route by rememberSaveable { mutableStateOf("LANDING") }
     var selectedRole by rememberSaveable { mutableStateOf<String?>(null) }
@@ -128,16 +133,22 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
             while(true) {rehabilitation.syncAssignments(); delay(ASSIGNMENT_CHECK_MS)}
         }
     }
-    val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","PROGRESS","PROFILE","ADMIN")
+    val bookingPage=route.takeIf {patientAccount!=null && it in setOf("HOME","BOOKINGS","BOOK")}
+    LaunchedEffect(bookingPage,patientAccount) {
+        when(bookingPage) {"HOME","BOOKINGS" -> booking.refresh();"BOOK" -> booking.openBooking()}
+    }
+    val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PROFILE","ADMIN")
     val activeTab=when(route) {
         "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
         "LOCAL_HISTORY" -> "PROFILE"
+        "BOOK" -> "BOOKINGS"
         else -> route
     }
     val accountName=overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account)
     fun refreshWorkspace() {
         rehabilitation.refreshNow()
         if(route=="PROGRESS" || route=="PATIENT_DETAIL") history.refresh()
+        if(route=="BOOKINGS") booking.refresh()
         vm.loadOverview()
     }
     // Pull-to-refresh only shows its indicator for a refresh the person started, and clears once that work settles.
@@ -150,7 +161,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         }
         pulled=false
     }
-    val refreshable=auth.session!=null && route in setOf("HOME","PATIENTS","EXERCISES","PROGRESS","PATIENT_DETAIL","PROFILE")
+    val refreshable=auth.session!=null && route in setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PATIENT_DETAIL","PROFILE")
     Scaffold(
         containerColor=MaterialTheme.colorScheme.background,
         topBar={BrandHeader(onProfile=if(auth.session!=null && route!="PROFILE") ({route="PROFILE"}) else null,
@@ -158,8 +169,9 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         bottomBar={if(auth.session!=null) {
             val destinations=when(actualRole) {
                 UserRole.ADMIN -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("ADMIN",R.string.role_admin,Icons.Default.Settings),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
+                UserRole.SCHEDULER -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
                 UserRole.THERAPIST -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("PATIENTS",R.string.nav_patients,Icons.Default.Person),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
-                else -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("EXERCISES",R.string.nav_exercises,Icons.Default.PlayArrow),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
+                else -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("EXERCISES",R.string.nav_exercises,Icons.Default.PlayArrow),Triple("BOOKINGS",R.string.nav_bookings,Icons.Default.Place),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
             }
             Column {
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
@@ -280,12 +292,20 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                     QuickAction(Icons.Default.PlayArrow,R.string.camera_check,R.string.camera_preview_only) {route="SETUP"}
                     PatientInvitation(connected,rehabilitation)
                 }
+                "BOOKINGS" -> {
+                    PageHeader(R.string.booking_my_title,R.string.booking_my_detail)
+                    MyBookings(bookingState,booking) {route="BOOK"}
+                }
+                "BOOK" -> {
+                    PageHeader(R.string.booking_title,R.string.booking_detail)
+                    BookSession(bookingState,booking) {route="BOOKINGS"}
+                }
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); history.refresh()}
                     ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history)
                 }
-                else -> {
+                else -> if(actualRole==UserRole.SCHEDULER) SchedulerHome() else {
                     val patientRole=actualRole==UserRole.PATIENT
                     val greeting=overview.data?.displayName?.takeIf {it.isNotBlank()}?.let {stringResource(R.string.home_greeting,it.substringBefore(' '))}
                     PageHeader(if(patientRole) R.string.your_recovery else R.string.clinical_overview,
@@ -302,6 +322,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                                 overview.data?.sessions.orEmpty().filter {it.status=="completed"}.mapNotNull {runCatching {LocalDate.parse(it.startedAt.take(10))}.getOrNull()}.toSet() +
                                     local.history.filter {it.status=="COMPLETED"}.map {Instant.ofEpochMilli(it.startedAt).atZone(ZoneId.systemDefault()).toLocalDate()}
                             }
+                            NextSessionCard(bookingState.bookings.nextSession(),{route="BOOKINGS"},{route="BOOK"})
                             WeekCard(days)
                         }
                         UserRole.THERAPIST -> {
@@ -335,7 +356,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
 private fun depth(route:String)=when(route) {
     "ASSIGN" -> 2
-    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE" -> 1
+    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK" -> 1
     else -> 0
 }
 
@@ -344,6 +365,7 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     "CAMERA" -> "SETUP"
     "ASSIGN" -> "PATIENT_DETAIL"
     "PATIENT_DETAIL" -> "PATIENTS"
+    "BOOK" -> "BOOKINGS"
     "LOCAL_HISTORY" -> if(signedIn) "PROFILE" else "CHECK_COMPLETE"
     "SETUP" -> if(signedIn) "HOME" else "LANDING"
     else -> if(signedIn) "HOME" else "LANDING"
@@ -588,7 +610,13 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     }
 }
 
-private fun UserRole.title()=when(this) { UserRole.PATIENT -> R.string.patient_title; UserRole.THERAPIST -> R.string.therapist_title; UserRole.ADMIN -> R.string.role_admin }
+private fun UserRole.title()=when(this) { UserRole.PATIENT -> R.string.patient_title; UserRole.THERAPIST -> R.string.therapist_title; UserRole.SCHEDULER -> R.string.scheduler_title; UserRole.ADMIN -> R.string.role_admin }
+
+/** Scheduling is built from large tables and exports, so it lives on the web. The phone says so rather than showing an empty workspace. */
+@Composable private fun SchedulerHome() {
+    PageHeader(R.string.scheduler_home,R.string.scheduler_home_detail)
+    FeedbackNotice(R.string.scheduler_use_web)
+}
 
 /** Fallback hero when there is no assigned exercise to feature: a short orientation and the one next step. */
 @Composable internal fun WorkspaceHero(role:UserRole,onOpen:()->Unit) {

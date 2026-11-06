@@ -27,7 +27,7 @@ class AdministrationRepositoryTest {
                 "/rest/v1/rpc/admin_accounts" -> JSONArray((0..50).map {account(it)}).toString()
                 "/rest/v1/rpc/admin_links" -> """[{"therapist_id":"t","patient_id":"p","active":true,"therapist_name":"Thea","patient_name":null}]"""
                 "/rest/v1/exercises" -> """[{"id":"e","code":"elbow","active":true,"exercise_versions":[{"version":1,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Old"}},{"version":2,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Elbow","instructions_en":"Bend","instructions_fil":"Baluktot"}}]}]"""
-                "/rest/v1/rpc/admin_summary" -> """{"accounts":51,"disabled":1,"patients":49,"therapists":1,"admins":1,"active_links":1,"unlinked_patients":48,"exercises":2,"active_exercises":1,"sessions_week":7,"pending_requests":2}"""
+                "/rest/v1/rpc/admin_summary" -> """{"accounts":51,"disabled":1,"patients":49,"therapists":1,"admins":1,"schedulers":4,"active_links":1,"unlinked_patients":48,"exercises":2,"active_exercises":1,"sessions_week":7,"pending_requests":2}"""
                 "/rest/v1/rpc/admin_activity" -> JSONArray((31L downTo 1L).map {event(it)}).toString()
                 else -> """{"access_token":"fixture-access","refresh_token":"fixture-refresh","user":{"id":"fixture-admin"}}"""
             }
@@ -50,7 +50,7 @@ class AdministrationRepositoryTest {
         assertEquals("Thea",workspace.links.single().therapistName);assertEquals("",workspace.links.single().patientName)
         val exercise=workspace.exercises.single()
         assertEquals(2,exercise.version);assertEquals("Elbow",exercise.name);assertEquals("elbow-flexion-v1",exercise.algorithm)
-        assertEquals(48,workspace.summary!!.unlinkedPatients);assertEquals(2,workspace.summary!!.pendingRequests)
+        assertEquals(48,workspace.summary!!.unlinkedPatients);assertEquals(2,workspace.summary!!.pendingRequests);assertEquals(4,workspace.summary!!.schedulers)
         assertEquals(30,workspace.activity.size);assertEquals(2L,workspace.activityNext)
         assertTrue(workspace.activity.first { it.id==30L }.system);assertFalse(workspace.activity.first { it.id==31L }.system)
         assertEquals("maria",bodies.getValue("/rest/v1/rpc/admin_accounts").single().getString("p_search"))

@@ -68,7 +68,7 @@ All are `security definer` functions that re-check the caller. A failed role che
 | Any active account | `booking_availability(from, to)`, `mark_notifications_read(ids)`, `register_device(token, platform)` |
 | Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist` |
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
-| Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_log_export` |
+| Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_log_export` |
 | Scheduler: calendar | `scheduler_save_settings`, `scheduler_save_hours`, `scheduler_save_holiday`, `scheduler_delete_holiday`, `scheduler_closure_impact`, `scheduler_save_closure` (takes the resolution for each affected booking, in one transaction), `scheduler_delete_closure`, `scheduler_save_time_off`, `scheduler_delete_time_off` |
 | Scheduler: series and dashboard | `scheduler_series_preview`, `scheduler_series_create`, `scheduler_series_cancel`, `scheduler_summary` |
 | Scheduled jobs (`pg_cron`) | `enqueue_booking_reminders`, `expire_stale_bookings`, and a call to `notification-dispatch` |

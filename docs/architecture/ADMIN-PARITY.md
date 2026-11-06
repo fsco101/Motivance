@@ -15,9 +15,9 @@ Android paths are under `android/app/src/main/java/com/motivance/`. Web paths ar
 | Whole-system counts | `admin_summary` | `feature/admin/AdminOverview.kt` | `features/admin/AdminOverviewView.tsx` | `AdministrationRepositoryTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
 | Attention items that open their section | `admin_summary` | `feature/admin/AdminOverview.kt` | `features/admin/AdminOverviewView.tsx` | `AdministrationScreenTest` | `admin.spec.ts` | Done |
 | Directory, 50 accounts at a time, server search | `admin_accounts` | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx`, `data/admin.ts` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, `admin.test.ts` | Done |
-| Filters: all, patients, therapists, administrators, disabled | Loaded accounts | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationScreenTest` | `admin.spec.ts` | Done |
+| Filters: all, patients, therapists, Schedulers, administrators, disabled | Loaded accounts | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationScreenTest` | `admin.spec.ts` | Done |
 | Enable or disable an account | `admin_set_account` | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
-| Grant or remove the therapist and administrator roles | `admin_set_role` | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
+| Grant or remove the therapist, Scheduler and administrator roles | `admin_set_role` | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
 | Remove another account's photo | `admin_clear_photo` | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationViewModelTest` | `admin.spec.ts`, contract `admin.test.ts` | Done |
 | Copy an account ID | Loaded accounts | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationScreenTest` | `admin.spec.ts` | Done |
 | No change to your own account, with the reason shown | `admin_set_account`, `admin_set_role` | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
@@ -26,7 +26,7 @@ Android paths are under `android/app/src/main/java/com/motivance/`. Web paths ar
 | Catalogue with therapists' exercises, up to 500 | Administrator row policy on `exercises` | `data/remote/SupabaseAuthRepository.kt` | `data/admin.ts` | `AdministrationRepositoryTest` | `admin.spec.ts`, contract `admin.test.ts` | Done |
 | Activate or deactivate an exercise | `admin_set_exercise` | `feature/admin/AdminCatalogue.kt` | `features/admin/CatalogueView.tsx` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
 | Publish a new exercise version | `admin_publish_exercise` | `feature/admin/AdminCatalogue.kt` | `features/admin/CatalogueView.tsx` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
-| Activity feed, categories, older events, system label | `admin_activity` | `feature/admin/AdminActivity.kt` | `features/admin/ActivityView.tsx`, `data/admin.ts` | `AdministrationTest`, `test_administration.py` | `admin.spec.ts`, `admin.test.ts`, contract `admin.test.ts` | Done |
+| Activity feed, categories including bookings, older events, system label | `admin_activity` | `feature/admin/AdminActivity.kt` | `features/admin/ActivityView.tsx`, `data/admin.ts` | `AdministrationTest`, `test_administration.py` | `admin.spec.ts`, `admin.test.ts`, contract `admin.test.ts` | Done |
 | A failed read clears loaded records | Client rule | `feature/admin/AdministrationViewModel.kt` | `features/admin/pages.tsx` | `AdministrationViewModelTest` | `admin.spec.ts` | Done |
 
 The web app refreshes itself after every change and when you return to the tab, so it has no separate Refresh button. Android's Refresh does the same job.
@@ -41,6 +41,6 @@ The web app refreshes itself after every change and when you return to the tab, 
 
 ## Differences that are not capabilities
 
-- **Layout.** The web app shows account details beside the table, and the overview puts counts in one row.
+- **Layout.** The web app shows account details beside the table, and the overview puts its counts in two rows.
 - **After a failed change.** Android clears loaded records. The web app reports the failure, then reloads the lists, which keeps an unpublished catalogue edit on screen. A failed read still clears account and link lists on both.
 - **Changes in quick succession.** Android disables its buttons while saving. The web app runs them one after another, in order.

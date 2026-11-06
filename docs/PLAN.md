@@ -1,6 +1,6 @@
 # Motivance implementation plan
 
-Build an Android rehabilitation support application in Kotlin, with a feature-complete MVP by week 8 and a validated live pilot by week 10. The live camera view displays a skeleton, estimates joint angles and range of motion (ROM), counts repetitions and compares movement against therapist-defined prescriptions. The application supports professional review; supported measurements must pass a predeclared validation protocol. After the Android pilot, a TypeScript web workspace gives therapists and administrators a large-screen version of their work; see [Web workspace](#web-workspace).
+Build an Android rehabilitation support application in Kotlin, with a feature-complete MVP by week 8 and a validated live pilot by week 10. The live camera view displays a skeleton, estimates joint angles and range of motion (ROM), counts repetitions and compares movement against therapist-defined prescriptions. The application supports professional review; supported measurements must pass a predeclared validation protocol. After the Android pilot, a TypeScript web workspace gives every role a browser version of their work, and only the camera exercise stays on the phone; see [Web workspace](#web-workspace).
 
 Implementation instruction: therapist review and physical-device validation are deferred follow-up work, not blockers to implementing Sprints 2 and 3. The executable development catalogue supports elbow flexion and shoulder abduction, and therapists can add their own single-joint exercises ([custom exercises](validation/CUSTOM-EXERCISES.md)). Record later reference/device/therapist checks in [POST-IMPLEMENTATION-CHECKLIST.md](validation/POST-IMPLEMENTATION-CHECKLIST.md); do not represent deferred checks as executed clinical validation.
 
@@ -63,7 +63,7 @@ In-center booking (S9-S12) is designed in [BOOKING.md](architecture/BOOKING.md),
 | Central persistence | PostgreSQL SQL migrations, RLS and transactional functions in Supabase |
 | Local persistence | Room over SQLite; Room migrations and schema exports |
 | Optional privileged backend operations | Supabase Edge Functions in TypeScript only when needed; no separate inference server |
-| Therapist and administrator web workspace | TypeScript, React and Vite in `web/`; see [Web workspace](#web-workspace) |
+| Web workspace for every role | TypeScript, React and Vite in `web/`; see [Web workspace](#web-workspace) |
 | Planning synchronization | Existing Python standard-library script and GitHub CLI |
 
 Start with minimum Android API 26 as a proposed baseline, then confirm the client device inventory in MOT-01. Supabase's Kotlin installation guidance identifies API 26 as its baseline without additional desugaring. Confirm compatibility across MediaPipe, CameraX, Room and the selected SDK. Choose compile/target SDK to satisfy the distribution requirements at release. Select the JDK required by the pinned Android Gradle Plugin, then document the tested JDK/AGP/Gradle/Kotlin/KSP tuple; do not choose those versions independently. [Supabase installation](https://supabase.com/docs/reference/kotlin/installing)
@@ -101,7 +101,7 @@ Dependency references: [Compose BOM](https://developer.android.com/develop/ui/co
 
 ## Web workspace
 
-Therapists and administrators work with a lot of data, which is cramped on a phone, so S6-S8 add a web app for those two roles. Patients stay on Android because the camera session needs it; a patient who signs in on the web is told to use the mobile app.
+Therapists and administrators work with a lot of data, which is cramped on a phone, so S6-S8 add a web app for those two roles. S9 opens it to patients and Schedulers. Per the owner's instruction, patients can use everything on the web except the camera: an exercise session and the camera check need the phone, so starting one suggests the mobile app. Local history and Sync now describe what is stored on a phone, so they stay there too.
 
 `web/` is a frontend only: a React and TypeScript single-page app on static hosting, with a public landing page at `/`. Supabase remains the only backend, so new tables, policies and functions go in `supabase/migrations/`, and anything needing a secret goes in `supabase/functions/`. The web app holds only the publishable key, never the service-role key.
 
@@ -127,7 +127,7 @@ The stack is pinned in `web/package.json`. Each runtime dependency earns its pla
 
 Three proposed packages were dropped. Storybook became a development-only `/design` route, which renders the real views on sample data and is not bundled. Recharts became a small SVG chart, which keeps gaps honest and saves initial download. TanStack Table was not needed for the current tables; reconsider it if S8 needs more.
 
-Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. It is currently 293 KB, almost all of it libraries, so each feature page loads lazily by route.
+Initial JavaScript is budgeted at 300 KB compressed, enforced by `scripts/check_web_bundle.py`. Almost all of it is libraries, so each feature page loads lazily by route. Booking text lives in `locales/booking.en.json` and `booking.fil.json`, which load with the booking and patient pages, because both languages of `en.json` and `fil.json` sit in the first download.
 
 ## System architecture
 
@@ -283,7 +283,7 @@ Motivance/
     core/assessment/src/main/kotlin/com/motivance/assessment/
     core/assessment/src/test/kotlin/
     gradle/                       # Version catalogue; wrapper created in S1
-  web/                            # S6-S8: therapist and administrator web frontend
+  web/                            # Web frontend for every role
     src/
       design/                     # Tokens and theme
       components/                 # Shared accessible components
@@ -291,7 +291,7 @@ Motivance/
       auth/                       # Sign-in, role routing, idle sign-out
       data/                       # Typed Supabase access and generated types
       layout/                     # Rail, top bar and breadcrumbs
-      features/                   # therapist/, admin/ presentational views
+      features/                   # Presentational views and pages, by workspace
       gallery/                    # Development-only design review, not bundled
       locales/                    # English and Filipino
     tests/                        # Contract, browser and accessibility tests

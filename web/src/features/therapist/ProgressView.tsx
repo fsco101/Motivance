@@ -5,6 +5,7 @@ import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/
 import { SelectField, TextField } from '@/components/Field'
 import { rehabilitationProgress, resultStatus, rom, roundDegrees, usable, type HistoricalSession, type ResultStatus } from '@/data/history'
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
+import { cn } from '@/lib/cn'
 import { romPoints } from './summaries'
 import { TrendChart } from './TrendChart'
 
@@ -18,6 +19,8 @@ export type ProgressResults = { sessions: HistoricalSession[]; more: boolean; lo
 const statusTone: Record<ResultStatus, 'positive' | 'neutral' | 'caution' | 'danger'> = { completed: 'positive', partial: 'caution', interrupted: 'neutral', empty: 'neutral', invalid: 'danger' }
 
 type Props = {
+  /** A patient reading their own progress, so there is no patient to choose. */
+  self?: boolean
   /** Separate from the results, so the filters stay on screen and keep focus while a new query runs. */
   choices: Load<ProgressChoices>
   results: Load<ProgressResults>
@@ -28,7 +31,35 @@ type Props = {
   onMore: () => void
 }
 
-export function ProgressView({ choices, results, filters, onFilters, onPatient, onMore }: Props) {
+/** A table cannot fit a phone without hiding the results, so there each session stacks. Only patients use this page on a phone. */
+function SessionList({ sessions }: { sessions: readonly HistoricalSession[] }) {
+  const { t } = useTranslation()
+  const format = useFormat()
+  return (
+    <ul aria-label={t('progress.sessions')} className="divide-y divide-line tablet:hidden">
+      {sessions.map((session) => {
+        const status = resultStatus(session)
+        return (
+          <li key={session.id} className="px-5 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 font-semibold">{session.prescription?.exerciseName ?? t('progress.unknown')}</p>
+              <StatusPill tone={statusTone[status]}>{t(`progress.status.${status}`)}</StatusPill>
+            </div>
+            <p className="text-sm text-slate">{format.dateTime(session.startedAt)}</p>
+            {session.measurements.length === 0 ? <p className="mt-1 text-sm">{t('progress.notMeasured')}</p> : session.measurements.map((measurement) => (
+              <p key={`${measurement.key}-${measurement.side}`} className="mt-1 text-sm">
+                {t('progress.rom')}: <span className="numeric font-semibold">{usable(measurement) ? `${roundDegrees(rom(measurement)!)}°` : t('progress.notMeasured')}</span>
+                {', '}{t('record.repetitions')}: <span className="numeric font-semibold">{measurement.repetitions} / {session.prescription?.targetRepetitions ?? 0}</span>
+              </p>
+            ))}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+export function ProgressView({ self, choices, results, filters, onFilters, onPatient, onMore }: Props) {
   const { t } = useTranslation()
   const format = useFormat()
   const sessions = results.status === 'ready' ? results.data.sessions : null
@@ -52,12 +83,12 @@ export function ProgressView({ choices, results, filters, onFilters, onPatient, 
   ]
   return (
     <>
-      <PageHeader title={t('nav.progress')} description={t('progress.description')} />
+      <PageHeader title={t('nav.progress')} description={t(self ? 'progress.selfDescription' : 'progress.description')} />
       <Loadable load={choices} skeleton={<SkeletonLines />}>
         {(data) => (
           <>
-            <div className="mb-5 grid gap-3 rounded-card border border-line bg-paper p-4 shadow-rest tablet:grid-cols-2 desk:grid-cols-5">
-              <SelectField label={t('progress.patient')} value={data.patientId} onChange={onPatient} options={data.patients.map((p) => ({ value: p.id, label: p.name }))} />
+            <div className={cn('mb-5 grid gap-3 rounded-card border border-line bg-paper p-4 shadow-rest tablet:grid-cols-2', self ? 'desk:grid-cols-4' : 'desk:grid-cols-5')}>
+              {!self && <SelectField label={t('progress.patient')} value={data.patientId} onChange={onPatient} options={data.patients.map((p) => ({ value: p.id, label: p.name }))} />}
               <SelectField label={t('assign.exercise')} value={filters.exerciseVersionId} onChange={(exerciseVersionId) => onFilters({ ...filters, exerciseVersionId })}
                 options={[{ value: 'all', label: t('progress.allExercises') }, ...data.exercises.map((item) => ({ value: item.id, label: item.name }))]} />
               <SelectField label={t('record.side')} value={filters.side} onChange={(side) => onFilters({ ...filters, side })} options={[{ value: 'all', label: t('progress.bothSides') }, { value: 'left', label: t('common.left') }, { value: 'right', label: t('common.right') }]} />
@@ -76,7 +107,8 @@ export function ProgressView({ choices, results, filters, onFilters, onPatient, 
                   </Panel>
                 ))}
                 <Panel title={t('progress.sessions')} flush footer={<LoadMore shown={t('progress.shown', { count: found.sessions.length })} onLoad={found.more ? onMore : undefined} busy={found.loadingMore} label={t('progress.loadOlder')} />}>
-                  <DataTable caption={t('progress.sessions')} columns={columns} rows={found.sessions} rowKey={(s) => s.id} />
+                  {self && <SessionList sessions={found.sessions} />}
+                  <div className={cn(self && 'hidden tablet:block')}><DataTable caption={t('progress.sessions')} columns={columns} rows={found.sessions} rowKey={(s) => s.id} /></div>
                 </Panel>
                 <p className="max-w-[62ch] text-sm text-slate">{t('progress.notValidated')}</p>
               </div>

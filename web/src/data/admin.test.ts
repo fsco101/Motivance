@@ -25,6 +25,19 @@ describe('audit events use the same wording as Android', () => {
     ['consents', 'insert', 'consent'], ['data_requests', 'insert', 'requestCreated'], ['data_requests', 'update', 'requestUpdated'], ['profiles', 'something_new', 'other'],
   ])('names %s %s as %s', (type, action, kind) => expect(auditKind(type, action)).toBe(kind))
 
+  it.each([
+    ['requested', 'bookingRequested'], ['confirmed', 'bookingConfirmed'], ['rejected', 'bookingRejected'], ['cancelled', 'bookingCancelled'], ['rescheduled', 'bookingRescheduled'],
+    ['returned_to_pending', 'bookingReturned'], ['therapist_changed', 'bookingTherapist'], ['attendance_marked', 'bookingAttendance'],
+  ])('names a booking that was %s as %s', (action, kind) => {
+    expect(auditKind('bookings', action)).toBe(kind)
+    expect(auditCategory('bookings')).toBe('bookings')
+  })
+
+  it('names a booking by its reference number, or falls back to part of its ID', () => {
+    expect(describeEvent(event({ target_type: 'bookings', action: 'confirmed', target_name: 'BK-2026-000042' }), t).target).toBe('BK-2026-000042')
+    expect(describeEvent(event({ target_type: 'bookings', action: 'confirmed' }), t).target).toBe('admin.eventReference:12345678')
+  })
+
   it('names an account, or shows part of its ID', () => {
     expect(describeEvent(event({ target_type: 'profiles', action: 'enable', target_name: 'Ana Cruz' }), t).target).toBe('Ana Cruz')
     expect(describeEvent(event({ target_type: 'profiles', action: 'enable' }), t).target).toBe('12345678')

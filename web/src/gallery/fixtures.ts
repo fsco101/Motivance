@@ -1,7 +1,12 @@
+import type { Availability, Booking } from '@/data/booking'
 import type { CatalogueExercise } from '@/data/catalogue'
+import type { RequestDetail, RequestRow, TherapistChoice } from '@/data/scheduler'
 import type { HistoricalSession } from '@/data/history'
+import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent } from '@/features/admin/types'
+import type { PrivacyState } from '@/features/patient/PatientCareView'
+import type { PatientHome } from '@/features/patient/PatientHomeView'
 import type { PatientSummary } from '@/features/therapist/PatientTable'
 import type { PatientRecord } from '@/features/therapist/PatientRecordView'
 import type { TherapistHome } from '@/features/therapist/TherapistHomeView'
@@ -57,7 +62,54 @@ export const sessions: HistoricalSession[] = days.map((day, index): HistoricalSe
   measurements: [{ key: 'elbow-flexion-v1', side: 'right', minimum: 14, maximum: reach[index]!, repetitions: index === 5 ? 7 : index === 3 ? 4 : 10, incomplete: index === 5 ? 3 : 0, quality: index === 3 ? 'limited' : 'valid', validFrames: 420, invalidFrames: 12 }],
 })).reverse()
 
-export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 186, therapists: 24, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
+export const myExercises: MyExercise[] = [
+  { assignmentId: 'a1', versionId: 'pv1', exerciseVersionId: 'v1', name: 'Elbow flexion', instructions: 'Sit tall, keep your upper arm still, and bend your elbow slowly.', side: 'left', low: 20, high: 120, repetitions: 10, focus: 'ELBOW', version: 2 },
+  { assignmentId: 'a2', versionId: 'pv2', exerciseVersionId: 'v2', name: 'Shoulder abduction', instructions: 'Raise your arm out to the side, then lower it with control.', side: 'right', low: 15, high: 90, repetitions: 8, focus: null, version: 1 },
+]
+const today = new Date()
+const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7))
+const slotsOn = (date: string, left: readonly number[]) => left.map((remaining, index) => {
+  const hour = String(9 + index).padStart(2, '0')
+  return { startsAt: `${date}T${hour}:00:00+08:00`, endsAt: `${date}T${String(10 + index).padStart(2, '0')}:00:00+08:00`, remaining, mine: index === 2 }
+})
+const bookingDate = '2026-12-07'
+export const availability: Availability = {
+  timeZone: 'Asia/Manila',
+  days: [
+    { date: bookingDate, status: 'open', holiday: null, slots: slotsOn(bookingDate, [3, 1, 2, 0, 3, 2, 1, 3]) },
+    { date: '2026-12-08', status: 'holiday', holiday: 'Feast of the Immaculate Conception of Mary', slots: [] },
+    { date: '2026-12-09', status: 'open', holiday: null, slots: slotsOn('2026-12-09', [2, 2, 2, 2, 2, 2, 2, 2]) },
+    { date: '2026-12-12', status: 'closed', holiday: null, slots: [] },
+  ],
+}
+export const myBookings: Booking[] = [
+  { id: 'k1', reference: 'BK-2026-000142', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', previousStartsAt: null, therapist: 'Dana Reyes', location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-06T01:00:00Z', canCancel: true },
+  { id: 'k2', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-13T02:00:00Z', canCancel: true },
+  { id: 'k3', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: null, canCancel: false },
+]
+export const patientHome: PatientHome = {
+  name: 'Ana Dela Cruz', next: myExercises[0]!, exerciseCount: 2,
+  week: Array.from({ length: 7 }, (_, index) => ({ day: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index), done: index < 2 })),
+  session: myBookings[0]!,
+  recent: [{ id: 'r1', startedAt: '2026-11-04T01:30:00Z', status: 'completed' }, { id: 'r2', startedAt: '2026-11-03T02:10:00Z', status: 'interrupted' }, { id: 'r3', startedAt: '2026-11-02T01:45:00Z', status: 'completed' }],
+}
+export const privacy: PrivacyState = { consent: 'granted', requests: [{ id: 'd1', kind: 'export', status: 'requested', createdAt: '2026-11-04T01:30:00Z' }, { id: 'd2', kind: 'delete', status: 'declined', createdAt: '2026-10-20T01:30:00Z' }] }
+
+export const requests: RequestRow[] = [
+  { id: 'q1', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, createdAt: '2026-11-05T02:00:00Z' },
+  { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', patientId: 'p2', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes', attendance: null, createdAt: '2026-11-04T02:00:00Z' },
+  { id: 'q3', reference: 'BK-2026-000149', status: 'rescheduled', reason: 'Therapist training', startsAt: '2026-12-09T05:00:00Z', endsAt: '2026-12-09T06:00:00Z', patientId: 'p3', patient: 'Liza Mendoza', therapistId: 't2', therapist: 'Omar Lim', attendance: null, createdAt: '2026-11-02T02:00:00Z' },
+  { id: 'q4', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, createdAt: '2026-10-12T02:00:00Z' },
+]
+export const requestDetail: RequestDetail = {
+  id: 'q1',
+  events: [{ id: 1, action: 'requested', actorRole: 'patient', actor: 'Ana Dela Cruz', fromStatus: null, toStatus: 'pending', toStartsAt: '2026-12-14T02:00:00Z', reason: null, recordedAt: '2026-11-05T02:00:00Z' }],
+}
+export const therapistChoices: TherapistChoice[] = [
+  { id: 't1', name: 'Dana Reyes', linked: true, busy: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true }, { id: 't3', name: 'Grace Tan', linked: false, busy: false },
+]
+
+export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 
 export const accounts: AdminAccount[] = [
   { id: '7c0e1f2a-0000-4000-8000-000000000001', name: 'Dana Reyes', email: 'dana.reyes@example.test', username: 'dana', active: true, roles: ['patient', 'therapist'], joined: '2026-08-02T01:00:00Z', lastSignIn: '2026-11-05T00:40:00Z' },

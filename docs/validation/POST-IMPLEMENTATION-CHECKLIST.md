@@ -156,6 +156,18 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] On a physical phone with animations on, confirm the guide moves smoothly on the patient exercise list, where several can play at once.
 - [ ] Try the guide with TalkBack, and have a Filipino speaker review its spoken description.
 
+## Booking and scheduling follow-up (2026-11-06)
+
+Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
+
+- [x] On a spare emulator, run `scripts/test_role_routing.py` and confirm a Scheduler sees the note that scheduling is on the web, with no clinical tabs. Passed on 2026-11-06 on an API 35 emulator, 3 runs of 3 on the final build. It clears app data, so do not use a working emulator.
+- [ ] On a physical phone, book, follow and cancel a session at large text sizes and with TalkBack. Check the date cells, which are narrower than 48 dp on a small screen.
+- [ ] On a physical phone, run the S9 demo in one sitting: grant the Scheduler role, request a session on the web and on Android, confirm one request and reject another in the Scheduler table, and show two requests racing for the last place. Each step has passed in automated runs, but not as one sitting on a phone.
+- [ ] On a physical phone's browser, walk through the patient workspace: home, exercises, progress, profile, and the suggestion to use the app.
+- [ ] Once the app has a public address, set `VITE_ANDROID_APP_URL` and confirm the store link and QR code open it on a phone.
+- [ ] On a phone with a working camera, withdraw consent on the web, then record a session: confirm it asks again and the session uploads. `SessionStoreTest` covers the storage step and passes on an emulator, but the whole journey has not been run.
+- [ ] Have a Filipino speaker review the booking and scheduling text in `web/src/locales/fil.json` and `android/app/src/main/res/values-fil/strings.xml`.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

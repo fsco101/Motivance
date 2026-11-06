@@ -47,6 +47,14 @@ import org.json.JSONObject
         database.withTransaction { dao.clearPrescriptions(owner); prescriptions.forEach {cache(it)} }
     }
     suspend fun clearCacheOnLogout(owner:String) { database.withTransaction { dao.clearPrescriptions(owner); dao.interruptDrafts(owner,System.currentTimeMillis()) } }
+    /**
+     * Adopts a withdrawal made on the web. Without this, [recordConsent] would keep returning the old grant, and the server
+     * would reject the session on upload. Stored as already synced, because it came from the server.
+     */
+    suspend fun reconcileConsent(owner:String,server:ServerConsent)=database.withTransaction {
+        val local=dao.latestConsent(owner)
+        if(server.withdrawsLocalGrant(local?.event,local?.occurredAt)) dao.consent(LocalConsent(server.id,owner,"withdrawn","movement-summary-v1",server.occurredAt,"SYNCED"))
+    }
     suspend fun recordConsent(owner:String,granted:Boolean):LocalConsent=database.withTransaction {
         require(owner.isNotBlank())
         val previous=dao.latestConsent(owner)

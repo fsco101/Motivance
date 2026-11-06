@@ -6,13 +6,17 @@
     "loadFailedTitle": "This page could not load", "loadFailed": "Check your connection and try again."
   },
   "nav": {
-    "workspace": { "admin": "Administration", "therapist": "Therapist workspace" },
+    "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling", "patient": "Your care" },
     "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
-    "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here"
+    "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here",
+    "book": "Book",
+    "bookings": "My bookings",
+    "bookingsShort": "Bookings",
+    "requests": "Requests"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",
-    "open": { "admin": "Open the administrator workspace", "therapist": "Open the therapist workspace" }
+    "open": { "admin": "Open the administrator workspace", "therapist": "Open the therapist workspace", "scheduler": "Open the scheduling workspace", "patient": "Open your patient workspace" }
   },
   "auth": {
     "backHome": "Back to home", "recoveryStep": "Step {{step}} of 2", "capsLock": "Caps Lock is on.", "sharedComputer": "On a shared computer? You are signed out after 15 minutes without activity.",
@@ -63,7 +67,6 @@
     "title": "Are you still there?", "stay": "Stay signed in",
     "message_one": "To protect patient information, you will be signed out in {{count}} second.", "message_other": "To protect patient information, you will be signed out in {{count}} seconds."
   },
-  "useMobile": { "title": "Use the Motivance mobile app", "detail": "Your exercises need the phone camera, so they run in the mobile app. This website is for therapists and administrators." },
   "home": {
     "subtitle": "How your patients are moving, and who needs a plan.", "withoutPlan": "Without a plan",
     "greeting": "Hello, {{name}}", "latestMovement": "Latest movement", "latestMovementDetail": "The pale band is the prescribed range. The bright arc is what was measured.",
@@ -95,7 +98,8 @@
     "chartLabel": "{{title}} chart with {{count}} sessions. Use the left and right arrow keys to read each session.", "showTable": "Show as a table", "date": "Date", "unknown": "Unknown exercise", "targets": "Prescribed", "result": "Result",
     "status": { "completed": "Completed", "partial": "Partial", "interrupted": "Interrupted", "empty": "No result", "invalid": "Not usable" },
     "patient": "Patient", "allExercises": "All exercises", "bothSides": "Both sides", "from": "From", "through": "Through", "emptyTitle": "No sessions yet", "emptyDetail": "Results appear here after this patient finishes an exercise.",
-    "noMatch": "No sessions match these filters.", "seriesLine": "{{side}}, version {{version}}, prescribed {{low}}° to {{high}}°", "sessions": "Sessions", "shown_one": "{{count}} session", "shown_other": "{{count}} sessions", "loadOlder": "Load older sessions"
+    "noMatch": "No sessions match these filters.", "seriesLine": "{{side}}, version {{version}}, prescribed {{low}}° to {{high}}°", "sessions": "Sessions", "shown_one": "{{count}} session", "shown_other": "{{count}} sessions", "loadOlder": "Load older sessions",
+    "selfDescription": "Your measured movement over time."
   },
   "assign": {
     "editing": "Editing version {{version}}", "nextVersion": "Publishing creates version {{version}}. Earlier sessions keep the targets they were recorded with.", "removed": "Removed", "removedHint": "This exercise was removed from your list, so this plan can only be published with another exercise.",
@@ -109,7 +113,7 @@
   },
   "joints": { "SHOULDER": "Shoulder", "ELBOW": "Elbow", "WRIST": "Wrist", "HIP": "Hip", "KNEE": "Knee", "ANKLE": "Ankle" },
   "admin": {
-    "eventColumn": "Event", "affectedColumn": "Affected", "categoryColumn": "Category", "byColumn": "By", "whenColumn": "When", "versionColumn": "Version", "typeColumn": "Type", "standard": "Standard", "accountsByRole": "Accounts by role", "coverage": "Care coverage", "coverageDetail": "{{linked}} of {{total}} patients have an active therapist.", "adminsCount": "{{count}} administrators",
+    "eventColumn": "Event", "affectedColumn": "Affected", "categoryColumn": "Category", "byColumn": "By", "whenColumn": "When", "versionColumn": "Version", "typeColumn": "Type", "standard": "Standard", "accountsByRole": "Accounts by role", "coverage": "Care coverage", "coverageDetail": "{{linked}} of {{total}} patients have an active therapist.", 
     "roles": "Roles", "eventLink": "{{therapist}} → {{patient}}", "eventReference": "Reference {{reference}}", "failed": "The change could not be completed. Check your connection and administrator access, then try again.", "savedAccount": "Account status updated.", "savedRole": "Access updated. The change applies on the server immediately.", "savedLink": "Care-team link updated.", "savedExercise": "Exercise availability updated.", "savedPublish": "New exercise version published.", "savedPhoto": "Profile photo removed.",
     "title": "Administration", "scope": "Manage accounts, care-team links and the exercise catalogue. Every change is confirmed and audited.",
     "accounts": "Accounts", "patients": "Patients", "therapists": "Therapists", "admins": "Administrators", "activeLinks": "Active links", "activeExercises": "Active exercises", "sessions": "Sessions", "requests": "Privacy requests",
@@ -118,7 +122,7 @@
     "attentionDisabled": "Disabled accounts", "attentionDisabledDetail": "Review and re-enable accounts that should regain access.", "attentionCatalogue": "No active exercises", "attentionCatalogueDetail": "Therapists cannot prescribe until an exercise is activated.",
     "attentionRequests": "Open privacy requests", "attentionRequestsDetail": "Export and deletion requests follow the documented data lifecycle procedure.", "recentActivity": "Recent activity", "viewAll": "View all",
     "search": "Search accounts", "searchHelp": "Name, email, username or account ID", "searchAction": "Search directory", "searchClear": "Clear search", "searchFor": "Showing matches for “{{query}}”.", "filterLabel": "Filter", "shownCount": "{{shown}} of {{total}}", "more": "Load more accounts",
-    "filter": { "all": "All", "patients": "Patients", "therapists": "Therapists", "admins": "Administrators", "disabled": "Disabled" },
+    "filter": { "all": "All", "patients": "Patients", "therapists": "Therapists", "admins": "Administrators", "disabled": "Disabled", "schedulers": "Schedulers" },
     "accountsEmpty": "No matching accounts", "accountsEmptyDetail": "Try a different search or filter.", "accountsEmptyMore": "None of the loaded accounts match. Load more accounts or refine the search.",
     "account": "Account", "role": "Role", "status": "Status", "active": "Active", "disabled": "Disabled", "joined": "Joined", "lastSignIn": "Last sign-in", "never": "Never", "accountId": "Account ID", "copyId": "Copy ID", "accountDetails": "Details for {{name}}",
     "selfNotice": "This is your account. Another administrator must change your access or status.", "access": "Access", "rolesNeedActive": "Enable the account before changing its access.", "roleTherapist": "Therapist", "roleAdmin": "Administrator", "rolePatient": "Patient",
@@ -133,11 +137,27 @@
     "name": "Exercise name", "instructionsEn": "English instructions", "instructionsFil": "Filipino instructions", "required": "Required", "unsaved": "Unsaved changes", "edit": "Edit", "publish": "Review and publish", "publishVersion": "Publish version {{version}}", "confirmPublish": "Publish version {{version}} of {{name}}? New prescriptions will use this text. Published versions cannot be edited.", "discard": "Discard changes", "closeEditor": "Close editor",
     "activate": "Activate exercise", "deactivate": "Deactivate exercise", "activateShort": "Activate", "deactivateShort": "Deactivate", "confirmActivate": "Therapists will be able to prescribe {{name}} again.", "confirmDeactivate": "Therapists will not be able to prescribe {{name}} while it is inactive.",
     "activityHelp": "Audit records are append-only. They show who made each change and when.", "activityEmpty": "No activity to show", "activityEmptyDetail": "Audited changes appear here as they happen.", "activityEmptyMore": "No loaded records match this filter. Load older activity to look further back.", "activityMore": "Load older activity",
-    "category": { "accounts": "Accounts and roles", "links": "Links", "catalogue": "Catalogue", "clinical": "Clinical", "privacy": "Privacy" }, "eventSystem": "System",
+    "category": { "accounts": "Accounts and roles", "links": "Links", "catalogue": "Catalogue", "clinical": "Clinical", "privacy": "Privacy", "bookings": "Bookings" }, "eventSystem": "System",
     "event": { "roleChanged": "Role changed",
       "accountEnabled": "Account enabled", "accountDisabled": "Account disabled", "roleGranted": "Role granted", "roleRemoved": "Role removed", "linkCreated": "Link created", "linkUpdated": "Link updated", "invitation": "Patient invitation created",
       "exerciseActivated": "Exercise activated", "exerciseDeactivated": "Exercise deactivated", "versionPublished": "Exercise version published", "prescription": "Prescription published", "session": "Session recorded", "consent": "Consent recorded",
-      "requestCreated": "Privacy request submitted", "requestUpdated": "Privacy request updated", "photoUpdated": "Profile photo updated", "photoRemoved": "Profile photo removed", "profileUpdated": "Profile details updated", "other": "Recorded change"
-    }
+      "requestCreated": "Privacy request submitted", "requestUpdated": "Privacy request updated", "photoUpdated": "Profile photo updated", "photoRemoved": "Profile photo removed", "profileUpdated": "Profile details updated", "other": "Recorded change",
+      "bookingRequested": "Booking requested",
+      "bookingConfirmed": "Booking confirmed",
+      "bookingRejected": "Booking rejected",
+      "bookingCancelled": "Booking cancelled",
+      "bookingRescheduled": "Booking rescheduled",
+      "bookingReturned": "Booking returned to pending",
+      "bookingTherapist": "Booking therapist changed",
+      "bookingAttendance": "Attendance recorded"
+    },
+    "schedulers": "Schedulers",
+    "roleScheduler": "Scheduler",
+    "revokeSchedulerDetail": "They will no longer be able to open scheduling."
+  },
+  "forbidden": {
+    "title": "403: This page is for Schedulers",
+    "detail": "Your account does not have the Scheduler role. An administrator can grant it.",
+    "back": "Back to your workspace"
   }
 }

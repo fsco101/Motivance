@@ -35,7 +35,7 @@ To reinstall after tests, select the **app** run configuration and the intended 
 
 ## Backend
 
-For persistent local development logins, run `python scripts/seed_local_accounts.py` from the repository root. It creates confirmed `therapist@motivance.test` and `patient@motivance.test` accounts, assigns their exact roles through trusted local provisioning and links the demo patient to the therapist. Generated passwords are stored only in ignored `docs/operations/local-test-accounts.json`; the script prints no passwords or privileged keys. Reruns reuse these fixture accounts/passwords and refuse to overwrite an unrelated existing account. A local database reset removes the accounts; rerun this script afterward. The original draft catalogue remains unpublished. S3 adds two usable development exercise definitions; `--with-prescription` optionally creates one demonstration elbow assignment without overwriting an existing program. This is not a clinical-approval record.
+For persistent local development logins, run `python scripts/seed_local_accounts.py` from the repository root. It creates confirmed `therapist@motivance.test`, `patient@motivance.test` and `scheduler@motivance.test` accounts, assigns their exact roles through trusted local provisioning and links the demo patient to the therapist. Generated passwords are stored only in ignored `docs/operations/local-test-accounts.json`; the script prints no passwords or privileged keys. Reruns reuse these fixture accounts/passwords and refuse to overwrite an unrelated existing account. A local database reset removes the accounts; rerun this script afterward. The original draft catalogue remains unpublished. S3 adds two usable development exercise definitions; `--with-prescription` optionally creates one demonstration elbow assignment without overwriting an existing program. This is not a clinical-approval record.
 
 Use Supabase CLI 2.20.12 and a running Docker engine on the development machine. Run `supabase start`, `supabase db reset` and `supabase test db` from the repository root (or prefix with `npx --yes supabase@2.20.12`). Reset is only for the disposable local stack and removes its current records. The original seed is an unpublished draft; S3 adds supported published development definitions in its migration. The migration's signup trigger creates a patient profile and ignores caller-supplied role metadata. Staff roles and therapist links require trusted SQL/administrative provisioning; there is no client self-promotion endpoint.
 
@@ -97,9 +97,23 @@ The first command uses four disposable local users and cleans only those fixture
 
 For the optional native `CameraLifecycleTest`, use a camera source that actually supplies frames. On the headless test host the saved webcam0 setting supplied none; cold-booting the AVD with `-camera-back emulated -camera-front emulated -no-snapshot-load` passes the native smoke test without changing its saved camera preferences. Synthetic emulator imagery does not test patient tracking accuracy.
 
+## Live tests without touching a working emulator
+
+Live tests clear app data, and Gradle's `connected` tasks run on every attached device, so keep them away from an emulator you are using. Create a throwaway AVD in its own folder and name it by serial:
+
+```bash
+export ANDROID_AVD_HOME="$TEMP/motivance-avd"
+echo no | avdmanager create avd -n motivance_verify -k "system-images;android-35;google_apis;x86_64" -d pixel_6
+emulator -avd motivance_verify -port 5560 -no-window -no-audio -no-snapshot -gpu swiftshader_indirect
+export ANDROID_SERIAL=emulator-5560
+adb shell settings put global animator_duration_scale 0
+```
+
+Give it a moment after boot, because the first run on a cold emulator can time out. Install the APKs with `adb`, then run `python scripts/test_role_routing.py` or `adb shell am instrument`. `ANDROID_SERIAL` keeps every command on this device. Stop it with `adb -s emulator-5560 emu kill`.
+
 ## Web app
 
-The therapist and administrator web app is in `web/`. It needs Node 22 and the local Supabase stack. Everything in `web/.env` ships to the browser, so it holds only the URL and the publishable key.
+The web app is in `web/`. It needs Node 22 and the local Supabase stack. Everything in `web/.env` ships to the browser, so it holds only the URL and the publishable key.
 
 ```powershell
 cd web

@@ -9,6 +9,7 @@ import { Button, IconButton } from './Button'
 const overlay = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: duration.standard, ease: ease.out } }
 const panel = { initial: { opacity: 0, y: 14, scale: 0.98 }, animate: { opacity: 1, y: 0, scale: 1 }, exit: { opacity: 0, y: 8, scale: 0.985 }, transition: spring.layout }
 const shell = 'fixed left-1/2 top-1/2 z-50 w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2'
+const wideShell = 'fixed left-1/2 top-1/2 z-50 w-[min(56rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2'
 
 /** These dialogs open from state rather than a Radix trigger, so Radix has nowhere to return focus. Keyboard users go back to where they were. */
 function useReturnFocus(open: boolean) {
@@ -20,9 +21,9 @@ function useReturnFocus(open: boolean) {
   }
 }
 
-type DialogProps = { open: boolean; onOpenChange: (open: boolean) => void; title: string; description?: string; children: ReactNode }
+type DialogProps = { open: boolean; onOpenChange: (open: boolean) => void; title: string; description?: string; /** Room for a calendar beside its times. */ wide?: boolean; children: ReactNode }
 
-export function Dialog({ open, onOpenChange, title, description, children }: DialogProps) {
+export function Dialog({ open, onOpenChange, title, description, wide, children }: DialogProps) {
   const { t } = useTranslation()
   const returnFocus = useReturnFocus(open)
   return (
@@ -31,7 +32,7 @@ export function Dialog({ open, onOpenChange, title, description, children }: Dia
         {open && (
           <RadixDialog.Portal forceMount>
             <RadixDialog.Overlay asChild forceMount><motion.div {...overlay} className="fixed inset-0 z-40 bg-night/55" /></RadixDialog.Overlay>
-            <div className={shell}>
+            <div className={wide ? wideShell : shell}>
               <RadixDialog.Content asChild forceMount onCloseAutoFocus={returnFocus} {...(description ? {} : { 'aria-describedby': undefined })}>
                 <motion.div {...panel} className="rounded-card bg-paper p-6 shadow-float">
                   <div className="mb-3 flex items-start justify-between gap-4">
@@ -57,11 +58,13 @@ type ConfirmProps = {
   /** Name the record, so the person approves one specific change. */
   message: string
   confirmLabel: string
+  /** For when "Cancel" would itself be confusing, such as beside "Cancel booking". */
+  cancelLabel?: string
   destructive?: boolean
   onConfirm: () => void
 }
 
-export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel, destructive, onConfirm }: ConfirmProps) {
+export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel, cancelLabel, destructive, onConfirm }: ConfirmProps) {
   const { t } = useTranslation()
   const returnFocus = useReturnFocus(open)
   return (
@@ -76,7 +79,7 @@ export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel
                   <AlertDialog.Title className="text-2xl font-bold">{title}</AlertDialog.Title>
                   <AlertDialog.Description className="mt-2 text-slate">{message}</AlertDialog.Description>
                   <div className="mt-6 flex flex-wrap justify-end gap-2">
-                    <AlertDialog.Cancel asChild><Button variant="secondary">{t('common.cancel')}</Button></AlertDialog.Cancel>
+                    <AlertDialog.Cancel asChild><Button variant="secondary">{cancelLabel ?? t('common.cancel')}</Button></AlertDialog.Cancel>
                     <AlertDialog.Action asChild><Button variant={destructive ? 'danger' : 'primary'} onClick={onConfirm}>{confirmLabel}</Button></AlertDialog.Action>
                   </div>
                 </motion.div>

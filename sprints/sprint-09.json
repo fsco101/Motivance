@@ -4,7 +4,7 @@
   "title": "S9 - Booking core",
   "description": "Weeks 17-18. Exit: a Scheduler role exists in both apps, patients can use the whole app on the web except the camera, patients can request sessions on web and Android, and a Scheduler can confirm or refuse them without double-booking.",
   "goal": "Let patients request in-center sessions and let a Scheduler decide them safely.",
-  "status": "planned",
+  "status": "completed",
   "weeks": {
     "start": 17,
     "end": 18
@@ -18,12 +18,28 @@
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist and physical-device checks must not block development.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "All seven issues are implemented and closed with local evidence. MOT-54-AC7, a physical phone at large text sizes with TalkBack, is deferred; not a development blocker."
     },
     {
       "description": "Grant the Scheduler role, request a session as a patient on the web and on Android, then confirm one request and reject another in the Scheduler table, showing two simultaneous requests for the last place cannot both succeed.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferral_authority": "User instruction: therapist and physical-device checks must not block development.",
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "disposition": "Each step passed in automated runs, with Android on an emulator. One sitting on a physical phone is deferred; not a development blocker."
     }
   ],
   "demo": "Grant the Scheduler role, request a session as a patient on the web and on Android, then confirm one request and reject another in the Scheduler table, showing two simultaneous requests for the last place cannot both succeed.",
@@ -39,9 +55,14 @@
   },
   "total_estimate_points": 47,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-06T14:06:36.132134+00:00",
+    "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+    "acceptance_basis": "engineering-implementation",
+    "evidence": [
+      "docs/validation/BOOKING-IMPLEMENTATION.md",
+      "docs/validation/booking-test-results.json",
+      "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+    ]
   },
   "issues": [
     {
@@ -49,7 +70,7 @@
       "github_issue": 66,
       "title": "Add the Scheduler role across both apps",
       "description": "Create a Scheduler role that only an Admin can assign, using the same mechanism as the Therapist role, limited to scheduling and kept away from clinical data.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web + Android",
       "estimate_points": 5,
@@ -94,54 +115,112 @@
         {
           "id": "MOT-49-AC1",
           "description": "Only an active administrator can grant or revoke the Scheduler role, and not on their own account, through admin_set_role.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/scheduler_access.test.sql"
+          ]
         },
         {
           "id": "MOT-49-AC2",
           "description": "Both administrator apps offer the role in account details, a Schedulers filter and a Schedulers count, and both call the same functions. check_admin_parity.py passes and ADMIN-PARITY.md is updated.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/scheduler_access.test.sql",
+            "docs/architecture/ADMIN-PARITY.md",
+            "scripts/check_admin_parity.py",
+            "web/tests/e2e/admin.spec.ts"
+          ]
         },
         {
           "id": "MOT-49-AC3",
-          "description": "Android signs in an account holding scheduler or any unknown role without failing, and a Scheduler on Android sees a note that scheduling is on the web.",
-          "passed": false,
-          "evidence": []
+          "description": "Android signs in an account holding scheduler or any unknown role without failing, and a Scheduler gets their own tabs rather than the patient ones.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/scheduler_access.test.sql",
+            "android/app/src/test/java/com/motivance/data/remote/SupabaseAuthRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-49-AC4",
           "description": "The web routes a Scheduler to /scheduler, in the order Admin, Scheduler, Therapist, Patient, matching Android.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/scheduler_access.test.sql",
+            "web/src/auth/roles.test.ts"
+          ]
         },
         {
           "id": "MOT-49-AC5",
           "description": "A signed-in non-Scheduler gets a 403 page at /scheduler and HTTP 403 from scheduler functions. A generic test finds every scheduler_ function and proves this for each role, so later functions are covered automatically.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/scheduler_access.test.sql",
+            "web/tests/e2e/auth.spec.ts"
+          ]
         },
         {
           "id": "MOT-49-AC6",
           "description": "A Scheduler reads no other person's sessions, measurements, prescriptions, assignments, consents or patient profiles, proved by tests.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/scheduler_access.test.sql"
+          ]
+        },
+        {
+          "id": "MOT-49-AC7",
+          "description": "A Scheduler on Android sees the note that scheduling is on the web, confirmed in the real app on an emulator.",
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/app/src/androidTest/java/com/motivance/navigation/LiveRoleRoutingTest.kt",
+            "scripts/test_role_routing.py"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T11:52:56.528604+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/booking-test-results.json",
+          "scripts/test_booking.py",
+          "supabase/tests/scheduler_access.test.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "scripts/test_booking.py",
+        "supabase/tests/scheduler_access.test.sql"
+      ]
     },
     {
       "id": "MOT-50",
       "github_issue": 67,
       "title": "Model center hours, holidays, closures and availability",
       "description": "Give the database one source of truth for when the center can see patients, and a function that lists specific bookable times.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend",
       "estimate_points": 5,
@@ -177,54 +256,104 @@
         {
           "id": "MOT-50-AC1",
           "description": "Migrations create center_settings, center_hours, center_holidays and center_closures, seeded with 60-minute slots, capacity 3, 24-hour cut-offs and Monday to Friday 09:00-17:00.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC2",
           "description": "Every holiday in Proclamation 1006 (2026) and Proclamation 1427 (2027) is seeded. February 25, a special working day, is not, so it stays bookable.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC3",
           "description": "booking_availability returns specific slots with a start and end time and places remaining, and hides past times, times inside the minimum notice and times beyond the booking horizon.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC4",
           "description": "Weekends when closed, national holidays, seasonal holidays and closures are not bookable. A time-range closure removes only the slots it overlaps. Tests cover each case.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC5",
           "description": "Times are stored in UTC and slot boundaries are correct in Asia/Manila whatever the client's time zone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         },
         {
           "id": "MOT-50-AC6",
           "description": "Clients cannot write these tables directly, and closure reasons are visible to Schedulers only.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/center_calendar.test.sql",
+            "supabase/migrations/202611060002_center_calendar.sql"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T11:56:38.492519+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/booking-test-results.json",
+          "scripts/test_booking.py",
+          "supabase/tests/center_calendar.test.sql",
+          "supabase/migrations/202611060002_center_calendar.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "scripts/test_booking.py",
+        "supabase/tests/center_calendar.test.sql",
+        "supabase/migrations/202611060002_center_calendar.sql"
+      ]
     },
     {
       "id": "MOT-51",
       "github_issue": 68,
       "title": "Add conflict-safe bookings and the audit log",
       "description": "Enforce every booking rule on the server, so that simultaneous requests cannot both succeed, and record who changed what and when.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend",
       "estimate_points": 8,
@@ -296,72 +425,142 @@
         {
           "id": "MOT-51-AC1",
           "description": "bookings has a unique reference number, the statuses pending, confirmed, rejected, cancelled and rescheduled, and specific start and end times. Clients have no direct writes.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC2",
           "description": "Database exclusion constraints reject overlapping active bookings for one patient and for one therapist, even for a direct insert that bypasses the functions.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC3",
           "description": "Parallel requests for the last place in a slot: exactly the capacity succeed, proved by a concurrent test against real PostgREST.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC4",
           "description": "request_booking refuses holidays, closures, past times, times inside the minimum notice, full slots and accounts over the active-booking cap. A repeated client ID returns the original booking.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC5",
           "description": "scheduler_confirm requires a therapist and re-validates hours, holidays, closures, capacity and therapist conflicts at the moment of confirmation.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC6",
           "description": "Reject and cancel require a reason. Reschedule requires a specific slot and a therapist. Bulk reject applies to pending requests only.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC7",
           "description": "A patient can cancel only their own pending or confirmed booking, and only before the cut-off.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC8",
           "description": "Every status change writes who, what and when to an immutable booking_events row through a trigger, mirrored to audit_events. Both administrator activity feeds show it under a Bookings category, with the same wording.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql",
+            "web/src/data/admin.test.ts",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/AdministrationTest.kt"
+          ]
         },
         {
           "id": "MOT-51-AC9",
           "description": "Revoking the therapist role or disabling a therapist returns their future bookings to Pending without a therapist.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T12:06:25.072245+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/booking-test-results.json",
+          "scripts/test_booking.py",
+          "supabase/tests/bookings.test.sql",
+          "supabase/migrations/202611060003_bookings.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "scripts/test_booking.py",
+        "supabase/tests/bookings.test.sql",
+        "supabase/migrations/202611060003_bookings.sql"
+      ]
     },
     {
       "id": "MOT-52",
       "github_issue": 69,
       "title": "Give patients the whole app on the web, except the camera",
       "description": "Replace the \"use the mobile app\" page with a full patient workspace. Everything a patient can do on Android works on the web, and only the camera exercise suggests the phone.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Android",
       "estimate_points": 8,
@@ -406,60 +605,104 @@
         {
           "id": "MOT-52-AC1",
           "description": "A patient who signs in on the web lands on /patient, and the old /use-mobile page is gone. Staff who also hold the patient role can switch to it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts"
+          ]
         },
         {
           "id": "MOT-52-AC2",
           "description": "Home shows the next exercise, this week and recent sessions. Exercises lists assignments with targets and instructions. Progress shows history, filters and charts. All filter to the signed-in account.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts"
+          ]
         },
         {
           "id": "MOT-52-AC3",
           "description": "Profile covers details, photo, password and language, plus consent status and withdrawal, export and deletion requests with their status, and joining a therapist by code.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts"
+          ]
         },
         {
           "id": "MOT-52-AC4",
           "description": "Starting an exercise or the camera check shows the suggestion to use the phone, with a store link or QR code when VITE_ANDROID_APP_URL is set. A browser test proves the exercise does not run and the page never requests the camera.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "web/src/features/patient/UseThePhone.tsx"
+          ]
         },
         {
           "id": "MOT-52-AC5",
           "description": "The workspace works at phone width with no sideways scrolling, by keyboard, and passes axe.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "web/tests/e2e/design.spec.ts"
+          ]
         },
         {
           "id": "MOT-52-AC6",
           "description": "After a consent withdrawal on the web, Android reads the server's latest consent on refresh and records a new grant before the next session, proved by a unit test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/ServerConsentTest.kt"
+          ]
         },
         {
           "id": "MOT-52-AC7",
           "description": "docs/PLAN.md and WEB-DESIGN.md no longer say patients stay on Android, and every new string exists in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "docs/PLAN.md",
+            "docs/architecture/WEB-DESIGN.md",
+            "web/src/locales/locales.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T12:48:04.108747+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/tests/e2e/patient.spec.ts",
+          "web/src/data/patient.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/tests/e2e/patient.spec.ts",
+        "web/src/data/patient.test.ts"
+      ]
     },
     {
       "id": "MOT-53",
       "github_issue": 70,
       "title": "Add patient booking on the web",
       "description": "Let patients find a specific time, request it, follow its status and cancel it, in the browser.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web",
       "estimate_points": 5,
@@ -496,54 +739,104 @@
         {
           "id": "MOT-53-AC1",
           "description": "Book a session shows working days and specific time slots with start and end times. Closed days say why, and full or unavailable slots cannot be chosen.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC2",
           "description": "Submitting is safe to retry, and a refused request explains why in plain words, in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC3",
           "description": "My bookings shows Pending, Confirmed, Rejected, Cancelled and Rescheduled, with reference number, specific time, therapist, location and any reason.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC4",
           "description": "Cancel works up to the cut-off. After it, the action is disabled with an explanation, and the server refuses it too.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC5",
           "description": "Times show in Asia/Manila whatever the browser's time zone, proved by a browser test in another zone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         },
         {
           "id": "MOT-53-AC6",
           "description": "Contract, browser and axe tests pass, and the pages work at phone width.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/booking.spec.ts",
+            "web/tests/contract/booking.test.ts",
+            "web/src/data/booking.test.ts",
+            "scripts/test_booking.py"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T12:57:08.155208+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/tests/e2e/booking.spec.ts",
+          "web/tests/contract/booking.test.ts",
+          "web/src/data/booking.test.ts",
+          "scripts/test_booking.py"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/tests/e2e/booking.spec.ts",
+        "web/tests/contract/booking.test.ts",
+        "web/src/data/booking.test.ts",
+        "scripts/test_booking.py"
+      ]
     },
     {
       "id": "MOT-54",
       "github_issue": 71,
       "title": "Add patient booking on Android",
       "description": "Give Android patients the same booking flow as the web, using the existing authenticated client.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Android",
       "estimate_points": 8,
@@ -590,60 +883,114 @@
         {
           "id": "MOT-54-AC1",
           "description": "A Bookings tab shows requests with status, reference number, specific time, therapist, location and any reason.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC2",
           "description": "Book a session shows working days and specific time slots. Full or unavailable slots cannot be chosen.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC3",
           "description": "Requests are safe to retry, and refused requests explain why in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC4",
           "description": "Cancel works up to the cut-off and is explained after it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC5",
           "description": "Times show in Asia/Manila whatever the phone's time zone, proved by a unit test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/SessionFormatTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC6",
           "description": "Unit tests cover decoding, the ViewModel and owner isolation. check_resources.py and check_module_boundaries.py pass.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC7",
           "description": "Booking is exercised on a physical phone at large text sizes and with TalkBack.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ],
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist and physical-device checks must not block development.",
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Not run on a physical phone. The flow was run in the real app on an emulator. Deferred; not a development blocker."
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T13:33:37.026745+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+          "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+          "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+        ],
+        "acceptance_basis": "engineering-implementation"
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+        "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+        "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+      ]
     },
     {
       "id": "MOT-55",
       "github_issue": 72,
       "title": "Build the Scheduler request table and actions",
       "description": "Give Schedulers one table to find, decide and correct every booking request.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Backend",
       "estimate_points": 8,
@@ -690,53 +1037,109 @@
         {
           "id": "MOT-55-AC1",
           "description": "The table uses server-side pagination, sorting, search across patient name, therapist and reference number, and filters for status, date range and therapist.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC2",
           "description": "Each request offers Confirm, Reject with a reason, Reschedule to a specific slot, Assign or Change Therapist, and Cancel.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC3",
           "description": "The therapist picker lists therapists linked to the patient first and marks who is busy at that time.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC4",
           "description": "Bulk reject works on selected requests with one reason, and a confirmation states how many.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC5",
           "description": "The detail panel shows who changed what and when.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC6",
           "description": "A refused action explains why and reloads the list, so a Scheduler never acts on stale data.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         },
         {
           "id": "MOT-55-AC7",
           "description": "Contract, browser and axe tests pass.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/scheduler.spec.ts",
+            "web/tests/contract/scheduler.test.ts",
+            "scripts/test_booking.py",
+            "supabase/migrations/202611060005_scheduler_requests.sql"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T13:50:22.880394+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/tests/e2e/scheduler.spec.ts",
+          "web/tests/contract/scheduler.test.ts",
+          "scripts/test_booking.py",
+          "supabase/migrations/202611060005_scheduler_requests.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/tests/e2e/scheduler.spec.ts",
+        "web/tests/contract/scheduler.test.ts",
+        "scripts/test_booking.py",
+        "supabase/migrations/202611060005_scheduler_requests.sql"
+      ]
     }
   ],
   "plan_reference": "docs/architecture/BOOKING.md"

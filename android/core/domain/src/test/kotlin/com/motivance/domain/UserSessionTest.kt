@@ -10,6 +10,19 @@ class UserSessionTest {
         assertEquals(UserRole.PATIENT,session(UserRole.PATIENT).primaryRole)
         assertEquals(UserRole.THERAPIST,session(UserRole.THERAPIST).primaryRole)
         assertEquals(UserRole.ADMIN,session(UserRole.ADMIN).primaryRole)
+        assertEquals(UserRole.SCHEDULER,session(UserRole.SCHEDULER).primaryRole)
+    }
+
+    /** Mirrors the order on the web: Admin, Scheduler, Therapist, Patient. */
+    @Test fun aSchedulerRanksBetweenAnAdministratorAndATherapist() {
+        assertEquals(UserRole.SCHEDULER,session(UserRole.THERAPIST,UserRole.SCHEDULER).primaryRole)
+        assertEquals(UserRole.ADMIN,session(UserRole.SCHEDULER,UserRole.ADMIN).primaryRole)
+    }
+
+    @Test fun aRoleThisBuildDoesNotKnowIsIgnored() {
+        assertEquals(UserRole.SCHEDULER,UserRole.of("scheduler"))
+        assertEquals(UserRole.ADMIN,UserRole.of("ADMIN"))
+        assertNull(UserRole.of("clerk"))
     }
 
     /** Every account starts as a patient, and the order roles arrive in is not guaranteed. */

@@ -5,9 +5,9 @@ data class AdminAccount(
     val id:String,val name:String,val active:Boolean,val roles:Set<String>,
     val email:String="",val username:String?=null,val createdAt:String?=null,val lastSignInAt:String?=null,val photoUrl:String?=null,
 ) {
-    val staff get()="therapist" in roles || "admin" in roles
+    val staff get()="therapist" in roles || "admin" in roles || "scheduler" in roles
     /** The most privileged role, used for grouping and badges. */
-    val primaryRole get()=when {"admin" in roles -> "admin";"therapist" in roles -> "therapist";else -> "patient"}
+    val primaryRole get()=when {"admin" in roles -> "admin";"scheduler" in roles -> "scheduler";"therapist" in roles -> "therapist";else -> "patient"}
     val label get()=name.ifBlank {email.ifBlank {id.take(8)}}
 }
 data class AdminLink(val therapist:String,val patient:String,val active:Boolean,val therapistName:String="",val patientName:String="")
@@ -16,7 +16,7 @@ data class AdminExercise(val id:String,val code:String,val active:Boolean,val ve
 data class AdminSummary(
     val accounts:Int=0,val disabled:Int=0,val patients:Int=0,val therapists:Int=0,val admins:Int=0,
     val activeLinks:Int=0,val unlinkedPatients:Int=0,val exercises:Int=0,val activeExercises:Int=0,
-    val sessionsWeek:Int=0,val pendingRequests:Int=0,
+    val sessionsWeek:Int=0,val pendingRequests:Int=0,val schedulers:Int=0,
 )
 data class AuditEvent(
     val id:Long,val action:String,val targetType:String,val targetId:String,val recordedAt:String,
@@ -31,11 +31,12 @@ data class AdminWorkspace(
     val next:String?=null,val summary:AdminSummary?=null,val activity:List<AuditEvent> = emptyList(),val activityNext:Long?=null,
 )
 
-enum class AccountFilter { ALL, PATIENTS, THERAPISTS, ADMINS, DISABLED }
+enum class AccountFilter { ALL, PATIENTS, THERAPISTS, SCHEDULERS, ADMINS, DISABLED }
 fun AccountFilter.accepts(account:AdminAccount)=when(this) {
     AccountFilter.ALL -> true
     AccountFilter.PATIENTS -> account.primaryRole=="patient"
     AccountFilter.THERAPISTS -> "therapist" in account.roles
+    AccountFilter.SCHEDULERS -> "scheduler" in account.roles
     AccountFilter.ADMINS -> "admin" in account.roles
     AccountFilter.DISABLED -> !account.active
 }
@@ -44,19 +45,21 @@ enum class LinkFilter { ACTIVE, REVOKED, ALL }
 fun LinkFilter.accepts(link:AdminLink)=when(this) {LinkFilter.ACTIVE -> link.active;LinkFilter.REVOKED -> !link.active;LinkFilter.ALL -> true}
 
 /** Coarse grouping of audit records for filtering and iconography. */
-enum class AuditCategory { ACCOUNTS, LINKS, CATALOGUE, CLINICAL, PRIVACY }
+enum class AuditCategory { ACCOUNTS, LINKS, CATALOGUE, CLINICAL, PRIVACY, BOOKINGS }
 fun AuditEvent.category()=when(targetType) {
     "profiles","user_roles","patient_profiles" -> AuditCategory.ACCOUNTS
     "therapist_patients","patient_invitations" -> AuditCategory.LINKS
     "exercises","exercise_versions" -> AuditCategory.CATALOGUE
     "consents","data_requests" -> AuditCategory.PRIVACY
+    "bookings" -> AuditCategory.BOOKINGS
     else -> AuditCategory.CLINICAL
 }
 
 /** Stable keys for every audited operation the backend currently records. */
 enum class AuditKind { ACCOUNT_ENABLED, ACCOUNT_DISABLED, PHOTO_UPDATED, PHOTO_REMOVED, PROFILE_UPDATED, ROLE_GRANTED, ROLE_REMOVED, ROLE_CHANGED, LINK_CREATED, LINK_UPDATED,
     INVITATION_CREATED, EXERCISE_ACTIVATED, EXERCISE_DEACTIVATED, VERSION_PUBLISHED, PRESCRIPTION_PUBLISHED, SESSION_RECORDED,
-    CONSENT_RECORDED, REQUEST_CREATED, REQUEST_UPDATED, OTHER }
+    CONSENT_RECORDED, REQUEST_CREATED, REQUEST_UPDATED, BOOKING_REQUESTED, BOOKING_CONFIRMED, BOOKING_REJECTED, BOOKING_CANCELLED,
+    BOOKING_RESCHEDULED, BOOKING_RETURNED, BOOKING_THERAPIST, BOOKING_ATTENDANCE, OTHER }
 fun AuditEvent.kind()=when(targetType to action) {
     "profiles" to "enable" -> AuditKind.ACCOUNT_ENABLED
     "profiles" to "disable" -> AuditKind.ACCOUNT_DISABLED
@@ -77,6 +80,14 @@ fun AuditEvent.kind()=when(targetType to action) {
     "consents" to "insert" -> AuditKind.CONSENT_RECORDED
     "data_requests" to "insert" -> AuditKind.REQUEST_CREATED
     "data_requests" to "update" -> AuditKind.REQUEST_UPDATED
+    "bookings" to "requested" -> AuditKind.BOOKING_REQUESTED
+    "bookings" to "confirmed" -> AuditKind.BOOKING_CONFIRMED
+    "bookings" to "rejected" -> AuditKind.BOOKING_REJECTED
+    "bookings" to "cancelled" -> AuditKind.BOOKING_CANCELLED
+    "bookings" to "rescheduled" -> AuditKind.BOOKING_RESCHEDULED
+    "bookings" to "returned_to_pending" -> AuditKind.BOOKING_RETURNED
+    "bookings" to "therapist_changed" -> AuditKind.BOOKING_THERAPIST
+    "bookings" to "attendance_marked" -> AuditKind.BOOKING_ATTENDANCE
     else -> AuditKind.OTHER
 }
 

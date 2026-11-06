@@ -1,5 +1,9 @@
 # Database implementation decisions
 
+## In-center booking
+
+The tables, functions and rules for booking are in [BOOKING.md](BOOKING.md). `center_problem` holds the rules that bind everyone, and `slot_problem` adds the ones that bind only patients: notice, horizon and the slot grid. Schedulers skip those, so they can book at short notice.
+
 ## Sprint 4 history reads
 
 MOT-19 uses the existing RLS policies and schema. A history query fixes one patient and optionally filters the referenced prescription exercise version/side and inclusive UTC start-date range. The explicit `sessions_prescription_version_id_patient_id_fkey` embedding resolves the session's original immutable prescription, never the latest assignment version. All child measurements and tracking counts are retained. Keyset pages use `(started_at desc, id desc)` with a 50-row page and one lookahead; a newer concurrent upload cannot shift earlier pages. History is kept in memory only, cleared on account/filter change or request failure and refreshed through the authenticated API. No additional Room table, SQL migration or service credential is introduced.

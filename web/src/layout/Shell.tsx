@@ -1,4 +1,4 @@
-import { CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { CalendarBlankIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
 import type { ReactNode } from 'react'
@@ -10,7 +10,7 @@ import { cn } from '@/lib/cn'
 import { spring } from '@/motion/tokens'
 import { LanguageSwitch } from './LanguageSwitch'
 
-type NavItem = { path: string; label: string; icon: Icon; end?: boolean }
+type NavItem = { path: string; label: string; icon: Icon; end?: boolean; /** For the bottom bar, where a long label would be cut off. */ short?: string }
 
 const NAV: Record<Workspace, readonly NavItem[]> = {
   therapist: [
@@ -18,6 +18,17 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
     { path: 'patients', label: 'nav.patients', icon: UsersThreeIcon },
     { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
     { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
+  ],
+  patient: [
+    { path: '', label: 'nav.home', icon: HouseIcon, end: true },
+    { path: 'book', label: 'nav.book', icon: CalendarPlusIcon },
+    { path: 'bookings', label: 'nav.bookings', short: 'nav.bookingsShort', icon: CalendarBlankIcon },
+    { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
+    { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
+  ],
+  scheduler: [
+    { path: '', label: 'nav.home', icon: HouseIcon, end: true },
+    { path: 'requests', label: 'nav.requests', icon: TrayIcon },
   ],
   admin: [
     { path: '', label: 'nav.overview', icon: GaugeIcon, end: true },
@@ -35,7 +46,7 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
 function Sidebar({ workspace, base }: { workspace: Workspace; base: string }) {
   const { t } = useTranslation()
   return (
-    <div className="bg-ink">
+    <div className={cn('bg-ink', workspace === 'patient' && 'hidden tablet:block')}>
       <nav aria-label={t('nav.main')} className="on-dark graduated sticky top-0 flex h-dvh w-16 flex-col text-night-ink desk:w-60">
         <Link to={base} aria-label={`Motivance, ${t('nav.home')}`} className="flex h-14 shrink-0 items-center gap-2.5 px-3.5 desk:px-5">
           <img src="/logo-96.png" alt="" width={30} height={30} className="rounded-md" />
@@ -64,6 +75,21 @@ function Sidebar({ workspace, base }: { workspace: Workspace; base: string }) {
         </ul>
       </nav>
     </div>
+  )
+}
+
+/** Patients are often on a phone, so below tablet width their pages move to the bottom edge, in reach of a thumb. */
+function BottomBar({ workspace, base }: { workspace: Workspace; base: string }) {
+  const { t } = useTranslation()
+  return (
+    <nav aria-label={t('nav.main')} className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper pb-[env(safe-area-inset-bottom)] tablet:hidden">
+      {NAV[workspace].map((item) => (
+        <NavLink key={item.label} to={item.path ? `${base}/${item.path}` : base} end={item.end}
+          className={({ isActive }) => cn('flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold', isActive ? 'text-lagoon-deep' : 'text-slate')}>
+          {({ isActive }) => <><item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="text-xl" /><span className="max-w-full truncate px-1">{t(item.short ?? item.label)}</span></>}
+        </NavLink>
+      ))}
+    </nav>
   )
 }
 
@@ -141,9 +167,10 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, children 
               <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
             </div>
           </div>
-          <main id="main" tabIndex={-1} className="w-full max-w-[100rem] flex-1 px-5 pb-12 pt-5 outline-none desk:px-7">{children}</main>
+          <main id="main" tabIndex={-1} className={cn('w-full max-w-[100rem] flex-1 px-5 pb-12 pt-5 outline-none desk:px-7', workspace === 'patient' && 'max-tablet:pb-24')}>{children}</main>
         </div>
       </div>
+      {workspace === 'patient' && <BottomBar workspace={workspace} base={base} />}
     </RadixTooltip.Provider>
   )
 }

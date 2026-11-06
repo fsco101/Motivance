@@ -1,6 +1,6 @@
 # Web workspace design
 
-The design direction for the therapist and administrator web app (MOT-32). It extends the motion arc system in [UI-UX.md](UI-UX.md) to large screens; it is not a new brand. To review it, run the app and open `/design`, which shows every screen on sample data with real motion, or see the renders in [web-design](../validation/web-design/).
+The design direction for the web app (MOT-32). It extends the motion arc system in [UI-UX.md](UI-UX.md) to large screens; it is not a new brand. To review it, run the app and open `/design`, which shows every screen on sample data with real motion, or see the renders in [web-design](../validation/web-design/).
 
 ## The idea
 
@@ -78,12 +78,24 @@ The sidebar and top bar stay in place while the page scrolls. Below 1024 px the 
 
 ## Public pages
 
-Visitors reach the landing page at `/`; a signed-in account skips it and goes to its workspace. These two pages also work on a phone, unlike the workspaces, which start at 768 px.
+Visitors reach the landing page at `/`; a signed-in account skips it and goes to its workspace. These two pages also work on a phone, as does the patient workspace. The staff workspaces start at 768 px.
 
 - **Landing hero.** A front-facing skeleton measures elbow flexion by itself, and anyone can take the hand and move it, by pointer or arrow keys. The angle, the prescribed band and the repetition count respond using the same rule as the app. It is labelled as sample movement, and it stops playing when it leaves the screen or someone takes over.
 - **Landing content.** Three numbered steps (they really are a sequence), who each part is for, and the privacy facts in Android's own words. There are no statistics, logos or quotes, because the product has none yet.
 - **Sign-in model person.** A dial read as a car speedometer, so the owner replaced it with a person. Their arm rests low, rises through a soft arc as the form is completed, and eases down on an error. The body is one set of curved anatomical outlines rather than capsules, so it reads as human. It shows the same character as the Android guide, in the same clothes.
 - **Sign-in details.** Warns when Caps Lock is on, moves between sign-in and the two recovery steps with a short transition, and states the 15-minute sign-out for shared computers.
+
+## Patient workspace
+
+Patients are often on a phone, so this is the one workspace built for one. Below 768 px the sidebar gives way to a bottom bar, in reach of a thumb, and lists stack rather than sit in tables: a table cannot fit a phone without hiding the results. Above that it uses the same frame as the staff workspaces.
+
+The next exercise is the page's one bold element, because it is what a patient came to do. Starting it opens a suggestion to continue on the phone, with a store link and QR code once the app has an address, because movement is measured through the phone's camera. Nothing about an exercise runs in the browser.
+
+## Scheduler workspace
+
+A Scheduler works through a queue, so Requests is one dense table: filters above, the chosen booking and its history beside it, and every decision in a dialog that names the patient and the time. Search, filters, sorting and paging run on the server, because the table has to stay correct however many bookings exist.
+
+The list can change under a Scheduler, so it never trusts what is on screen. A refused action always reloads the list. If the booking itself has changed, the dialog closes to show what happened. If only the choice is wrong, such as a therapist who has just become busy, it stays open with the updated choices. A selection counts only rows still pending, so the number in a bulk confirmation is the number that will change.
 
 ## Interaction
 

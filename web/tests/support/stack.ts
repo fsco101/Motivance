@@ -21,7 +21,7 @@ export function sql(statement: string) {
 }
 
 export type TestUser = { id: string; email: string; password: string }
-export type Role = 'patient' | 'therapist' | 'admin'
+export type Role = 'patient' | 'therapist' | 'scheduler' | 'admin'
 
 export const client = () => createClient<Database>(stack().API_URL, stack().ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
 
@@ -100,6 +100,9 @@ export function removeUsers(users: readonly TestUser[]) {
   const ids = users.map((user) => `'${user.id}'`).join(',')
   // Scoped fixture cleanup; immutable-history triggers are bypassed only in this admin transaction.
   sql(`begin; set local session_replication_role=replica;
+delete from public.audit_events where target_type='bookings' and target_id in (select id::text from public.bookings where patient_id in (${ids}) or therapist_id in (${ids}));
+delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in (${ids}) or therapist_id in (${ids}));
+delete from public.bookings where patient_id in (${ids}) or therapist_id in (${ids});
 delete from public.session_measurements where session_id in (select id from public.sessions where patient_id in (${ids}));
 delete from public.sessions where patient_id in (${ids}); delete from public.consents where patient_id in (${ids});
 delete from public.prescription_versions where patient_id in (${ids}); delete from public.exercise_assignments where patient_id in (${ids});

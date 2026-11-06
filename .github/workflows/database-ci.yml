@@ -1,9 +1,9 @@
 name: Database migration and access checks
 on:
   push:
-    paths: ['supabase/**', 'android/app/src/main/java/com/motivance/feature/admin/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/test_local_auth.py', 'scripts/test_connected_workflow.py', 'scripts/test_administration.py', 'scripts/test_patient_profiles.py', '.github/workflows/database-ci.yml']
+    paths: ['supabase/**', 'android/app/src/main/java/com/motivance/feature/admin/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/test_local_auth.py', 'scripts/test_connected_workflow.py', 'scripts/test_administration.py', 'scripts/test_patient_profiles.py', 'scripts/test_booking.py', '.github/workflows/database-ci.yml']
   pull_request:
-    paths: ['supabase/**', 'android/app/src/main/java/com/motivance/feature/admin/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/test_local_auth.py', 'scripts/test_connected_workflow.py', 'scripts/test_administration.py', 'scripts/test_patient_profiles.py', '.github/workflows/database-ci.yml']
+    paths: ['supabase/**', 'android/app/src/main/java/com/motivance/feature/admin/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/test_local_auth.py', 'scripts/test_connected_workflow.py', 'scripts/test_administration.py', 'scripts/test_patient_profiles.py', 'scripts/test_booking.py', '.github/workflows/database-ci.yml']
 permissions:
   contents: read
 jobs:
@@ -22,5 +22,6 @@ jobs:
       - run: python scripts/test_connected_workflow.py
       - run: python scripts/test_administration.py
       - run: python scripts/test_patient_profiles.py
+      - run: python scripts/test_booking.py
       - if: always()
         run: supabase stop --no-backup

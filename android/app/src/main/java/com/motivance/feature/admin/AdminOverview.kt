@@ -36,6 +36,7 @@ private const val RECENT_EVENTS=5
     MetricPair(
         {AdminMetric(R.string.admin_metric_therapists,summary.therapists.toString(),Icons.Default.Face,it,tint=MaterialTheme.colorScheme.primary) {accounts(AccountFilter.THERAPISTS)}},
         {AdminMetric(R.string.admin_metric_admins,summary.admins.toString(),Icons.Default.Lock,it,tint=MaterialTheme.colorScheme.primary) {accounts(AccountFilter.ADMINS)}})
+    AdminMetric(R.string.admin_metric_schedulers,summary.schedulers.toString(),Icons.Default.DateRange,Modifier.fillMaxWidth(),tint=MaterialTheme.colorScheme.primary) {accounts(AccountFilter.SCHEDULERS)}
     SectionHeading(R.string.admin_care_activity)
     MetricPair(
         {AdminMetric(R.string.admin_metric_links,summary.activeLinks.toString(),Icons.Default.Share,it) {open(AdminSection.LINKS)}},
