@@ -42,10 +42,16 @@ Defer iOS, video consultations, raw video archives, custom model training, arbit
 | S6 | 11-12 | Web art direction, design system, motion, sign-in and data layer | MOT-31 through MOT-36 |
 | S7 | 13-14 | Therapist web workspace: patients, assignments, custom exercises and progress | MOT-37 through MOT-42 |
 | S8 | 15-16 | Administrator web workspace at parity with Android, web hardening and release | MOT-43 through MOT-48 |
+| S9 | 17-18 | Scheduler role, patient web workspace, conflict-safe booking on web and Android, and the Scheduler request table | MOT-49 through MOT-55 |
+| S10 | 19-20 | My Schedule, calendar management, in-app notifications, queued email, reminders and exports | MOT-56 through MOT-62 |
+| S11 | 21-22 | Waitlist, patient reschedule, attendance, weekly repeats and the Scheduler dashboard | MOT-63 through MOT-67 |
+| S12 | 23-24 | Web sign-up, landing page redesign, FCM setup and final regression | MOT-68 through MOT-70 |
 
 At each sprint kickoff, assign owners and confirm prerequisites. During week one, implement contracts and the riskiest behavior first. During week two, integrate and demonstrate the vertical workflow. Review dependency blockers midweek. A sprint completes only after its acceptance records and demo evidence are reviewed. An eight-week final release is a stretch outcome requiring the same release gates as week 10; feature completeness alone is insufficient.
 
 Critical path: exercise protocol and camera feasibility -> measurement engine -> guided local session -> versioned assignment integration -> retry-safe upload -> therapist review -> final validation -> defect gate -> deployment. Schema/auth work proceeds alongside the camera spike. Start external distribution verification in Sprint 1 and finish configuration in Sprint 4; store approval timing is external.
+
+In-center booking (S9-S12) is designed in [BOOKING.md](architecture/BOOKING.md), which owns its data model, endpoints, screens and decisions.
 
 ## Programming languages and toolchain
 

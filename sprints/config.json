@@ -3,7 +3,7 @@
   "repository": "fsco101/Motivance",
   "plan_issue": 1,
   "schedule": {
-    "duration_weeks": 16,
+    "duration_weeks": 24,
     "mvp_week": 8,
     "start_date": null,
     "contributors_assumed": "3-4 plus therapist input"
@@ -16,7 +16,11 @@
     "sprint-05.json",
     "sprint-06.json",
     "sprint-07.json",
-    "sprint-08.json"
+    "sprint-08.json",
+    "sprint-09.json",
+    "sprint-10.json",
+    "sprint-11.json",
+    "sprint-12.json"
   ],
   "sync": {
     "default": "dry-run",
@@ -178,6 +182,26 @@
       "name": "sprint:08",
       "color": "0052CC",
       "description": "Sprint 8: weeks 15-16"
+    },
+    {
+      "name": "sprint:09",
+      "color": "0052CC",
+      "description": "Sprint 9: weeks 17-18"
+    },
+    {
+      "name": "sprint:10",
+      "color": "0052CC",
+      "description": "Sprint 10: weeks 19-20"
+    },
+    {
+      "name": "sprint:11",
+      "color": "0052CC",
+      "description": "Sprint 11: weeks 21-22"
+    },
+    {
+      "name": "sprint:12",
+      "color": "0052CC",
+      "description": "Sprint 12: weeks 23-24"
     }
   ]
 }
