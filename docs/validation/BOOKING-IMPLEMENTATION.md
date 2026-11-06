@@ -242,3 +242,32 @@ The reason stays with scheduling. A patient whose session is cancelled for leave
 | Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
 
 On Android, leave on My Schedule is covered by unit tests of the data it reads, and has not yet been seen on an emulator screen. That check runs before the sprint closes.
+
+## MOT-59: In-app notifications and scheduler alerts
+
+A trigger on `booking_events` writes notifications, so every change to a booking reaches the people it matters to, however it was made, including changes made while resolving a closure. Confirming, rejecting, rescheduling, cancelling and changing the therapist tell the patient and the therapists involved. New requests, patient cancellations and sessions that lose their therapist alert every active Scheduler. Nobody is told what they have just done themselves.
+
+A row holds facts rather than sentences, and each app writes the text, so it follows the reader's language and reads the time in Asia/Manila. Switching language rewrites what is already in the list. A Scheduler's reason goes to the patient only.
+
+The web has a bell in the header and a Notifications page for patients, therapists and Schedulers, and Android has the same bell and list. Administrators have neither, because they take no part in bookings. Opening a notification marks it read and goes to where the booking can be seen. Both apps check every minute while open, and Android ignores a result for an account that has since signed out.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: every kind of change, who hears and who does not, a closure, a therapist leaving, reading only your own, no writes or forged notifications, read and unread | `python scripts/test_booking.py notifications` | 49 checks passed |
+| All sections | `python scripts/test_booking.py` | 494 checks passed |
+| Contract tests | `npm run test:contract` | 52 passed |
+| Whole browser suite with axe, one browser at a time | `npx playwright test --workers=1` | 209 passed, 1 failed and 1 did not run. 83 opt-in tests did not run, as designed |
+| The two left over, after the fix below | `npx playwright test tests/e2e/notifications.spec.ts tests/e2e/schedule.spec.ts --workers=1` | 15 passed, so all 211 tests that run by default have passed on this code |
+| Web unit tests | `npm test` | 216 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 215 passed |
+| Android resources and module boundaries | `python scripts/check_resources.py`, `check_module_boundaries.py` | Passed |
+| The bell, the list and leave in the real Android app, on a spare emulator set to New York, against the local backend | Driven through the UI | Passed. The phone reported EST and a notification read 9:00 AM Manila time. Opening it went to My bookings or My Schedule, cleared the bell, and the server agreed. A therapist's leave showed on its hours, without the reason |
+| Live role routing on the spare emulator, with the new header | `python scripts/test_role_routing.py` | 5 of 5 |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The failed test measured sideways scrolling while the page was still sliding in. Settled pages do not overflow at 320, 360 or 390 pixels wide, so that test and the same check in `schedule.spec.ts` now wait for the page to settle.
+
+The first download reads 297 KB, up from 292 KB, which looked larger than a bell should cost. Comparing source maps with the previous commit shows it gained five small modules, about 7.5 KB of source, and removing the bell saves only 1.2 KB compressed. The rest is the bundler regrouping shared code between files, which compresses a little worse. Only 3 KB of margin is left, so later web work has to load on demand.
+
+The emulator check also covers what MOT-58 left open: leave on My Schedule has now been seen on an Android screen.

@@ -26,6 +26,8 @@ import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
 import { ScheduleView } from '@/features/booking/ScheduleView'
+import { BellLink } from '@/features/notifications/NotificationBell'
+import { NotificationsView } from '@/features/notifications/NotificationsView'
 import { ClosureDialog, HolidayDialog, TimeOffDialog, type CalendarActions } from '@/features/scheduler/CalendarDialogs'
 import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
@@ -56,7 +58,7 @@ const said = (message: string) => () => toast.show(message)
 
 function Frame({ workspace }: { workspace: Workspace }) {
   return (
-    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : workspace === 'scheduler' ? SCHEDULER : THERAPIST} onSignOut={said('Signed out')} onSwitch={said('Switched workspace')}
+    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : workspace === 'scheduler' ? SCHEDULER : THERAPIST} onSignOut={said('Signed out')} bell={workspace === 'admin' ? undefined : <BellLink to={`/design/${workspace}/notifications`} count={2} />} onSwitch={said('Switched workspace')}
       account={{ name: 'Dana Reyes', email: 'dana.reyes@example.test', workspaces: ['admin', 'therapist', 'patient'] }}>
       <AnimatedOutlet />
     </Shell>
@@ -108,6 +110,8 @@ const requestActions: RequestActions = {
   therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),
   reject: async () => toast.show('Rejected'), cancel: async () => toast.show('Cancelled'), reschedule: async () => toast.show('Rescheduled'), bulkReject: async () => toast.show('Rejected'),
 }
+const Notifications = () => <NotificationsView load={useDemo(data.inbox, { unread: 0, rows: [] })} onOpen={said('Opened')} onMarkAll={said('Marked read')} />
+
 function Schedule({ audience }: { audience: ScheduleAudience }) {
   const [date, setDate] = useState<string | null>('2026-12-14')
   const load = useDemo(audience === 'patient' ? data.schedule : data.therapistSchedule, { days: [] })
@@ -191,6 +195,7 @@ export const galleryRoutes: RouteObject[] = [{
       children: [
         { index: true, element: <Home /> },
         { path: 'schedule', element: <Schedule audience="therapist" />, handle: { crumb: 'nav.schedule' } },
+        { path: 'notifications', element: <Notifications />, handle: { crumb: 'nav.notifications' } },
         { path: 'patients', handle: { crumb: 'nav.patients' }, children: [
           { index: true, element: <Patients /> },
           { path: ':id', handle: { crumb: () => 'Ana Dela Cruz' }, children: [
@@ -208,6 +213,7 @@ export const galleryRoutes: RouteObject[] = [{
       children: [
         { index: true, element: <PatientHome /> },
         { path: 'schedule', element: <Schedule audience="patient" />, handle: { crumb: 'nav.schedule' } },
+        { path: 'notifications', element: <Notifications />, handle: { crumb: 'nav.notifications' } },
         { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
         { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },

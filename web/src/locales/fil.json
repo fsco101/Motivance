@@ -15,7 +15,10 @@
     "requests": "Mga kahilingan",
     "schedule": "Iskedyul ko",
     "scheduleShort": "Iskedyul",
-    "calendar": "Kalendaryo"
+    "calendar": "Kalendaryo",
+    "notifications": "Mga abiso",
+    "notificationsUnread_one": "Mga abiso, {{count}} hindi pa nababasa",
+    "notificationsUnread_other": "Mga abiso, {{count}} hindi pa nababasa"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",

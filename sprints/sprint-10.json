@@ -525,7 +525,7 @@
       "github_issue": 76,
       "title": "Add in-app notifications and scheduler alerts",
       "description": "Tell people what changed, inside both apps, with a read and unread state.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web + Android",
       "estimate_points": 8,
@@ -568,47 +568,113 @@
         {
           "id": "MOT-59-AC1",
           "description": "Confirming, rejecting, rescheduling or cancelling a booking notifies the patient and the assigned therapist, including changes made while resolving a closure.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060009_notifications.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "web/src/data/notifications.test.ts",
+            "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-59-AC2",
           "description": "New requests and patient cancellations alert every active Scheduler.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060009_notifications.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "web/src/data/notifications.test.ts",
+            "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-59-AC3",
           "description": "The web has a bell and list with read and unread state for patients, therapists and Schedulers.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060009_notifications.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "web/src/data/notifications.test.ts",
+            "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-59-AC4",
           "description": "Android has the same bell and list.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060009_notifications.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "web/src/data/notifications.test.ts",
+            "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-59-AC5",
           "description": "A person reads only their own notifications, proved by a test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060009_notifications.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "web/src/data/notifications.test.ts",
+            "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-59-AC6",
           "description": "Notification text comes from the app, so it follows the reader's language, and shows the specific time in Asia/Manila.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060009_notifications.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "web/src/data/notifications.test.ts",
+            "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T17:01:36.907178+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060009_notifications.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/notifications.spec.ts",
+          "web/src/data/notifications.test.ts",
+          "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+          "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060009_notifications.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/notifications.spec.ts",
+        "web/src/data/notifications.test.ts",
+        "android/app/src/test/java/com/motivance/feature/notifications/NotificationsViewModelTest.kt",
+        "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+      ]
     },
     {
       "id": "MOT-60",

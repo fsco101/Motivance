@@ -93,6 +93,10 @@ The next exercise is the page's one bold element, because it is what a patient c
 
 My Schedule shows a month to find a date, and that date by the hour, so a session reads in its place in the day. Only dates with a session stand out. The bottom bar holds five, so Book leaves it for My Schedule, and stays on the pages that lead to it.
 
+## Notifications
+
+The bell sits in the header for patients, therapists and Schedulers, and opens a page rather than a popover, so it works the same on a phone and needs no second way of reading a list. Unread rows are tinted and bold, and say so to a screen reader. Opening one marks it read and goes to where the booking can be seen. An open page checks every minute, because nothing here is urgent enough to hold a connection open.
+
 ## Scheduler workspace
 
 A Scheduler works through a queue, so Requests is one dense table: filters above, the chosen booking and its history beside it, and every decision in a dialog that names the patient and the time. Search, filters, sorting and paging run on the server, because the table has to stay correct however many bookings exist.

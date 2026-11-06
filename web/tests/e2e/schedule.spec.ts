@@ -177,7 +177,8 @@ test('on a phone the schedule fits, and booking stays one tap away', async ({ br
   const page = await signIn(browser, ben, /\/patient$/, { viewport: { width: 360, height: 740 } })
   await openDate(page, '/patient/schedule', date)
   await expect(hour(page, '11:00 AM – 12:00 PM')).toContainText('Your session')
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  // The route slides in, so this waits for it to settle. A page that really is too wide never does.
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   const bar = page.getByRole('navigation', { name: 'Main' }).last()
   await expect(bar.getByRole('link')).toHaveCount(5)
   await expect(bar.getByRole('link', { name: 'Schedule' })).toBeVisible()

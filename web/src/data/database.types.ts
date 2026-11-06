@@ -543,6 +543,54 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          data: Json
+          dedupe_key: string
+          id: string
+          kind: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          dedupe_key: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_invitations: {
         Row: {
           accepted_at: string | null
@@ -1248,6 +1296,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      mark_notifications_read: {
+        Args: { p_ids?: string[] }
+        Returns: number
+      }
       my_booking_view: {
         Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
         Returns: Json
@@ -1256,9 +1308,34 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      my_notifications: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
       my_schedule: {
         Args: { p_from: string; p_to: string }
         Returns: Json
+      }
+      notify: {
+        Args: {
+          p_user: string
+          p_kind: string
+          p_booking: string
+          p_data: Json
+          p_event: number
+          p_actor: string
+        }
+        Returns: undefined
+      }
+      notify_schedulers: {
+        Args: {
+          p_kind: string
+          p_booking: string
+          p_data: Json
+          p_event: number
+          p_actor: string
+        }
+        Returns: undefined
       }
       profile_photo_upload: {
         Args: Record<PropertyKey, never>

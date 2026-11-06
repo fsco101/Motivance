@@ -310,5 +310,26 @@
     "useTherapist": "Use this therapist",
     "willPass": "Passes to {{name}}",
     "therapistAway": "Your therapist is away at this time."
+  },
+  "notifications": {
+    "detail": "What has changed with your bookings.",
+    "markAll": "Mark all as read",
+    "unread": "unread",
+    "noneTitle": "Nothing new",
+    "noneDetail": "Changes to your bookings will show here.",
+    "therapistUnavailable": "Your therapist is no longer available.",
+    "confirmed": "Your session on {{when}} is confirmed with {{therapist}}.",
+    "rejected": "Your request for {{when}} was not approved.",
+    "cancelled": "Your session on {{when}} was cancelled.",
+    "rescheduled": "Your session moved to {{when}}.",
+    "therapist_changed": "Your therapist for {{when}} is now {{therapist}}.",
+    "returned_to_pending": "Your session on {{when}} needs a new therapist. A Scheduler will confirm it again.",
+    "session_assigned": "{{patient}} is booked with you on {{when}}.",
+    "session_moved": "Your session with {{patient}} moved to {{when}}.",
+    "session_cancelled": "Your session with {{patient}} on {{when}} was cancelled.",
+    "session_removed": "Your session with {{patient}} on {{was}} is no longer yours.",
+    "request_received": "{{patient}} requested {{when}}.",
+    "patient_cancelled": "{{patient}} cancelled their session on {{when}}.",
+    "needs_therapist": "The session with {{patient}} on {{when}} needs a therapist."
   }
 }

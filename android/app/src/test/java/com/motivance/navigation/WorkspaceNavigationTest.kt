@@ -13,6 +13,10 @@ class WorkspaceNavigationTest {
         assertEquals("HOME",parentRoute("SETUP",true))
     }
 
+    @Test fun backFromNotificationsGoesHome() {
+        assertEquals("HOME",parentRoute("NOTIFICATIONS",true))
+    }
+
     /** A patient reaches My Schedule from their bookings. A therapist has it as a tab of its own. */
     @Test fun backFromTheScheduleDependsOnWhoseItIs() {
         assertEquals("BOOKINGS",parentRoute("SCHEDULE",true))

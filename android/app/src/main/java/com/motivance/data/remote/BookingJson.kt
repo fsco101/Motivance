@@ -20,6 +20,15 @@ object BookingJson {
 
     fun bookings(json:JSONArray)=json.objects().map {booking(it)}
 
+    /** A kind this version does not know is left out, so a newer server never shows a blank row. */
+    fun inbox(json:JSONObject)=NotificationInbox(json.getInt("unread"),json.getJSONArray("rows").objects().mapNotNull {row ->
+        NotificationKind.of(row.getString("kind"))?.let {kind ->
+            val data=row.getJSONObject("data")
+            AppNotification(row.getString("id"),kind,data.getString("reference_no"),data.getString("starts_at"),data.getString("ends_at"),data.text("previous_starts_at"),
+                data.text("patient_name"),data.text("therapist_name"),data.text("reason"),row.text("read_at"),row.getString("created_at"))
+        }
+    })
+
     private fun session(json:JSONObject)=ScheduleSession(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.CONFIRMED,
         json.getString("starts_at"),json.getString("ends_at"),json.text("location").orEmpty(),json.text("therapist_name"),json.text("patient_id"),json.text("patient_name"),json.optBoolean("linked"))
 

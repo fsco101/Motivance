@@ -84,6 +84,7 @@ class Stack:
             return
         ids = ','.join("'" + str(uuid.UUID(user)) + "'" for user in self.users)
         self.sql(f"""begin; set local session_replication_role=replica;
+delete from public.notifications where user_id in ({ids}) or booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.audit_events where target_type='bookings' and target_id in (select id::text from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.bookings where patient_id in ({ids}) or therapist_id in ({ids});
@@ -1076,7 +1077,143 @@ def time_off(stack):
     stack.check(refused(stack.rpc('scheduler_delete_time_off', {'p_id': first}, ts), 'booking_unavailable'), 'Leave already gone is refused')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off}
+def notifications(stack):
+    """MOT-59: what changed, told to the people it matters to, and to nobody else."""
+    sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Scheduler')
+    _, t2 = stack.user('patient', 'scheduler', name='Booking Sam Scheduler')
+    gone, tg = stack.user('patient', 'scheduler', name='Booking Gone Scheduler')
+    stack.sql(f"update public.profiles set active=false where id='{gone}';")
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Notes')
+    omar, to = stack.user('patient', 'therapist', name='Booking Omar Notes')
+    ana, ta = stack.user('patient', name='Booking Ana Notes')
+    ben, tb = stack.user('patient', name='Booking Ben Notes')
+    fresh = working_days(stack)
+    day, other, later, last = next(fresh), next(fresh), next(fresh), next(fresh)
+
+    def request(token, start):
+        code, data = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)
+        assert code == 200, data
+        return data
+
+    def inbox(token):
+        code, data = stack.rpc('my_notifications', {}, token)
+        assert code == 200, data
+        return data
+
+    def about(token, booking):
+        return [row for row in inbox(token)['rows'] if row['booking_id'] == booking['id']]
+
+    def kinds(token, booking):
+        return [row['kind'] for row in about(token, booking)]
+
+    def act(name, body, token=ts):
+        code, data = stack.rpc(name, body, token)
+        assert code == 200, (name, data)
+        return data
+
+    # A new request reaches every active Scheduler, and nobody else.
+    a = request(ta, manila(day, 9))
+    stack.check(kinds(ts, a) == ['request_received'] and kinds(t2, a) == ['request_received'], 'A new request alerts every Scheduler')
+    note = about(ts, a)[0]
+    stack.check(note['data']['patient_name'] == 'Booking Ana Notes' and note['data']['reference_no'] == a['reference_no'], 'The alert says who and which')
+    stack.check(manila_hour(note['data']['starts_at']) == 9 and manila_hour(note['data']['ends_at']) == 10, 'And the specific time')
+    stack.check(note['read_at'] is None, 'It starts unread')
+    stack.check('user_id' not in note and 'dedupe_key' not in note, 'Internal fields stay behind')
+    stack.check(kinds(ta, a) == [], 'The patient is not told what they just did')
+    stack.check(kinds(tt, a) == [], 'A therapist is not told about a request')
+    stack.sql(f"update public.profiles set active=true where id='{gone}';")
+    stack.check(kinds(tg, a) == [], 'A disabled Scheduler is not alerted')
+    stack.sql(f"update public.profiles set active=false where id='{gone}';")
+
+    # A decision reaches the patient and the therapist, and not the Scheduler who made it.
+    act('scheduler_confirm', {'p_booking': a['id'], 'p_therapist': tess})
+    stack.check(kinds(ta, a) == ['confirmed'], 'Confirming tells the patient')
+    stack.check(about(ta, a)[0]['data']['therapist_name'] == 'Booking Tess Notes', 'With their therapist')
+    stack.check(kinds(tt, a) == ['session_assigned'], 'And tells the therapist')
+    stack.check(about(tt, a)[0]['data']['patient_name'] == 'Booking Ana Notes', 'With their patient')
+    stack.check(kinds(ts, a) == ['request_received'], 'The Scheduler who decided hears nothing new')
+    stack.check(kinds(to, a) == [], 'Another therapist hears nothing')
+
+    act('scheduler_reschedule', {'p_booking': a['id'], 'p_starts': manila(other, 10), 'p_therapist': tess})
+    stack.check(kinds(ta, a) == ['rescheduled', 'confirmed'], 'Rescheduling tells the patient, newest first')
+    moved = about(ta, a)[0]['data']
+    stack.check(manila_hour(moved['starts_at']) == 10 and manila_hour(moved['previous_starts_at']) == 9, 'With the new time and the old one')
+    stack.check(kinds(tt, a)[0] == 'session_moved', 'And tells the therapist it moved')
+
+    act('scheduler_assign_therapist', {'p_booking': a['id'], 'p_therapist': omar})
+    stack.check(kinds(ta, a)[0] == 'therapist_changed', 'Changing the therapist tells the patient')
+    stack.check(kinds(tt, a)[0] == 'session_removed', 'And the therapist who lost the session')
+    stack.check(kinds(to, a) == ['session_assigned'], 'And the one who gained it')
+
+    act('scheduler_reschedule', {'p_booking': a['id'], 'p_starts': manila(other, 11), 'p_therapist': tess})
+    stack.check(kinds(to, a)[0] == 'session_removed' and kinds(tt, a)[0] == 'session_assigned', 'Moving a session to another therapist tells both')
+
+    act('scheduler_cancel', {'p_booking': a['id'], 'p_reason': 'Booking test reason'})
+    stack.check(kinds(ta, a)[0] == 'cancelled' and about(ta, a)[0]['data']['reason'] == 'Booking test reason', 'A Scheduler cancelling tells the patient why')
+    stack.check(kinds(tt, a)[0] == 'session_cancelled', 'And tells the therapist')
+    stack.check('reason' not in about(tt, a)[0]['data'], 'The reason is written for the patient')
+
+    b = request(tb, manila(day, 11))
+    act('scheduler_reject', {'p_booking': b['id'], 'p_reason': 'Booking test rejection'})
+    stack.check(kinds(tb, b) == ['rejected'] and about(tb, b)[0]['data']['reason'] == 'Booking test rejection', 'Rejecting tells the patient why')
+
+    # A patient cancelling alerts the Schedulers.
+    c = request(tb, manila(later, 9))
+    act('scheduler_confirm', {'p_booking': c['id'], 'p_therapist': omar})
+    act('cancel_my_booking', {'p_booking': c['id'], 'p_reason': None}, tb)
+    stack.check(kinds(ts, c)[0] == 'patient_cancelled' and kinds(t2, c)[0] == 'patient_cancelled', 'A patient cancelling alerts every Scheduler')
+    stack.check(kinds(to, c)[0] == 'session_cancelled', 'And tells their therapist')
+    stack.check('cancelled' not in kinds(tb, c), 'But not the patient who did it')
+
+    # Changes made while resolving a closure.
+    d = request(ta, manila(later, 10))
+    act('scheduler_confirm', {'p_booking': d['id'], 'p_therapist': tess})
+    e = request(tb, manila(later, 11))
+    act('scheduler_confirm', {'p_booking': e['id'], 'p_therapist': omar})
+    resolutions = [{'booking': d['id'], 'action': 'cancel', 'reason': 'Booking test closure'}, {'booking': e['id'], 'action': 'reschedule', 'starts_at': manila(last, 9), 'therapist': omar}]
+    try:
+        act('scheduler_save_closure', {'p_id': None, 'p_starts': manila(later, 0), 'p_ends': manila(later + timedelta(days=1), 0), 'p_all_day': True, 'p_reason': 'Booking test closure', 'p_resolutions': resolutions})
+        stack.check(kinds(ta, d)[0] == 'cancelled' and about(ta, d)[0]['data']['reason'] == 'Booking test closure', 'A closure tells a patient their session was cancelled, and why')
+        stack.check(kinds(tt, d)[0] == 'session_cancelled', 'And tells their therapist')
+        stack.check(kinds(tb, e)[0] == 'rescheduled' and kinds(to, e)[0] == 'session_moved', 'A session a closure moved is announced too')
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test closure';")
+
+    # A therapist leaving returns their sessions.
+    f = request(ta, manila(last, 11))
+    act('scheduler_confirm', {'p_booking': f['id'], 'p_therapist': omar})
+    stack.sql(f"select public.release_therapist_bookings('{omar}');")
+    stack.check(kinds(ta, f)[0] == 'returned_to_pending', 'A patient hears when their session needs a new therapist')
+    stack.check(kinds(ts, f)[0] == 'needs_therapist' and kinds(t2, f)[0] == 'needs_therapist', 'And every Scheduler is alerted')
+
+    # Each person reads only their own.
+    theirs = about(ta, f)[0]
+    code, rows = stack.api(f"/rest/v1/notifications?select=*&id=eq.{theirs['id']}", token=tb)
+    stack.check(code == 200 and rows == [], "Another patient cannot read someone's notification")
+    code, rows = stack.api(f"/rest/v1/notifications?select=*&id=eq.{theirs['id']}", token=ts)
+    stack.check(code == 200 and rows == [], 'Nor can a Scheduler')
+    code, rows = stack.api(f"/rest/v1/notifications?select=id&id=eq.{theirs['id']}", token=ta)
+    stack.check(code == 200 and len(rows) == 1, 'The owner can, so the empty results are real')
+    code, rows = stack.api('/rest/v1/notifications?select=user_id', token=ta)
+    stack.check(code == 200 and {row['user_id'] for row in rows} == {ana}, 'A whole-table read returns only their own')
+    stack.check(stack.api(f"/rest/v1/notifications?id=eq.{theirs['id']}", {'read_at': '2026-01-01T00:00:00Z'}, ta, method='PATCH')[0] in (401, 403), 'Nobody can write to the table')
+    stack.check(stack.api('/rest/v1/notifications', {'user_id': ben, 'kind': 'confirmed', 'dedupe_key': 'forged'}, ta)[0] in (401, 403), 'Nor forge a notification')
+    stack.check(stack.rpc('my_notifications', {})[0] == 401, 'Someone signed out has no inbox')
+    stack.check(stack.rpc('notify', {'p_user': ben, 'p_kind': 'confirmed', 'p_booking': None, 'p_data': {}, 'p_event': 1, 'p_actor': None}, ta)[0] in (403, 404), 'Nor can anyone call the sender directly')
+
+    # Read and unread.
+    before = inbox(ta)['unread']
+    stack.check(before == len(inbox(ta)['rows']) and before >= 5, 'Everything starts unread, and the count matches')
+    stack.check(act('mark_notifications_read', {'p_ids': [theirs['id']]}, tb) == inbox(tb)['unread'], "Marking someone else's notification changes nothing of yours")
+    stack.check(about(ta, f)[0]['read_at'] is None, 'And nothing of theirs')
+    stack.check(act('mark_notifications_read', {'p_ids': [theirs['id']]}, ta) == before - 1, 'Marking one read lowers the count')
+    stack.check(about(ta, f)[0]['read_at'] is not None, 'And it stays read')
+    stack.check(act('mark_notifications_read', {'p_ids': None}, ta) == 0 and inbox(ta)['unread'] == 0, 'Marking all clears the count')
+    stack.check(len(inbox(ta)['rows']) == before, 'Read notifications stay in the list')
+    stack.check(len(stack.rpc('my_notifications', {'p_limit': 2}, ta)[1]['rows']) == 2, 'The list can be limited')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications}
 
 
 def main():

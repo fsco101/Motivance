@@ -26,6 +26,13 @@ class BookingRepositoryTest {
                     {"date":"2026-12-07","status":"open","holiday":null,"slots":[{"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","remaining":2,"mine":true}]},
                     {"date":"2026-12-08","status":"holiday","holiday":"Feast","slots":[]},{"date":"2026-12-09","status":"too_soon","holiday":null,"slots":[]}]}"""
                 path=="/rest/v1/rpc/my_bookings" -> "[$booking]"
+                path=="/rest/v1/rpc/my_notifications" -> """{"unread":1,"rows":[
+                    {"id":"n1","kind":"rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
+                     "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":"2026-12-07T02:00:00+00:00","patient_name":"Ana","therapist_name":"Dana","reason":"Training"}},
+                    {"id":"n2","kind":"from_a_newer_server","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{}},
+                    {"id":"n3","kind":"confirmed","booking_id":"b1","read_at":"2026-12-02T02:00:00+00:00","created_at":"2026-11-30T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
+                     "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":null,"patient_name":"Ana","therapist_name":null,"reason":null}}]}"""
+                path=="/rest/v1/rpc/mark_notifications_read" -> "0"
                 path=="/rest/v1/rpc/my_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
                     {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null},
                     {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":$booking}]},
@@ -75,6 +82,32 @@ class BookingRepositoryTest {
         assertTrue(day.onLeave)
         assertEquals(listOf(true,false),day.rows.map {it.onLeave})
         assertFalse("A patient's schedule has none",repository().loadSchedule("2026-12-01","2026-12-31",false).days[0].onLeave)
+    }
+
+    @Test fun anInboxKeepsTheFactsTheTextIsWrittenFrom()=runBlocking {
+        val inbox=repository().loadNotifications()
+        assertEquals(1,inbox.unread)
+        val note=inbox.items.first()
+        assertEquals(NotificationKind.RESCHEDULED,note.kind)
+        assertEquals("2026-12-14T02:00:00+00:00",note.startsAt)
+        assertEquals("2026-12-07T02:00:00+00:00",note.previousStartsAt)
+        assertEquals("Dana",note.therapist)
+        assertEquals("Training",note.reason)
+        assertTrue(note.unread)
+        assertFalse(inbox.items.last().unread)
+        assertNull(inbox.items.last().therapist)
+    }
+
+    @Test fun aKindFromANewerServerIsLeftOut()=runBlocking {
+        assertEquals(listOf("n1","n3"),repository().loadNotifications().items.map {it.id})
+    }
+
+    @Test fun markingSendsTheIdsOrNoneForEverything()=runBlocking {
+        val remote=repository()
+        assertEquals(0,remote.markNotificationsRead(listOf("n1")))
+        assertEquals("n1",bodies["/rest/v1/rpc/mark_notifications_read"]!!.getJSONArray("p_ids").getString(0))
+        remote.markNotificationsRead(null)
+        assertTrue(bodies["/rest/v1/rpc/mark_notifications_read"]!!.isNull("p_ids"))
     }
 
     @Test fun availabilityKeepsEachDateAndItsSpecificTimes()=runBlocking {

@@ -55,6 +55,7 @@ import com.motivance.domain.nextSession
 import com.motivance.feature.admin.*
 import com.motivance.feature.auth.*
 import com.motivance.feature.booking.*
+import com.motivance.feature.notifications.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.rehabilitation.*
@@ -67,6 +68,8 @@ import java.time.ZoneId
 
 /** How often an open patient screen checks for exercises the therapist has just published. */
 private const val ASSIGNMENT_CHECK_MS=30_000L
+/** How often the bell looks for news while the app is open. Nothing here is urgent enough to hold a connection open. */
+private const val NOTIFICATION_CHECK_MS=60_000L
 
 /** The toast host wraps the whole app because several screens below return early and draw without the scaffold. */
 @Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster) {
@@ -94,6 +97,8 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
     val bookingState by booking.state.collectAsStateWithLifecycle()
     val schedule:ScheduleViewModel=viewModel()
     val scheduleState by schedule.state.collectAsStateWithLifecycle()
+    val notifications:NotificationsViewModel=viewModel()
+    val notificationState by notifications.state.collectAsStateWithLifecycle()
     val haptics=rememberHaptics()
     LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
     LaunchedEffect(Unit) {vm.restore()}
@@ -147,12 +152,21 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         schedule.configure(auth.session?.userId,therapistRole)
         if(schedulePage!=null) schedule.open()
     }
+    // Administrators take no part in bookings, so they have no bell.
+    val inboxOwner=auth.session?.userId?.takeIf {actualRole!=UserRole.ADMIN}
+    LaunchedEffect(inboxOwner,lifecycle) {
+        notifications.configure(inboxOwner)
+        if(inboxOwner!=null) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while(true) {notifications.refresh(); delay(NOTIFICATION_CHECK_MS)}
+        }
+    }
     val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PROFILE","ADMIN")+(if(therapistRole) setOf("SCHEDULE") else emptySet())
     val activeTab=when(route) {
         "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
         "LOCAL_HISTORY" -> "PROFILE"
         "BOOK" -> "BOOKINGS"
         "SCHEDULE" -> if(therapistRole) "SCHEDULE" else "BOOKINGS"
+        "NOTIFICATIONS" -> "HOME"
         else -> route
     }
     val accountName=overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account)
@@ -161,6 +175,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         if(route=="PROGRESS" || route=="PATIENT_DETAIL") history.refresh()
         if(route=="BOOKINGS") booking.refresh()
         if(route=="SCHEDULE") schedule.open()
+        notifications.refresh()
         vm.loadOverview()
     }
     // Pull-to-refresh only shows its indicator for a refresh the person started, and clears once that work settles.
@@ -173,11 +188,12 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         }
         pulled=false
     }
-    val refreshable=auth.session!=null && route in setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","SCHEDULE","PROGRESS","PATIENT_DETAIL","PROFILE")
+    val refreshable=auth.session!=null && route in setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","SCHEDULE","NOTIFICATIONS","PROGRESS","PATIENT_DETAIL","PROFILE")
     Scaffold(
         containerColor=MaterialTheme.colorScheme.background,
         topBar={BrandHeader(onProfile=if(auth.session!=null && route!="PROFILE") ({route="PROFILE"}) else null,
-            onBack=if(route !in rootRoutes) ({goBack()}) else null,photoUrl=profileState.profile?.photoUrl,name=accountName)},
+            onBack=if(route !in rootRoutes) ({goBack()}) else null,photoUrl=profileState.profile?.photoUrl,name=accountName,
+            onNotifications=if(inboxOwner!=null && route!="NOTIFICATIONS") ({route="NOTIFICATIONS"}) else null,unread=notificationState.inbox.unread)},
         bottomBar={if(auth.session!=null) {
             val destinations=when(actualRole) {
                 UserRole.ADMIN -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("ADMIN",R.string.role_admin,Icons.Default.Settings),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
@@ -308,6 +324,13 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                     PageHeader(R.string.booking_my_title,R.string.booking_my_detail)
                     MyBookings(bookingState,booking,{route="SCHEDULE"}) {route="BOOK"}
                 }
+                "NOTIFICATIONS" -> {
+                    PageHeader(R.string.nav_notifications,R.string.notifications_detail)
+                    // A Scheduler's requests are on the web, so opening one only marks it read.
+                    Notifications(notificationState,notifications) {
+                        when(actualRole) {UserRole.PATIENT -> route="BOOKINGS";UserRole.THERAPIST -> route="SCHEDULE";else -> Unit}
+                    }
+                }
                 "SCHEDULE" -> {
                     PageHeader(R.string.schedule_title,if(therapistRole) R.string.schedule_detail_therapist else R.string.schedule_detail_patient)
                     MySchedule(scheduleState,schedule,connected.workspace.patients.map {it.id}.toSet()) {selectedPatient=it; route="PATIENT_DETAIL"}
@@ -372,7 +395,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
 private fun depth(route:String,therapist:Boolean)=when(route) {
     "ASSIGN" -> 2
-    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK" -> 1
+    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","NOTIFICATIONS" -> 1
     "SCHEDULE" -> if(therapist) 0 else 1
     else -> 0
 }
@@ -422,7 +445,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
  * The app bar sits on the page ground rather than on a white strip, so content reads as one surface. The
  * account button shows the person's own avatar, which is both a shortcut and a reminder of who is signed in.
  */
-@Composable fun BrandHeader(onProfile:(()->Unit)?=null,onBack:(()->Unit)?=null,photoUrl:String?=null,name:String="") {
+@Composable fun BrandHeader(onProfile:(()->Unit)?=null,onBack:(()->Unit)?=null,photoUrl:String?=null,name:String="",onNotifications:(()->Unit)?=null,unread:Int=0) {
     Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).heightIn(min=64.dp)
         .padding(start=if(onBack!=null) 4.dp else 20.dp,end=12.dp,top=6.dp,bottom=6.dp),
         verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -430,6 +453,11 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
         Image(painterResource(R.drawable.motivance_logo),null,modifier=Modifier.size(34.dp))
         Text(stringResource(R.string.app_name),style=MaterialTheme.typography.titleLarge,color=MaterialTheme.colorScheme.onSurface,
             modifier=Modifier.weight(1f).semantics {heading()})
+        if(onNotifications!=null) IconButton(onNotifications,Modifier.size(48.dp)) {
+            BadgedBox(badge={if(unread>0) Badge {Text(if(unread>9) "9+" else unread.toString())}}) {
+                Icon(Icons.Default.Notifications,if(unread>0) stringResource(R.string.notifications_unread_count,unread) else stringResource(R.string.nav_notifications),tint=MaterialTheme.colorScheme.onSurface)
+            }
+        }
         if(onProfile!=null) IconButton(onProfile,Modifier.size(48.dp)) {
             PersonAvatar(photoUrl,name.ifBlank {"?"},36.dp,container=MaterialTheme.colorScheme.primaryContainer,
                 content=MaterialTheme.colorScheme.onPrimaryContainer,description=stringResource(R.string.nav_profile))

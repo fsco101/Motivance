@@ -32,7 +32,7 @@ import java.time.YearMonth
 /** Patients can turn the calendar this far ahead. The server still decides what is bookable. */
 private const val MONTHS_AHEAD=3L
 
-@Composable internal fun rememberSessionFormat():SessionFormat {
+@Composable fun rememberSessionFormat():SessionFormat {
     val locale=LocalConfiguration.current.locales[0]
     return remember(locale) {SessionFormat(locale)}
 }

@@ -4,6 +4,7 @@ import type { CatalogueExercise } from '@/data/catalogue'
 import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
 import type { RequestDetail, RequestRow, TherapistChoice } from '@/data/scheduler'
 import type { HistoricalSession } from '@/data/history'
+import type { Inbox } from '@/data/notifications'
 import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent } from '@/features/admin/types'
@@ -166,6 +167,16 @@ export const affected: AffectedBooking[] = [
   { id: 'q1', reference: 'BK-2026-000158', status: 'pending', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', patient: 'Ana Dela Cruz', therapistId: null, therapist: null },
   { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', startsAt: '2026-12-14T03:00:00Z', endsAt: '2026-12-14T04:00:00Z', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes' },
 ]
+
+const noteFacts = { reference: 'BK-2026-000158', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, patient: 'Ana Dela Cruz', therapist: 'Dana Reyes', reason: null, readAt: null }
+export const inbox: Inbox = {
+  unread: 2,
+  rows: [
+    { ...noteFacts, id: 'n1', kind: 'confirmed', createdAt: '2026-12-01T02:00:00Z' },
+    { ...noteFacts, id: 'n2', kind: 'cancelled', reason: 'Water supply maintenance', startsAt: '2026-12-09T02:00:00Z', endsAt: '2026-12-09T03:00:00Z', createdAt: '2026-11-30T05:00:00Z' },
+    { ...noteFacts, id: 'n3', kind: 'rescheduled', previousStartsAt: '2026-12-02T02:00:00Z', readAt: '2026-11-29T05:00:00Z', createdAt: '2026-11-28T05:00:00Z' },
+  ],
+}
 
 export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 

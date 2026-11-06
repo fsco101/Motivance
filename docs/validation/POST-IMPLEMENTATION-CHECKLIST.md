@@ -164,6 +164,7 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] On a physical phone, book, follow and cancel a session at large text sizes and with TalkBack. Check the date cells, which are narrower than 48 dp on a small screen.
 - [ ] On a physical phone, run the S9 demo in one sitting: grant the Scheduler role, request a session on the web and on Android, confirm one request and reject another in the Scheduler table, and show two requests racing for the last place. Each step has passed in automated runs, but not as one sitting on a phone.
 - [ ] On a physical phone, read My Schedule as a patient and as a therapist at large text sizes and with TalkBack. Check that a date reads its session count, and that an unlinked patient's card offers no record.
+- [ ] On a physical phone, read notifications at large text sizes and with TalkBack, including that an unread one is announced as unread.
 - [ ] On a physical phone's browser, walk through the patient workspace: home, exercises, progress, profile, and the suggestion to use the app.
 - [ ] Once the app has a public address, set `VITE_ANDROID_APP_URL` and confirm the store link and QR code open it on a phone.
 - [ ] On a phone with a working camera, withdraw consent on the web, then record a session: confirm it asks again and the session uploads. `SessionStoreTest` covers the storage step and passes on an emulator, but the whole journey has not been run.

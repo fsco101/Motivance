@@ -310,5 +310,26 @@
     "useTherapist": "Gamitin ang therapist na ito",
     "willPass": "Ililipat kay {{name}}",
     "therapistAway": "Wala ang iyong therapist sa oras na ito."
+  },
+  "notifications": {
+    "detail": "Ang mga nagbago sa iyong mga booking.",
+    "markAll": "Markahang nabasa lahat",
+    "unread": "hindi pa nababasa",
+    "noneTitle": "Walang bago",
+    "noneDetail": "Lalabas dito ang mga pagbabago sa iyong mga booking.",
+    "therapistUnavailable": "Hindi na available ang iyong therapist.",
+    "confirmed": "Kumpirmado ang iyong session sa {{when}} kasama si {{therapist}}.",
+    "rejected": "Hindi naaprubahan ang iyong kahilingan para sa {{when}}.",
+    "cancelled": "Kinansela ang iyong session sa {{when}}.",
+    "rescheduled": "Inilipat ang iyong session sa {{when}}.",
+    "therapist_changed": "Si {{therapist}} na ang iyong therapist para sa {{when}}.",
+    "returned_to_pending": "Kailangan ng bagong therapist ang iyong session sa {{when}}. Kukumpirmahin itong muli ng Scheduler.",
+    "session_assigned": "Naka-book sa iyo si {{patient}} sa {{when}}.",
+    "session_moved": "Inilipat ang session ninyo ni {{patient}} sa {{when}}.",
+    "session_cancelled": "Kinansela ang session ninyo ni {{patient}} sa {{when}}.",
+    "session_removed": "Hindi na sa iyo ang session kay {{patient}} sa {{was}}.",
+    "request_received": "Humiling si {{patient}} ng {{when}}.",
+    "patient_cancelled": "Kinansela ni {{patient}} ang session sa {{when}}.",
+    "needs_therapist": "Kailangan ng therapist ang session ni {{patient}} sa {{when}}."
   }
 }

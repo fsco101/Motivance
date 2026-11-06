@@ -152,10 +152,10 @@ function AccountMenu({ account, current, profilePath, onSwitch, onSignOut }: { a
   )
 }
 
-type Props = { workspace: Workspace; base: string; account: ShellAccount; onSwitch: (workspace: Workspace) => void; onSignOut: () => void; children: ReactNode }
+type Props = { workspace: Workspace; base: string; account: ShellAccount; onSwitch: (workspace: Workspace) => void; onSignOut: () => void; /** Beside the account menu, where a workspace has anything to announce. */ bell?: ReactNode; children: ReactNode }
 
 /** The frame of both workspaces. It takes everything as props, so the design gallery runs the same frame on sample data. */
-export function Shell({ workspace, base, account, onSwitch, onSignOut, children }: Props) {
+export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, children }: Props) {
   const { t } = useTranslation()
   return (
     <RadixTooltip.Provider>
@@ -167,6 +167,7 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, children 
             <Breadcrumbs />
             <div className="flex shrink-0 items-center gap-3">
               <LanguageSwitch />
+              {bell}
               <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
             </div>
           </div>
