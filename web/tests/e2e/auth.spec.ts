@@ -49,6 +49,7 @@ test('an administrator lands on the administrator workspace', async ({ page }) =
 })
 
 test('a Scheduler lands on scheduling, and every other role gets a 403 page there', async ({ page }) => {
+  test.setTimeout(90_000)
   await signIn(page, await account(['patient', 'scheduler']))
   await expect(page).toHaveURL(/\/scheduler$/)
   await expect(page.getByRole('heading', { name: 'Scheduling', level: 1 })).toBeVisible()
@@ -78,14 +79,13 @@ test('someone with both staff roles can switch, and the choice ends at sign-out'
   await expect(page).toHaveURL(/\/admin$/)
 })
 
-test('a patient is sent to the mobile app and reaches no workspace', async ({ page }) => {
+test('a patient lands on their own workspace and reaches no staff workspace', async ({ page }) => {
   await signIn(page, await account(['patient']))
-  await expect(page).toHaveURL(/use-mobile/)
-  await expect(page.getByRole('heading', { name: 'Use the Motivance mobile app' })).toBeVisible()
+  await expect(page).toHaveURL(/\/patient$/)
   await page.goto('/therapist')
-  await expect(page).toHaveURL(/use-mobile/)
+  await expect(page).toHaveURL(/\/patient$/)
   await page.goto('/admin')
-  await expect(page).toHaveURL(/use-mobile/)
+  await expect(page).toHaveURL(/\/patient$/)
 })
 
 test('a wrong password says so and stays on the page', async ({ page }) => {

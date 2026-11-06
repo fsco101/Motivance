@@ -1,7 +1,10 @@
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { HistoricalSession } from '@/data/history'
+import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent } from '@/features/admin/types'
+import type { PrivacyState } from '@/features/patient/PatientCareView'
+import type { PatientHome } from '@/features/patient/PatientHomeView'
 import type { PatientSummary } from '@/features/therapist/PatientTable'
 import type { PatientRecord } from '@/features/therapist/PatientRecordView'
 import type { TherapistHome } from '@/features/therapist/TherapistHomeView'
@@ -56,6 +59,19 @@ export const sessions: HistoricalSession[] = days.map((day, index): HistoricalSe
   prescription: prescription('rx1', 3),
   measurements: [{ key: 'elbow-flexion-v1', side: 'right', minimum: 14, maximum: reach[index]!, repetitions: index === 5 ? 7 : index === 3 ? 4 : 10, incomplete: index === 5 ? 3 : 0, quality: index === 3 ? 'limited' : 'valid', validFrames: 420, invalidFrames: 12 }],
 })).reverse()
+
+export const myExercises: MyExercise[] = [
+  { assignmentId: 'a1', versionId: 'pv1', exerciseVersionId: 'v1', name: 'Elbow flexion', instructions: 'Sit tall, keep your upper arm still, and bend your elbow slowly.', side: 'left', low: 20, high: 120, repetitions: 10, focus: 'ELBOW', version: 2 },
+  { assignmentId: 'a2', versionId: 'pv2', exerciseVersionId: 'v2', name: 'Shoulder abduction', instructions: 'Raise your arm out to the side, then lower it with control.', side: 'right', low: 15, high: 90, repetitions: 8, focus: null, version: 1 },
+]
+const today = new Date()
+const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7))
+export const patientHome: PatientHome = {
+  name: 'Ana Dela Cruz', next: myExercises[0]!, exerciseCount: 2,
+  week: Array.from({ length: 7 }, (_, index) => ({ day: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index), done: index < 2 })),
+  recent: [{ id: 'r1', startedAt: '2026-11-04T01:30:00Z', status: 'completed' }, { id: 'r2', startedAt: '2026-11-03T02:10:00Z', status: 'interrupted' }, { id: 'r3', startedAt: '2026-11-02T01:45:00Z', status: 'completed' }],
+}
+export const privacy: PrivacyState = { consent: 'granted', requests: [{ id: 'd1', kind: 'export', status: 'requested', createdAt: '2026-11-04T01:30:00Z' }, { id: 'd2', kind: 'delete', status: 'declined', createdAt: '2026-10-20T01:30:00Z' }] }
 
 export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 

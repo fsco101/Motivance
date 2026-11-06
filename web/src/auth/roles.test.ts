@@ -21,14 +21,14 @@ describe('role routing, matching Android', () => {
     expect(primaryRole(['scheduler', 'admin'])).toBe('admin')
   })
 
-  it('tells a patient-only account to use the mobile app', () => {
-    expect(homePath(['patient'])).toBe('/use-mobile')
-    expect(workspacesOf(['patient'])).toEqual([])
+  it('gives a patient their own workspace', () => {
+    expect(homePath(['patient'])).toBe('/patient')
+    expect(workspacesOf(['patient'])).toEqual(['patient'])
   })
 
-  it('offers every staff workspace the account holds, most senior first', () => {
-    expect(workspacesOf(['patient', 'therapist', 'admin'])).toEqual(['admin', 'therapist'])
-    expect(workspacesOf(['therapist', 'patient', 'scheduler', 'admin'])).toEqual(['admin', 'scheduler', 'therapist'])
+  it('offers every workspace the account holds, most senior first', () => {
+    expect(workspacesOf(['patient', 'therapist', 'admin'])).toEqual(['admin', 'therapist', 'patient'])
+    expect(workspacesOf(['therapist', 'patient', 'scheduler', 'admin'])).toEqual(['admin', 'scheduler', 'therapist', 'patient'])
   })
 
   it('has no primary role for an account without roles', () => {

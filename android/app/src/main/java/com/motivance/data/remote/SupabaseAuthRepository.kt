@@ -18,6 +18,7 @@ import com.motivance.data.local.SessionStore
 import com.motivance.data.local.SessionVault
 import java.io.IOException
 import java.time.Instant
+import java.time.OffsetDateTime
 
 /** Authenticated GoTrue/PostgREST adapter with protected session persistence. */
 @Singleton class SupabaseAuthRepository internal constructor(
@@ -181,6 +182,8 @@ import java.time.Instant
         if(cache!=null) {
             val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
             cache.replaceCache(id,PrescriptionCache.decode(id,details,System.currentTimeMillis()))
+            val consent=JSONArray(call("/rest/v1/consents?select=client_event_id,event,occurred_at&patient_id=eq.$id&consent_type=eq.movement-summary&client_event_id=not.is.null&order=occurred_at.desc&limit=1",null,token,"GET"))
+            if(consent.length()>0) cache.reconcileConsent(id,consent.getJSONObject(0).let {ServerConsent(it.getString("client_event_id"),it.getString("event"),OffsetDateTime.parse(it.getString("occurred_at")).toInstant().toEpochMilli())})
         }
         val patients=JSONArray(call("/rest/v1/patients?select=id,profiles:profiles!patients_id_fkey(display_name,photo_url)",null,token,"GET"))
         val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))

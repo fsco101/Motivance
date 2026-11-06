@@ -8,6 +8,10 @@ import { ActivityView } from '@/features/admin/ActivityView'
 import { AdminOverviewView } from '@/features/admin/AdminOverviewView'
 import { CatalogueView } from '@/features/admin/CatalogueView'
 import { LinksView } from '@/features/admin/LinksView'
+import { ConnectPanel, PrivacyPanel } from '@/features/patient/PatientCareView'
+import { PatientExercisesView } from '@/features/patient/PatientExercisesView'
+import { PatientHomeView } from '@/features/patient/PatientHomeView'
+import { UseThePhone } from '@/features/patient/UseThePhone'
 import { ready, type Load } from '@/features/shared'
 import { AssignmentEditorView } from '@/features/therapist/AssignmentEditorView'
 import { ProfileView, type ProfileActions } from '@/features/profile/ProfileView'
@@ -17,6 +21,7 @@ import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
 import { TherapistHomeView } from '@/features/therapist/TherapistHomeView'
 import { LandingPage } from '@/landing/LandingPage'
+import '@/locales/booking'
 import { Shell } from '@/layout/Shell'
 import { AnimatedOutlet } from '@/motion/AnimatedOutlet'
 import { ComponentGallery } from './ComponentGallery'
@@ -24,6 +29,7 @@ import * as data from './fixtures'
 
 const THERAPIST = '/design/therapist'
 const ADMIN = '/design/admin'
+const PATIENT = '/design/patient'
 
 /** Any screen can be reviewed in any state: add ?state=loading, ?state=error or ?state=empty to its address. */
 function useDemo<T>(value: T, empty: T): Load<T> {
@@ -38,8 +44,8 @@ const said = (message: string) => () => toast.show(message)
 
 function Frame({ workspace }: { workspace: Workspace }) {
   return (
-    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : THERAPIST} onSignOut={said('Signed out')} onSwitch={said('Switched workspace')}
-      account={{ name: 'Dana Reyes', email: 'dana.reyes@example.test', workspaces: ['admin', 'therapist'] }}>
+    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : THERAPIST} onSignOut={said('Signed out')} onSwitch={said('Switched workspace')}
+      account={{ name: 'Dana Reyes', email: 'dana.reyes@example.test', workspaces: ['admin', 'therapist', 'patient'] }}>
       <AnimatedOutlet />
     </Shell>
   )
@@ -57,6 +63,27 @@ function Progress() {
   const sessions = data.sessions.filter((s) => (filters.exerciseVersionId === 'all' || s.prescription?.exerciseVersionId === filters.exerciseVersionId)
     && (filters.side === 'all' || s.prescription?.side === filters.side) && (!filters.from || s.startedAt.slice(0, 10) >= filters.from) && (!filters.through || s.startedAt.slice(0, 10) <= filters.through))
   return <ProgressView choices={useDemo(base, base)} results={useDemo({ sessions, more: true }, { sessions: [], more: false })} filters={filters} onFilters={setFilters} onPatient={() => setFilters(NO_FILTERS)} onMore={said('Loaded older sessions')} />
+}
+function PatientHome() {
+  const [open, setOpen] = useState(false)
+  return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, next: null, exerciseCount: 0, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.next?.name} /></>
+}
+const PatientExercises = () => <PatientExercisesView base={PATIENT} load={useDemo(data.myExercises, [])} onStart={said('Suggested the phone')} onCamera={said('Suggested the phone')} />
+function PatientProgress() {
+  const [filters, setFilters] = useState(NO_FILTERS)
+  const base = { patients: [], patientId: 'p1', exercises: [{ id: 'v1', name: 'Elbow flexion' }] }
+  return <ProgressView self choices={useDemo(base, base)} results={useDemo({ sessions: data.sessions, more: false }, { sessions: [], more: false })} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={said('Loaded more')} />
+}
+function PatientProfile() {
+  return (
+    <>
+      <Profile />
+      <div className="mt-5 grid items-start gap-5 desk:grid-cols-2">
+        <ConnectPanel onConnect={async () => toast.show('Connected')} />
+        <PrivacyPanel load={useDemo(data.privacy, { consent: null, requests: [] })} onWithdraw={async () => toast.show('Withdrawn')} onRequest={async () => toast.show('Requested')} />
+      </div>
+    </>
+  )
 }
 const Exercises = () => <ExercisesView load={useDemo(data.catalogue, data.catalogue.filter((item) => !item.custom))} onCreate={async () => toast.show('Exercise saved')} onRemove={said('Exercise removed')} />
 
@@ -111,6 +138,15 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
         { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
+      ],
+    },
+    {
+      path: 'patient', element: <Frame workspace="patient" />, handle: { crumb: 'nav.home' },
+      children: [
+        { index: true, element: <PatientHome /> },
+        { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
+        { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
+        { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },
       ],
     },
     {

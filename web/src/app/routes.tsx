@@ -6,7 +6,7 @@ import { useAuth, useSignedIn } from '@/auth/AuthProvider'
 import { IdleGuard } from '@/auth/IdleGuard'
 import { SignInPage } from '@/auth/SignInPage'
 import { homePath, workspacePath, workspacesOf, type Workspace } from '@/auth/roles'
-import { Button, ButtonLink } from '@/components/Button'
+import { ButtonLink } from '@/components/Button'
 import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { SkeletonLines } from '@/features/shared'
@@ -33,6 +33,11 @@ const Catalogue = admin('CataloguePage')
 const Activity = admin('ActivityPage')
 const scheduler = (name: keyof typeof import('@/features/scheduler/pages')) => lazy(async () => ({ default: (await import('@/features/scheduler/pages'))[name] as ComponentType }))
 const SchedulerHome = scheduler('SchedulerHomePage')
+const patient = (name: keyof typeof import('@/features/patient/pages')) => lazy(async () => ({ default: (await import('@/features/patient/pages'))[name] as ComponentType }))
+const PatientHome = patient('PatientHomePage')
+const PatientExercises = patient('PatientExercisesPage')
+const PatientProgress = patient('PatientProgressPage')
+const PatientProfile = patient('PatientProfilePage')
 const Profile = lazy(async () => ({ default: (await import('@/features/profile/pages')).ProfilePage }))
 const LandingPage = lazy(async () => ({ default: (await import('@/landing/LandingPage')).LandingPage }))
 
@@ -79,18 +84,6 @@ function Front() {
   return <Suspense fallback={<Splash />}><LandingPage /></Suspense>
 }
 
-function UseMobile() {
-  const { t } = useTranslation()
-  const { signOut } = useAuth()
-  const { roles } = useSignedIn()
-  if (workspacesOf(roles).length > 0) return <Navigate to="/" replace />
-  return (
-    <main className="mx-auto grid min-h-dvh max-w-[40rem] content-center px-6">
-      <EmptyState title={t('useMobile.title')} detail={t('useMobile.detail')} action={<Button variant="secondary" onClick={() => void signOut()}>{t('account.signOut')}</Button>} />
-    </main>
-  )
-}
-
 /** Scheduling answers with a 403 rather than quietly moving the person, so they know the page exists and why they cannot use it. */
 function Forbidden() {
   const { t } = useTranslation()
@@ -131,7 +124,6 @@ export const routes: RouteObject[] = [
   {
     element: <SignedInOnly />,
     children: [
-      { path: 'use-mobile', element: <UseMobile /> },
       {
         path: 'therapist', element: <WorkspaceFrame workspace="therapist" />, handle: { crumb: 'nav.home' },
         children: [
@@ -149,6 +141,15 @@ export const routes: RouteObject[] = [
           { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
           { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
+        ],
+      },
+      {
+        path: 'patient', element: <WorkspaceFrame workspace="patient" />, handle: { crumb: 'nav.home' },
+        children: [
+          { index: true, element: <PatientHome /> },
+          { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
+          { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
+          { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },
         ],
       },
       {

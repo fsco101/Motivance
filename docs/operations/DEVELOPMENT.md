@@ -99,7 +99,7 @@ For the optional native `CameraLifecycleTest`, use a camera source that actually
 
 ## Web app
 
-The therapist and administrator web app is in `web/`. It needs Node 22 and the local Supabase stack. Everything in `web/.env` ships to the browser, so it holds only the URL and the publishable key.
+The web app is in `web/`. It needs Node 22 and the local Supabase stack. Everything in `web/.env` ships to the browser, so it holds only the URL and the publishable key.
 
 ```powershell
 cd web

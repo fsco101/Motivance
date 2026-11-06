@@ -6,13 +6,13 @@
     "loadFailedTitle": "This page could not load", "loadFailed": "Check your connection and try again."
   },
   "nav": {
-    "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling" },
+    "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling", "patient": "Your care" },
     "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
     "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",
-    "open": { "admin": "Open the administrator workspace", "therapist": "Open the therapist workspace", "scheduler": "Open the scheduling workspace" }
+    "open": { "admin": "Open the administrator workspace", "therapist": "Open the therapist workspace", "scheduler": "Open the scheduling workspace", "patient": "Open your patient workspace" }
   },
   "auth": {
     "backHome": "Back to home", "recoveryStep": "Step {{step}} of 2", "capsLock": "Caps Lock is on.", "sharedComputer": "On a shared computer? You are signed out after 15 minutes without activity.",
@@ -63,7 +63,6 @@
     "title": "Are you still there?", "stay": "Stay signed in",
     "message_one": "To protect patient information, you will be signed out in {{count}} second.", "message_other": "To protect patient information, you will be signed out in {{count}} seconds."
   },
-  "useMobile": { "title": "Use the Motivance mobile app", "detail": "Your exercises need the phone camera, so they run in the mobile app. This website is for therapists and administrators." },
   "home": {
     "subtitle": "How your patients are moving, and who needs a plan.", "withoutPlan": "Without a plan",
     "greeting": "Hello, {{name}}", "latestMovement": "Latest movement", "latestMovementDetail": "The pale band is the prescribed range. The bright arc is what was measured.",
@@ -95,7 +94,8 @@
     "chartLabel": "{{title}} chart with {{count}} sessions. Use the left and right arrow keys to read each session.", "showTable": "Show as a table", "date": "Date", "unknown": "Unknown exercise", "targets": "Prescribed", "result": "Result",
     "status": { "completed": "Completed", "partial": "Partial", "interrupted": "Interrupted", "empty": "No result", "invalid": "Not usable" },
     "patient": "Patient", "allExercises": "All exercises", "bothSides": "Both sides", "from": "From", "through": "Through", "emptyTitle": "No sessions yet", "emptyDetail": "Results appear here after this patient finishes an exercise.",
-    "noMatch": "No sessions match these filters.", "seriesLine": "{{side}}, version {{version}}, prescribed {{low}}° to {{high}}°", "sessions": "Sessions", "shown_one": "{{count}} session", "shown_other": "{{count}} sessions", "loadOlder": "Load older sessions"
+    "noMatch": "No sessions match these filters.", "seriesLine": "{{side}}, version {{version}}, prescribed {{low}}° to {{high}}°", "sessions": "Sessions", "shown_one": "{{count}} session", "shown_other": "{{count}} sessions", "loadOlder": "Load older sessions",
+    "selfDescription": "Your measured movement over time."
   },
   "assign": {
     "editing": "Editing version {{version}}", "nextVersion": "Publishing creates version {{version}}. Earlier sessions keep the targets they were recorded with.", "removed": "Removed", "removedHint": "This exercise was removed from your list, so this plan can only be published with another exercise.",

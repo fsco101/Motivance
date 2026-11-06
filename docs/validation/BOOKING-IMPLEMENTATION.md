@@ -72,3 +72,24 @@ Two rules went beyond the brief, because the design needs them. A patient has a 
 | Web unit tests, including booking event wording | `npm test` | 180 passed |
 | Android unit tests, including booking event wording | `gradlew :core:domain:test :app:testDebugUnitTest` | Passed |
 | Administrator parity | `python scripts/check_admin_parity.py` | 10 functions matched |
+
+## MOT-52: patients on the web
+
+Patients now have a full workspace at `/patient`, replacing the old "use the mobile app" page. Home, Exercises, Progress and Profile reuse the existing history and profile code, and the invitation, consent and data-request functions already on the server, so this needed no database change. Every read filters to the signed-in account, because row-level security alone would show an administrator everyone's records.
+
+Starting an exercise or the camera check opens a suggestion to continue on the phone. `VITE_ANDROID_APP_URL` adds a store link and a QR code, and until it is set the suggestion gives the instruction alone. A browser test watches `getUserMedia`, and the page never asks for the camera.
+
+Two problems came up that the existing checks did not catch:
+
+- **Consent.** Android reused its last local grant, so after a withdrawal on the web the next session would have been rejected on upload and lost. Android now reads the server's latest consent when it refreshes, and records a new grant.
+- **Clipped results on a phone.** The sessions table was cut off, hiding range of motion, repetitions and result, though the sideways-scroll check passed because the panel hides overflow. Sessions now stack on a phone, and a new check looks at each element. Putting the bug back makes that check fail.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Patient browser tests, with axe, at desktop and phone width | `npx playwright test tests/e2e/patient.spec.ts` | 11 passed, three runs in a row |
+| Full browser suite | `npx playwright test --workers=2` | 152 passed, 83 opt-in capture tests skipped. At the default worker count some tests time out on this 16 GB machine, and they pass serially |
+| Web unit tests | `npm test` | 187 passed |
+| Android unit tests, including consent reconciliation | `gradlew :core:domain:test :app:testDebugUnitTest` | Passed |
+| Bundle | `python scripts/check_web_bundle.py` | 290 KB of 300 KB |
+
+**Not run.** `SessionStoreTest.aWithdrawalMadeOnTheWebMeansTheNextSessionRecordsANewGrant` compiled but needs a device, for the reason under MOT-49. The decision it relies on is covered by the `ServerConsentTest` unit tests.

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
@@ -7,15 +7,16 @@ import { EmptyState, PageHeader } from '@/components/Display'
 import { toast } from '@/components/Toast'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
-import { loadHistory, usable, type HistoricalSession, type HistoryCursor } from '@/data/history'
+import { loadHistory, usable, type HistoricalSession } from '@/data/history'
 import { archiveCustomExercise, createCustomExercise, invitePatient, loadLatestSessions, loadPatientProfile, publishPrescription, revokePatientLink, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
 import { loadCatalogue, loadOverview, loadPatients, loadPlans } from '@/data/workspace'
 import { asLoad, ready, useFormat, type Load } from '@/features/shared'
 import { AssignmentEditorView } from './AssignmentEditorView'
 import { ExercisesView } from './ExercisesView'
+import { useProgressResults } from './history'
 import { PatientRecordView, type PatientRecord, type PlanCard } from './PatientRecordView'
 import { PatientsView } from './PatientsView'
-import { NO_FILTERS, ProgressView, type ProgressChoices, type ProgressResults } from './ProgressView'
+import { NO_FILTERS, ProgressView, type ProgressChoices } from './ProgressView'
 import { TherapistHomeView, type TherapistHome } from './TherapistHomeView'
 import { latestMovement, latestSeries, nameOf, reachedBy, recentFirst, romPoints, summarisePatients } from './summaries'
 
@@ -203,16 +204,7 @@ export function ProgressPage() {
   // Filters belong to one patient: another patient starts clean, however they were reached.
   const [chosen, setChosen] = useState({ patientId, filters: NO_FILTERS })
   const filters = chosen.patientId === patientId ? chosen.filters : NO_FILTERS
-  const history = useInfiniteQuery({
-    queryKey: ['history', patientId, filters],
-    enabled: Boolean(patientId),
-    initialPageParam: null as HistoryCursor | null,
-    queryFn: ({ pageParam }) => loadHistory(supabase(), {
-      patientId, exerciseVersionId: filters.exerciseVersionId === 'all' ? undefined : filters.exerciseVersionId,
-      side: filters.side === 'all' ? undefined : filters.side, from: filters.from || undefined, through: filters.through || undefined,
-    }, pageParam),
-    getNextPageParam: (page) => page.next,
-  })
+  const { results, onMore } = useProgressResults(patientId, filters)
   if (workspace.data && patients.length === 0) {
     return <><PageHeader title={t('nav.progress')} description={t('progress.description')} /><EmptyState title={t('progress.noPatientsTitle')} detail={t('progress.noPatientsDetail')} /></>
   }
@@ -222,13 +214,8 @@ export function ProgressPage() {
   })
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state
     : ready({ patients: patients.map((patient) => ({ id: patient.id, name: nameOf(patient) })), patientId, exercises: [...new Map(exercises.map((item) => [item.id, item])).values()] })
-  // Sessions already on screen stay there if a later page or a refresh fails.
-  const results: Load<ProgressResults> = history.data
-    ? ready({ sessions: history.data.pages.flatMap((page) => page.sessions), more: history.hasNextPage, loadingMore: history.isFetchingNextPage })
-    : history.isError ? { status: 'error', retry: () => void history.refetch() } : { status: 'loading' }
   return (
     <ProgressView choices={choices} results={results} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
-      onPatient={(id) => setParams({ patient: id })}
-      onMore={() => void history.fetchNextPage().then((page) => { if (page.isError) toast.show(t(failureKey(page.error)), 'error') })} />
+      onPatient={(id) => setParams({ patient: id })} onMore={onMore} />
   )
 }

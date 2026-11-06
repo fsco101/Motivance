@@ -546,7 +546,7 @@
       "github_issue": 69,
       "title": "Give patients the whole app on the web, except the camera",
       "description": "Replace the \"use the mobile app\" page with a full patient workspace. Everything a patient can do on Android works on the web, and only the camera exercise suggests the phone.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Android",
       "estimate_points": 8,
@@ -591,53 +591,97 @@
         {
           "id": "MOT-52-AC1",
           "description": "A patient who signs in on the web lands on /patient, and the old /use-mobile page is gone. Staff who also hold the patient role can switch to it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts"
+          ]
         },
         {
           "id": "MOT-52-AC2",
           "description": "Home shows the next exercise, this week and recent sessions. Exercises lists assignments with targets and instructions. Progress shows history, filters and charts. All filter to the signed-in account.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts"
+          ]
         },
         {
           "id": "MOT-52-AC3",
           "description": "Profile covers details, photo, password and language, plus consent status and withdrawal, export and deletion requests with their status, and joining a therapist by code.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts"
+          ]
         },
         {
           "id": "MOT-52-AC4",
           "description": "Starting an exercise or the camera check shows the suggestion to use the phone, with a store link or QR code when VITE_ANDROID_APP_URL is set. A browser test proves the exercise does not run and the page never requests the camera.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "web/src/features/patient/UseThePhone.tsx"
+          ]
         },
         {
           "id": "MOT-52-AC5",
           "description": "The workspace works at phone width with no sideways scrolling, by keyboard, and passes axe.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "web/tests/e2e/design.spec.ts"
+          ]
         },
         {
           "id": "MOT-52-AC6",
           "description": "After a consent withdrawal on the web, Android reads the server's latest consent on refresh and records a new grant before the next session, proved by a unit test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/ServerConsentTest.kt"
+          ]
         },
         {
           "id": "MOT-52-AC7",
           "description": "docs/PLAN.md and WEB-DESIGN.md no longer say patients stay on Android, and every new string exists in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/tests/e2e/patient.spec.ts",
+            "web/src/data/patient.test.ts",
+            "docs/PLAN.md",
+            "docs/architecture/WEB-DESIGN.md",
+            "web/src/locales/locales.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T12:48:04.108747+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/tests/e2e/patient.spec.ts",
+          "web/src/data/patient.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/tests/e2e/patient.spec.ts",
+        "web/src/data/patient.test.ts"
+      ]
     },
     {
       "id": "MOT-53",

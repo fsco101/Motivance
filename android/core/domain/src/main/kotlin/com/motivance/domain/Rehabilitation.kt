@@ -10,6 +10,11 @@ data class CustomExerciseDraft(val id:String,val name:String,val joint:BodyJoint
 }
 data class PrescriptionSummary(val assignmentId:String,val versionId:String,val patientId:String,val exerciseId:String,val version:Int,val side:String,val low:Double,val high:Double,val repetitions:Int,val parameters:String="{}")
 data class PrivacyRequest(val id:String,val kind:String,val status:String)
+/** The newest consent event on the server. Patients can also withdraw on the web, which this phone would otherwise never hear about. */
+data class ServerConsent(val id:String,val event:String,val occurredAt:Long) {
+    /** True when this phone still trusts a grant the patient has since withdrawn elsewhere. A grant made here afterwards stands. */
+    fun withdrawsLocalGrant(localEvent:String?,localOccurredAt:Long?)=event=="withdrawn" && localEvent=="granted" && occurredAt>=(localOccurredAt ?: Long.MAX_VALUE)
+}
 data class RehabWorkspace(val patients:List<LinkedPatient> = emptyList(),val catalogue:List<CatalogueExercise> = emptyList(),val prescriptions:List<PrescriptionSummary> = emptyList(),val requests:List<PrivacyRequest> = emptyList())
 data class PrescriptionDraft(val assignmentId:String,val requestId:String,val patientId:String,val exerciseId:String,val side:BodySide,val low:Double,val high:Double,val repetitions:Int,val minimumCycleMs:Long=600,val maximumCycleMs:Long=30000,val peakHoldMs:Long=100,val maxTrunkLean:Double=20.0,val confidence:Double=.7,val focusJoint:BodyJoint?=null)
 interface RehabilitationRepository {

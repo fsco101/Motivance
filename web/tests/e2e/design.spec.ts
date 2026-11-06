@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 
 /** Runs against the design gallery, which uses the same components and views as the app. */
 const SCREENS = [
-  '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
+  '/design/patient', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
   '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
 ]
 
@@ -30,6 +30,30 @@ for (const width of [768, 1024, 1440, 1920]) {
     }
   })
 }
+
+// A panel hides what overflows it, so the page itself can fit while a table is cut off. This checks each element instead.
+test('nothing on a patient page runs past a phone\'s edge', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.setViewportSize({ width: 360, height: 760 })
+  for (const path of ['/design/patient', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile']) {
+    await page.goto(path)
+    await page.waitForLoadState('networkidle')
+    const cut = await page.evaluate(() => [...document.querySelectorAll('main *')].filter((element) => {
+      const box = element.getBoundingClientRect()
+      return box.width > 0 && box.right > window.innerWidth + 1
+    }).map((element) => element.tagName).slice(0, 5))
+    expect(cut, path).toEqual([])
+  }
+})
+
+test('on a phone, each session shows its range of motion and result', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 760 })
+  await page.goto('/design/patient/progress')
+  const sessions = page.getByRole('list', { name: 'Sessions' })
+  await expect(sessions.getByRole('listitem').first()).toContainText('Range of motion')
+  await expect(sessions.getByRole('listitem').first()).toContainText('Completed')
+  await expect(page.getByRole('table', { name: 'Sessions' })).toBeHidden()
+})
 
 for (const [path, empty] of [
   ['/design/therapist', 'Invite your first patient'], ['/design/therapist/patients', 'No patients yet'], ['/design/therapist/patients/p1', 'No exercise assigned yet'], ['/design/therapist/progress', 'No sessions yet'],

@@ -6,13 +6,13 @@
     "loadFailedTitle": "Hindi ma-load ang pahinang ito", "loadFailed": "Suriin ang koneksyon at subukan muli."
   },
   "nav": {
-    "workspace": { "admin": "Pangangasiwa", "therapist": "Workspace ng therapist", "scheduler": "Pag-iiskedyul" },
+    "workspace": { "admin": "Pangangasiwa", "therapist": "Workspace ng therapist", "scheduler": "Pag-iiskedyul", "patient": "Iyong pangangalaga" },
     "main": "Pangunahin", "home": "Home", "patients": "Mga pasyente", "exercises": "Mga ehersisyo", "progress": "Pag-unlad", "overview": "Buod", "accounts": "Mga account",
     "links": "Ugnayan", "catalogue": "Katalogo", "activity": "Aktibidad", "skip": "Lumaktaw sa nilalaman", "breadcrumbs": "Narito ka"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",
-    "open": { "admin": "Buksan ang workspace ng administrador", "therapist": "Buksan ang workspace ng therapist", "scheduler": "Buksan ang workspace ng pag-iiskedyul" }
+    "open": { "admin": "Buksan ang workspace ng administrador", "therapist": "Buksan ang workspace ng therapist", "scheduler": "Buksan ang workspace ng pag-iiskedyul", "patient": "Buksan ang iyong workspace bilang pasyente" }
   },
   "auth": {
     "backHome": "Bumalik sa home", "recoveryStep": "Hakbang {{step}} sa 2", "capsLock": "Naka-on ang Caps Lock.", "sharedComputer": "Nasa shared na computer? Masa-sign out ka matapos ang 15 minutong walang aktibidad.",
@@ -63,7 +63,6 @@
     "title": "Nandiyan ka pa ba?", "stay": "Manatiling naka-sign in",
     "message_one": "Para maprotektahan ang impormasyon ng pasyente, masa-sign out ka sa loob ng {{count}} segundo.", "message_other": "Para maprotektahan ang impormasyon ng pasyente, masa-sign out ka sa loob ng {{count}} segundo."
   },
-  "useMobile": { "title": "Gamitin ang Motivance mobile app", "detail": "Kailangan ng iyong mga ehersisyo ang camera ng telepono, kaya sa mobile app ito ginagawa. Para sa mga therapist at administrador ang website na ito." },
   "home": {
     "subtitle": "Ang galaw ng iyong mga pasyente, at kung sino ang nangangailangan ng plano.", "withoutPlan": "Walang plano",
     "greeting": "Kumusta, {{name}}", "latestMovement": "Pinakabagong galaw", "latestMovementDetail": "Ang maputlang banda ang nireseta na saklaw. Ang maliwanag na arko ang nasukat.",
@@ -95,7 +94,8 @@
     "chartLabel": "Chart ng {{title}} na may {{count}} sesyon. Gamitin ang kaliwa at kanang arrow key para basahin ang bawat sesyon.", "showTable": "Ipakita bilang talahanayan", "date": "Petsa", "unknown": "Hindi kilalang ehersisyo", "targets": "Nireseta", "result": "Resulta",
     "status": { "completed": "Natapos", "partial": "Bahagya", "interrupted": "Naantala", "empty": "Walang resulta", "invalid": "Hindi magagamit" },
     "patient": "Pasyente", "allExercises": "Lahat ng ehersisyo", "bothSides": "Dalawang bahagi", "from": "Mula", "through": "Hanggang", "emptyTitle": "Wala pang sesyon", "emptyDetail": "Lalabas dito ang resulta kapag natapos ng pasyenteng ito ang isang ehersisyo.",
-    "noMatch": "Walang sesyong tumutugma sa mga filter na ito.", "seriesLine": "{{side}}, bersiyon {{version}}, nireseta {{low}}° hanggang {{high}}°", "sessions": "Mga sesyon", "shown_one": "{{count}} sesyon", "shown_other": "{{count}} sesyon", "loadOlder": "Mag-load ng mas lumang sesyon"
+    "noMatch": "Walang sesyong tumutugma sa mga filter na ito.", "seriesLine": "{{side}}, bersiyon {{version}}, nireseta {{low}}° hanggang {{high}}°", "sessions": "Mga sesyon", "shown_one": "{{count}} sesyon", "shown_other": "{{count}} sesyon", "loadOlder": "Mag-load ng mas lumang sesyon",
+    "selfDescription": "Ang nasukat mong paggalaw sa paglipas ng panahon."
   },
   "assign": {
     "editing": "Ine-edit ang bersyon {{version}}", "nextVersion": "Ang paglalathala ay gagawa ng bersyon {{version}}. Mananatili sa mga naunang sesyon ang target na ginamit noon.", "removed": "Inalis", "removedHint": "Inalis ang ehersisyong ito sa iyong listahan, kaya mailalathala lamang ang planong ito gamit ang ibang ehersisyo.",
