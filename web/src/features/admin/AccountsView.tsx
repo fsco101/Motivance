@@ -10,14 +10,14 @@ import { Avatar, EmptyState, Notice, PageHeader, Panel, StatusPill, Tabs } from 
 import { TextField } from '@/components/Field'
 import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { spring } from '@/motion/tokens'
-import { label, primaryRole, type AdminAccount, type StaffRole } from './types'
+import { label, primaryRole, roleLabel, type AdminAccount, type StaffRole } from './types'
 
-const FILTERS = ['all', 'patients', 'therapists', 'admins', 'disabled'] as const
+const FILTERS = ['all', 'patients', 'therapists', 'schedulers', 'admins', 'disabled'] as const
 type Filter = (typeof FILTERS)[number]
 
 const accepts = (filter: Filter, account: AdminAccount) => (
   filter === 'all' ? true : filter === 'patients' ? primaryRole(account) === 'patient' : filter === 'therapists' ? account.roles.includes('therapist')
-    : filter === 'admins' ? account.roles.includes('admin') : !account.active
+    : filter === 'schedulers' ? account.roles.includes('scheduler') : filter === 'admins' ? account.roles.includes('admin') : !account.active
 )
 
 type Pending = { title: string; message: string; confirm: string; destructive: boolean; run: () => void }
@@ -33,6 +33,7 @@ function Details({ account, self, actions, onClose, confirm }: { account: AdminA
   const name = label(account)
   const roles: ReadonlyArray<{ role: StaffRole; title: string; revokeDetail: string }> = [
     { role: 'therapist', title: t('admin.roleTherapist'), revokeDetail: t('admin.revokeTherapistDetail') },
+    { role: 'scheduler', title: t('admin.roleScheduler'), revokeDetail: t('admin.revokeSchedulerDetail') },
     { role: 'admin', title: t('admin.roleAdmin'), revokeDetail: t('admin.revokeAdminDetail') },
   ]
   const copy = async () => {
@@ -54,7 +55,7 @@ function Details({ account, self, actions, onClose, confirm }: { account: AdminA
       <dl className="mt-5 grid grid-cols-2 gap-3">
         <Fact term={t('admin.joined')}>{account.joined ? format.date(account.joined) : t('admin.never')}</Fact>
         <Fact term={t('admin.lastSignIn')}>{account.lastSignIn ? format.date(account.lastSignIn) : t('admin.never')}</Fact>
-        <Fact term={t('admin.roles')}>{account.roles.map((role) => t(`admin.role${role === 'admin' ? 'Admin' : role === 'therapist' ? 'Therapist' : 'Patient'}`)).join(', ')}</Fact>
+        <Fact term={t('admin.roles')}>{account.roles.map((role) => t(roleLabel(role))).join(', ')}</Fact>
         {account.username && <Fact term={t('profile.username')}>{account.username}</Fact>}
       </dl>
       <div className="mt-3 flex items-center justify-between gap-2">
@@ -125,7 +126,7 @@ export function AccountsView({ load, self, actions }: { load: Load<{ accounts: A
         <span className="min-w-0"><span className="block truncate font-semibold">{label(a)}</span><span className="block truncate text-xs text-slate">{a.email}</span></span>
       </button>
     ) },
-    { key: 'role', header: t('admin.role'), cell: (a) => <StatusPill tone={primaryRole(a) === 'patient' ? 'neutral' : 'primary'}>{t(`admin.role${primaryRole(a) === 'admin' ? 'Admin' : primaryRole(a) === 'therapist' ? 'Therapist' : 'Patient'}`)}</StatusPill> },
+    { key: 'role', header: t('admin.role'), cell: (a) => <StatusPill tone={primaryRole(a) === 'patient' ? 'neutral' : 'primary'}>{t(roleLabel(primaryRole(a)))}</StatusPill> },
     { key: 'status', header: t('admin.status'), hideBelow: 'desk', cell: (a) => (a.active ? <span className="text-slate">{t('admin.active')}</span> : <StatusPill tone="danger">{t('admin.disabled')}</StatusPill>) },
     { key: 'seen', header: t('admin.lastSignIn'), hideBelow: 'wide', align: 'end', cell: (a) => <span className="whitespace-nowrap text-slate">{a.lastSignIn ? format.date(a.lastSignIn) : t('admin.never')}</span> },
   ]

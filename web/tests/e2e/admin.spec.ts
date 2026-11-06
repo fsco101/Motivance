@@ -56,10 +56,10 @@ const confirm = async (text: string, button: string) => {
 const roles = (user: TestUser) => sql(`select string_agg(role,',' order by role) from public.user_roles where user_id='${user.id}'`)
 
 test('the overview shows every count and leads to each section', async () => {
-  await page.route('**/rpc/admin_summary', (route) => route.fulfill({ json: { accounts: 111, disabled: 2, patients: 88, therapists: 12, admins: 3, active_links: 44, unlinked_patients: 5, exercises: 9, active_exercises: 0, sessions_week: 77, pending_requests: 6 } }))
+  await page.route('**/rpc/admin_summary', (route) => route.fulfill({ json: { accounts: 111, disabled: 2, patients: 88, therapists: 12, schedulers: 5, admins: 3, active_links: 44, unlinked_patients: 5, exercises: 9, active_exercises: 0, sessions_week: 77, pending_requests: 6 } }))
   await page.goto('/admin')
   const main = page.getByRole('main')
-  for (const name of ['Accounts: 111', 'Patients: 88', 'Therapists: 12', 'Active links: 44', 'Active exercises: 0']) await expect(main.getByRole('link', { name })).toBeVisible()
+  for (const name of ['Accounts: 111', 'Patients: 88', 'Therapists: 12', 'Schedulers: 5', 'Administrators: 3', 'Active links: 44', 'Active exercises: 0']) await expect(main.getByRole('link', { name })).toBeVisible()
   await expect(main).toContainText('2 disabled')
   await expect(main).toContainText('5 without a therapist')
   await expect(main).toContainText('9 in catalogue')
@@ -114,6 +114,19 @@ test('a role is granted and removed after a confirmation that names the account'
   await details.getByRole('listitem').filter({ hasText: 'Therapist' }).getByRole('button', { name: 'Remove' }).click()
   await expect(page.getByRole('alertdialog')).toContainText('Their patient links and active assignments are revoked')
   await confirm(patientName, 'Remove')
+  await expect.poll(() => roles(patient)).toBe('patient')
+})
+
+test('the Scheduler role is granted, filtered and removed', async () => {
+  const details = await openAccount(patientName)
+  await details.getByRole('listitem').filter({ hasText: 'Scheduler' }).getByRole('button', { name: 'Grant' }).click()
+  await confirm(patientName, 'Grant')
+  await expect.poll(() => roles(patient)).toBe('patient,scheduler')
+  await page.getByRole('button', { name: /^Schedulers/ }).click()
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(patientName) })).toBeVisible()
+  await page.getByRole('button', { name: /^All/ }).click()
+  await details.getByRole('listitem').filter({ hasText: 'Scheduler' }).getByRole('button', { name: 'Remove' }).click()
+  await confirm('They will no longer be able to open scheduling.', 'Remove')
   await expect.poll(() => roles(patient)).toBe('patient')
 })
 

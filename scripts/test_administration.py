@@ -67,7 +67,7 @@ def main():
         check(rpc('admin_accounts',{'p_search':'%'},ta)[1]==[] and rpc('admin_accounts',{'p_search':'_'},ta)[1]==[],'Directory search treats LIKE wildcards literally')
         check(rpc('admin_accounts',{'p_search':'x'*101},ta)[0]>=400,'Overlong directory search rejected')
         code,summary=rpc('admin_summary',{},ta)
-        check(code==200 and {'accounts','disabled','patients','therapists','admins','active_links','unlinked_patients','exercises','active_exercises','sessions_week','pending_requests'}<=set(summary),'Admin reads whole-system overview counts')
+        check(code==200 and {'accounts','disabled','patients','therapists','schedulers','admins','active_links','unlinked_patients','exercises','active_exercises','sessions_week','pending_requests'}<=set(summary),'Admin reads whole-system overview counts')
         _,page=rpc('admin_accounts',{'p_after':patient},ta)
         check(all(a['id']>patient for a in page),'Account cursor excludes preceding records')
         check(rpc('admin_set_account',{'p_user':admin,'p_active':False},ta)[0]>=400,'Admin cannot disable own account')

@@ -48,6 +48,24 @@ test('an administrator lands on the administrator workspace', async ({ page }) =
   await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Accounts' })).toBeVisible()
 })
 
+test('a Scheduler lands on scheduling, and every other role gets a 403 page there', async ({ page }) => {
+  await signIn(page, await account(['patient', 'scheduler']))
+  await expect(page).toHaveURL(/\/scheduler$/)
+  await expect(page.getByRole('heading', { name: 'Scheduling', level: 1 })).toBeVisible()
+  await signOut(page)
+  for (const roles of [['therapist'], ['patient', 'admin'], ['patient']] as const) {
+    const person = await account(roles)
+    await signIn(page, person)
+    await expect(page).not.toHaveURL(/sign-in/)
+    await page.goto('/scheduler')
+    await expect(page.getByRole('heading', { name: '403: This page is for Schedulers' })).toBeVisible()
+    await page.getByRole('link', { name: 'Back to your workspace' }).click()
+    await expect(page).not.toHaveURL(/scheduler/)
+    await page.evaluate(() => localStorage.clear())
+    await page.goto('/sign-in')
+  }
+})
+
 test('someone with both staff roles can switch, and the choice ends at sign-out', async ({ page }) => {
   const both = await account(['patient', 'therapist', 'admin'])
   await signIn(page, both)

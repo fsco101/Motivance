@@ -5,9 +5,9 @@ data class AdminAccount(
     val id:String,val name:String,val active:Boolean,val roles:Set<String>,
     val email:String="",val username:String?=null,val createdAt:String?=null,val lastSignInAt:String?=null,val photoUrl:String?=null,
 ) {
-    val staff get()="therapist" in roles || "admin" in roles
+    val staff get()="therapist" in roles || "admin" in roles || "scheduler" in roles
     /** The most privileged role, used for grouping and badges. */
-    val primaryRole get()=when {"admin" in roles -> "admin";"therapist" in roles -> "therapist";else -> "patient"}
+    val primaryRole get()=when {"admin" in roles -> "admin";"scheduler" in roles -> "scheduler";"therapist" in roles -> "therapist";else -> "patient"}
     val label get()=name.ifBlank {email.ifBlank {id.take(8)}}
 }
 data class AdminLink(val therapist:String,val patient:String,val active:Boolean,val therapistName:String="",val patientName:String="")
@@ -16,7 +16,7 @@ data class AdminExercise(val id:String,val code:String,val active:Boolean,val ve
 data class AdminSummary(
     val accounts:Int=0,val disabled:Int=0,val patients:Int=0,val therapists:Int=0,val admins:Int=0,
     val activeLinks:Int=0,val unlinkedPatients:Int=0,val exercises:Int=0,val activeExercises:Int=0,
-    val sessionsWeek:Int=0,val pendingRequests:Int=0,
+    val sessionsWeek:Int=0,val pendingRequests:Int=0,val schedulers:Int=0,
 )
 data class AuditEvent(
     val id:Long,val action:String,val targetType:String,val targetId:String,val recordedAt:String,
@@ -31,11 +31,12 @@ data class AdminWorkspace(
     val next:String?=null,val summary:AdminSummary?=null,val activity:List<AuditEvent> = emptyList(),val activityNext:Long?=null,
 )
 
-enum class AccountFilter { ALL, PATIENTS, THERAPISTS, ADMINS, DISABLED }
+enum class AccountFilter { ALL, PATIENTS, THERAPISTS, SCHEDULERS, ADMINS, DISABLED }
 fun AccountFilter.accepts(account:AdminAccount)=when(this) {
     AccountFilter.ALL -> true
     AccountFilter.PATIENTS -> account.primaryRole=="patient"
     AccountFilter.THERAPISTS -> "therapist" in account.roles
+    AccountFilter.SCHEDULERS -> "scheduler" in account.roles
     AccountFilter.ADMINS -> "admin" in account.roles
     AccountFilter.DISABLED -> !account.active
 }

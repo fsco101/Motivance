@@ -42,7 +42,7 @@ import java.time.Instant
         val stored=vault?.read() ?: return
         try {
             val j=JSONObject(stored); require(j.getString("backend")==baseUrl); access=j.getString("access_token"); refreshToken=j.getString("refresh_token"); userId=j.getString("id"); expiresAt=j.getLong("expires_at")
-            cachedRoles=j.getJSONArray("roles").let { a -> (0 until a.length()).map {UserRole.valueOf(a.getString(it))}.toSet() }
+            cachedRoles=j.getJSONArray("roles").let { a -> (0 until a.length()).mapNotNull {UserRole.of(a.getString(it))}.toSet() }
         } catch(_:Exception) {clearSession()}
     }
     private suspend fun <T> authorized(owner:String?=null,action:suspend (String,String)->T):T=mutex.withLock {
@@ -78,7 +78,7 @@ import java.time.Instant
         val token = value.getString("access_token")
         val id = value.getJSONObject("user").getString("id")
         val roles = JSONArray(call("/rest/v1/user_roles?select=role&user_id=eq.$id", null, token, "GET"))
-        val mapped = (0 until roles.length()).map { UserRole.valueOf(roles.getJSONObject(it).getString("role").uppercase()) }.toSet()
+        val mapped = (0 until roles.length()).mapNotNull { UserRole.of(roles.getJSONObject(it).getString("role")) }.toSet()
         access = token; refreshToken = value.getString("refresh_token"); userId = id
         cachedRoles=mapped; expiresAt=value.optLong("expires_at",System.currentTimeMillis()/1000+value.optLong("expires_in",3600))
         vault?.write(JSONObject().put("backend",baseUrl).put("id",id).put("access_token",token).put("refresh_token",refreshToken).put("expires_at",expiresAt).put("roles",JSONArray(mapped.map {it.name})).toString())
@@ -216,7 +216,7 @@ import java.time.Instant
             if(accounts.length()>ADMIN_PAGE) rows.last().id else null,
             AdminSummary(summary.optInt("accounts"),summary.optInt("disabled"),summary.optInt("patients"),summary.optInt("therapists"),summary.optInt("admins"),
                 summary.optInt("active_links"),summary.optInt("unlinked_patients"),summary.optInt("exercises"),summary.optInt("active_exercises"),
-                summary.optInt("sessions_week"),summary.optInt("pending_requests")),
+                summary.optInt("sessions_week"),summary.optInt("pending_requests"),summary.optInt("schedulers")),
             activity.events,activity.next)
     }
     override suspend fun clearPhoto(user:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_clear_photo",JSONObject().put("p_user",user),t)}}

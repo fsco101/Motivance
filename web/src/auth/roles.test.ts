@@ -5,6 +5,7 @@ describe('role routing, matching Android', () => {
   it('sends each account to its own workspace', () => {
     expect(homePath(['therapist'])).toBe('/therapist')
     expect(homePath(['admin'])).toBe('/admin')
+    expect(homePath(['scheduler'])).toBe('/scheduler')
   })
 
   it('puts staff who are also patients on their staff workspace, in any order', () => {
@@ -12,6 +13,12 @@ describe('role routing, matching Android', () => {
     expect(homePath(['therapist', 'patient'])).toBe('/therapist')
     expect(homePath(['patient', 'therapist', 'admin'])).toBe('/admin')
     expect(primaryRole(['patient', 'admin'])).toBe('admin')
+    expect(homePath(['patient', 'scheduler'])).toBe('/scheduler')
+  })
+
+  it('ranks a Scheduler above a therapist and below an administrator', () => {
+    expect(primaryRole(['therapist', 'scheduler'])).toBe('scheduler')
+    expect(primaryRole(['scheduler', 'admin'])).toBe('admin')
   })
 
   it('tells a patient-only account to use the mobile app', () => {
@@ -21,6 +28,7 @@ describe('role routing, matching Android', () => {
 
   it('offers every staff workspace the account holds, most senior first', () => {
     expect(workspacesOf(['patient', 'therapist', 'admin'])).toEqual(['admin', 'therapist'])
+    expect(workspacesOf(['therapist', 'patient', 'scheduler', 'admin'])).toEqual(['admin', 'scheduler', 'therapist'])
   })
 
   it('has no primary role for an account without roles', () => {

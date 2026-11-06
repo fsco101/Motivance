@@ -1,4 +1,4 @@
-"""Create/reuse two owned local-only Auth fixtures, roles and a therapist link.
+"""Create/reuse three owned local-only Auth fixtures, roles and a therapist link.
 
 Credentials are saved in an ignored local document, never in the Android app.
 The optional --with-prescription flag adds an engineering demonstration assignment,
@@ -17,7 +17,8 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 CREDENTIALS = ROOT / 'docs/operations/local-test-accounts.json'
 FIXTURES = [('therapist', 'therapist@motivance.test', 'Demo Therapist'),
-            ('patient', 'patient@motivance.test', 'Demo Patient')]
+            ('patient', 'patient@motivance.test', 'Demo Patient'),
+            ('scheduler', 'scheduler@motivance.test', 'Demo Scheduler')]
 
 
 def main():
@@ -50,7 +51,7 @@ def main():
     # Look up only our reserved synthetic addresses, without listing other users.
     lookup = subprocess.run(
         ['docker', 'exec', '-i', 'supabase_db_motivance', 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-v', 'ON_ERROR_STOP=1'],
-        input="select email || '|' || id::text from auth.users where email in ('therapist@motivance.test','patient@motivance.test');",
+        input="select email || '|' || id::text from auth.users where email in ('therapist@motivance.test','patient@motivance.test','scheduler@motivance.test');",
         text=True, capture_output=True, check=True)
     existing = dict(line.split('|', 1) for line in lookup.stdout.splitlines() if line)
     old = json.loads(CREDENTIALS.read_text(encoding='utf-8')) if CREDENTIALS.exists() else {}
@@ -72,13 +73,14 @@ def main():
         accounts.append({'role': role, 'email': email, 'password': password,
                          'user_id': user_id, 'display_name': display_name})
 
-    therapist, patient = accounts
-    t, p = therapist['user_id'], patient['user_id']
+    therapist, patient, scheduler = accounts
+    t, p, s = therapist['user_id'], patient['user_id'], scheduler['user_id']
     sql = f"""begin;
 update public.profiles set display_name='Demo Therapist', active=true where id='{t}';
 update public.profiles set display_name='Demo Patient', active=true where id='{p}';
-delete from public.user_roles where user_id in ('{t}','{p}');
-insert into public.user_roles(user_id,role) values ('{t}','therapist'),('{p}','patient');
+update public.profiles set display_name='Demo Scheduler', active=true where id='{s}';
+delete from public.user_roles where user_id in ('{t}','{p}','{s}');
+insert into public.user_roles(user_id,role) values ('{t}','therapist'),('{p}','patient'),('{s}','scheduler');
 insert into public.therapist_patients(therapist_id,patient_id,active,assigned_by)
 values ('{t}','{p}',true,'{t}')
 on conflict (therapist_id,patient_id) do update set active=true;

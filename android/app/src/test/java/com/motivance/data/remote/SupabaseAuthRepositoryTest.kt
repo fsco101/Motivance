@@ -115,6 +115,17 @@ class SupabaseAuthRepositoryTest {
         assertEquals("Bearer test-access",requests.last().header("Authorization"))
         assertEquals("password",requests.first().url.queryParameter("grant_type"))
     }
+    /** A role added on the server must never stop an existing app signing in. */
+    @Test fun signInKeepsKnownRolesAndIgnoresOnesThisBuildDoesNotKnow()=runBlocking {
+        val http=OkHttpClient.Builder().addInterceptor {chain ->
+            val r=chain.request()
+            val body=if(r.url.encodedPath=="/rest/v1/user_roles") """[{"role":"patient"},{"role":"scheduler"},{"role":"clerk"}]""" else session
+            Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(200).message("Fixture").body(body.toResponseBody("application/json".toMediaType())).build()
+        }.build()
+        val signedIn=SupabaseAuthRepository(http,"https://fixture.invalid","public-fixture").signIn("a@example.test","fixture-password")
+        assertEquals(setOf(UserRole.PATIENT,UserRole.SCHEDULER),signedIn.roles)
+        assertEquals(UserRole.SCHEDULER,signedIn.primaryRole)
+    }
     @Test fun refreshFailureClearsSessionAndCannotRetryOldToken()=runBlocking {
         val repository=repository(); repository.signIn("patient@example.invalid","fixture-password")
         failRefresh=true

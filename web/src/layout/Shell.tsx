@@ -19,6 +19,9 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
     { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
     { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
   ],
+  scheduler: [
+    { path: '', label: 'nav.home', icon: HouseIcon, end: true },
+  ],
   admin: [
     { path: '', label: 'nav.overview', icon: GaugeIcon, end: true },
     { path: 'accounts', label: 'nav.accounts', icon: UsersThreeIcon },

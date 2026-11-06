@@ -57,7 +57,7 @@ export const sessions: HistoricalSession[] = days.map((day, index): HistoricalSe
   measurements: [{ key: 'elbow-flexion-v1', side: 'right', minimum: 14, maximum: reach[index]!, repetitions: index === 5 ? 7 : index === 3 ? 4 : 10, incomplete: index === 5 ? 3 : 0, quality: index === 3 ? 'limited' : 'valid', validFrames: 420, invalidFrames: 12 }],
 })).reverse()
 
-export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 186, therapists: 24, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
+export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 
 export const accounts: AdminAccount[] = [
   { id: '7c0e1f2a-0000-4000-8000-000000000001', name: 'Dana Reyes', email: 'dana.reyes@example.test', username: 'dana', active: true, roles: ['patient', 'therapist'], joined: '2026-08-02T01:00:00Z', lastSignIn: '2026-11-05T00:40:00Z' },

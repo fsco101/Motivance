@@ -1,0 +1,8 @@
+{
+  "scheduler": {
+    "title": "Scheduling",
+    "scope": "Review booking requests and manage the center's calendar.",
+    "emptyTitle": "No booking requests yet",
+    "emptyDetail": "Requests appear here once patients can book."
+  }
+}

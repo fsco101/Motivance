@@ -75,5 +75,11 @@ class LiveRoleRoutingTest {
         signIn(args.getString("adminEmail")!!)
         assertWorkspace(R.string.role_admin)
         signOut()
+
+        // Scheduling lives on the web, so a Scheduler sees that note and no clinical tabs.
+        signIn(args.getString("schedulerEmail")!!)
+        waitFor {present(R.string.scheduler_use_web)}
+        listOf(R.string.nav_exercises,R.string.nav_patients,R.string.role_admin).forEach {check(!present(it)) {"Found ${text(it)} in the Scheduler workspace"}}
+        signOut()
     }
 }

@@ -1,0 +1,8 @@
+{
+  "scheduler": {
+    "title": "Pag-iiskedyul",
+    "scope": "Suriin ang mga kahilingan sa booking at pamahalaan ang kalendaryo ng center.",
+    "emptyTitle": "Wala pang kahilingan sa booking",
+    "emptyDetail": "Lalabas dito ang mga kahilingan kapag nakakapag-book na ang mga pasyente."
+  }
+}

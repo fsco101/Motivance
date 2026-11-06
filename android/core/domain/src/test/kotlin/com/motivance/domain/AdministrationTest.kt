@@ -7,13 +7,15 @@ class AdministrationTest {
     private val patient=AdminAccount("p","Pat",true,setOf("patient"))
     private val therapist=AdminAccount("t","Thea",true,setOf("patient","therapist"))
     private val admin=AdminAccount("a","Ada",true,setOf("admin","patient"))
+    private val scheduler=AdminAccount("s","Sol",true,setOf("patient","scheduler"))
     private val disabled=AdminAccount("d","",false,setOf("patient"),email="d@example.test")
 
     @Test fun primaryRolePrefersTheMostPrivilegedRoleBecauseEveryAccountIsAlsoAPatient() {
         assertEquals("patient",patient.primaryRole)
         assertEquals("therapist",therapist.primaryRole)
         assertEquals("admin",admin.primaryRole)
-        assertFalse(patient.staff);assertTrue(therapist.staff);assertTrue(admin.staff)
+        assertFalse(patient.staff);assertTrue(therapist.staff);assertTrue(admin.staff);assertTrue(scheduler.staff)
+        assertEquals("scheduler",scheduler.primaryRole)
     }
     @Test fun labelFallsBackFromNameToEmailToShortId() {
         assertEquals("Pat",patient.label)
@@ -24,6 +26,8 @@ class AdministrationTest {
         val all=listOf(patient,therapist,admin,disabled)
         assertEquals(listOf(patient,disabled),all.filter {AccountFilter.PATIENTS.accepts(it)})
         assertEquals(listOf(therapist),all.filter {AccountFilter.THERAPISTS.accepts(it)})
+        assertTrue(AccountFilter.SCHEDULERS.accepts(scheduler));assertFalse(AccountFilter.SCHEDULERS.accepts(therapist))
+        assertFalse("A Scheduler is staff, not a patient",AccountFilter.PATIENTS.accepts(scheduler))
         assertEquals(listOf(admin),all.filter {AccountFilter.ADMINS.accepts(it)})
         assertEquals(listOf(disabled),all.filter {AccountFilter.DISABLED.accepts(it)})
         assertEquals(all,all.filter {AccountFilter.ALL.accepts(it)})

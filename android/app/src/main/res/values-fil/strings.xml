@@ -750,4 +750,13 @@
     <string name="custom_camera_limit">Sumusukat ang camera sa 2D. Kailangang manatiling nakatayo nang tuwid ang pasyente, at kita ang balikat, balakang at kasukasuang ito.</string>
     <string name="toast_exercise_created">Nai-save ang ehersisyo</string>
     <string name="toast_exercise_removed">Naalis ang ehersisyo</string>
+    <string name="scheduler_title">Scheduler</string>
+    <string name="scheduler_home">Pag-iiskedyul</string>
+    <string name="scheduler_home_detail">Sa web pinamamahalaan ang mga kahilingan sa booking at ang kalendaryo ng center.</string>
+    <string name="scheduler_use_web">Mag-sign in sa website ng Motivance sa computer para suriin ang mga kahilingan at pamahalaan ang kalendaryo.</string>
+    <string name="admin_role_scheduler">Scheduler</string>
+    <string name="admin_metric_schedulers">Mga scheduler</string>
+    <string name="admin_filter_schedulers">Mga scheduler</string>
+    <string name="admin_role_scheduler_detail">Maaaring suriin ang mga kahilingan sa booking at pamahalaan ang kalendaryo ng center, nang walang access sa mga clinical record.</string>
+    <string name="admin_revoke_scheduler_detail">Hindi na nila mabubuksan ang pag-iiskedyul.</string>
 </resources>

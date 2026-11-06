@@ -750,4 +750,13 @@
     <string name="custom_camera_limit">The camera measures in 2D. The patient needs to stay upright, with the shoulder, hip and this joint in view.</string>
     <string name="toast_exercise_created">Exercise saved</string>
     <string name="toast_exercise_removed">Exercise removed</string>
+    <string name="scheduler_title">Scheduler</string>
+    <string name="scheduler_home">Scheduling</string>
+    <string name="scheduler_home_detail">Booking requests and the center\'s calendar are managed on the web.</string>
+    <string name="scheduler_use_web">Sign in to the Motivance website on a computer to review requests and manage the calendar.</string>
+    <string name="admin_role_scheduler">Scheduler</string>
+    <string name="admin_metric_schedulers">Schedulers</string>
+    <string name="admin_filter_schedulers">Schedulers</string>
+    <string name="admin_role_scheduler_detail">Can review booking requests and manage the center\'s calendar, with no access to clinical records.</string>
+    <string name="admin_revoke_scheduler_detail">They will no longer be able to open scheduling.</string>
 </resources>

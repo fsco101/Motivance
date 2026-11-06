@@ -158,6 +158,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         bottomBar={if(auth.session!=null) {
             val destinations=when(actualRole) {
                 UserRole.ADMIN -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("ADMIN",R.string.role_admin,Icons.Default.Settings),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
+                UserRole.SCHEDULER -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
                 UserRole.THERAPIST -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("PATIENTS",R.string.nav_patients,Icons.Default.Person),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
                 else -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("EXERCISES",R.string.nav_exercises,Icons.Default.PlayArrow),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
             }
@@ -285,7 +286,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); history.refresh()}
                     ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history)
                 }
-                else -> {
+                else -> if(actualRole==UserRole.SCHEDULER) SchedulerHome() else {
                     val patientRole=actualRole==UserRole.PATIENT
                     val greeting=overview.data?.displayName?.takeIf {it.isNotBlank()}?.let {stringResource(R.string.home_greeting,it.substringBefore(' '))}
                     PageHeader(if(patientRole) R.string.your_recovery else R.string.clinical_overview,
@@ -588,7 +589,13 @@ internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
     }
 }
 
-private fun UserRole.title()=when(this) { UserRole.PATIENT -> R.string.patient_title; UserRole.THERAPIST -> R.string.therapist_title; UserRole.ADMIN -> R.string.role_admin }
+private fun UserRole.title()=when(this) { UserRole.PATIENT -> R.string.patient_title; UserRole.THERAPIST -> R.string.therapist_title; UserRole.SCHEDULER -> R.string.scheduler_title; UserRole.ADMIN -> R.string.role_admin }
+
+/** Scheduling is built from large tables and exports, so it lives on the web. The phone says so rather than showing an empty workspace. */
+@Composable private fun SchedulerHome() {
+    PageHeader(R.string.scheduler_home,R.string.scheduler_home_detail)
+    FeedbackNotice(R.string.scheduler_use_web)
+}
 
 /** Fallback hero when there is no assigned exercise to feature: a short orientation and the one next step. */
 @Composable internal fun WorkspaceHero(role:UserRole,onOpen:()->Unit) {

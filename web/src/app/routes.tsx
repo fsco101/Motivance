@@ -6,7 +6,7 @@ import { useAuth, useSignedIn } from '@/auth/AuthProvider'
 import { IdleGuard } from '@/auth/IdleGuard'
 import { SignInPage } from '@/auth/SignInPage'
 import { homePath, workspacePath, workspacesOf, type Workspace } from '@/auth/roles'
-import { Button } from '@/components/Button'
+import { Button, ButtonLink } from '@/components/Button'
 import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { SkeletonLines } from '@/features/shared'
@@ -31,6 +31,8 @@ const Accounts = admin('AccountsPage')
 const Links = admin('LinksPage')
 const Catalogue = admin('CataloguePage')
 const Activity = admin('ActivityPage')
+const scheduler = (name: keyof typeof import('@/features/scheduler/pages')) => lazy(async () => ({ default: (await import('@/features/scheduler/pages'))[name] as ComponentType }))
+const SchedulerHome = scheduler('SchedulerHomePage')
 const Profile = lazy(async () => ({ default: (await import('@/features/profile/pages')).ProfilePage }))
 const LandingPage = lazy(async () => ({ default: (await import('@/landing/LandingPage')).LandingPage }))
 
@@ -89,6 +91,17 @@ function UseMobile() {
   )
 }
 
+/** Scheduling answers with a 403 rather than quietly moving the person, so they know the page exists and why they cannot use it. */
+function Forbidden() {
+  const { t } = useTranslation()
+  const { roles } = useSignedIn()
+  return (
+    <main className="mx-auto grid min-h-dvh max-w-[40rem] content-center px-6">
+      <EmptyState title={t('forbidden.title')} detail={t('forbidden.detail')} action={<ButtonLink to={homePath(roles)} variant="secondary">{t('forbidden.back')}</ButtonLink>} />
+    </main>
+  )
+}
+
 function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   const { signOut } = useAuth()
   const { userId, email, roles } = useSignedIn()
@@ -103,7 +116,7 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
     },
   })
   // The server enforces this too; here it simply keeps people out of pages that would only fail.
-  if (!held.includes(workspace)) return <Navigate to={homePath(roles)} replace />
+  if (!held.includes(workspace)) return workspace === 'scheduler' ? <Forbidden /> : <Navigate to={homePath(roles)} replace />
   return (
     <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))}
       account={{ name: profile.data?.display_name || email, email, photo: profile.data?.photo_url, workspaces: held }}>
@@ -135,6 +148,13 @@ export const routes: RouteObject[] = [
           },
           { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
+          { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
+        ],
+      },
+      {
+        path: 'scheduler', element: <WorkspaceFrame workspace="scheduler" />, handle: { crumb: 'nav.home' },
+        children: [
+          { index: true, element: <SchedulerHome /> },
           { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
         ],
       },

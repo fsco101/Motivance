@@ -66,6 +66,7 @@ describe('administration on the local backend', () => {
     const db = await signedIn(admin)
     await expect(setAccount(db, admin.id, false)).rejects.toThrow()
     await expect(setRole(db, admin.id, 'admin', false)).rejects.toThrow()
+    await expect(setRole(db, admin.id, 'scheduler', true)).rejects.toThrow()
     expect(sql(`select active from public.profiles where id='${admin.id}'`)).toBe('t')
   })
 

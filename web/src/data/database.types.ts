@@ -840,6 +840,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      require_scheduler: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       revoke_patient_link: {
         Args: { p_patient: string }
         Returns: undefined
@@ -847,6 +851,10 @@ export type Database = {
       save_my_profile: {
         Args: { p_details: Json }
         Returns: undefined
+      }
+      scheduler_patients: {
+        Args: { p_search?: string; p_limit?: number }
+        Returns: Json
       }
       set_my_profile_photo: {
         Args: { p_public_id: string; p_version: number; p_signature: string }

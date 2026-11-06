@@ -156,6 +156,13 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] On a physical phone with animations on, confirm the guide moves smoothly on the patient exercise list, where several can play at once.
 - [ ] Try the guide with TalkBack, and have a Filipino speaker review its spoken description.
 
+## Booking and scheduling follow-up (2026-11-06)
+
+Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
+
+- [ ] On a spare emulator, run `scripts/test_role_routing.py` and confirm a Scheduler sees the note that scheduling is on the web, with no clinical tabs. It clears app data, so do not use a working emulator.
+- [ ] Have a Filipino speaker review the booking and scheduling text in `web/src/locales/fil.json` and `android/app/src/main/res/values-fil/strings.xml`.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

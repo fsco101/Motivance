@@ -1,8 +1,8 @@
-export type Role = 'admin' | 'therapist' | 'patient'
+export type Role = 'admin' | 'scheduler' | 'therapist' | 'patient'
 /** The workspaces that exist on the web. Patients use the Android app, because exercises need the camera. */
-export type Workspace = 'admin' | 'therapist'
+export type Workspace = 'admin' | 'scheduler' | 'therapist'
 
-const ORDER: readonly Role[] = ['admin', 'therapist', 'patient']
+const ORDER: readonly Role[] = ['admin', 'scheduler', 'therapist', 'patient']
 
 /**
  * Every account starts as a patient, so staff also hold that role: the most senior role decides where they land.

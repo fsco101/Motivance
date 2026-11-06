@@ -49,7 +49,7 @@ def main():
         return email
 
     try:
-        accounts = {'patientEmail': user('patient'), 'therapistEmail': user('therapist'), 'therapistPatientEmail': user('patient', 'therapist'), 'adminEmail': user('patient', 'admin')}
+        accounts = {'patientEmail': user('patient'), 'therapistEmail': user('therapist'), 'therapistPatientEmail': user('patient', 'therapist'), 'adminEmail': user('patient', 'admin'), 'schedulerEmail': user('patient', 'scheduler')}
         command = [ADB, 'shell', 'am', 'instrument', '-w', '-e', 'class', TEST, '-e', 'password', password]
         for name, email in accounts.items(): command += ['-e', name, email]
         output = subprocess.run(command + [RUNNER], capture_output=True, text=True, timeout=300).stdout

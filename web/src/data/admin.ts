@@ -30,7 +30,7 @@ export async function loadSummary(db: Db): Promise<AdminSummary> {
   const row = must(await db.rpc('admin_summary')) as Record<string, number>
   const count = (key: string) => row[key] ?? 0
   return {
-    accounts: count('accounts'), disabled: count('disabled'), patients: count('patients'), therapists: count('therapists'), admins: count('admins'),
+    accounts: count('accounts'), disabled: count('disabled'), patients: count('patients'), therapists: count('therapists'), schedulers: count('schedulers'), admins: count('admins'),
     activeLinks: count('active_links'), unlinkedPatients: count('unlinked_patients'), exercises: count('exercises'), activeExercises: count('active_exercises'),
     sessionsWeek: count('sessions_week'), pendingRequests: count('pending_requests'),
   }

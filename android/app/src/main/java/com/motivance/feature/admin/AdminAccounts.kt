@@ -60,6 +60,7 @@ private fun AccountFilter.label()=when(this) {
     AccountFilter.ALL -> R.string.admin_filter_all
     AccountFilter.PATIENTS -> R.string.admin_filter_patients
     AccountFilter.THERAPISTS -> R.string.admin_filter_therapists
+    AccountFilter.SCHEDULERS -> R.string.admin_filter_schedulers
     AccountFilter.ADMINS -> R.string.admin_filter_admins
     AccountFilter.DISABLED -> R.string.admin_filter_disabled
 }
@@ -104,6 +105,7 @@ private fun AccountFilter.label()=when(this) {
     Text(stringResource(R.string.admin_access),style=MaterialTheme.typography.titleSmall,color=MaterialTheme.colorScheme.primary,modifier=Modifier.semantics {heading()})
     val name=account.label
     listOf(Triple("therapist",R.string.admin_role_therapist_detail,R.string.admin_revoke_therapist_detail),
+        Triple("scheduler",R.string.admin_role_scheduler_detail,R.string.admin_revoke_scheduler_detail),
         Triple("admin",R.string.admin_role_admin_detail,R.string.admin_revoke_admin_detail)).forEach {(role,detail,revokeDetail) ->
         val granted=role in account.roles
         val label=roleLabel(role)

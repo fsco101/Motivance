@@ -21,7 +21,7 @@ export function sql(statement: string) {
 }
 
 export type TestUser = { id: string; email: string; password: string }
-export type Role = 'patient' | 'therapist' | 'admin'
+export type Role = 'patient' | 'therapist' | 'scheduler' | 'admin'
 
 export const client = () => createClient<Database>(stack().API_URL, stack().ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
 

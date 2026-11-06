@@ -101,7 +101,7 @@ internal fun AdminAction.savedLabel()=when(this) {
     }
 }
 
-@Composable internal fun roleLabel(role:String)=stringResource(when(role) {"admin" -> R.string.admin_role_admin;"therapist" -> R.string.admin_role_therapist;else -> R.string.admin_role_patient})
+@Composable internal fun roleLabel(role:String)=stringResource(when(role) {"admin" -> R.string.admin_role_admin;"scheduler" -> R.string.admin_role_scheduler;"therapist" -> R.string.admin_role_therapist;else -> R.string.admin_role_patient})
 
 /** The account's photo, or initials on a role-coloured disc; disabled accounts are drawn neutral. */
 @Composable internal fun AdminAvatar(name:String,role:String,active:Boolean=true,size:Int=48,photoUrl:String?=null) {
@@ -109,7 +109,7 @@ internal fun AdminAction.savedLabel()=when(this) {
     val (container,content)=when {
         !active -> scheme.surfaceContainerHigh to scheme.outline
         role=="admin" -> scheme.primary to scheme.onPrimary
-        role=="therapist" -> scheme.secondary to scheme.onSecondary
+        role=="therapist" || role=="scheduler" -> scheme.secondary to scheme.onSecondary
         else -> scheme.primaryContainer to scheme.onPrimaryContainer
     }
     PersonAvatar(photoUrl,name,size.dp,container=container,content=content)
@@ -120,7 +120,7 @@ internal fun AdminAction.savedLabel()=when(this) {
 @Composable internal fun AccountBadges(account:AdminAccount,self:Boolean) {
     FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
         if(self) StatusPill(stringResource(R.string.admin_you),PillTone.PRIMARY)
-        listOf("admin","therapist").filter {it in account.roles}.forEach {StatusPill(roleLabel(it),PillTone.POSITIVE)}
+        listOf("admin","scheduler","therapist").filter {it in account.roles}.forEach {StatusPill(roleLabel(it),PillTone.POSITIVE)}
         if(!account.staff) StatusPill(roleLabel("patient"))
         if(!account.active) StatusPill(stringResource(R.string.admin_disabled),PillTone.ATTENTION,Icons.Default.Lock)
     }
