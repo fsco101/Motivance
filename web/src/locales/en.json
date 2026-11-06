@@ -17,8 +17,8 @@
     "scheduleShort": "Schedule",
     "calendar": "Calendar",
     "notifications": "Notifications",
-    "notificationsUnread_one": "Notifications, {{count}} unread",
-    "notificationsUnread_other": "Notifications, {{count}} unread"
+    "notificationsUnread_one": "Notifications, {{shown}} unread",
+    "notificationsUnread_other": "Notifications, {{shown}} unread"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",
@@ -155,11 +155,13 @@
       "bookingRescheduled": "Booking rescheduled",
       "bookingReturned": "Booking returned to pending",
       "bookingTherapist": "Booking therapist changed",
-      "bookingAttendance": "Attendance recorded"
+      "bookingAttendance": "Attendance recorded",
+      "bookingExported": "Schedule exported"
     },
     "schedulers": "Schedulers",
     "roleScheduler": "Scheduler",
-    "revokeSchedulerDetail": "They will no longer be able to open scheduling."
+    "revokeSchedulerDetail": "They will no longer be able to open scheduling.",
+    "eventExport": "{{format}}, {{rows}} rows"
   },
   "forbidden": {
     "title": "403: This page is for Schedulers",

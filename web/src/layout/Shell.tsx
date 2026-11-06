@@ -31,6 +31,7 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
   scheduler: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
     { path: 'requests', label: 'nav.requests', icon: TrayIcon },
+    { path: 'schedule', label: 'nav.scheduleShort', icon: CalendarCheckIcon },
     { path: 'calendar', label: 'nav.calendar', icon: CalendarDotsIcon },
   ],
   admin: [

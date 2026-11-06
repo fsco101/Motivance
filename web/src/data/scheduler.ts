@@ -28,6 +28,10 @@ export const decodeRow = (row: RawRow): RequestRow => ({
   therapistId: row.therapist_id, therapist: row.therapist_name, attendance: row.attendance, createdAt: row.created_at,
 })
 
+export type ScheduleFilters = { search: string; status: 'all' | 'confirmed' | 'rescheduled'; from: string; to: string; therapist: string; patient: string }
+export const NO_SCHEDULE_FILTERS: ScheduleFilters = { search: '', status: 'all', from: '', to: '', therapist: 'all', patient: 'all' }
+export type PatientChoice = { id: string; name: string }
+
 export const queryOf = (filters: RequestFilters, sort: RequestSort, page: number) => ({
   p_search: filters.search.trim() || undefined, p_statuses: filters.status === 'all' ? undefined : [filters.status], p_from: filters.from || undefined, p_to: filters.to || undefined,
   p_therapist: filters.therapist === 'all' ? undefined : filters.therapist, p_sort: sort.key, p_descending: sort.direction === 'desc', p_limit: PAGE_SIZE, p_offset: page * PAGE_SIZE,
@@ -57,6 +61,37 @@ export async function loadDetail(db: Db, booking: string): Promise<RequestDetail
 }
 
 export type TherapistChoice = { id: string; name: string; linked: boolean; busy: boolean; onLeave: boolean }
+
+const scheduleQuery = (filters: ScheduleFilters, sort: RequestSort, limit: number, offset: number) => ({
+  p_search: filters.search.trim() || undefined, p_statuses: filters.status === 'all' ? ['confirmed', 'rescheduled'] : [filters.status], p_from: filters.from || undefined, p_to: filters.to || undefined,
+  p_therapist: filters.therapist === 'all' ? undefined : filters.therapist, p_patient: filters.patient === 'all' ? undefined : filters.patient,
+  p_sort: sort.key, p_descending: sort.direction === 'desc', p_limit: limit, p_offset: offset,
+})
+
+async function readSchedule(db: Db, filters: ScheduleFilters, sort: RequestSort, limit: number, offset: number) {
+  const { rows, total } = must(await db.rpc('scheduler_bookings', scheduleQuery(filters, sort, limit, offset))) as unknown as { rows: RawRow[]; total: number }
+  return { rows: rows.map(decodeRow), total }
+}
+
+export const loadConfirmed = (db: Db, filters: ScheduleFilters, sort: RequestSort, page: number) => readSchedule(db, filters, sort, PAGE_SIZE, page * PAGE_SIZE)
+
+/** Everything the filters match, however many pages that takes, because an export covers the whole result and not what is on screen. */
+export async function loadAllConfirmed(db: Db, filters: ScheduleFilters, sort: RequestSort, chunk = 500) {
+  const rows: RequestRow[] = []
+  for (;;) {
+    const found = await readSchedule(db, filters, sort, chunk, rows.length)
+    rows.push(...found.rows)
+    if (found.rows.length === 0 || rows.length >= found.total) return rows
+  }
+}
+
+export const loadPatientChoices = async (db: Db) => must(await db.rpc('scheduler_schedule_patients')) as unknown as PatientChoice[]
+export const loadCenterName = async (db: Db) => {
+  const { data, error } = await db.from('center_settings').select('center_name').single()
+  if (error) throw error
+  return data.center_name
+}
+export const logExport = async (db: Db, format: 'xlsx' | 'pdf', rows: number) => { must(await db.rpc('scheduler_log_export', { p_format: format, p_rows: rows })) }
 
 /** With no booking, every active therapist, for the filter. With one, those who could take it, linked ones first. */
 export async function loadTherapists(db: Db, booking?: string, startsAt?: string): Promise<TherapistChoice[]> {

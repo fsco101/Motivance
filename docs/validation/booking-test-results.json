@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T17:29:48.224669+00:00",
-  "checks_passed": 531,
+  "generated_at": "2026-11-06T19:17:41.361415+00:00",
+  "checks_passed": 549,
   "checks": [
     "A patient cannot grant the Scheduler role",
     "A therapist cannot grant the Scheduler role",
@@ -60,6 +60,10 @@
     "scheduler_delete_time_off answers 403 to a therapist",
     "scheduler_delete_time_off answers 403 to a administrator",
     "scheduler_delete_time_off answers 401 to an anonymous caller",
+    "scheduler_log_export answers 403 to a patient",
+    "scheduler_log_export answers 403 to a therapist",
+    "scheduler_log_export answers 403 to a administrator",
+    "scheduler_log_export answers 401 to an anonymous caller",
     "scheduler_patients answers 403 to a patient",
     "scheduler_patients answers 403 to a therapist",
     "scheduler_patients answers 403 to a administrator",
@@ -92,6 +96,10 @@
     "scheduler_save_time_off answers 403 to a therapist",
     "scheduler_save_time_off answers 403 to a administrator",
     "scheduler_save_time_off answers 401 to an anonymous caller",
+    "scheduler_schedule_patients answers 403 to a patient",
+    "scheduler_schedule_patients answers 403 to a therapist",
+    "scheduler_schedule_patients answers 403 to a administrator",
+    "scheduler_schedule_patients answers 401 to an anonymous caller",
     "scheduler_therapists answers 403 to a patient",
     "scheduler_therapists answers 403 to a therapist",
     "scheduler_therapists answers 403 to a administrator",
@@ -447,6 +455,7 @@
     "Leave can be deleted",
     "And the therapist is free again",
     "Leave already gone is refused",
+    "A recipient removed part-way through costs nobody their booking",
     "A new request alerts every Scheduler",
     "The alert says who and which",
     "And the specific time",
@@ -532,7 +541,16 @@
     "And tells nobody twice",
     "A Scheduler cannot run the reminders",
     "Nor expire requests",
-    "Both jobs are scheduled"
+    "Both jobs are scheduled",
+    "A Scheduler records an export",
+    "With its format and row count",
+    "An export of nothing is still recorded",
+    "An administrator sees who exported what",
+    "An export with an unknown format is refused",
+    "An export with no format is refused",
+    "An export with a negative count is refused",
+    "An export with no count is refused",
+    "A patient cannot record an export"
   ],
   "environment": "real local Auth and PostgREST with disposable synthetic accounts"
 }

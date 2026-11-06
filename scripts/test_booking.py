@@ -1080,6 +1080,9 @@ def time_off(stack):
 
 def notifications(stack):
     """MOT-59: what changed, told to the people it matters to, and to nobody else."""
+    nobody = '00000000-0000-4000-8000-000000000000'
+    stack.sql(f"select public.notify('{nobody}','request_received',null,'{{}}'::jsonb,-1,null);")
+    stack.check(stack.sql(f"select count(*) from public.notifications where user_id='{nobody}';") == '0', 'A recipient removed part-way through costs nobody their booking')
     sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Scheduler')
     _, t2 = stack.user('patient', 'scheduler', name='Booking Sam Scheduler')
     gone, tg = stack.user('patient', 'scheduler', name='Booking Gone Scheduler')
@@ -1315,7 +1318,23 @@ def reminders(stack):
     stack.check(stack.sql("select count(*) from cron.job where jobname in ('booking-reminders','expire-booking-requests') and active;") == '2', 'Both jobs are scheduled')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders}
+def exports(stack):
+    """MOT-62: every export is on the record."""
+    sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Export')
+    admin, tadmin = stack.user('patient', 'admin', name='Booking Admin Export')
+    _, ta = stack.user('patient', name='Booking Ana Export')
+    stack.check(stack.rpc('scheduler_log_export', {'p_format': 'xlsx', 'p_rows': 12}, ts)[0] == 204, 'A Scheduler records an export')
+    stack.check(stack.sql(f"select action,target_type,target_id from public.audit_events where actor_id='{sol}' order by id desc limit 1;") == 'export|bookings|xlsx:12', 'With its format and row count')
+    stack.check(stack.rpc('scheduler_log_export', {'p_format': 'pdf', 'p_rows': 0}, ts)[0] == 204, 'An export of nothing is still recorded')
+    code, feed = stack.rpc('admin_activity', {}, tadmin)
+    found = [row for row in feed if row['action'] == 'export' and row['actor_id'] == sol]
+    stack.check(code == 200 and found[0]['target_id'] == 'pdf:0' and found[0]['actor_name'] == 'Booking Sol Export', 'An administrator sees who exported what')
+    for label, body in [('an unknown format', {'p_format': 'csv', 'p_rows': 1}), ('no format', {'p_format': None, 'p_rows': 1}), ('a negative count', {'p_format': 'pdf', 'p_rows': -1}), ('no count', {'p_format': 'pdf', 'p_rows': None})]:
+        stack.check(refused(stack.rpc('scheduler_log_export', body, ts), 'booking_invalid'), f'An export with {label} is refused')
+    stack.check(stack.rpc('scheduler_log_export', {'p_format': 'pdf', 'p_rows': 1}, ta)[0] == 403, 'A patient cannot record an export')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports}
 
 
 def main():

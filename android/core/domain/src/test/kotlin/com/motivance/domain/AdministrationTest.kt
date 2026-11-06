@@ -57,6 +57,7 @@ class AdministrationTest {
             ("data_requests" to "insert") to (AuditKind.REQUEST_CREATED to AuditCategory.PRIVACY),
             ("data_requests" to "update") to (AuditKind.REQUEST_UPDATED to AuditCategory.PRIVACY),
             ("bookings" to "requested") to (AuditKind.BOOKING_REQUESTED to AuditCategory.BOOKINGS),
+            ("bookings" to "export") to (AuditKind.BOOKING_EXPORTED to AuditCategory.BOOKINGS),
             ("bookings" to "confirmed") to (AuditKind.BOOKING_CONFIRMED to AuditCategory.BOOKINGS),
             ("bookings" to "rejected") to (AuditKind.BOOKING_REJECTED to AuditCategory.BOOKINGS),
             ("bookings" to "cancelled") to (AuditKind.BOOKING_CANCELLED to AuditCategory.BOOKINGS),

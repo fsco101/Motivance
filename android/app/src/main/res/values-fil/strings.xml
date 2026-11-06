@@ -869,4 +869,6 @@
     <string name="notification_reminder">Paalala: ang iyong session ay sa %1$s kasama si %2$s.</string>
     <string name="notification_session_reminder">Paalala: naka-book sa iyo si %1$s sa %2$s.</string>
     <string name="booking_reason_expired">Lumipas ang oras bago makumpirma ang kahilingang ito.</string>
+    <string name="admin_event_booking_exported">Na-export ang iskedyul</string>
+    <string name="admin_event_export_target">%1$s, %2$s hanay</string>
 </resources>

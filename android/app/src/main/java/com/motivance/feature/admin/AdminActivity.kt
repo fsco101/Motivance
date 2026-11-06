@@ -78,6 +78,7 @@ internal fun AuditKind.label()=when(this) {
     AuditKind.BOOKING_RETURNED -> R.string.admin_event_booking_returned
     AuditKind.BOOKING_THERAPIST -> R.string.admin_event_booking_therapist
     AuditKind.BOOKING_ATTENDANCE -> R.string.admin_event_booking_attendance
+    AuditKind.BOOKING_EXPORTED -> R.string.admin_event_booking_exported
     AuditKind.OTHER -> R.string.admin_event_other
 }
 
@@ -103,7 +104,8 @@ internal fun AuditKind.label()=when(this) {
             val (therapist,patient)=event.targetId.split(':').let {(it.getOrNull(0) ?: "") to (it.getOrNull(1) ?: "")}
             stringResource(R.string.admin_event_link_target,event.targetName.ifBlank {shortId(therapist)},event.relatedName.ifBlank {shortId(patient)})
         } else stringResource(R.string.admin_event_reference,shortId(event.targetId))
-        AuditCategory.BOOKINGS -> event.targetName.ifBlank {stringResource(R.string.admin_event_reference,shortId(event.targetId))}
+        AuditCategory.BOOKINGS -> if(event.action=="export") event.targetId.split(":").let {stringResource(R.string.admin_event_export_target,it[0].uppercase(),it.getOrElse(1) {"0"})}
+            else event.targetName.ifBlank {stringResource(R.string.admin_event_reference,shortId(event.targetId))}
         else -> stringResource(R.string.admin_event_reference,shortId(event.targetId))
     }
     val actor=when {

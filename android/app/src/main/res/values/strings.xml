@@ -869,4 +869,6 @@
     <string name="notification_reminder">Reminder: your session is on %1$s with %2$s.</string>
     <string name="notification_session_reminder">Reminder: %1$s is booked with you on %2$s.</string>
     <string name="booking_reason_expired">The time passed before this request could be confirmed.</string>
+    <string name="admin_event_booking_exported">Schedule exported</string>
+    <string name="admin_event_export_target">%1$s, %2$s rows</string>
 </resources>

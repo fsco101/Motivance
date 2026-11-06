@@ -1537,6 +1537,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      scheduler_log_export: {
+        Args: { p_format: string; p_rows: number }
+        Returns: undefined
+      }
       scheduler_patients: {
         Args: { p_search?: string; p_limit?: number }
         Returns: Json
@@ -1604,6 +1608,10 @@ export type Database = {
           p_reason: string
           p_resolutions?: Json
         }
+        Returns: Json
+      }
+      scheduler_schedule_patients: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       scheduler_therapists: {

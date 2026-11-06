@@ -1,7 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { TFunction } from 'i18next'
 import { describe, expect, it } from 'vitest'
-import { ACCOUNT_PAGE, ACTIVITY_PAGE, auditCategory, auditKind, decodeExercises, describeEvent, loadAccounts, loadActivity, type RawAudit } from './admin'
+import en from '@/locales/en.json'
+import fil from '@/locales/fil.json'
+import { ACCOUNT_PAGE, ACTIVITY_PAGE, auditCategory, auditKind, decodeExercises, describeEvent, KINDS, loadAccounts, loadActivity, type RawAudit } from './admin'
 import type { Database } from './database.types'
 
 const fake = (data: unknown) => ({ rpc: async () => ({ data, error: null }) }) as unknown as SupabaseClient<Database>
@@ -12,6 +14,12 @@ const event = (extra: Partial<RawAudit>): RawAudit => ({
 })
 
 describe('audit events use the same wording as Android', () => {
+  // The feed falls back to a generic label, so a misplaced key looks fine until someone reads it.
+  it.each([...new Set(Object.values(KINDS))])('has words for %s in both languages', (kind) => {
+    expect(en.admin.event).toHaveProperty(kind)
+    expect(fil.admin.event).toHaveProperty(kind)
+  })
+
   it.each([
     ['profiles', 'accounts'], ['user_roles', 'accounts'], ['patient_profiles', 'accounts'], ['therapist_patients', 'links'], ['patient_invitations', 'links'], ['exercises', 'catalogue'],
     ['exercise_versions', 'catalogue'], ['consents', 'privacy'], ['data_requests', 'privacy'], ['sessions', 'clinical'], ['prescription_versions', 'clinical'], ['anything_else', 'clinical'],
@@ -35,6 +43,8 @@ describe('audit events use the same wording as Android', () => {
 
   it('names a booking by its reference number, or falls back to part of its ID', () => {
     expect(describeEvent(event({ target_type: 'bookings', action: 'confirmed', target_name: 'BK-2026-000042' }), t).target).toBe('BK-2026-000042')
+    expect(auditKind('bookings', 'export')).toBe('bookingExported')
+    expect(describeEvent(event({ target_type: 'bookings', action: 'export', target_id: 'xlsx:42' }), t).target).toBe('admin.eventExport:XLSX|42')
     expect(describeEvent(event({ target_type: 'bookings', action: 'confirmed' }), t).target).toBe('admin.eventReference:12345678')
   })
 

@@ -3,7 +3,7 @@
 Run after `supabase start` and `supabase migration up --local`. This starts the Edge Functions itself, with an environment that
 points at Mailpit, and stops if the running function has any other mail server. Accounts it creates are removed again.
 """
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
@@ -18,7 +18,7 @@ import urllib.request
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from test_booking import ROOT, Stack, manila, manila_today, refused, together, working_days
+from test_booking import ROOT, Stack, manila, manila_hour, manila_today, refused, together, working_days
 
 REPORT = ROOT / 'docs/validation/email-test-results.json'
 FUNCTIONS = 'http://127.0.0.1:54321/functions/v1'
@@ -278,11 +278,57 @@ def checks(stack):
         stack.sql("delete from vault.secrets where name in ('notification_dispatch_url','notification_dispatch_secret');")
 
 
+def sprint_demo(stack):
+    """The S10 demo in one sitting: a confirmed session, a closure over it, and the news reaching the patient."""
+    _, ts = stack.user('patient', 'scheduler', name='Demo Sol Scheduler')
+    tess, tt = stack.user('patient', 'therapist', name='Demo Tess Therapist')
+    ana, ta = stack.user('patient', name='Demo Ana Patient')
+    address = stack.sql(f"select email from auth.users where id='{ana}';")
+    fresh = working_days(stack, 8)
+    day, other = next(fresh), next(fresh)
+    clear_mail()
+
+    code, booked = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': manila(day, 11)}, ta)
+    assert code == 200, booked
+    assert stack.rpc('scheduler_confirm', {'p_booking': booked['id'], 'p_therapist': tess}, ts)[0] == 200
+
+    def on_schedule(name, token, date_value):
+        found = stack.rpc(name, {'p_from': str(date_value), 'p_to': str(date_value)}, token)[1]['days'][0]
+        return [row for row in found['rows'] if row['session'] and row['session']['id'] == booked['id']]
+
+    stack.check(manila_hour(on_schedule('my_schedule', ta, day)[0]['starts_at']) == 11, "Demo: it is on the patient's My Schedule at 11")
+    stack.check(manila_hour(on_schedule('therapist_schedule', tt, day)[0]['starts_at']) == 11, "Demo: and on the therapist's")
+
+    start, end = manila(day, 0), manila(day + timedelta(days=1), 0)
+    impact = stack.rpc('scheduler_calendar_impact', {'p_starts': start, 'p_ends': end}, ts)[1]
+    stack.check(booked['id'] in [row['id'] for row in impact], 'Demo: a closure over it lists it')
+    decisions = [{'booking': row['id'], 'action': 'reschedule', 'starts_at': manila(other, 10), 'therapist': tess} for row in impact if row['id'] == booked['id']]
+    others = [{'booking': row['id'], 'action': 'cancel', 'reason': 'Demo closure'} for row in impact if row['id'] != booked['id']]
+    code, _ = stack.rpc('scheduler_save_closure', {'p_id': None, 'p_starts': start, 'p_ends': end, 'p_all_day': True, 'p_reason': 'Demo closure', 'p_resolutions': decisions + others}, ts)
+    try:
+        stack.check(code == 200, 'Demo: resolving the booking saves the closure')
+        stack.check(on_schedule('my_schedule', ta, day) == [] and manila_hour(on_schedule('my_schedule', ta, other)[0]['starts_at']) == 10, 'Demo: the session moved on My Schedule')
+        rows = stack.rpc('my_notifications', {}, ta)[1]['rows']
+        stack.check(rows[0]['kind'] == 'rescheduled' and rows[0]['data']['reference_no'] == booked['reference_no'], 'Demo: the patient has the in-app notification')
+        for _ in range(12):
+            if dispatch()[1]['claimed'] == 0:
+                break
+        mail = [message(item) for item in inbox(address)]
+        moved = next(item for item in mail if item['Subject'] == 'Your session has moved')
+        link = re.search(r'https?://\S*booking-calendar\?token=[0-9a-f]+', moved['Text'])
+        stack.check(link is not None, 'Demo: and the email with its calendar link')
+        ics = http(link.group(0))[1]
+        stack.check(re.search(r'DTSTART:(\S+)', ics).group(1).endswith('020000Z'), 'Demo: the calendar file has the new time')
+    finally:
+        stack.sql("delete from public.center_closures where reason='Demo closure';")
+
+
 def main():
     stack = Stack()
     try:
         with Functions():
             checks(stack)
+            sprint_demo(stack)
         REPORT.write_text(json.dumps({'generated_at': datetime.now(timezone.utc).isoformat(), 'checks_passed': len(stack.checks), 'checks': stack.checks,
                                       'environment': 'real local Auth, PostgREST, Edge Functions and Mailpit with disposable synthetic accounts'}, indent=2) + '\n', encoding='utf-8')
         print(f'{len(stack.checks)} checks passed.')

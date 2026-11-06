@@ -37,6 +37,9 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 - **Email leaves through a queue.** A notification adds a row to `notification_deliveries`, so a booking never waits for Gmail and cannot fail because of it. `notification-dispatch` claims rows so two runs cannot send one email twice, and retries with growing waits before stopping as failed. The server keeps each person's language in `profiles.preferred_language`, because email has no app to choose it.
 - **Reminders cannot repeat.** The session's start time is part of each reminder's key, so a job that runs twice finds the key and sends nothing, and a session that moves has a new key and gets fresh reminders. They are kept in the booking's own history, not the administrators' feed, which they would only fill up.
 - **A request nobody decided ends by itself.** Once its time has passed nobody can act on it, so the system rejects it and tells the patient, with the reason written in each app's language.
+- **An export is on the record before it exists.** The audit entry is written before the file is built, because the rule is that every export is recorded. A file that then fails to build leaves one line too many, which is better than a file nobody recorded. Administrators see exports in Activity on both apps.
+- **The PDF covers Western European text only.** It uses a built-in font, which keeps the download small and handles Filipino names, but a name in another script would not draw correctly. The spreadsheet has no such limit.
+- **A notification never costs anyone their booking.** It runs inside the change it reports, so `notify` skips a recipient who disappeared part-way through rather than failing the whole change.
 - **Leave stays private.** A therapist's reason is seen only by Schedulers. A patient whose session is cancelled for it reads only that their therapist is away, and a therapist's own schedule shows the hours without the reason. Other therapists and patients do not see it at all.
 - **Leave resolves like a closure, with one more choice.** The center stays open, so a session can pass to another therapist at the same time. That is usually kinder than moving it.
 - **Changing the hours moves nothing.** Sessions already booked keep their time, because hours change far more often than people can be rung. The save reports how many now fall outside the hours, and the Calendar page keeps that on screen until someone looks at them. A closure or holiday is different: it means the center is shut, so each booking needs a decision first.
@@ -107,6 +110,7 @@ Patient pages always filter to the signed-in account, because row-level security
 | Where | Package | Purpose |
 | --- | --- | --- |
 | Web | `write-excel-file`, `jspdf`, `jspdf-autotable` | XLSX and PDF export, downloaded only on export, so they stay out of the initial bundle budget |
+| Web, tests only | `fflate` | Opens exported spreadsheets so a test can read them. Already in the tree through `write-excel-file` |
 | Web | `qrcode-generator` | App download QR code, loaded only where shown |
 | Edge Function | `nodemailer`, pinned to a release at least two weeks old | Gmail SMTP |
 | Android | `firebase-messaging` through its BOM | FCM, in MOT-69 only |
