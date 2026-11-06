@@ -138,6 +138,7 @@
       "too_late": "It is too late to change this booking online. Contact the center.",
       "invalid": "That request could not be read. Try again.",
       "invalid_range": "Those dates could not be read."
-    }
+    },
+    "keep": "Keep booking"
   }
 }

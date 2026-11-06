@@ -174,6 +174,7 @@ test('a booking can be cancelled before the cut-off, and the action closes after
   await upcoming.getByRole('button', { name: 'Cancel booking' }).click()
   const dialog = page.getByRole('alertdialog')
   await expect(dialog).toContainText('9:00')
+  await expect(dialog.getByRole('button', { name: 'Keep booking' })).toBeVisible()
   await dialog.getByRole('button', { name: 'Cancel booking' }).click()
   await expect(page.getByText('Booking cancelled.')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Upcoming' })).toHaveCount(0)
@@ -203,6 +204,14 @@ test('booking fits a phone, with nothing past the edge', async () => {
     expect(cut, path).toEqual([])
     await noViolations()
   }
+  await page.setViewportSize({ width: 1280, height: 800 })
+})
+
+test('on a phone, choosing a time brings the next step into view', async () => {
+  await page.setViewportSize({ width: 360, height: 640 })
+  await openDate(workingDay(16))
+  await page.getByRole('region', { name: 'Choose a time' }).getByRole('button').first().click()
+  await expect(page.getByRole('button', { name: 'Request this time' })).toBeInViewport()
   await page.setViewportSize({ width: 1280, height: 800 })
 })
 

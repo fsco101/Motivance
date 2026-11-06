@@ -29,7 +29,7 @@ import java.time.OffsetDateTime
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null,
     private val cloudinaryApi:String=CLOUDINARY_API,
-) : AuthRepository, RehabilitationRepository, AdministrationRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -67,8 +67,10 @@ import java.time.OffsetDateTime
         if (method == "GET") builder.get() else builder.method(method, (body ?: JSONObject()).toString().toRequestBody("application/json".toMediaType()))
         http.newCall(builder.build()).execute().use { response ->
             if(!response.isSuccessful) {
-                val code=runCatching {JSONObject(response.body?.string().orEmpty()).optString("code")}.getOrNull()
-                    ?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
+                val failure=runCatching {JSONObject(response.body?.string().orEmpty())}.getOrNull()
+                // Only known codes pass: other server messages can name tables and columns.
+                val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
+                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_")}
                 throw RemoteFailure(response.code,code)
             }
             response.body?.string().orEmpty()
@@ -235,6 +237,10 @@ import java.time.OffsetDateTime
     override suspend fun setLink(therapist:String,patient:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_link",JSONObject().put("p_therapist",therapist).put("p_patient",patient).put("p_active",active),t)}}
     override suspend fun setExercise(exercise:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_exercise",JSONObject().put("p_exercise",exercise).put("p_active",active),t)}}
     override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_publish_exercise",JSONObject().put("p_exercise",exercise).put("p_name",name).put("p_english",english).put("p_filipino",filipino),t)}}
+    override suspend fun loadAvailability(from:String,to:String)=authorized {token,_ -> BookingJson.availability(JSONObject(call("/rest/v1/rpc/booking_availability",JSONObject().put("p_from",from).put("p_to",to),token)))}
+    override suspend fun requestBooking(requestId:String,startsAt:String)=authorized {token,_ -> BookingJson.booking(JSONObject(call("/rest/v1/rpc/request_booking",JSONObject().put("p_request",requestId).put("p_starts",startsAt),token)))}
+    override suspend fun loadMyBookings()=authorized {token,_ -> BookingJson.bookings(JSONArray(call("/rest/v1/rpc/my_bookings",JSONObject(),token)))}
+    override suspend fun cancelBooking(id:String) {authorized {token,_ -> call("/rest/v1/rpc/cancel_my_booking",JSONObject().put("p_booking",id),token)}}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }

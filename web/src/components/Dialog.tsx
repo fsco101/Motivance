@@ -57,11 +57,13 @@ type ConfirmProps = {
   /** Name the record, so the person approves one specific change. */
   message: string
   confirmLabel: string
+  /** For when "Cancel" would itself be confusing, such as beside "Cancel booking". */
+  cancelLabel?: string
   destructive?: boolean
   onConfirm: () => void
 }
 
-export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel, destructive, onConfirm }: ConfirmProps) {
+export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel, cancelLabel, destructive, onConfirm }: ConfirmProps) {
   const { t } = useTranslation()
   const returnFocus = useReturnFocus(open)
   return (
@@ -76,7 +78,7 @@ export function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel
                   <AlertDialog.Title className="text-2xl font-bold">{title}</AlertDialog.Title>
                   <AlertDialog.Description className="mt-2 text-slate">{message}</AlertDialog.Description>
                   <div className="mt-6 flex flex-wrap justify-end gap-2">
-                    <AlertDialog.Cancel asChild><Button variant="secondary">{t('common.cancel')}</Button></AlertDialog.Cancel>
+                    <AlertDialog.Cancel asChild><Button variant="secondary">{cancelLabel ?? t('common.cancel')}</Button></AlertDialog.Cancel>
                     <AlertDialog.Action asChild><Button variant={destructive ? 'danger' : 'primary'} onClick={onConfirm}>{confirmLabel}</Button></AlertDialog.Action>
                   </div>
                 </motion.div>

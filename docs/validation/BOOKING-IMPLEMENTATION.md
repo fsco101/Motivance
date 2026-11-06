@@ -29,7 +29,7 @@ Android also parsed roles with `UserRole.valueOf`, which throws on a role it doe
 
 Both languages sit in the first download, so booking text would have broken the 300 KB budget. It now lives in `booking.en.json` and `booking.fil.json`, which load with the booking pages. Initial JavaScript is 290 KB, down from 293 KB.
 
-**Not run.** The Scheduler note on Android compiled but was not seen on a device. The only emulator was the owner's Android Studio session, with the app open, and `scripts/test_role_routing.py` clears app data. The machine had too little free memory for a second emulator. `LiveRoleRoutingTest` now covers this case and is ready to run on a spare emulator.
+The Scheduler note was first left unverified, because the only emulator was the owner's working session and `scripts/test_role_routing.py` clears app data. It was then run on a separate spare emulator during MOT-54, and `LiveRoleRoutingTest` passes, including the Scheduler seeing the note.
 
 ## MOT-50: center calendar and availability
 
@@ -92,7 +92,7 @@ Two problems came up that the existing checks did not catch:
 | Android unit tests, including consent reconciliation | `gradlew :core:domain:test :app:testDebugUnitTest` | Passed |
 | Bundle | `python scripts/check_web_bundle.py` | 290 KB of 300 KB |
 
-**Not run.** `SessionStoreTest.aWithdrawalMadeOnTheWebMeansTheNextSessionRecordsANewGrant` compiled but needs a device, for the reason under MOT-49. The decision it relies on is covered by the `ServerConsentTest` unit tests.
+`SessionStoreTest.aWithdrawalMadeOnTheWebMeansTheNextSessionRecordsANewGrant` passes on a spare emulator, with all 9 tests in that class. A full withdrawal on the web followed by a camera session on a phone has not been run.
 
 ## MOT-53: patient booking on the web
 
@@ -113,3 +113,33 @@ Reviewing the screens by eye found three things the tests had not: Upcoming reli
 | Design screens, with axe | `npx playwright test tests/e2e/design.spec.ts --workers=2` | 58 passed |
 | Web unit tests | `npm test` | 198 passed |
 | Bundle | `python scripts/check_web_bundle.py` | 291 KB of 300 KB |
+
+## MOT-54: patient booking on Android
+
+Patients get a Bookings tab, a Book a session screen and a next-session card on Home. `BookingRepository` is a domain contract, and `BookingViewModel` keeps each account's data apart. Times come from `SessionFormat`, which always uses the center's zone.
+
+This was run in the real app on a spare API 35 emulator, driven through the interface against the local backend: sign in, open Bookings, choose a date and a specific time, request it, see it Pending, cancel it, see it Cancelled. The database agreed at each step. It ran as a throwaway AVD outside `~/.android`, addressed only by serial, so the owner's emulator and its app were not touched. `docs/operations/DEVELOPMENT.md` explains how to repeat this.
+
+Running it found six things the unit tests could not:
+
+| Found by using the app | Fix |
+| --- | --- |
+| Tapping Book while the list was loading dropped the calendar load, leaving it empty with no error, because reads and changes shared one guard | Reads now run alongside each other, with a test that reproduces it |
+| Choosing a time changed nothing visible, because the next step was below the fold | The next step now scrolls into view, on Android and on the web |
+| The calendar had no weekday header | Added |
+| Unavailable days stood out more than available ones | They now sit flat on the page |
+| The dialog offered "Cancel" and "Cancel booking" | The safe choice now says "Keep booking", on both apps |
+| Pending looked like an error | It is now neutral |
+
+`LiveRoleRoutingTest` failed intermittently at first, for two reasons. It typed into the Email field while a sign-out still had the form disabled, which is fixed. It also fails on the first run straight after a cold boot on this memory-starved machine. After the emulator settled it passed 3 runs of 3 on the final build.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Domain and app unit tests, 36 of them new | `gradlew :core:domain:test :app:testDebugUnitTest` | Passed |
+| Lint | `gradlew :app:lintDebug` | Passed |
+| Live role routing on the spare emulator, including the Scheduler | `python scripts/test_role_routing.py` | 3 of 3 on the final build |
+| Consent and storage on the spare emulator | `am instrument -e class com.motivance.data.local.SessionStoreTest` | 9 passed |
+| Resources and module boundaries | `python scripts/check_resources.py`, `python scripts/check_module_boundaries.py` | Passed |
+| Web after the shared fixes | `npx playwright test tests/e2e/booking.spec.ts` | 12 passed |
+
+**Not run.** A physical phone, large text sizes and TalkBack.

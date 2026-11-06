@@ -165,18 +165,13 @@
         },
         {
           "id": "MOT-49-AC7",
-          "description": "A Scheduler on Android sees the note that scheduling is on the web, confirmed on a device.",
-          "passed": false,
+          "description": "A Scheduler on Android sees the note that scheduling is on the web, confirmed in the real app on an emulator.",
+          "passed": true,
           "evidence": [
             "docs/validation/BOOKING-IMPLEMENTATION.md",
-            "docs/validation/booking-test-results.json",
-            "scripts/test_booking.py",
-            "supabase/tests/scheduler_access.test.sql"
-          ],
-          "non_blocking": true,
-          "deferral_authority": "User instruction: therapist and physical-device checks must not block development.",
-          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
-          "disposition": "Not run on a device. The screen compiled, and LiveRoleRoutingTest now covers it, but the only emulator was the owner's working session and there was no memory for a second. Deferred; not a development blocker."
+            "android/app/src/androidTest/java/com/motivance/navigation/LiveRoleRoutingTest.kt",
+            "scripts/test_role_routing.py"
+          ]
         }
       ],
       "completion": {
@@ -186,10 +181,8 @@
           "docs/validation/BOOKING-IMPLEMENTATION.md",
           "docs/validation/booking-test-results.json",
           "scripts/test_booking.py",
-          "supabase/tests/scheduler_access.test.sql",
-          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
-        ],
-        "acceptance_basis": "engineering-implementation"
+          "supabase/tests/scheduler_access.test.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
       "blockers": [],
@@ -822,7 +815,7 @@
       "github_issue": 71,
       "title": "Add patient booking on Android",
       "description": "Give Android patients the same booking flow as the web, using the existing authenticated client.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Android",
       "estimate_points": 8,
@@ -869,53 +862,107 @@
         {
           "id": "MOT-54-AC1",
           "description": "A Bookings tab shows requests with status, reference number, specific time, therapist, location and any reason.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC2",
           "description": "Book a session shows working days and specific time slots. Full or unavailable slots cannot be chosen.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC3",
           "description": "Requests are safe to retry, and refused requests explain why in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC4",
           "description": "Cancel works up to the cut-off and is explained after it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC5",
           "description": "Times show in Asia/Manila whatever the phone's time zone, proved by a unit test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/SessionFormatTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC6",
           "description": "Unit tests cover decoding, the ViewModel and owner isolation. check_resources.py and check_module_boundaries.py pass.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-54-AC7",
           "description": "Booking is exercised on a physical phone at large text sizes and with TalkBack.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ],
+          "non_blocking": true,
+          "deferral_authority": "User instruction: therapist and physical-device checks must not block development.",
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Not run on a physical phone. The flow was run in the real app on an emulator. Deferred; not a development blocker."
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T13:33:37.026745+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+          "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+          "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+        ],
+        "acceptance_basis": "engineering-implementation"
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt",
+        "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt",
+        "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+      ]
     },
     {
       "id": "MOT-55",

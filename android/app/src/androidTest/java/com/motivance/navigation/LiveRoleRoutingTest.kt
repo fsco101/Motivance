@@ -29,7 +29,8 @@ class LiveRoleRoutingTest {
 
     private fun signIn(email:String) {
         if(!present(R.string.email)) compose.onNode(hasText(text(R.string.sign_in)) and hasClickAction()).tap()
-        waitFor {present(R.string.email)}
+        // The form stays disabled while a sign-out finishes, so being on screen is not enough.
+        waitFor {compose.onAllNodes(hasText(text(R.string.email)) and isEnabled()).fetchSemanticsNodes().isNotEmpty()}
         compose.onNodeWithText(text(R.string.email)).performTextInput(email)
         compose.onNodeWithText(text(R.string.auth_password)).performTextInput(args.getString("password")!!)
         compose.onNode(hasText(text(R.string.sign_in)) and hasClickAction()).tap()

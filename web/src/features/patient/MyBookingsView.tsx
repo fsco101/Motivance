@@ -75,7 +75,7 @@ export function MyBookingsView({ load, base, onCancel }: { load: Load<readonly B
         }}
       </Loadable>
       <ConfirmDialog open={confirming !== null} onOpenChange={(open) => { if (!open) setConfirming(null) }} title={t('booking.cancel')}
-        message={confirming ? t('booking.cancelMessage', { when: format.when(confirming.startsAt, confirming.endsAt) }) : ''} confirmLabel={t('booking.cancel')} destructive
+        message={confirming ? t('booking.cancelMessage', { when: format.when(confirming.startsAt, confirming.endsAt) }) : ''} confirmLabel={t('booking.cancel')} cancelLabel={t('booking.keep')} destructive
         onConfirm={() => { if (confirming) onCancel(confirming) }} />
     </>
   )

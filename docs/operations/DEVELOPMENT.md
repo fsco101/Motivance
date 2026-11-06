@@ -97,6 +97,20 @@ The first command uses four disposable local users and cleans only those fixture
 
 For the optional native `CameraLifecycleTest`, use a camera source that actually supplies frames. On the headless test host the saved webcam0 setting supplied none; cold-booting the AVD with `-camera-back emulated -camera-front emulated -no-snapshot-load` passes the native smoke test without changing its saved camera preferences. Synthetic emulator imagery does not test patient tracking accuracy.
 
+## Live tests without touching a working emulator
+
+Live tests clear app data, and Gradle's `connected` tasks run on every attached device, so keep them away from an emulator you are using. Create a throwaway AVD in its own folder and name it by serial:
+
+```bash
+export ANDROID_AVD_HOME="$TEMP/motivance-avd"
+echo no | avdmanager create avd -n motivance_verify -k "system-images;android-35;google_apis;x86_64" -d pixel_6
+emulator -avd motivance_verify -port 5560 -no-window -no-audio -no-snapshot -gpu swiftshader_indirect
+export ANDROID_SERIAL=emulator-5560
+adb shell settings put global animator_duration_scale 0
+```
+
+Give it a moment after boot, because the first run on a cold emulator can time out. Install the APKs with `adb`, then run `python scripts/test_role_routing.py` or `adb shell am instrument`. `ANDROID_SERIAL` keeps every command on this device. Stop it with `adb -s emulator-5560 emu kill`.
+
 ## Web app
 
 The web app is in `web/`. It needs Node 22 and the local Supabase stack. Everything in `web/.env` ships to the browser, so it holds only the URL and the publishable key.
