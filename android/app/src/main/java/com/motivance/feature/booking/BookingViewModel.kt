@@ -14,10 +14,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class BookingAction { LOAD, MONTH, REQUEST, CANCEL }
+enum class BookingAction { LOAD, MONTH, REQUEST, CANCEL, WAITLIST }
 
 data class BookingState(
-    val owner:String="",val month:YearMonth=YearMonth.from(centerToday()),val availability:BookingAvailability=BookingAvailability(),val bookings:List<Booking> = emptyList(),
+    val owner:String="",val month:YearMonth=YearMonth.from(centerToday()),val availability:BookingAvailability=BookingAvailability(),val bookings:List<Booking> = emptyList(),val waitlist:List<WaitlistEntry> = emptyList(),
     val date:String?=null,val slot:BookingSlot?=null,val busy:Boolean=false,val activeAction:BookingAction?=null,val loading:Set<BookingAction> = emptySet(),
     val failed:Boolean=false,val loaded:Boolean=false,
 )
@@ -38,6 +38,7 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
     "booking_state" -> R.string.booking_error_state
     "booking_unavailable" -> R.string.booking_error_unavailable
     "booking_too_late" -> R.string.booking_error_too_late
+    "booking_not_full" -> R.string.booking_error_not_full
     else -> R.string.booking_error_request
 }
 
@@ -86,7 +87,7 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
         job=viewModelScope.launch {
             try {
                 val next=work(current)
-                if(mutable.value.owner==current.owner) mutable.value=mutable.value.copy(bookings=next.bookings,date=next.date,slot=next.slot,busy=false,activeAction=null,failed=false,loaded=true)
+                if(mutable.value.owner==current.owner) mutable.value=mutable.value.copy(availability=next.availability,bookings=next.bookings,waitlist=next.waitlist,date=next.date,slot=next.slot,busy=false,activeAction=null,failed=false,loaded=true)
             } catch(e:CancellationException) {throw e}
             catch(e:Exception) {
                 if(mutable.value.owner==current.owner) {
@@ -101,7 +102,8 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
 
     fun refresh()=read(BookingAction.LOAD) {
         val bookings=repository.loadMyBookings()
-        ;{it.copy(bookings=bookings)}
+        val waitlist=repository.loadWaitlist()
+        ;{it.copy(bookings=bookings,waitlist=waitlist)}
     }
     fun openBooking()=showMonth(mutable.value.month)
     fun showMonth(month:YearMonth) {
@@ -112,19 +114,22 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
         }
     }
     fun selectDate(date:String) {mutable.value=mutable.value.copy(date=date,slot=null)}
-    fun selectSlot(slot:BookingSlot) {if(slot.bookable) mutable.value=mutable.value.copy(slot=slot)}
+    fun selectSlot(slot:BookingSlot) {if(slot.bookable || slot.joinable) mutable.value=mutable.value.copy(slot=slot)}
+
+    /** The time may be gone, so what is on screen must not stand. */
+    private fun refused(error:Exception):Int {
+        val owner=mutable.value.owner
+        mutable.value=mutable.value.copy(slot=null)
+        viewModelScope.launch {runCatching {availabilityOf(mutable.value.month)}.onSuccess {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(availability=it)}}
+        viewModelScope.launch {runCatching {repository.loadWaitlist()}.onSuccess {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(waitlist=it)}}
+        return bookingFailure(error)
+    }
 
     fun request(done:()->Unit) {
         val slot=mutable.value.slot ?: return
         if(attempt?.first!=slot.startsAt) attempt=slot.startsAt to UUID.randomUUID().toString()
         val id=attempt!!.second
-        val owner=mutable.value.owner
-        perform(BookingAction.REQUEST,failure={error ->
-            // The time may be gone, so what is on screen must not stand.
-            mutable.value=mutable.value.copy(slot=null)
-            viewModelScope.launch {runCatching {availabilityOf(mutable.value.month)}.onSuccess {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(availability=it)}}
-            bookingFailure(error)
-        }) {
+        perform(BookingAction.REQUEST,failure={refused(it)}) {
             repository.requestBooking(id,slot.startsAt)
             val bookings=repository.loadMyBookings()
             attempt=null
@@ -132,6 +137,29 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
             done()
             it.copy(bookings=bookings,slot=null,date=null)
         }
+    }
+
+    /** Joining or leaving changes what the calendar shows, so it is read again along with the list. */
+    private fun changeWaitlist(done:Int,work:suspend ()->Unit)=perform(BookingAction.WAITLIST,failure={refused(it)}) {
+        work()
+        val availability=availabilityOf(it.month)
+        val waitlist=repository.loadWaitlist()
+        toasts.show(done)
+        it.copy(availability=availability,waitlist=waitlist,slot=null)
+    }
+    fun joinWaitlist() {
+        val slot=mutable.value.slot ?: return
+        changeWaitlist(R.string.booking_joined_waitlist) {repository.joinWaitlist(slot.startsAt)}
+    }
+    fun leaveWaitlist(startsAt:String)=changeWaitlist(R.string.booking_left_waitlist) {repository.leaveWaitlist(startsAt)}
+
+    /** The first to book gets a place, so it is booked from the list in one step. */
+    fun book(entry:WaitlistEntry)=perform(BookingAction.REQUEST,failure={refused(it)}) {
+        repository.requestBooking(UUID.randomUUID().toString(),entry.startsAt)
+        val bookings=repository.loadMyBookings()
+        val waitlist=repository.loadWaitlist()
+        toasts.show(R.string.booking_requested)
+        it.copy(bookings=bookings,waitlist=waitlist)
     }
 
     fun cancel(booking:Booking)=perform(BookingAction.CANCEL,failure={bookingFailure(it)}) {

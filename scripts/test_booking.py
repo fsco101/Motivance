@@ -89,6 +89,7 @@ delete from public.notifications where user_id in ({ids}) or booking_id in (sele
 delete from public.audit_events where target_type='bookings' and target_id in (select id::text from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.bookings where patient_id in ({ids}) or therapist_id in ({ids});
+delete from public.booking_waitlist where patient_id in ({ids});
 delete from public.session_measurements where session_id in (select id from public.sessions where patient_id in ({ids}));
 delete from public.sessions where patient_id in ({ids}); delete from public.consents where patient_id in ({ids});
 delete from public.prescription_versions where patient_id in ({ids}); delete from public.exercise_assignments where patient_id in ({ids});
@@ -227,7 +228,8 @@ def availability(stack):
     stack.check(datetime.fromisoformat(first['starts_at']).astimezone(timezone.utc).hour == 1, 'Nine in Manila is stored as 01:00 UTC')
     stack.check(datetime.fromisoformat(last['ends_at']).astimezone(timezone.utc).hour == 9, 'The last slot ends at five in Manila, 09:00 UTC')
     stack.check(all(slot['remaining'] == 3 for slot in row['slots']), 'Each slot reports the places left')
-    stack.check(set(first) == {'starts_at', 'ends_at', 'remaining', 'mine'}, 'A slot says nothing about who else holds it')
+    # 'mine' and 'waiting' describe only the caller.
+    stack.check(set(first) == {'starts_at', 'ends_at', 'remaining', 'mine', 'waiting'}, 'A slot says nothing about who else holds it')
 
     saturday = next_weekday(today, 6, 3)
     row = days(saturday, saturday)[str(saturday)]
@@ -1080,6 +1082,9 @@ def time_off(stack):
 
 def notifications(stack):
     """MOT-59: what changed, told to the people it matters to, and to nobody else."""
+    nobody = '00000000-0000-4000-8000-000000000000'
+    stack.sql(f"select public.notify('{nobody}','request_received',null,'{{}}'::jsonb,-1,null);")
+    stack.check(stack.sql(f"select count(*) from public.notifications where user_id='{nobody}';") == '0', 'A recipient removed part-way through costs nobody their booking')
     sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Scheduler')
     _, t2 = stack.user('patient', 'scheduler', name='Booking Sam Scheduler')
     gone, tg = stack.user('patient', 'scheduler', name='Booking Gone Scheduler')
@@ -1315,7 +1320,184 @@ def reminders(stack):
     stack.check(stack.sql("select count(*) from cron.job where jobname in ('booking-reminders','expire-booking-requests') and active;") == '2', 'Both jobs are scheduled')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders}
+def exports(stack):
+    """MOT-62: every export is on the record."""
+    sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Export')
+    admin, tadmin = stack.user('patient', 'admin', name='Booking Admin Export')
+    _, ta = stack.user('patient', name='Booking Ana Export')
+    stack.check(stack.rpc('scheduler_log_export', {'p_format': 'xlsx', 'p_rows': 12}, ts)[0] == 204, 'A Scheduler records an export')
+    stack.check(stack.sql(f"select action,target_type,target_id from public.audit_events where actor_id='{sol}' order by id desc limit 1;") == 'export|bookings|xlsx:12', 'With its format and row count')
+    stack.check(stack.rpc('scheduler_log_export', {'p_format': 'pdf', 'p_rows': 0}, ts)[0] == 204, 'An export of nothing is still recorded')
+    code, feed = stack.rpc('admin_activity', {}, tadmin)
+    found = [row for row in feed if row['action'] == 'export' and row['actor_id'] == sol]
+    stack.check(code == 200 and found[0]['target_id'] == 'pdf:0' and found[0]['actor_name'] == 'Booking Sol Export', 'An administrator sees who exported what')
+    for label, body in [('an unknown format', {'p_format': 'csv', 'p_rows': 1}), ('no format', {'p_format': None, 'p_rows': 1}), ('a negative count', {'p_format': 'pdf', 'p_rows': -1}), ('no count', {'p_format': 'pdf', 'p_rows': None})]:
+        stack.check(refused(stack.rpc('scheduler_log_export', body, ts), 'booking_invalid'), f'An export with {label} is refused')
+    stack.check(stack.rpc('scheduler_log_export', {'p_format': 'pdf', 'p_rows': 1}, ta)[0] == 403, 'A patient cannot record an export')
+
+
+def waitlist(stack):
+    """MOT-63: waiting for a full slot, and hearing when a place opens."""
+    capacity = stack.sql('select slot_capacity from public.center_settings;')
+    stack.sql('update public.center_settings set slot_capacity=2 where id;')
+    try:
+        waitlist_checks(stack)
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test waitlist';")
+        stack.sql(f'update public.center_settings set slot_capacity={capacity} where id;')
+
+
+def waitlist_checks(stack):
+    _, ts = stack.user('patient', 'scheduler', name='Booking Sol Waitlist')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Waitlist')
+    stack.sql(f"delete from public.user_roles where user_id='{tess}' and role='patient';")
+    ana, ta = stack.user('patient', name='Booking Ana Waitlist')
+    ben, tb = stack.user('patient', name='Booking Ben Waitlist')
+    cai, tc = stack.user('patient', name='Booking Cai Waitlist')
+    dee, td = stack.user('patient', name='Booking Dee Waitlist')
+    eve, te = stack.user('patient', name='Booking Eve Waitlist')
+    fresh = working_days(stack, 5)
+    day, race, moved, capacity_day, closed_day, off_day, gone_day = (next(fresh) for _ in range(7))
+    at = manila(day, 10)
+
+    def request(token, start):
+        code, data = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)
+        assert code == 200, data
+        return data
+
+    def cancel(booking, token):
+        code, data = stack.rpc('cancel_my_booking', {'p_booking': booking['id']}, token)
+        assert code == 200, data
+
+    def join(token, start=at):
+        return stack.rpc('join_waitlist', {'p_starts': start}, token)
+
+    def leave(token, start=at):
+        return stack.rpc('leave_waitlist', {'p_starts': start}, token)
+
+    def entries(token):
+        code, data = stack.rpc('my_waitlist', {}, token)
+        assert code == 200, data
+        return data
+
+    def told(person):
+        return int(stack.sql(f"select count(*) from public.notifications where user_id='{person}' and kind='place_open';"))
+
+    def slot(token, date_value, hour):
+        found = stack.rpc('booking_availability', {'p_from': str(date_value), 'p_to': str(date_value)}, token)[1]['days'][0]['slots']
+        return next(item for item in found if manila_hour(item['starts_at']) == hour)
+
+    stack.check(refused(join(tc), 'booking_not_full'), 'Nobody waits for a time with places left')
+    first, second = request(ta, at), request(tb, at)
+    code, entry = join(tc)
+    stack.check(code == 200 and entries(tc)[0]['id'] == entry['id'] and entries(tc)[0]['open'] is False, 'A patient can wait for a full slot')
+    stack.check(join(tc)[1]['id'] == entry['id'] and len(entries(tc)) == 1, 'Asking twice is one place in the line')
+    stack.check(slot(tc, day, 10)['waiting'] is True and slot(tc, day, 10)['remaining'] == 0, 'Availability shows the patient they are waiting')
+    stack.check(slot(te, day, 10)['waiting'] is False and slot(tc, day, 11)['waiting'] is False, 'And only for that time, only to them')
+    stack.check(refused(join(ta), 'booking_overlap'), 'A patient with a session then has nothing to wait for')
+    stack.check(refused(join(tc, None), 'booking_invalid'), 'A time is needed to wait for')
+    stack.check(refused(join(tc, manila(day, 10, 30)), 'booking_off_grid'), 'Only a real slot can be waited for')
+    stack.check(refused(join(tc, manila(next_weekday(day, 6), 10)), 'booking_closed_day'), 'A closed day cannot be waited for')
+    stack.check(refused(join(tc, (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()), 'booking_too_soon'), 'A time inside the notice period cannot be waited for')
+    stack.check(join(tt)[0] == 403 and stack.rpc('my_waitlist', {}, tt)[0] == 403 and leave(tt)[0] == 403, 'The waitlist is for patients')
+    stack.check(stack.api('/rest/v1/booking_waitlist?select=id', token=tc)[0] in (401, 403), 'Nobody reads the table directly')
+    stack.check(join(td)[0] == 200, 'Others can wait too')
+
+    cancel(first, ta)
+    stack.check(told(cai) == 1 and told(dee) == 1, 'When a place opens, everyone waiting hears')
+    stack.check(told(ben) == 0 and told(eve) == 0 and told(ana) == 0, 'And nobody else does')
+    stack.check(entries(tc)[0]['open'] is True, 'The waitlist shows the place is open')
+    note = stack.rpc('my_notifications', {}, tc)[1]['rows'][0]
+    stack.check(note['kind'] == 'place_open' and note['data']['starts_at'] == entries(tc)[0]['starts_at'] and note['booking_id'] is None, 'The news carries the time')
+    stack.check(stack.sql(f"select count(*) from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.user_id='{cai}' and n.kind='place_open' and d.channel='email';") == '1', 'And goes out by email')
+    cancel(second, tb)
+    stack.check(told(cai) == 1 and told(dee) == 1, 'A second place in the same opening is not a second message')
+
+    stack.check(leave(td)[0] == 204 and entries(td) == [] and len(entries(tc)) == 1, 'A patient can leave, and only touches their own place')
+    stack.check(leave(td)[0] == 204, 'Leaving twice is the same as leaving once')
+    stack.check(join(td)[0] == 400 and refused(join(td), 'booking_not_full'), 'With places left, the way in is to book')
+
+    mine = request(tc, at)
+    stack.check(entries(tc) == [] and stack.sql(f"select status from public.booking_waitlist where patient_id='{cai}';") == 'booked', 'Booking the slot takes a patient off the list')
+    cancel(mine, tc)
+
+    # One place, two people waiting, and someone who never joined the line.
+    hour = manila(race, 11)
+    hold, keep = request(ta, hour), request(tb, hour)
+    stack.check(refused(stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': hour}, te), 'booking_full'), 'Capacity still applies to someone not waiting')
+    join(tc, hour), join(td, hour)
+    before = told(cai)
+    cancel(hold, ta)
+    stack.check(told(cai) == before + 1, 'The people waiting hear about the one place')
+    results = together([lambda token=token: stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': hour}, token) for token in (tc, td)])
+    wins = [result for result in results if result[0] == 200]
+    stack.check(len(wins) == 1 and sum(refused(result, 'booking_full') for result in results) == 1, 'The first to book gets it, and only one does')
+    winner, loser = (tc, td) if results[0][0] == 200 else (td, tc)
+    loser_id = dee if loser == td else cai
+    stack.check(entries(winner) == [] and len(entries(loser)) == 1 and entries(loser)[0]['open'] is False, 'The winner leaves the list, the other keeps their place in it')
+    heard = told(loser_id)
+    cancel(keep, tb)
+    stack.check(told(loser_id) == heard + 1, 'Once the slot has filled again, the next place is news')
+    stack.check(refused(stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': hour}, winner), 'booking_overlap'), 'Nobody books the same time twice')
+    stack.check(stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': hour}, te)[0] == 200, 'Someone not waiting can take a place too: the first to book gets it')
+
+    # A Scheduler moving a session frees the time it left, and can settle a place in the line.
+    time_at, other_at = manila(moved, 10), manila(moved, 14)
+    one, two = request(ta, time_at), request(tb, time_at)
+    join(te, time_at)
+    stack.rpc('scheduler_confirm', {'p_booking': one['id'], 'p_therapist': tess}, ts)
+    heard = told(eve)
+    wanted = request(te, other_at)
+    stack.check(stack.rpc('scheduler_reschedule', {'p_booking': one['id'], 'p_starts': manila(moved, 15), 'p_therapist': tess}, ts)[0] == 200 and told(eve) == heard + 1, 'Moving a session away opens its place')
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': wanted['id'], 'p_therapist': tess}, ts)[0] == 200, 'The patient waiting has a session of their own')
+    stack.check(stack.rpc('scheduler_reschedule', {'p_booking': wanted['id'], 'p_starts': time_at, 'p_therapist': tess}, ts)[0] == 200 and entries(te) == [], 'A Scheduler moving them into the slot settles their place in the line')
+    del two
+
+    # Raising the capacity opens every full slot at once.
+    at_capacity = manila(capacity_day, 9)
+    request(ta, at_capacity), request(tb, at_capacity)
+    join(td, at_capacity)
+    stack.sql('update public.center_settings set slot_capacity=3 where id;')
+    # Whoever lost the race above is still waiting there too, so this looks at this slot alone.
+    stack.check(stack.sql(f"select count(*) from public.notifications where user_id='{dee}' and kind='place_open' and (data->>'starts_at')::timestamptz='{at_capacity}';") == '1', 'Raising the capacity opens a place')
+    stack.sql('update public.center_settings set slot_capacity=2 where id;')
+
+    # A time that cannot be booked is not news, and has nothing left to wait for.
+    start, end = manila(closed_day, 0), manila(closed_day + timedelta(days=1), 0)
+    shut = manila(closed_day, 13)
+    held = [request(ta, shut), request(tb, shut)]
+    join(tc, shut)
+    heard = told(cai)
+    decisions = [{'booking': item['id'], 'action': 'cancel', 'reason': 'Booking test waitlist'} for item in stack.rpc('scheduler_calendar_impact', {'p_starts': start, 'p_ends': end}, ts)[1]]
+    stack.check(stack.rpc('scheduler_save_closure', {'p_id': None, 'p_starts': start, 'p_ends': end, 'p_all_day': True, 'p_reason': 'Booking test waitlist', 'p_resolutions': decisions}, ts)[0] == 200, 'A closure can cancel the sessions in a full slot')
+    stack.check(told(cai) == heard, 'A place in a closed slot is not news')
+    stack.check(shut not in [item['starts_at'] for item in entries(tc)] and all(manila_hour(item['starts_at']) != 13 for item in entries(tc)), 'And a closed time drops off the list')
+    del held
+
+    # An account that is off hears nothing.
+    away = manila(off_day, 9)
+    leaving = request(ta, away)
+    request(tb, away)
+    join(te, away)
+    stack.sql(f"update public.profiles set active=false where id='{eve}';")
+    heard = told(eve)
+    cancel(leaving, ta)
+    stack.check(told(eve) == heard, 'A disabled account is not told')
+    stack.sql(f"update public.profiles set active=true where id='{eve}';")
+
+    # Inside the notice period the place cannot be booked, so saying so would only disappoint.
+    booking = str(uuid.uuid4())
+    for suffix, person in (('A', ana), ('B', ben)):
+        stack.sql(f"""insert into public.bookings(id,reference_no,patient_id,starts_at,ends_at,status)
+ values('{booking if suffix == 'A' else uuid.uuid4()}','BK-WAIT-{suffix}-{booking[:8]}','{person}',date_trunc('hour',now())+interval '6 hours',date_trunc('hour',now())+interval '7 hours','pending');""")
+    stack.sql(f"insert into public.booking_waitlist(patient_id,starts_at,ends_at) values('{dee}',date_trunc('hour',now())+interval '6 hours',date_trunc('hour',now())+interval '7 hours');")
+    heard = told(dee)
+    stack.sql(f"update public.bookings set status='cancelled' where id='{booking}';")
+    stack.check(told(dee) == heard, 'A place too soon to book is not news')
+    stack.check(all(item['starts_at'] > (datetime.now(timezone.utc) + timedelta(hours=8)).isoformat() for item in entries(td)), 'And a time too soon to book drops off the list')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist}
 
 
 def main():

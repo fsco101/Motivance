@@ -3,7 +3,7 @@
 export type Language = 'en' | 'fil'
 export type Delivery = {
   id: string; kind: string; email: string | null; name: string | null; language: Language; calendar_token: string | null; location: string; center_name: string; time_zone: string
-  data: { reference_no: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null }
+  data: { reference_no?: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null }
 }
 export type Links = { site: string; functions: string }
 
@@ -27,6 +27,7 @@ const LINES: Record<Language, Record<string, Line>> = {
     needs_therapist: { subject: 'Needs a therapist: {patient}', body: 'The session with {patient} on {when} needs a therapist.' },
     reminder: { subject: 'Session reminder', body: 'Reminder: your session is on {when} with {therapist}.' },
     session_reminder: { subject: 'Session reminder: {patient}', body: 'Reminder: {patient} is booked with you on {when}.' },
+    place_open: { subject: 'A place has opened', body: 'A place has opened on {when}. The first to book gets it.' },
   },
   fil: {
     confirmed: { subject: 'Kumpirmado ang iyong session', body: 'Kumpirmado ang iyong session sa {when} kasama si {therapist}.' },
@@ -44,6 +45,7 @@ const LINES: Record<Language, Record<string, Line>> = {
     needs_therapist: { subject: 'Kailangan ng therapist: {patient}', body: 'Kailangan ng therapist ang session ni {patient} sa {when}.' },
     reminder: { subject: 'Paalala sa session', body: 'Paalala: ang iyong session ay sa {when} kasama si {therapist}.' },
     session_reminder: { subject: 'Paalala sa session: {patient}', body: 'Paalala: naka-book sa iyo si {patient} sa {when}.' },
+    place_open: { subject: 'May bakante na', body: 'May bakante na sa {when}. Makukuha ito ng unang mag-book.' },
   },
 }
 
@@ -78,22 +80,26 @@ export function renderEmail(delivery: Delivery, links: Links) {
   const was = data.previous_starts_at ?? data.starts_at
   const values = { when: `${day(data.starts_at)}, ${range}`, was: `${day(was)}, ${clock(was)}`, patient: data.patient_name ?? '', therapist: data.therapist_name ?? label.pending }
   const reason = data.reason === 'therapist_unavailable' ? label.unavailable : data.reason === 'request_expired' ? label.expired : data.reason ?? null
-  const facts: Array<[string, string]> = [[label.date, day(data.starts_at)], [label.time, range], [label.therapist, data.therapist_name ?? label.pending]]
+  // A place on the waitlist is a time, not yet a session, so it has no therapist or reference.
+  const facts: Array<[string, string]> = [[label.date, day(data.starts_at)], [label.time, range]]
+  if (data.reference_no) facts.push([label.therapist, data.therapist_name ?? label.pending])
   if (delivery.location) facts.push([label.location, delivery.location])
-  facts.push([label.reference, data.reference_no])
+  if (data.reference_no) facts.push([label.reference, data.reference_no])
   if (reason) facts.push([label.reason, reason])
   const calendar = CALENDAR_KINDS.has(delivery.kind) && delivery.calendar_token ? `${links.functions}/booking-calendar?token=${encodeURIComponent(delivery.calendar_token)}` : null
   const hello = fill(label.hello, { name: delivery.name ?? '' }).replace(' ,', ',')
   const sentence = fill(lines.body, values)
+  // The first to book gets a place, so this one goes straight to where it can be booked.
+  const site = delivery.kind === 'place_open' ? `${links.site}/patient/bookings` : links.site
 
-  const text = [hello, '', sentence, '', ...facts.map(([term, value]) => `${term}: ${value}`), '', ...(calendar ? [`${label.calendar}: ${calendar}`] : []), `${label.open}: ${links.site}`, '', delivery.center_name].join('\n')
+  const text = [hello, '', sentence, '', ...facts.map(([term, value]) => `${term}: ${value}`), '', ...(calendar ? [`${label.calendar}: ${calendar}`] : []), `${label.open}: ${site}`, '', delivery.center_name].join('\n')
   const button = (href: string, title: string) => `<a href="${escapeHtml(href)}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;border-radius:8px;background:#0e7c86;color:#ffffff;text-decoration:none;font-weight:600">${escapeHtml(title)}</a>`
   const html = `<!doctype html><html lang="${delivery.language}"><body style="margin:0;padding:24px;background:#f1f5f4;font-family:Arial,sans-serif;color:#0f2b35">
 <div style="max-width:520px;margin:0 auto;padding:24px;border-radius:12px;background:#ffffff">
 <p style="margin:0 0 12px">${escapeHtml(hello)}</p>
 <p style="margin:0 0 16px;font-size:17px;font-weight:600">${escapeHtml(sentence)}</p>
 <table role="presentation" style="margin:0 0 20px;border-collapse:collapse">${facts.map(([term, value]) => `<tr><td style="padding:3px 16px 3px 0;color:#4c6670">${escapeHtml(term)}</td><td style="padding:3px 0;font-weight:600">${escapeHtml(value)}</td></tr>`).join('')}</table>
-${calendar ? button(calendar, label.calendar) : ''}${button(links.site, label.open)}
+${calendar ? button(calendar, label.calendar) : ''}${button(site, label.open)}
 <p style="margin:16px 0 0;font-size:13px;color:#4c6670">${escapeHtml(delivery.center_name)}</p>
 </div></body></html>`
   return { subject: oneLine(fill(lines.subject, values)), text, html }

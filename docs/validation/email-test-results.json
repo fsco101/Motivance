@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T17:31:02.742361+00:00",
-  "checks_passed": 50,
+  "generated_at": "2026-11-06T19:47:06.812147+00:00",
+  "checks_passed": 60,
   "checks": [
     "A booking does not wait for email",
     "It leaves a row in the queue",
@@ -51,7 +51,17 @@
     "A row left claimed by a dead run is picked up again",
     "One being sent right now is left alone",
     "The job is scheduled",
-    "The scheduled job drains the queue by itself"
+    "The scheduled job drains the queue by itself",
+    "Demo: it is on the patient's My Schedule at 11",
+    "Demo: and on the therapist's",
+    "Demo: a closure over it lists it",
+    "Demo: resolving the booking saves the closure",
+    "Demo: the session moved on My Schedule",
+    "Demo: the patient has the in-app notification",
+    "Demo: and the email with its calendar link",
+    "Demo: the calendar file has the new time",
+    "Waitlist: a place opening reaches the inbox",
+    "Waitlist: it points straight to the place, with no session details"
   ],
   "environment": "real local Auth, PostgREST, Edge Functions and Mailpit with disposable synthetic accounts"
 }

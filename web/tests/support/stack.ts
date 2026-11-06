@@ -105,6 +105,7 @@ delete from public.notifications where user_id in (${ids}) or booking_id in (sel
 delete from public.audit_events where target_type='bookings' and target_id in (select id::text from public.bookings where patient_id in (${ids}) or therapist_id in (${ids}));
 delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in (${ids}) or therapist_id in (${ids}));
 delete from public.bookings where patient_id in (${ids}) or therapist_id in (${ids});
+delete from public.booking_waitlist where patient_id in (${ids});
 delete from public.session_measurements where session_id in (select id from public.sessions where patient_id in (${ids}));
 delete from public.sessions where patient_id in (${ids}); delete from public.consents where patient_id in (${ids});
 delete from public.prescription_versions where patient_id in (${ids}); delete from public.exercise_assignments where patient_id in (${ids});

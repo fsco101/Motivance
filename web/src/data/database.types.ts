@@ -107,6 +107,47 @@ export type Database = {
           },
         ]
       }
+      booking_waitlist: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          notified_at: string | null
+          patient_id: string
+          settled_at: string | null
+          starts_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          notified_at?: string | null
+          patient_id: string
+          settled_at?: string | null
+          starts_at: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          notified_at?: string | null
+          patient_id?: string
+          settled_at?: string | null
+          starts_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_waitlist_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           attendance: string | null
@@ -1370,6 +1411,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      join_waitlist: {
+        Args: { p_starts: string }
+        Returns: Json
+      }
+      leave_waitlist: {
+        Args: { p_starts: string }
+        Returns: undefined
+      }
       mark_notifications_read: {
         Args: { p_ids?: string[] }
         Returns: number
@@ -1388,6 +1437,10 @@ export type Database = {
       }
       my_schedule: {
         Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      my_waitlist: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       notify: {
@@ -1537,6 +1590,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      scheduler_log_export: {
+        Args: { p_format: string; p_rows: number }
+        Returns: undefined
+      }
       scheduler_patients: {
         Args: { p_search?: string; p_limit?: number }
         Returns: Json
@@ -1606,6 +1663,10 @@ export type Database = {
         }
         Returns: Json
       }
+      scheduler_schedule_patients: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       scheduler_therapists: {
         Args: { p_booking?: string; p_starts?: string }
         Returns: Json
@@ -1641,6 +1702,10 @@ export type Database = {
       username_allowed: {
         Args: { value: string }
         Returns: boolean
+      }
+      waitlist_release: {
+        Args: { p_from: string; p_to: string }
+        Returns: undefined
       }
       write_patient_profile: {
         Args: { p_user: string; p_details: Json }

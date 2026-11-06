@@ -6,35 +6,38 @@ import { cn } from '@/lib/cn'
 import { useCenterFormat } from './format'
 import { MonthCalendar, type CalendarDay } from './MonthCalendar'
 
-function SlotButton({ slot, chosen, onChoose }: { slot: Slot; chosen: boolean; onChoose: () => void }) {
+function SlotButton({ slot, chosen, waitlist, onChoose }: { slot: Slot; chosen: boolean; waitlist: boolean; onChoose: () => void }) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const full = slot.remaining === 0
-  const note = slot.mine ? t('booking.mine') : full ? t('booking.full') : t('booking.placesLeft', { count: slot.remaining })
+  const note = slot.mine ? t('booking.mine') : !full ? t('booking.placesLeft', { count: slot.remaining }) : slot.waiting ? t('booking.onWaitlist') : t('booking.full')
+  const closed = slot.mine || (full && !waitlist)
   return (
-    <button type="button" aria-pressed={chosen} disabled={full || slot.mine} onClick={onChoose}
+    <button type="button" aria-pressed={chosen} disabled={closed} onClick={onChoose}
       className={cn('flex min-h-12 items-center justify-between gap-3 rounded-control border px-3 py-2 text-left text-sm transition-colors transition-quick',
-        chosen ? 'border-lagoon bg-lagoon text-paper' : full || slot.mine ? 'border-line bg-mist text-slate' : 'border-line-strong bg-paper hover:border-lagoon hover:bg-mist')}>
+        chosen ? 'border-lagoon bg-lagoon text-paper' : closed ? 'border-line bg-mist text-slate' : full ? 'border-line-strong bg-mist text-slate hover:border-lagoon' : 'border-line-strong bg-paper hover:border-lagoon hover:bg-mist')}>
       <span className="font-semibold">{format.range(slot.startsAt, slot.endsAt)}</span>
       <span className={cn('text-right text-xs', chosen ? 'text-paper' : 'text-slate')}>{note}</span>
     </button>
   )
 }
 
-function DaySlots({ day, chosen, onChoose }: { day: AvailabilityDay | undefined; chosen: Slot | null; onChoose: (slot: Slot) => void }) {
+function DaySlots({ day, chosen, waitlist, onChoose }: { day: AvailabilityDay | undefined; chosen: Slot | null; waitlist: boolean; onChoose: (slot: Slot) => void }) {
   const { t } = useTranslation()
   if (!day) return <p className="text-sm text-slate">{t('booking.noDate')}</p>
   if (day.status !== 'open') return <Notice tone="info">{day.status === 'holiday' ? t('booking.day.holiday', { name: day.holiday }) : t(`booking.day.${day.status}`)}</Notice>
-  return <div className="grid gap-2">{day.slots.map((slot) => <SlotButton key={slot.startsAt} slot={slot} chosen={chosen?.startsAt === slot.startsAt} onChoose={() => onChoose(slot)} />)}</div>
+  return <div className="grid gap-2">{day.slots.map((slot) => <SlotButton key={slot.startsAt} slot={slot} chosen={chosen?.startsAt === slot.startsAt} waitlist={waitlist} onChoose={() => onChoose(slot)} />)}</div>
 }
 
 type Props = {
   load: Load<Availability>; month: string; onMonth: (month: string) => void; canGoBack: boolean; canGoForward: boolean; today: string
   date: string | null; onDate: (date: string) => void; chosen: Slot | null; onChoose: (slot: Slot) => void
+  /** A patient booking can choose a full time, to wait for it. */
+  waitlist?: boolean
 }
 
 /** Choose a date, then one specific time. Shared by booking, rescheduling and the Scheduler's dialogs. */
-export function SlotPicker({ load, month, onMonth, canGoBack, canGoForward, today, date, onDate, chosen, onChoose }: Props) {
+export function SlotPicker({ load, month, onMonth, canGoBack, canGoForward, today, date, onDate, chosen, onChoose, waitlist = false }: Props) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const days = load.status === 'ready' ? load.data.days : []
@@ -55,7 +58,7 @@ export function SlotPicker({ load, month, onMonth, canGoBack, canGoForward, toda
       <section aria-label={t('booking.chooseTime')}>
         <h3 className="mb-3 font-sans text-base font-bold">{date ? format.calendarDay(date) : t('booking.chooseTime')}</h3>
         <Loadable load={load} skeleton={<div className="grid gap-2">{[0, 1, 2, 3].map((index) => <Skeleton key={index} className="h-12 rounded-control" />)}</div>}>
-          {() => <DaySlots day={picked} chosen={chosen} onChoose={onChoose} />}
+          {() => <DaySlots day={picked} chosen={chosen} waitlist={waitlist} onChoose={onChoose} />}
         </Loadable>
       </section>
     </div>

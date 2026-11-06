@@ -3,7 +3,7 @@ import { Link, useSearchParams, type RouteObject } from 'react-router'
 import type { Slot } from '@/data/booking'
 import type { Closure, Holiday, TimeOff } from '@/data/calendar'
 import type { ScheduleAudience } from '@/data/schedule'
-import { NO_FILTERS as NO_REQUEST_FILTERS, type RequestRow } from '@/data/scheduler'
+import { NO_FILTERS as NO_REQUEST_FILTERS, NO_SCHEDULE_FILTERS, type RequestRow } from '@/data/scheduler'
 import { SignInPage } from '@/auth/SignInPage'
 import type { Workspace } from '@/auth/roles'
 import { toast } from '@/components/Toast'
@@ -29,6 +29,7 @@ import { ScheduleView } from '@/features/booking/ScheduleView'
 import { BellLink } from '@/features/notifications/NotificationBell'
 import { NotificationsView } from '@/features/notifications/NotificationsView'
 import { ClosureDialog, HolidayDialog, TimeOffDialog, type CalendarActions } from '@/features/scheduler/CalendarDialogs'
+import { ConfirmedScheduleView } from '@/features/scheduler/ConfirmedScheduleView'
 import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
 import { RequestsView } from '@/features/scheduler/RequestsView'
@@ -87,9 +88,9 @@ function PatientBook() {
   const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
   const [chosen, setChosen] = useState<Slot | null>(null)
   return <BookSessionView load={useDemo(data.availability, { ...data.availability, days: [] })} month={data.availability.days[0]!.date.slice(0, 7)} onMonth={said('Changed month')} canGoBack={false} canGoForward today={data.availability.days[0]!.date}
-    date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onRequest={said('Requested')} busy={false} />
+    date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onRequest={said('Requested')} onJoin={said('Joined the waitlist')} onLeave={said('Left the waitlist')} busy={false} />
 }
-const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.myBookings, [])} onCancel={said('Cancelled')} />
+const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.myBookings, [])} waitlist={data.waitlist} onCancel={said('Cancelled')} onBook={said('Requested')} onLeave={said('Left the waitlist')} />
 function PatientProgress() {
   const [filters, setFilters] = useState(NO_FILTERS)
   const base = { patients: [], patientId: 'p1', exercises: [{ id: 'v1', name: 'Elbow flexion' }] }
@@ -121,6 +122,13 @@ function Schedule({ audience }: { audience: ScheduleAudience }) {
 const calendarActions: CalendarActions = {
   impact: async () => data.affected, availability: async () => data.availability, therapists: async () => data.therapistChoices, saveHoliday: async () => toast.show('Saved'), saveClosure: async () => toast.show('Saved'), saveTimeOff: async () => toast.show('Saved'),
 }
+function SchedulerSchedule() {
+  const [filters, setFilters] = useState(NO_SCHEDULE_FILTERS)
+  const rows = data.requests.filter((row) => row.status === 'confirmed' || row.status === 'rescheduled')
+  return <ConfirmedScheduleView load={useDemo({ rows, total: rows.length }, { rows: [], total: 0 })} therapists={data.therapistChoices} patients={[{ id: 'p1', name: 'Ana Dela Cruz' }]} filters={filters} onFilters={setFilters}
+    sort={{ key: 'starts_at', direction: 'asc' }} onSort={said('Sorted')} page={0} onPage={said('Paged')} exporting={null} onExport={said('Exported')} />
+}
+
 function SchedulerCalendar() {
   const [params] = useSearchParams()
   const [tab, setTab] = useState((params.get('tab') ?? 'hours') as CalendarTab)
@@ -223,7 +231,7 @@ export const galleryRoutes: RouteObject[] = [{
     },
     {
       path: 'scheduler', element: <Frame workspace="scheduler" />, handle: { crumb: 'nav.home' },
-      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
+      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'schedule', element: <SchedulerSchedule />, handle: { crumb: 'nav.scheduleShort' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
     },
     {
       path: 'admin', element: <Frame workspace="admin" />, handle: { crumb: 'nav.overview' },

@@ -18,7 +18,7 @@ export default defineConfig({
       },
       {
         extends: true,
-        test: { name: 'contract', environment: 'node', include: ['tests/contract/**/*.test.ts'], testTimeout: 30_000 },
+        test: { name: 'contract', environment: 'node', include: ['tests/contract/**/*.test.ts'], testTimeout: 30_000, hookTimeout: 30_000 },
       },
     ],
   },

@@ -4,7 +4,7 @@
   "title": "S11 - Self-service and scheduling tools",
   "description": "Weeks 21-22. Exit: patients can wait for a full slot and move their own sessions, attendance is tracked, Schedulers can book a weekly course, and a dashboard shows the state of the center.",
   "goal": "Reduce manual scheduling work for patients and staff.",
-  "status": "planned",
+  "status": "in-progress",
   "weeks": {
     "start": 21,
     "end": 22
@@ -48,7 +48,7 @@
       "github_issue": 80,
       "title": "Add the waitlist",
       "description": "Let patients wait for a full slot and hear when it opens.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web + Android",
       "estimate_points": 5,
@@ -83,35 +83,85 @@
         {
           "id": "MOT-63-AC1",
           "description": "A patient can join the waitlist for a full slot, once, on web and Android, and leave it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060015_waitlist.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/waitlist.spec.ts",
+            "web/tests/contract/waitlist.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-63-AC2",
           "description": "When a place opens, everyone waiting is notified, in the app and by email.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060015_waitlist.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/waitlist.spec.ts",
+            "web/tests/contract/waitlist.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-63-AC3",
           "description": "The first to book gets the place, and capacity rules still apply to everyone.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060015_waitlist.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/waitlist.spec.ts",
+            "web/tests/contract/waitlist.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-63-AC4",
           "description": "A waitlisted patient who books the slot leaves the waitlist automatically.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060015_waitlist.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/waitlist.spec.ts",
+            "web/tests/contract/waitlist.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T20:00:29.294052+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060015_waitlist.sql",
+          "scripts/test_booking.py",
+          "scripts/test_email.py",
+          "web/tests/e2e/waitlist.spec.ts",
+          "web/tests/contract/waitlist.test.ts",
+          "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060015_waitlist.sql",
+        "scripts/test_booking.py",
+        "scripts/test_email.py",
+        "web/tests/e2e/waitlist.spec.ts",
+        "web/tests/contract/waitlist.test.ts",
+        "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+      ]
     },
     {
       "id": "MOT-64",

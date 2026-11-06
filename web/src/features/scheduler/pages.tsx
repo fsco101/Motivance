@@ -6,16 +6,18 @@ import { ConfirmDialog } from '@/components/Dialog'
 import { PageHeader, Panel } from '@/components/Display'
 import { toast } from '@/components/Toast'
 import { addDays, bookingFailureKey, CENTER_ZONE, isStale, todayAt } from '@/data/booking'
+import { useCenterFormat } from '@/features/booking/format'
 import { deleteClosure, deleteHoliday, deleteTimeOff, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, saveTimeOff, type CenterDay, type CenterSettings, type Closure, type Holiday, type TimeOff } from '@/data/calendar'
 import { supabase } from '@/data/client'
 import {
-  assignTherapist, bulkReject, cancelBooking, confirmBooking, loadDetail, loadRequests, loadStaffAvailability, loadTherapists, NO_FILTERS, PAGE_SIZE, rejectBooking, rescheduleBooking,
-  type RequestFilters, type RequestRow, type RequestSort,
+  assignTherapist, bulkReject, cancelBooking, confirmBooking, loadAllConfirmed, loadCenterName, loadConfirmed, loadDetail, loadPatientChoices, loadRequests, loadStaffAvailability, loadTherapists, logExport,
+  NO_FILTERS, NO_SCHEDULE_FILTERS, PAGE_SIZE, rejectBooking, rescheduleBooking, type RequestFilters, type RequestRow, type RequestSort, type ScheduleFilters,
 } from '@/data/scheduler'
 import { asLoad } from '@/features/shared'
 import '@/locales/booking'
 import { ClosureDialog, HolidayDialog, TimeOffDialog, type CalendarActions } from './CalendarDialogs'
 import { CalendarView, type CalendarTab } from './CalendarView'
+import { ConfirmedScheduleView, type ExportFormat } from './ConfirmedScheduleView'
 import { BulkRejectDialog, RequestDialog, type RequestActionKind, type RequestActions } from './RequestDialogs'
 import { RequestsView } from './RequestsView'
 
@@ -98,6 +100,56 @@ export function SchedulerRequestsPage() {
       {action && <RequestDialog kind={action.kind} row={action.row} actions={actions} onClose={() => setAction(null)} />}
       {bulk && <BulkRejectDialog count={selection.length} actions={actions} onClose={() => setBulk(false)} />}
     </>
+  )
+}
+
+export function SchedulerSchedulePage() {
+  const { t } = useTranslation()
+  const format = useCenterFormat()
+  const [today] = useState(() => todayAt(CENTER_ZONE))
+  const [filters, setFilters] = useState(NO_SCHEDULE_FILTERS)
+  const [sort, setSort] = useState<RequestSort>({ key: 'starts_at', direction: 'asc' })
+  const [page, setPage] = useState(0)
+  const [exporting, setExporting] = useState<ExportFormat | null>(null)
+  const sessions = useQuery({ queryKey: ['scheduler', 'schedule', filters, sort, page], queryFn: () => loadConfirmed(supabase(), filters, sort, page), placeholderData: keepPreviousData })
+  const therapists = useQuery({ queryKey: ['scheduler', 'therapists'], queryFn: () => loadTherapists(supabase()) })
+  const patients = useQuery({ queryKey: ['scheduler', 'patients'], queryFn: () => loadPatientChoices(supabase()) })
+
+  const range = () => {
+    const date = (value: string) => format.calendarDay(value)
+    if (filters.from && filters.to) return t('scheduler.exportBetween', { from: date(filters.from), to: date(filters.to) })
+    if (filters.from) return t('scheduler.exportFrom', { from: date(filters.from) })
+    if (filters.to) return t('scheduler.exportUntil', { to: date(filters.to) })
+    return t('scheduler.exportAllDates')
+  }
+  const save = async (kind: ExportFormat) => {
+    setExporting(kind)
+    try {
+      const [rows, center] = await Promise.all([loadAllConfirmed(supabase(), filters, sort), loadCenterName(supabase())])
+      // Recorded before the file exists: a file that fails to build leaves one line too many, which is better than a file nobody recorded.
+      await logExport(supabase(), kind, rows.length)
+      const { saveXlsx, savePdf } = await import('./exportSchedule')
+      const now = new Date().toISOString()
+      // The PDF's built-in font has no narrow space, which is what browsers put before AM and PM.
+      const plain = (value: string) => value.replace(/\s+/g, ' ')
+      const document = {
+        center, title: t('scheduler.scheduleTitle'), range: range(), generated: t('scheduler.exportGenerated', { when: plain(`${format.day(now)}, ${format.time(now)}`) }), fileName: `motivance-schedule-${today}`,
+        columns: { date: t('scheduler.exportDate'), time: t('scheduler.exportTime'), patient: t('scheduler.patient'), therapist: t('booking.therapist'), status: t('scheduler.status'), reference: t('booking.reference') },
+        lines: rows.map((row) => ({ date: format.day(row.startsAt), time: plain(format.range(row.startsAt, row.endsAt)), patient: row.patient, therapist: row.therapist ?? '', status: t(`booking.status.${row.status}`), reference: row.reference })),
+      }
+      await (kind === 'xlsx' ? saveXlsx(document) : savePdf(document))
+      toast.show(t('scheduler.exported', { count: rows.length }))
+    } catch {
+      toast.show(t('scheduler.exportFailed'), 'error')
+    } finally {
+      setExporting(null)
+    }
+  }
+  const lastPage = Math.max(Math.ceil((sessions.data?.total ?? 0) / PAGE_SIZE) - 1, 0)
+  if (sessions.data && page > lastPage) setPage(lastPage)
+  return (
+    <ConfirmedScheduleView load={asLoad(sessions)} therapists={therapists.data ?? []} patients={patients.data ?? []} filters={filters} onFilters={(next: ScheduleFilters) => { setFilters(next); setPage(0) }}
+      sort={sort} onSort={(next) => { setSort(next); setPage(0) }} page={page} onPage={setPage} exporting={exporting} onExport={(kind) => void save(kind)} />
   )
 }
 

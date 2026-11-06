@@ -317,3 +317,66 @@ System reasons were checked for in six places, so each platform now has one plac
 | Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
 
 The expiry job closes exactly what the Scheduler's outdated-requests test creates, so that suite pauses the job with `cron.alter_job` and restores it at the end, even after a failure.
+
+## MOT-62: Confirmed schedule with XLSX and PDF export
+
+The Schedule page at `/scheduler/schedule` lists confirmed and rescheduled sessions, with search and filters for date range, therapist, patient and status. It reuses `scheduler_bookings`, so search, sorting and paging stay on the server.
+
+An export reads the whole filtered result, page by page, not the rows on screen. The audit entry is written first, with the format and row count, because the rule is that every export is recorded: a file that then fails to build leaves one line too many, which is better than a file nobody recorded. Administrators see exports in Activity, and that label shipped to the web and Android together.
+
+The PDF carries the center's name and logo, the date range and when it was made. The export libraries load only on export, so the first download did not grow. They are the three the plan listed, each more than two weeks old. `fflate` is a test dependency, used to open exported spreadsheets.
+
+Testing this turned up five problems, all fixed here:
+
+- Axe: with more than 9 unread, the bell showed "9+" but its label gave the exact number, so someone using voice control could not say what they saw. The label now holds what the badge shows.
+- A review of the labels: the new Activity label was under the wrong key, so the web feed fell back to its generic wording while every test passed. It is moved, every audit kind now has a test for its words in both languages, and a browser test reads the real feed as an administrator.
+- A review of the patient filter: `scheduler_patients` is a search capped at 50 that hides disabled accounts, so as a list it left patients out. The filter now comes from `scheduler_schedule_patients`, the people actually on the schedule.
+- Contract set-up sat on a 10 second limit while the tests themselves had 30, so a busy machine could fail a run before any test began. Set-up now has the same 30 seconds.
+- A contract test failed once in a whole run, on a booking insert. The database log showed why: `notify_schedulers` listed a Scheduler that another test then removed, the foreign key failed, and that rolled back the booking. So a notification could cost a patient their request. `notify` now skips a recipient who has gone. The new live check failed with the same error before the fix.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: recording exports, what an administrator sees, refusals | `python scripts/test_booking.py exports` | 9 checks passed |
+| A removed recipient does not stop a booking | `python scripts/test_booking.py notifications` | Passed; failed before the fix |
+| All sections | `python scripts/test_booking.py` | 549 checks passed |
+| Real sends to Mailpit, and the S10 demo | `python scripts/test_email.py` | 58 checks passed |
+| Contract tests, including reading a result across several pages | `npm run test:contract` | 108 passed, five runs in a row |
+| Whole browser suite with axe, one browser at a time, before the last fixes below | `npx playwright test --workers=1` | 220 passed. 83 opt-in tests did not run, as designed |
+| The four specs those fixes touch, after them, including 9 confirmed-schedule tests that open exported files, refuse a file with no audit record, and read the real Activity feed | `npx playwright test confirmed-schedule admin notifications scheduler --workers=1` | 45 passed |
+| Web unit tests | `npm test` | 244 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 220 passed |
+| Administrator parity | `python scripts/check_admin_parity.py` | Passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+An exported PDF was also rendered and looked at: the logo, the header, the table and the times all draw correctly, and it runs to a second page for 30 sessions. The PDF's built-in font covers Western European text, so a name in another script would not draw correctly. The spreadsheet has no such limit.
+
+## S10 outcome
+
+All seven issues are implemented and closed. The sprint demo ran for real, in one sitting, through the same API the apps call, in `scripts/test_email.py`: a session was confirmed and shown on both My Schedules at its specific time, a closure was added over it, the booking was resolved, and the patient had the in-app notification and an email with a working calendar link. The issue criterion stays recorded as not passed, under a deferral the owner approved, because MOT-60 needs a real Gmail delivery from a hosted project.
+
+## MOT-63: Waitlist
+
+A full time can now be chosen, to wait for it, on the web and on Android. A place in line holds nothing: when a place opens, everyone waiting hears, in the app and by email, and the first to book gets it under the same rules as any booking. Someone who was not waiting can take it too.
+
+The trigger sits on `booking_events`, so a place cannot be missed by a new way of cancelling or moving a booking. A burst of cancellations is one message per person, and once the slot fills again the next place is news. Raising the capacity counts as a place opening. A place nobody could book is not news: a closed time, or one inside the notice period, says nothing and drops off the list. A disabled account is not told.
+
+An open place can be booked from My bookings in one step, because the first to book gets it.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: joining, refusals, who hears and how often, a race for one place, moving and closing | `python scripts/test_booking.py waitlist` | 40 checks passed, three runs in a row |
+| All sections | `python scripts/test_booking.py` | 589 checks passed |
+| A real send through the queue to Mailpit | `python scripts/test_email.py` | 60 checks passed |
+| Contract tests | `npm run test:contract` | 114 passed |
+| Browser tests with axe: joining, leaving, the place opening, booking it, losing it to someone else | `npx playwright test waitlist booking design patient scheduler notifications --workers=1` | 114 passed. 1 opt-in test did not run, as designed |
+| Web unit tests | `npm test` | 244 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 229 passed |
+| The app on a throwaway emulator, against the local backend | Driven through its UI, checking the screen and the server at each step | 15 checks passed: joining, leaving, the list, the notification, booking the place |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+Two older tests pinned the rule this changes, that a full slot cannot be chosen. The browser test now proves a full slot offers the waitlist and never a request. A held slot still cannot be chosen.
+
+The whole live suite also caught a fault in a new check: raising the capacity told one patient about two slots whenever that patient had lost an earlier race, which is correct, so the check now looks at one slot. It had passed alone only when that patient won.
+
+A physical phone is still to be tried, and is on the checklist.

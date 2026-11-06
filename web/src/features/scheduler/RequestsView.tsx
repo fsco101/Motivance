@@ -1,4 +1,4 @@
-import { CaretLeftIcon, CaretRightIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react'
+import { MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react'
 import { AnimatePresence, m as motion } from 'motion/react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,10 +7,11 @@ import { DataTable, type Column, type Sort } from '@/components/DataTable'
 import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
 import { SelectField, TextField } from '@/components/Field'
 import { ACTIVE, type BookingStatus } from '@/data/booking'
-import { NO_FILTERS, PAGE_SIZE, type RequestDetail, type RequestFilters, type RequestRow, type RequestSort, type SortKey, type TherapistChoice } from '@/data/scheduler'
+import { NO_FILTERS, type RequestDetail, type RequestFilters, type RequestRow, type RequestSort, type SortKey, type TherapistChoice } from '@/data/scheduler'
 import { statusTone, useCenterFormat, useReasonText } from '@/features/booking/format'
 import { Fact, Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { spring } from '@/motion/tokens'
+import { Pager } from './Pager'
 import type { RequestActionKind } from './RequestDialogs'
 
 const STATUSES: ReadonlyArray<BookingStatus | 'all'> = ['all', 'pending', 'confirmed', 'rescheduled', 'rejected', 'cancelled']
@@ -105,8 +106,6 @@ export function RequestsView({ load, therapists, filters, onFilters, sort, onSor
     event.preventDefault()
     onFilters({ ...filters, search })
   }
-  const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
-  const first = total === 0 ? 0 : page * PAGE_SIZE + 1
   const filtered = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS)
   return (
     <>
@@ -132,16 +131,7 @@ export function RequestsView({ load, therapists, filters, onFilters, sort, onSor
                 </div>
               </form>
             )}
-            footer={(
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-sm text-slate">{t('scheduler.showing', { first, last: Math.min((page + 1) * PAGE_SIZE, total), total })}</span>
-                <div className="flex items-center gap-1">
-                  <IconButton label={t('scheduler.previousPage')} disabled={page === 0} onClick={() => onPage(page - 1)}><CaretLeftIcon aria-hidden /></IconButton>
-                  <span className="text-sm">{t('scheduler.page', { page: page + 1, pages })}</span>
-                  <IconButton label={t('scheduler.nextPage')} disabled={page + 1 >= pages} onClick={() => onPage(page + 1)}><CaretRightIcon aria-hidden /></IconButton>
-                </div>
-              </div>
-            )}>
+            footer={<Pager page={page} total={total} onPage={onPage} />}>
             {pending.length > 0 && (
               <div className="flex flex-wrap items-center gap-3 border-b border-line bg-mist px-4 py-2 text-sm">
                 <span>{t('scheduler.selected', { count: checked.length })}</span>

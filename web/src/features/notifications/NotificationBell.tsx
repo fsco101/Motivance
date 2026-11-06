@@ -10,11 +10,13 @@ const CHECK_EVERY = 60_000
 
 export function BellLink({ to, count }: { to: string; count: number }) {
   const { t } = useTranslation()
+  // The label holds what the badge shows, so someone using voice control can say what they see.
+  const shown = count > 9 ? '9+' : String(count)
   return (
-    <Link to={to} aria-label={count > 0 ? t('nav.notificationsUnread', { count }) : t('nav.notifications')}
+    <Link to={to} aria-label={count > 0 ? t('nav.notificationsUnread', { count, shown }) : t('nav.notifications')}
       className="relative grid size-11 shrink-0 place-items-center rounded-control text-slate transition-colors transition-quick hover:bg-mist hover:text-ink">
       <BellIcon aria-hidden className="text-xl" />
-      {count > 0 && <span aria-hidden className="absolute right-1 top-1 min-w-4 rounded-full bg-lagoon-deep px-1 text-center text-[0.625rem] font-bold leading-4 text-paper">{count > 9 ? '9+' : count}</span>}
+      {count > 0 && <span aria-hidden className="absolute right-1 top-1 min-w-4 rounded-full bg-lagoon-deep px-1 text-center text-[0.625rem] font-bold leading-4 text-paper">{shown}</span>}
     </Link>
   )
 }

@@ -12,9 +12,13 @@ const val CENTER_ZONE="Asia/Manila"
 enum class BookingDayStatus { OPEN, CLOSED, HOLIDAY, CLOSURE, PAST, TOO_SOON, TOO_FAR;
     companion object {fun of(value:String)=entries.firstOrNull {it.name.equals(value,ignoreCase=true)} ?: CLOSED}
 }
-data class BookingSlot(val startsAt:String,val endsAt:String,val remaining:Int,val mine:Boolean=false) {
+data class BookingSlot(val startsAt:String,val endsAt:String,val remaining:Int,val mine:Boolean=false,val waiting:Boolean=false) {
     val bookable get()=remaining>0 && !mine
+    /** A full time can still be waited for, by anyone without a session in it. */
+    val joinable get()=remaining==0 && !mine
 }
+/** A place in the line for a full time. Open means a place is free now, and the first to book gets it. */
+data class WaitlistEntry(val id:String,val startsAt:String,val endsAt:String,val open:Boolean)
 data class BookingDay(val date:String,val status:BookingDayStatus,val holiday:String?=null,val slots:List<BookingSlot> = emptyList()) {
     val hasPlaces get()=status==BookingDayStatus.OPEN && slots.any {it.bookable}
 }
@@ -73,6 +77,9 @@ interface BookingRepository {
     suspend fun requestBooking(requestId:String,startsAt:String):Booking
     suspend fun loadMyBookings():List<Booking>
     suspend fun cancelBooking(id:String)
+    suspend fun loadWaitlist():List<WaitlistEntry>
+    suspend fun joinWaitlist(startsAt:String)
+    suspend fun leaveWaitlist(startsAt:String)
     /** [therapist] reads the sessions assigned to this person instead of their own as a patient. */
     suspend fun loadSchedule(from:String,to:String,therapist:Boolean):Schedule
 }

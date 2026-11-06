@@ -241,6 +241,9 @@ import java.time.OffsetDateTime
     override suspend fun requestBooking(requestId:String,startsAt:String)=authorized {token,_ -> BookingJson.booking(JSONObject(call("/rest/v1/rpc/request_booking",JSONObject().put("p_request",requestId).put("p_starts",startsAt),token)))}
     override suspend fun loadMyBookings()=authorized {token,_ -> BookingJson.bookings(JSONArray(call("/rest/v1/rpc/my_bookings",JSONObject(),token)))}
     override suspend fun cancelBooking(id:String) {authorized {token,_ -> call("/rest/v1/rpc/cancel_my_booking",JSONObject().put("p_booking",id),token)}}
+    override suspend fun loadWaitlist()=authorized {token,_ -> BookingJson.waitlist(JSONArray(call("/rest/v1/rpc/my_waitlist",JSONObject(),token)))}
+    override suspend fun joinWaitlist(startsAt:String) {authorized {token,_ -> call("/rest/v1/rpc/join_waitlist",JSONObject().put("p_starts",startsAt),token)}}
+    override suspend fun leaveWaitlist(startsAt:String) {authorized {token,_ -> call("/rest/v1/rpc/leave_waitlist",JSONObject().put("p_starts",startsAt),token)}}
     override suspend fun loadNotifications()=authorized {token,_ -> BookingJson.inbox(JSONObject(call("/rest/v1/rpc/my_notifications",JSONObject(),token)))}
     override suspend fun markNotificationsRead(ids:List<String>?)=authorized {token,_ ->
         call("/rest/v1/rpc/mark_notifications_read",JSONObject().put("p_ids",ids?.let {JSONArray(it)} ?: JSONObject.NULL),token).trim().toInt()}

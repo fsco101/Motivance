@@ -64,7 +64,25 @@
     "bulkDone_one": "Natanggihan ang {{count}} kahilingan.",
     "bulkDone_other": "Natanggihan ang {{count}} kahilingan.",
     "onLeave": "Naka-leave",
-    "reasonExpired": "Lumipas ang oras bago may nakapagpasya."
+    "reasonExpired": "Lumipas ang oras bago may nakapagpasya.",
+    "scheduleTitle": "Kumpirmadong iskedyul",
+    "scheduleDetail": "Lahat ng kumpirmadong session. Sakop ng export ang lahat ng tumutugma sa mga filter, hindi lang ang pahinang ito.",
+    "allPatients": "Lahat ng pasyente",
+    "exportXlsx": "I-export ang XLSX",
+    "exportPdf": "I-export ang PDF",
+    "exporting": "Ine-export",
+    "exported_one": "Na-export ang {{count}} session.",
+    "exported_other": "Na-export ang {{count}} session.",
+    "exportFailed": "Hindi magawa ang export. Subukang muli.",
+    "exportDate": "Petsa",
+    "exportTime": "Oras",
+    "exportBetween": "{{from}} hanggang {{to}}",
+    "exportFrom": "Mula {{from}}",
+    "exportUntil": "Hanggang {{to}}",
+    "exportAllDates": "Lahat ng petsa",
+    "exportGenerated": "Ginawa noong {{when}}",
+    "noneScheduled": "Walang kumpirmadong session",
+    "noneScheduledDetail": "Lalabas dito ang mga session kapag nakumpirma na ng Scheduler."
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
@@ -200,7 +218,8 @@
       "invalid": "Hindi mabasa ang kahilingan. Subukang muli.",
       "invalid_range": "Hindi mabasa ang mga petsang iyan.",
       "unresolved": "May mga bagong booking sa oras na ito. Suriin ang mga ito at subukang muli.",
-      "therapist_on_leave": "Naka-leave ang therapist na iyon sa oras na iyon."
+      "therapist_on_leave": "Naka-leave ang therapist na iyon sa oras na iyon.",
+      "not_full": "May bakante na ulit sa oras na ito, kaya maaari mo itong i-book."
     },
     "keep": "Panatilihin ang booking",
     "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
@@ -213,7 +232,22 @@
     "scheduleNotLinked": "Hindi ka naka-link sa pasyenteng ito, kaya sarado pa rin ang kanilang rekord.",
     "scheduleCount_one": "{{count}} session",
     "scheduleCount_other": "{{count}} session",
-    "reasonExpired": "Lumipas ang oras bago makumpirma ang kahilingang ito."
+    "reasonExpired": "Lumipas ang oras bago makumpirma ang kahilingang ito.",
+    "onWaitlist": "Nasa waitlist",
+    "fullChoice": "Puno na ang oras na ito",
+    "waitlistDetail": "Sumali sa waitlist at sasabihan ka namin kapag may nabakante. Makukuha ito ng unang mag-book.",
+    "waitingDetail": "Sasabihan ka namin kapag may nabakante. Makukuha ito ng unang mag-book.",
+    "joinWaitlist": "Sumali sa waitlist",
+    "joiningWaitlist": "Sumasali",
+    "leaveWaitlist": "Umalis sa waitlist",
+    "leavingWaitlist": "Umaalis",
+    "joinedWaitlist": "Nasa waitlist ka na.",
+    "leftWaitlist": "Umalis ka na sa waitlist.",
+    "waitlist": "Waitlist",
+    "waiting": "Naghihintay",
+    "placeOpen": "May bakante",
+    "placeOpenDetail": "May bakante ngayon. Makukuha ito ng unang mag-book.",
+    "bookPlace": "I-book ang oras na ito"
   },
   "calendar": {
     "title": "Kalendaryo ng center",
@@ -334,6 +368,7 @@
     "patient_cancelled": "Kinansela ni {{patient}} ang session sa {{when}}.",
     "needs_therapist": "Kailangan ng therapist ang session ni {{patient}} sa {{when}}.",
     "reminder": "Paalala: ang iyong session ay sa {{when}} kasama si {{therapist}}.",
-    "session_reminder": "Paalala: naka-book sa iyo si {{patient}} sa {{when}}."
+    "session_reminder": "Paalala: naka-book sa iyo si {{patient}} sa {{when}}.",
+    "place_open": "May bakante na sa {{when}}. Makukuha ito ng unang mag-book."
   }
 }

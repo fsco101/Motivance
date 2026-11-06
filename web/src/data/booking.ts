@@ -8,19 +8,19 @@ type Db = SupabaseClient<Database>
 export const CENTER_ZONE = 'Asia/Manila'
 
 export type DayStatus = 'open' | 'closed' | 'holiday' | 'closure' | 'past' | 'too_soon' | 'too_far'
-export type Slot = { startsAt: string; endsAt: string; remaining: number; mine: boolean }
+export type Slot = { startsAt: string; endsAt: string; remaining: number; mine: boolean; waiting: boolean }
 export type AvailabilityDay = { date: string; status: DayStatus; holiday: string | null; slots: Slot[] }
 export type Availability = { timeZone: string; days: AvailabilityDay[] }
 
 type RawAvailability = {
   time_zone: string
-  days: Array<{ date: string; status: DayStatus; holiday: string | null; slots: Array<{ starts_at: string; ends_at: string; remaining: number; mine: boolean }> }>
+  days: Array<{ date: string; status: DayStatus; holiday: string | null; slots: Array<{ starts_at: string; ends_at: string; remaining: number; mine: boolean; waiting?: boolean }> }>
 }
 
 export function decodeAvailability(raw: RawAvailability): Availability {
   return {
     timeZone: raw.time_zone,
-    days: raw.days.map((day) => ({ ...day, slots: day.slots.map((slot) => ({ startsAt: slot.starts_at, endsAt: slot.ends_at, remaining: slot.remaining, mine: slot.mine })) })),
+    days: raw.days.map((day) => ({ ...day, slots: day.slots.map((slot) => ({ startsAt: slot.starts_at, endsAt: slot.ends_at, remaining: slot.remaining, mine: slot.mine, waiting: slot.waiting ?? false })) })),
   }
 }
 
@@ -93,6 +93,22 @@ const startTime = (booking: Booking) => new Date(booking.startsAt).getTime()
 export const upcomingBookings = (bookings: readonly Booking[], now = Date.now()) => bookings.filter((booking) => isUpcoming(booking, now)).sort((a, b) => startTime(a) - startTime(b))
 
 export const nextBooking = (bookings: readonly Booking[], now = Date.now()) => upcomingBookings(bookings, now)[0] ?? null
+
+/** A place in the line for a full time. Open means a place is free now, and the first to book gets it. */
+export type WaitlistEntry = { id: string; startsAt: string; endsAt: string; open: boolean }
+
+export async function loadMyWaitlist(db: Db): Promise<WaitlistEntry[]> {
+  const rows = must(await db.rpc('my_waitlist')) as unknown as Array<{ id: string; starts_at: string; ends_at: string; open: boolean }>
+  return rows.map((row) => ({ id: row.id, startsAt: row.starts_at, endsAt: row.ends_at, open: row.open }))
+}
+
+export async function joinWaitlist(db: Db, startsAt: string) {
+  must(await db.rpc('join_waitlist', { p_starts: startsAt }))
+}
+
+export async function leaveWaitlist(db: Db, startsAt: string) {
+  must(await db.rpc('leave_waitlist', { p_starts: startsAt }))
+}
 
 /** Someone else has already changed this booking, so whatever is on screen no longer applies. */
 export const isStale = (error: unknown) => ['booking_state', 'booking_unavailable'].includes((error as { message?: string } | null)?.message ?? '')

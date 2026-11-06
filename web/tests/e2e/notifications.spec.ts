@@ -50,7 +50,7 @@ test.afterAll(async () => {
 
 test('a Scheduler is alerted to a new request, and it opens the requests', async ({ browser }) => {
   const page = await signIn(browser, scheduler, /\/scheduler$/, { timezoneId: 'America/New_York' })
-  await page.getByRole('link', { name: /^Notifications, \d+ unread$/ }).click()
+  await page.getByRole('link', { name: /^Notifications, \S+ unread$/ }).click()
   const note = page.getByRole('button', { name: new RegExp(`Ana ${tag} requested`) })
   await expect(note).toContainText('9:00 AM – 10:00 AM')
   await noViolations(page)

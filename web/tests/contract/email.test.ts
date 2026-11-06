@@ -92,6 +92,23 @@ describe('a booking email', () => {
     expect(subject).not.toMatch(/[\r\n]/)
   })
 
+  it('offers a place as a time, with no session details and a link straight to it', () => {
+    const data = { starts_at: '2026-12-14T01:00:00+00:00', ends_at: '2026-12-14T02:00:00+00:00' }
+    for (const language of ['en', 'fil'] as const) {
+      const { subject, text, html } = renderEmail(delivery({ kind: 'place_open', language, calendar_token: null, data }), links)
+      expect(subject.length).toBeGreaterThan(0)
+      for (const missing of ['undefined', 'Reference', 'Therapist', 'booking-calendar', 'null']) {
+        expect(text).not.toContain(missing)
+        expect(html).not.toContain(missing)
+      }
+      expect(text).toContain(`${links.site}/patient/bookings`)
+      expect(html).toContain(`${links.site}/patient/bookings`)
+      expect(plain(text)).toContain('9:00')
+      expect(text).toContain('12 Mabini Street')
+    }
+    expect(renderEmail(delivery({ kind: 'place_open', data }), links).subject).toBe('A place has opened')
+  })
+
   it('refuses a kind it has no words for, rather than sending a blank email', () => {
     expect(() => renderEmail(delivery({ kind: 'unknown' }), links)).toThrow('Unknown notification kind')
   })

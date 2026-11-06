@@ -18,6 +18,9 @@ class BookingViewModelTest {
     private val slot=BookingSlot("2026-12-07T01:00:00+00:00","2026-12-07T02:00:00+00:00",2)
     private val booking=Booking("b1","BK-2026-000001",BookingStatus.PENDING,null,slot.startsAt,slot.endsAt,null,null,canCancel=true)
 
+    private val full=slot.copy(remaining=0)
+    private val entry=WaitlistEntry("w1",slot.startsAt,slot.endsAt,open=false)
+
     private inner class Remote:BookingRepository {
         var refusal:RemoteFailure?=null
         var loadFailure:RemoteFailure?=null
@@ -37,10 +40,78 @@ class BookingViewModelTest {
         }
         override suspend fun loadMyBookings():List<Booking> =wait?.let {withContext(NonCancellable) {it.await()}} ?: listOf(booking)
         override suspend fun cancelBooking(id:String) {refusal?.let {throw it};cancelled+=id}
+        var waitlist=emptyList<WaitlistEntry>()
+        val joined=mutableListOf<String>()
+        val left=mutableListOf<String>()
+        override suspend fun loadWaitlist()=waitlist
+        override suspend fun joinWaitlist(startsAt:String) {refusal?.let {throw it};joined+=startsAt;waitlist=listOf(entry)}
+        override suspend fun leaveWaitlist(startsAt:String) {refusal?.let {throw it};left+=startsAt;waitlist=emptyList()}
         override suspend fun loadSchedule(from:String,to:String,therapist:Boolean)=Schedule()
     }
 
     private fun viewModel(remote:Remote,toasts:Toaster=Toaster())=BookingViewModel(remote,toasts).also {it.configure("owner")}
+
+    @Test fun aFullTimeCanBeChosenToWaitFor()=runTest {
+        val vm=viewModel(Remote())
+        vm.selectSlot(full)
+        assertEquals(full,vm.state.value.slot)
+        vm.selectSlot(slot);assertEquals(slot,vm.state.value.slot)
+    }
+
+    @Test fun aTimeThePatientAlreadyHoldsCannotBeChosen()=runTest {
+        val vm=viewModel(Remote())
+        vm.selectSlot(slot.copy(mine=true));assertNull(vm.state.value.slot)
+        vm.selectSlot(full.copy(mine=true));assertNull(vm.state.value.slot)
+    }
+
+    @Test fun joiningSendsTheTimeAndReadsTheCalendarAgain()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        val before=remote.availabilityLoads
+        vm.selectSlot(full);vm.joinWaitlist();advanceUntilIdle()
+        assertEquals(listOf(full.startsAt),remote.joined)
+        assertEquals(listOf(entry),vm.state.value.waitlist)
+        assertEquals(before+1,remote.availabilityLoads)
+        assertNull("The choice ends with joining",vm.state.value.slot)
+    }
+
+    @Test fun leavingSendsTheTimeAndClearsTheList()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        remote.waitlist=listOf(entry)
+        vm.refresh();advanceUntilIdle()
+        assertEquals(listOf(entry),vm.state.value.waitlist)
+        vm.leaveWaitlist(entry.startsAt);advanceUntilIdle()
+        assertEquals(listOf(entry.startsAt),remote.left)
+        assertTrue(vm.state.value.waitlist.isEmpty())
+    }
+
+    @Test fun aRefusedJoinExplainsWhyAndReadsTheCalendarAgain()=runTest {
+        val remote=Remote();val toasts=Toaster();val vm=viewModel(remote,toasts)
+        remote.refusal=RemoteFailure(400,"booking_not_full")
+        val before=remote.availabilityLoads
+        vm.selectSlot(full);vm.joinWaitlist();advanceUntilIdle()
+        assertEquals(R.string.booking_error_not_full,toasts.current.value?.message)
+        assertEquals(ToastTone.ERROR,toasts.current.value?.tone)
+        assertNull(vm.state.value.slot)
+        assertEquals(before+1,remote.availabilityLoads)
+    }
+
+    @Test fun anOpenPlaceIsBookedInOneStep()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        vm.book(entry.copy(open=true));advanceUntilIdle()
+        assertEquals(entry.startsAt,remote.requests.single().second)
+        assertEquals(listOf(booking),vm.state.value.bookings)
+    }
+
+    /** Someone else got there first, so the list must stop saying a place is open. */
+    @Test fun losingThePlaceReadsTheListAgain()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        remote.waitlist=listOf(entry.copy(open=true))
+        vm.refresh();advanceUntilIdle()
+        remote.refusal=RemoteFailure(400,"booking_full")
+        remote.waitlist=listOf(entry)
+        vm.book(entry.copy(open=true));advanceUntilIdle()
+        assertEquals(listOf(entry),vm.state.value.waitlist)
+    }
 
     @Test fun requestingSendsTheChosenTimeAndReturnsToTheList()=runTest {
         val remote=Remote();val vm=viewModel(remote)
@@ -116,12 +187,6 @@ class BookingViewModelTest {
         vm.openBooking();advanceUntilIdle()
         assertFalse(vm.state.value.failed)
         assertEquals(1,vm.state.value.availability.days.size)
-    }
-
-    @Test fun aFullOrHeldSlotCannotBeChosen()=runTest {
-        val vm=viewModel(Remote())
-        vm.selectSlot(slot.copy(remaining=0));assertNull(vm.state.value.slot)
-        vm.selectSlot(slot.copy(mine=true));assertNull(vm.state.value.slot)
     }
 
     @Test fun choosingAnotherDateClearsTheChosenTime()=runTest {

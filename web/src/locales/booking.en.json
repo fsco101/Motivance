@@ -64,7 +64,25 @@
     "bulkDone_one": "{{count}} request rejected.",
     "bulkDone_other": "{{count}} requests rejected.",
     "onLeave": "On leave",
-    "reasonExpired": "The time passed before anyone decided."
+    "reasonExpired": "The time passed before anyone decided.",
+    "scheduleTitle": "Confirmed schedule",
+    "scheduleDetail": "Every confirmed session. An export covers everything these filters match, not only this page.",
+    "allPatients": "All patients",
+    "exportXlsx": "Export XLSX",
+    "exportPdf": "Export PDF",
+    "exporting": "Exporting",
+    "exported_one": "{{count}} session exported.",
+    "exported_other": "{{count}} sessions exported.",
+    "exportFailed": "The export could not be made. Try again.",
+    "exportDate": "Date",
+    "exportTime": "Time",
+    "exportBetween": "{{from}} to {{to}}",
+    "exportFrom": "From {{from}}",
+    "exportUntil": "Until {{to}}",
+    "exportAllDates": "All dates",
+    "exportGenerated": "Generated {{when}}",
+    "noneScheduled": "No confirmed sessions",
+    "noneScheduledDetail": "Sessions appear here once a Scheduler confirms them."
   },
   "patient": {
     "greeting": "Hello, {{name}}",
@@ -200,7 +218,8 @@
       "invalid": "That request could not be read. Try again.",
       "invalid_range": "Those dates could not be read.",
       "unresolved": "New bookings fall in this time. Review them and try again.",
-      "therapist_on_leave": "That therapist is on leave at that time."
+      "therapist_on_leave": "That therapist is on leave at that time.",
+      "not_full": "This time has places again, so you can book it."
     },
     "keep": "Keep booking",
     "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
@@ -213,7 +232,22 @@
     "scheduleNotLinked": "You are not linked to this patient, so their record stays closed.",
     "scheduleCount_one": "{{count}} session",
     "scheduleCount_other": "{{count}} sessions",
-    "reasonExpired": "The time passed before this request could be confirmed."
+    "reasonExpired": "The time passed before this request could be confirmed.",
+    "onWaitlist": "On the waitlist",
+    "fullChoice": "This time is full",
+    "waitlistDetail": "Join the waitlist and we will tell you if a place opens. The first to book gets it.",
+    "waitingDetail": "We will tell you if a place opens. The first to book gets it.",
+    "joinWaitlist": "Join the waitlist",
+    "joiningWaitlist": "Joining",
+    "leaveWaitlist": "Leave the waitlist",
+    "leavingWaitlist": "Leaving",
+    "joinedWaitlist": "You are on the waitlist.",
+    "leftWaitlist": "You left the waitlist.",
+    "waitlist": "Waitlist",
+    "waiting": "Waiting",
+    "placeOpen": "Place open",
+    "placeOpenDetail": "A place is open now. The first to book gets it.",
+    "bookPlace": "Book this time"
   },
   "calendar": {
     "title": "Center calendar",
@@ -334,6 +368,7 @@
     "patient_cancelled": "{{patient}} cancelled their session on {{when}}.",
     "needs_therapist": "The session with {{patient}} on {{when}} needs a therapist.",
     "reminder": "Reminder: your session is on {{when}} with {{therapist}}.",
-    "session_reminder": "Reminder: {{patient}} is booked with you on {{when}}."
+    "session_reminder": "Reminder: {{patient}} is booked with you on {{when}}.",
+    "place_open": "A place has opened on {{when}}. The first to book gets it."
   }
 }

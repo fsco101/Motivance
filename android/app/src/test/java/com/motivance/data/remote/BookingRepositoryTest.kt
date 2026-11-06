@@ -26,6 +26,9 @@ class BookingRepositoryTest {
                     {"date":"2026-12-07","status":"open","holiday":null,"slots":[{"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","remaining":2,"mine":true}]},
                     {"date":"2026-12-08","status":"holiday","holiday":"Feast","slots":[]},{"date":"2026-12-09","status":"too_soon","holiday":null,"slots":[]}]}"""
                 path=="/rest/v1/rpc/my_bookings" -> "[$booking]"
+                path=="/rest/v1/rpc/my_waitlist" -> """[{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00","open":true}]"""
+                path=="/rest/v1/rpc/join_waitlist" -> """{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00"}"""
+                path=="/rest/v1/rpc/leave_waitlist" -> ""
                 path=="/rest/v1/rpc/my_notifications" -> """{"unread":1,"rows":[
                     {"id":"n1","kind":"rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":"2026-12-07T02:00:00+00:00","patient_name":"Ana","therapist_name":"Dana","reason":"Training"}},
@@ -106,6 +109,24 @@ class BookingRepositoryTest {
         assertEquals("fil",bodies["/rest/v1/rpc/set_my_language"]!!.getString("p_language"))
     }
 
+    @Test fun aPlaceOnTheWaitlistIsRead()=runBlocking {
+        assertEquals(listOf(WaitlistEntry("w1","2026-12-09T02:00:00+00:00","2026-12-09T03:00:00+00:00",open=true)),repository().loadWaitlist())
+    }
+    @Test fun joiningAndLeavingSendTheTime()=runBlocking {
+        val repository=repository()
+        repository.joinWaitlist("2026-12-09T02:00:00+00:00")
+        assertEquals("2026-12-09T02:00:00+00:00",bodies["/rest/v1/rpc/join_waitlist"]?.getString("p_starts"))
+        repository.leaveWaitlist("2026-12-09T02:00:00+00:00")
+        assertEquals("2026-12-09T02:00:00+00:00",bodies["/rest/v1/rpc/leave_waitlist"]?.getString("p_starts"))
+    }
+    /** A place is a time, not yet a session, so it has no reference, and that must not lose the rest of the inbox. */
+    @Test fun aPlaceOpeningHasNoReference()=runBlocking {
+        val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n9","kind":"place_open","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
+            "data":{"starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00"}}]}""")).items.single()
+        assertEquals(NotificationKind.PLACE_OPEN,note.kind)
+        assertEquals("",note.reference)
+        assertEquals("2026-12-09T02:00:00+00:00",note.startsAt)
+    }
     @Test fun aReminderIsRead()=runBlocking {
         assertEquals(NotificationKind.REMINDER,repository().loadNotifications().items.first {it.id=="n4"}.kind)
     }
