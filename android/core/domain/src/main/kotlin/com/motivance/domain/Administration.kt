@@ -45,19 +45,21 @@ enum class LinkFilter { ACTIVE, REVOKED, ALL }
 fun LinkFilter.accepts(link:AdminLink)=when(this) {LinkFilter.ACTIVE -> link.active;LinkFilter.REVOKED -> !link.active;LinkFilter.ALL -> true}
 
 /** Coarse grouping of audit records for filtering and iconography. */
-enum class AuditCategory { ACCOUNTS, LINKS, CATALOGUE, CLINICAL, PRIVACY }
+enum class AuditCategory { ACCOUNTS, LINKS, CATALOGUE, CLINICAL, PRIVACY, BOOKINGS }
 fun AuditEvent.category()=when(targetType) {
     "profiles","user_roles","patient_profiles" -> AuditCategory.ACCOUNTS
     "therapist_patients","patient_invitations" -> AuditCategory.LINKS
     "exercises","exercise_versions" -> AuditCategory.CATALOGUE
     "consents","data_requests" -> AuditCategory.PRIVACY
+    "bookings" -> AuditCategory.BOOKINGS
     else -> AuditCategory.CLINICAL
 }
 
 /** Stable keys for every audited operation the backend currently records. */
 enum class AuditKind { ACCOUNT_ENABLED, ACCOUNT_DISABLED, PHOTO_UPDATED, PHOTO_REMOVED, PROFILE_UPDATED, ROLE_GRANTED, ROLE_REMOVED, ROLE_CHANGED, LINK_CREATED, LINK_UPDATED,
     INVITATION_CREATED, EXERCISE_ACTIVATED, EXERCISE_DEACTIVATED, VERSION_PUBLISHED, PRESCRIPTION_PUBLISHED, SESSION_RECORDED,
-    CONSENT_RECORDED, REQUEST_CREATED, REQUEST_UPDATED, OTHER }
+    CONSENT_RECORDED, REQUEST_CREATED, REQUEST_UPDATED, BOOKING_REQUESTED, BOOKING_CONFIRMED, BOOKING_REJECTED, BOOKING_CANCELLED,
+    BOOKING_RESCHEDULED, BOOKING_RETURNED, BOOKING_THERAPIST, BOOKING_ATTENDANCE, OTHER }
 fun AuditEvent.kind()=when(targetType to action) {
     "profiles" to "enable" -> AuditKind.ACCOUNT_ENABLED
     "profiles" to "disable" -> AuditKind.ACCOUNT_DISABLED
@@ -78,6 +80,14 @@ fun AuditEvent.kind()=when(targetType to action) {
     "consents" to "insert" -> AuditKind.CONSENT_RECORDED
     "data_requests" to "insert" -> AuditKind.REQUEST_CREATED
     "data_requests" to "update" -> AuditKind.REQUEST_UPDATED
+    "bookings" to "requested" -> AuditKind.BOOKING_REQUESTED
+    "bookings" to "confirmed" -> AuditKind.BOOKING_CONFIRMED
+    "bookings" to "rejected" -> AuditKind.BOOKING_REJECTED
+    "bookings" to "cancelled" -> AuditKind.BOOKING_CANCELLED
+    "bookings" to "rescheduled" -> AuditKind.BOOKING_RESCHEDULED
+    "bookings" to "returned_to_pending" -> AuditKind.BOOKING_RETURNED
+    "bookings" to "therapist_changed" -> AuditKind.BOOKING_THERAPIST
+    "bookings" to "attendance_marked" -> AuditKind.BOOKING_ATTENDANCE
     else -> AuditKind.OTHER
 }
 

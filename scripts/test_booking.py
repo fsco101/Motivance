@@ -3,12 +3,14 @@
 Run after `supabase start` and `supabase migration up --local`. Existing records are left alone: every account this
 creates is removed again. Pass a section name, such as `python scripts/test_booking.py roles`, to run one section.
 """
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import threading
 import urllib.error
 import urllib.request
 import uuid
@@ -82,6 +84,9 @@ class Stack:
             return
         ids = ','.join("'" + str(uuid.UUID(user)) + "'" for user in self.users)
         self.sql(f"""begin; set local session_replication_role=replica;
+delete from public.audit_events where target_type='bookings' and target_id in (select id::text from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
+delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
+delete from public.bookings where patient_id in ({ids}) or therapist_id in ({ids});
 delete from public.session_measurements where session_id in (select id from public.sessions where patient_id in ({ids}));
 delete from public.sessions where patient_id in ({ids}); delete from public.consents where patient_id in ({ids});
 delete from public.prescription_versions where patient_id in ({ids}); delete from public.exercise_assignments where patient_id in ({ids});
@@ -188,6 +193,14 @@ def working_day(stack, after=3):
         day += timedelta(days=1)
 
 
+def working_days(stack, after=3):
+    """Distinct working days in order, so two parts of a test never land on one date."""
+    day = working_day(stack, after)
+    while True:
+        yield day
+        day = working_day(stack, (day - manila_today(stack)).days + 1)
+
+
 def availability(stack):
     """MOT-50: what a patient can see."""
     _, patient = stack.user('patient')
@@ -255,7 +268,242 @@ def availability(stack):
     stack.check(stack.api('/rest/v1/center_hours?select=*', token=patient)[0] == 200, 'A patient can read the hours')
 
 
-SECTIONS = {'roles': roles, 'availability': availability}
+def manila(day, hour, minute=0):
+    return f'{day}T{hour:02d}:{minute:02d}:00+08:00'
+
+
+def refused(result, key):
+    return result[0] == 400 and (result[1] or {}).get('message') == key
+
+
+def together(calls):
+    """Starts every call at the same moment, each on its own connection."""
+    barrier = threading.Barrier(len(calls))
+
+    def run(call):
+        barrier.wait()
+        return call()
+
+    with ThreadPoolExecutor(len(calls)) as pool:
+        return list(pool.map(run, calls))
+
+
+def bookings(stack):
+    """MOT-51: the rules hold on the server, including under simultaneous requests."""
+    _, ts = stack.user('patient', 'scheduler')
+    therapist, tt = stack.user('patient', 'therapist')
+    second, _ = stack.user('patient', 'therapist')
+    admin, ta = stack.user('patient', 'admin')
+    patient, tp = stack.user('patient')
+    other, to = stack.user('patient')
+
+    def request(token, start, client=None):
+        return stack.rpc('request_booking', {'p_request': client or str(uuid.uuid4()), 'p_starts': start}, token)
+
+    def status(booking):
+        return stack.sql(f"select status from public.bookings where id='{booking}';")
+
+    fresh = working_days(stack)
+    day = next(fresh)
+    today = manila_today(stack)
+
+    # A request.
+    client = str(uuid.uuid4())
+    code, first = request(tp, manila(day, 9), client)
+    stack.check(code == 200 and first['status'] == 'pending' and first['therapist_id'] is None, 'A patient requests a specific slot and it starts as pending')
+    stack.check(first['reference_no'].startswith('BK-') and len(first['reference_no']) == 14, 'A booking has a reference number')
+    stack.check(datetime.fromisoformat(first['ends_at']) - datetime.fromisoformat(first['starts_at']) == timedelta(hours=1), 'The booking ends one slot later')
+    stack.check('calendar_token' not in first, 'The calendar token is not returned')
+    code, again = request(tp, manila(day, 9), client)
+    stack.check(code == 200 and again['id'] == first['id'], 'Repeating a request returns the original booking')
+    stack.check(stack.sql(f"select count(*) from public.bookings where patient_id='{patient}';") == '1', 'A repeated request creates nothing new')
+    stack.check(refused(request(to, manila(day, 9), client), 'booking_invalid'), 'Another patient cannot reuse someone else\'s request ID')
+    stack.check(stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': manila(day, 9)})[0] == 401, 'Anonymous callers cannot request')
+
+    # What a patient may not request.
+    stack.check(refused(request(tp, manila(day, 9)), 'booking_overlap'), 'A patient cannot hold two bookings at once')
+    saturday = next_weekday(today, 6, 3)
+    stack.check(refused(request(tp, manila(saturday, 9)), 'booking_closed_day'), 'A closed day is refused')
+    holiday = date.fromisoformat(stack.sql("select min(starts_on) from public.center_holidays where starts_on>current_date+2 and extract(isodow from starts_on)<6;"))
+    stack.check(refused(request(tp, manila(holiday, 9)), 'booking_holiday'), 'A holiday is refused')
+    stack.check(refused(request(tp, manila(today - timedelta(days=1), 9)), 'booking_past'), 'A past time is refused')
+    stack.check(refused(request(tp, (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()), 'booking_too_soon'), 'A time inside the minimum notice is refused')
+    stack.check(refused(request(tp, manila(today + timedelta(days=70), 9)), 'booking_too_far'), 'A time beyond the horizon is refused')
+    stack.check(refused(request(tp, manila(day, 9, 30)), 'booking_off_grid'), 'A time between slots is refused')
+    stack.check(refused(request(tp, manila(day, 8)), 'booking_off_grid'), 'A time before opening is refused')
+    stack.check(refused(request(tp, manila(day, 17)), 'booking_outside_hours'), 'A time after closing is refused')
+
+    closed = next(fresh)
+    stack.sql(f"""insert into public.center_closures(starts_at,ends_at,reason) values(('{closed} 09:00'::timestamp) at time zone 'Asia/Manila',('{closed} 11:00'::timestamp) at time zone 'Asia/Manila','Booking test closure');""")
+    try:
+        stack.check(refused(request(tp, manila(closed, 10)), 'booking_closure'), 'A closure blocks a request')
+        stack.check(request(tp, manila(closed, 11))[0] == 200, 'The slot after a closure can still be requested')
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test closure';")
+
+    stack.sql('update public.center_settings set max_active_bookings=2;')
+    try:
+        stack.check(refused(request(tp, manila(day, 11)), 'booking_limit'), 'A patient cannot hold more active bookings than the setting allows')
+    finally:
+        stack.sql('update public.center_settings set max_active_bookings=5;')
+
+    # Capacity.
+    full = next(fresh)
+    people = [stack.user('patient') for _ in range(12)]
+    for _, token in people[:2]:
+        stack.check(request(token, manila(full, 13))[0] == 200, 'Early requests fit in the slot')
+    results = together([lambda token=token: request(token, manila(full, 13)) for _, token in people[2:]])
+    stack.check(sum(code == 200 for code, _ in results) == 1, 'Ten simultaneous requests for the last place: exactly one succeeds')
+    stack.check(sum(refused(result, 'booking_full') for result in results) == 9, 'The other nine are told the slot is full')
+    stack.check(stack.sql(f"select count(*) from public.bookings where status='pending' and starts_at='{manila(full, 13)}';") == '3', 'The slot holds exactly its capacity')
+    code, data = stack.rpc('booking_availability', {'p_from': str(full), 'p_to': str(full)}, tp)
+    places = {datetime.fromisoformat(slot['starts_at']).astimezone(timezone.utc).hour: slot['remaining'] for slot in data['days'][0]['slots']}
+    stack.check(places[5] == 0 and places[6] == 3, 'Availability shows the full slot and its neighbour correctly')
+
+    clash = stack.user('patient')[1]
+    results = together([lambda: request(clash, manila(full, 15)), lambda: request(clash, manila(full, 15))])
+    stack.check(sum(code == 200 for code, _ in results) == 1, 'One patient asking twice at once gets one booking')
+
+    # Confirmation.
+    code, one = request(to, manila(day, 10))
+    stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': one['id']}, ts), 'booking_therapist_required'), 'Confirming needs a therapist')
+    stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': one['id'], 'p_therapist': patient}, ts), 'booking_therapist_unavailable'), 'Only a therapist can be assigned')
+    code, confirmed = stack.rpc('scheduler_confirm', {'p_booking': one['id'], 'p_therapist': therapist}, ts)
+    stack.check(code == 200 and confirmed['status'] == 'confirmed' and confirmed['therapist_id'] == therapist, 'A Scheduler confirms with a therapist')
+    stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': one['id'], 'p_therapist': second}, ts), 'booking_state'), 'A confirmed booking cannot be confirmed again')
+    code, two = request(tp, manila(day, 10))
+    stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': two['id'], 'p_therapist': therapist}, ts), 'booking_therapist_busy'), 'A busy therapist cannot be double-booked')
+
+    race = next(fresh)
+    a = request(to, manila(race, 9))[1]
+    b = request(tp, manila(race, 9))[1]
+    results = together([lambda: stack.rpc('scheduler_confirm', {'p_booking': a['id'], 'p_therapist': second}, ts), lambda: stack.rpc('scheduler_confirm', {'p_booking': b['id'], 'p_therapist': second}, ts)])
+    stack.check(sum(code == 200 for code, _ in results) == 1 and sum(refused(result, 'booking_therapist_busy') for result in results) == 1, 'Two Schedulers confirming one therapist at once: exactly one succeeds')
+
+    # Re-validation at the moment of confirmation.
+    check = next(fresh)
+    waiting = request(to, manila(check, 9))[1]
+    stack.sql(f"""insert into public.center_closures(starts_at,ends_at,reason) values(('{check} 09:00'::timestamp) at time zone 'Asia/Manila',('{check} 10:00'::timestamp) at time zone 'Asia/Manila','Booking test closure');""")
+    try:
+        stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': waiting['id'], 'p_therapist': therapist}, ts), 'booking_closure'), 'A closure added after the request stops confirmation')
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test closure';")
+    stack.sql(f"insert into public.center_holidays(name,kind,starts_on,ends_on) values('Booking test holiday','special','{check}','{check}');")
+    try:
+        stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': waiting['id'], 'p_therapist': therapist}, ts), 'booking_holiday'), 'A holiday added after the request stops confirmation')
+    finally:
+        stack.sql("delete from public.center_holidays where name='Booking test holiday';")
+    stack.sql('update public.center_hours set is_open=false where weekday=' + str(check.isoweekday()) + ';')
+    try:
+        stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': waiting['id'], 'p_therapist': therapist}, ts), 'booking_closed_day'), 'Closing that weekday after the request stops confirmation')
+    finally:
+        stack.sql('update public.center_hours set is_open=true where weekday=' + str(check.isoweekday()) + ';')
+    stack.sql(f"update public.bookings set starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour' where id='{waiting['id']}';")
+    stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': waiting['id'], 'p_therapist': therapist}, ts), 'booking_past'), 'A request whose time has passed cannot be confirmed')
+
+    # Refusing, moving and changing.
+    stack.check(refused(stack.rpc('scheduler_reject', {'p_booking': two['id'], 'p_reason': ' '}, ts), 'booking_reason_required'), 'Rejecting needs a reason')
+    code, rejected = stack.rpc('scheduler_reject', {'p_booking': two['id'], 'p_reason': 'No therapist available'}, ts)
+    stack.check(code == 200 and rejected['status'] == 'rejected' and rejected['status_reason'] == 'No therapist available', 'A Scheduler rejects with a reason')
+    stack.check(refused(stack.rpc('scheduler_reject', {'p_booking': one['id'], 'p_reason': 'Too late for this'}, ts), 'booking_state'), 'A confirmed booking cannot be rejected')
+
+    target = manila(day, 14)
+    stack.check(refused(stack.rpc('scheduler_reschedule', {'p_booking': one['id'], 'p_starts': manila(day, 14, 30)}, ts), 'booking_off_grid'), 'A Scheduler reschedules only onto a specific slot')
+    stack.check(refused(stack.rpc('scheduler_reschedule', {'p_booking': one['id'], 'p_starts': manila(saturday, 9)}, ts), 'booking_closed_day'), 'A Scheduler cannot reschedule onto a closed day')
+    code, moved = stack.rpc('scheduler_reschedule', {'p_booking': one['id'], 'p_starts': target}, ts)
+    stack.check(code == 200 and moved['status'] == 'rescheduled' and moved['previous_starts_at'] is not None, 'A reschedule moves the booking and keeps the old time')
+    stack.check(datetime.fromisoformat(moved['starts_at']) == datetime.fromisoformat(target), 'The new time is the chosen slot')
+    stack.sql('update public.center_settings set minimum_notice_hours=336;')
+    try:
+        stack.check(refused(request(tp, manila(day, 16)), 'booking_too_soon'), 'A slot inside the notice window is closed to patients')
+        stack.check(stack.rpc('scheduler_reschedule', {'p_booking': one['id'], 'p_starts': manila(day, 16)}, ts)[0] == 200, 'A Scheduler can still book at short notice')
+    finally:
+        stack.sql('update public.center_settings set minimum_notice_hours=24;')
+    unassigned = request(tp, manila(next(fresh), 9))[1]
+    stack.check(refused(stack.rpc('scheduler_reschedule', {'p_booking': unassigned['id'], 'p_starts': manila(day, 15)}, ts), 'booking_therapist_required'), 'Rescheduling needs a therapist')
+
+    stack.check(refused(stack.rpc('scheduler_assign_therapist', {'p_booking': one['id'], 'p_therapist': patient}, ts), 'booking_therapist_unavailable'), 'Assigning needs a therapist')
+    code, changed = stack.rpc('scheduler_assign_therapist', {'p_booking': one['id'], 'p_therapist': second}, ts)
+    stack.check(code == 200 and changed['therapist_id'] == second and changed['status'] == 'rescheduled', 'A Scheduler changes the therapist and the status stays')
+
+    stack.check(refused(stack.rpc('scheduler_cancel', {'p_booking': one['id'], 'p_reason': ''}, ts), 'booking_reason_required'), 'Cancelling needs a reason')
+    spare = next(fresh)
+    bulk = [request(token, manila(spare, 11))[1]['id'] for _, token in people[:2]]
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': bulk[0], 'p_therapist': therapist}, ts)[0] == 200, 'One of two requests is confirmed first')
+    code, count = stack.rpc('scheduler_bulk_reject', {'p_bookings': bulk, 'p_reason': 'Outdated request'}, ts)
+    stack.check(code == 200 and count == 1 and status(bulk[0]) == 'confirmed' and status(bulk[1]) == 'rejected', 'Bulk reject changes only pending requests')
+    stack.check(refused(stack.rpc('scheduler_bulk_reject', {'p_bookings': bulk, 'p_reason': ''}, ts), 'booking_reason_required'), 'Bulk reject needs a reason')
+
+    # A patient's own cancellation.
+    own = next(fresh)
+    mine = request(to, manila(own, 9))[1]
+    stack.check(refused(stack.rpc('cancel_my_booking', {'p_booking': mine['id']}, tp), 'booking_unavailable'), 'A patient cannot cancel someone else\'s booking')
+    stack.sql('update public.center_settings set cancel_cutoff_hours=336;')
+    try:
+        stack.check(refused(stack.rpc('cancel_my_booking', {'p_booking': mine['id']}, to), 'booking_too_late'), 'A patient cannot cancel after the cut-off')
+    finally:
+        stack.sql('update public.center_settings set cancel_cutoff_hours=24;')
+    code, cancelled = stack.rpc('cancel_my_booking', {'p_booking': mine['id'], 'p_reason': 'Feeling better'}, to)
+    stack.check(code == 200 and cancelled['status'] == 'cancelled', 'A patient cancels before the cut-off')
+    stack.check(refused(stack.rpc('cancel_my_booking', {'p_booking': mine['id']}, to), 'booking_state'), 'A cancelled booking cannot be cancelled again')
+    stack.check(request(to, manila(own, 9))[0] == 200, 'A cancelled booking frees the patient and the slot')
+
+    # The database itself.
+    def direct(person, start, end, therapist_id='null'):
+        stack.sql(f"""insert into public.bookings(reference_no,patient_id,therapist_id,starts_at,ends_at,status) values('BK-TEST-{uuid.uuid4().hex[:6]}','{person}',{therapist_id},'{start}','{end}','confirmed');""")
+
+    far = next(fresh)
+    direct(patient, manila(far, 9), manila(far, 10))
+    try:
+        direct(patient, manila(far, 9), manila(far, 10))
+        stack.check(False, 'The database rejects an overlapping booking for one patient')
+    except RuntimeError as error:
+        stack.check('bookings_no_patient_overlap' in str(error), 'The database itself rejects an overlapping booking for one patient')
+    direct(other, manila(far, 11), manila(far, 12), f"'{therapist}'")
+    try:
+        direct(patient, manila(far, 11), manila(far, 12), f"'{therapist}'")
+        stack.check(False, 'The database rejects an overlapping booking for one therapist')
+    except RuntimeError as error:
+        stack.check('bookings_no_therapist_overlap' in str(error), 'The database itself rejects an overlapping booking for one therapist')
+
+    # Clients have no direct path.
+    for token, label in [(tp, 'patient'), (ts, 'Scheduler'), (ta, 'administrator')]:
+        stack.check(stack.api('/rest/v1/bookings?select=id&limit=1', token=token)[0] == 403, f'A {label} cannot read the bookings table directly')
+        stack.check(stack.api('/rest/v1/booking_events?select=id&limit=1', token=token)[0] == 403, f'A {label} cannot read the audit table directly')
+    stack.check(stack.api('/rest/v1/bookings', {'patient_id': patient}, tp)[0] == 403, 'Nobody can write the bookings table directly')
+
+    # The audit trail.
+    events = stack.sql(f"select string_agg(action||'/'||actor_role,',' order by id) from public.booking_events where booking_id='{one['id']}';")
+    stack.check(events == 'requested/patient,confirmed/scheduler,rescheduled/scheduler,rescheduled/scheduler,therapist_changed/scheduler', 'Every change to a booking is recorded with who did it')
+    stack.check(stack.sql(f"select count(*) from public.booking_events where booking_id='{one['id']}' and actor_id is null;") == '0', 'Each event names its actor')
+    stack.check(stack.sql(f"select to_status from public.booking_events where booking_id='{two['id']}' order by id desc limit 1;") == 'rejected', 'The new status is recorded')
+    stack.check(stack.sql(f"select reason from public.booking_events where booking_id='{two['id']}' order by id desc limit 1;") == 'No therapist available', 'The reason is recorded')
+    try:
+        stack.sql(f"update public.booking_events set action='x' where booking_id='{one['id']}';")
+        stack.check(False, 'The audit trail is immutable')
+    except RuntimeError as error:
+        stack.check('immutable' in str(error), 'The audit trail cannot be changed, even by the database owner')
+    stack.check(stack.sql(f"select count(*) from public.audit_events where target_type='bookings' and target_id='{one['id']}';") == '5', 'Events are mirrored to the administrator feed')
+    code, feed = stack.rpc('admin_activity', {}, ta)
+    named = [row for row in feed if row['target_type'] == 'bookings']
+    stack.check(code == 200 and named and named[0]['target_name'].startswith('BK-'), 'The feed names a booking by its reference number')
+
+    # A therapist who leaves.
+    leaving, _ = stack.user('patient', 'therapist')
+    ahead = next(fresh)
+    held = request(stack.user('patient')[1], manila(ahead, 9))[1]
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': held['id'], 'p_therapist': leaving}, ts)[0] == 200, 'A session is confirmed with the therapist who will leave')
+    stack.check(stack.rpc('admin_set_role', {'p_user': leaving, 'p_role': 'therapist', 'p_granted': False}, ta)[0] in (200, 204), 'An administrator removes the therapist role')
+    stack.check(status(held['id']) == 'pending' and stack.sql(f"select therapist_id is null from public.bookings where id='{held['id']}';") == 't', 'Their future session returns to Pending without a therapist')
+    stack.check(stack.sql(f"select action||'/'||actor_role from public.booking_events where booking_id='{held['id']}' order by id desc limit 1;") == 'returned_to_pending/admin', 'The change is audited against the administrator')
+    disabled, _ = stack.user('patient', 'therapist')
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': held['id'], 'p_therapist': disabled}, ts)[0] == 200, 'The session is reassigned')
+    stack.check(stack.rpc('admin_set_account', {'p_user': disabled, 'p_active': False}, ta)[0] in (200, 204), 'An administrator disables that therapist')
+    stack.check(status(held['id']) == 'pending', 'Disabling a therapist also returns their sessions to Pending')
+    stack.check(refused(stack.rpc('scheduler_confirm', {'p_booking': held['id'], 'p_therapist': disabled}, ts), 'booking_therapist_unavailable'), 'A disabled therapist cannot be assigned')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings}
 
 
 def main():

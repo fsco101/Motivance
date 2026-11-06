@@ -78,6 +78,7 @@ export function auditCategory(targetType: string): AuditCategory {
   if (['therapist_patients', 'patient_invitations'].includes(targetType)) return 'links'
   if (['exercises', 'exercise_versions'].includes(targetType)) return 'catalogue'
   if (['consents', 'data_requests'].includes(targetType)) return 'privacy'
+  if (targetType === 'bookings') return 'bookings'
   return 'clinical'
 }
 
@@ -86,7 +87,9 @@ const KINDS: Record<string, string> = {
   'patient_profiles:update_profile': 'profileUpdated', 'user_roles:insert': 'roleGranted', 'user_roles:delete': 'roleRemoved', 'user_roles:update': 'roleChanged',
   'therapist_patients:insert': 'linkCreated', 'therapist_patients:update': 'linkUpdated', 'patient_invitations:invite': 'invitation', 'exercises:activate': 'exerciseActivated',
   'exercises:deactivate': 'exerciseDeactivated', 'exercise_versions:publish': 'versionPublished', 'prescription_versions:insert': 'prescription', 'sessions:insert': 'session',
-  'consents:insert': 'consent', 'data_requests:insert': 'requestCreated', 'data_requests:update': 'requestUpdated',
+  'consents:insert': 'consent', 'data_requests:insert': 'requestCreated', 'data_requests:update': 'requestUpdated', 'bookings:requested': 'bookingRequested', 'bookings:confirmed': 'bookingConfirmed',
+  'bookings:rejected': 'bookingRejected', 'bookings:cancelled': 'bookingCancelled', 'bookings:rescheduled': 'bookingRescheduled', 'bookings:returned_to_pending': 'bookingReturned',
+  'bookings:therapist_changed': 'bookingTherapist', 'bookings:attendance_marked': 'bookingAttendance',
 }
 
 /** Mirrors AuditEvent.kind on Android. */
@@ -100,6 +103,7 @@ export function describeEvent(row: RawAudit, t: TFunction): AuditEvent {
   const reference = () => t('admin.eventReference', { reference: shortId(row.target_id) })
   const [therapist = '', patient = ''] = row.target_id.split(':')
   const target = category === 'accounts' ? row.target_name || shortId(row.target_id)
+    : category === 'bookings' ? row.target_name || reference()
     : category === 'links' && row.target_type === 'therapist_patients' ? t('admin.eventLink', { therapist: row.target_name || shortId(therapist), patient: row.related_name || shortId(patient) })
       : reference()
   return {

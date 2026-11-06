@@ -56,6 +56,14 @@ class AdministrationTest {
             ("consents" to "insert") to (AuditKind.CONSENT_RECORDED to AuditCategory.PRIVACY),
             ("data_requests" to "insert") to (AuditKind.REQUEST_CREATED to AuditCategory.PRIVACY),
             ("data_requests" to "update") to (AuditKind.REQUEST_UPDATED to AuditCategory.PRIVACY),
+            ("bookings" to "requested") to (AuditKind.BOOKING_REQUESTED to AuditCategory.BOOKINGS),
+            ("bookings" to "confirmed") to (AuditKind.BOOKING_CONFIRMED to AuditCategory.BOOKINGS),
+            ("bookings" to "rejected") to (AuditKind.BOOKING_REJECTED to AuditCategory.BOOKINGS),
+            ("bookings" to "cancelled") to (AuditKind.BOOKING_CANCELLED to AuditCategory.BOOKINGS),
+            ("bookings" to "rescheduled") to (AuditKind.BOOKING_RESCHEDULED to AuditCategory.BOOKINGS),
+            ("bookings" to "returned_to_pending") to (AuditKind.BOOKING_RETURNED to AuditCategory.BOOKINGS),
+            ("bookings" to "therapist_changed") to (AuditKind.BOOKING_THERAPIST to AuditCategory.BOOKINGS),
+            ("bookings" to "attendance_marked") to (AuditKind.BOOKING_ATTENDANCE to AuditCategory.BOOKINGS),
         )
         cases.forEach {(input,expected) ->
             val e=event(input.first,input.second)

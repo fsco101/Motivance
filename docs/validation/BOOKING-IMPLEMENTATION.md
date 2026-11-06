@@ -41,3 +41,34 @@ The migration `202611060002_center_calendar.sql` adds `center_settings`, `center
 | --- | --- | --- |
 | Live API: slots, weekends, holidays, seasonal breaks, full and partial closures, notice, horizon, write refusal | `python scripts/test_booking.py availability` | 21 checks passed |
 | Database rules, including every seeded holiday count and time zone independence | `npx supabase@2.20.12 test db` | 54 tests passed |
+
+## MOT-51: conflict-safe bookings and the audit log
+
+The migration `202611060003_bookings.sql` adds `bookings`, `booking_events` and the patient and Scheduler functions. Clients have no direct reads or writes on either table.
+
+Three layers stop a conflict:
+
+- **Exclusion constraints** reject overlapping active bookings for one patient or one therapist, even from a direct insert as the database owner.
+- **One transaction lock** covers every booking change, so the capacity count cannot race. It also covers closures and settings.
+- **Re-validation** runs at each decision, so a stale screen cannot confirm a time that has since closed.
+
+The concurrent tests use real parallel HTTP requests through PostgREST, released together by a barrier:
+
+| Race | Result |
+| --- | --- |
+| Ten patients request the last place in a slot | Exactly one succeeds, nine are told it is full, and the slot holds exactly its capacity |
+| One patient asks for the same slot twice at once | One booking |
+| Two Schedulers confirm one therapist at the same time | Exactly one succeeds, the other is told the therapist is busy |
+
+The audit trail is written by a trigger, so no function can skip it, and it refuses changes even from the database owner. Each event records who, in which role, what changed and why, and is mirrored to `audit_events`. Both administrator feeds show a Bookings category, naming each booking by its reference number.
+
+Two rules went beyond the brief, because the design needs them. A patient has a cap on active bookings, because a pending request holds a place. A therapist who leaves returns their future sessions to Pending, so nobody stays booked with someone who is gone.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: every rule, the races above, the audit trail, a therapist leaving | `python scripts/test_booking.py bookings` | 82 checks passed |
+| All sections, with the 403 guard now covering 8 `scheduler_` functions | `python scripts/test_booking.py` | 166 checks passed |
+| Database constraints and immutability | `npx supabase@2.20.12 test db` | 69 tests passed |
+| Web unit tests, including booking event wording | `npm test` | 180 passed |
+| Android unit tests, including booking event wording | `gradlew :core:domain:test :app:testDebugUnitTest` | Passed |
+| Administrator parity | `python scripts/check_admin_parity.py` | 10 functions matched |

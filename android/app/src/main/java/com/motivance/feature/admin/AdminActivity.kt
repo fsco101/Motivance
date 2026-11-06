@@ -40,6 +40,7 @@ private fun AuditCategory.label()=when(this) {
     AuditCategory.CATALOGUE -> R.string.admin_category_catalogue
     AuditCategory.CLINICAL -> R.string.admin_category_clinical
     AuditCategory.PRIVACY -> R.string.admin_category_privacy
+    AuditCategory.BOOKINGS -> R.string.admin_category_bookings
 }
 private fun AuditCategory.icon():ImageVector=when(this) {
     AuditCategory.ACCOUNTS -> Icons.Default.AccountCircle
@@ -47,6 +48,7 @@ private fun AuditCategory.icon():ImageVector=when(this) {
     AuditCategory.CATALOGUE -> Icons.AutoMirrored.Filled.List
     AuditCategory.CLINICAL -> Icons.Default.DateRange
     AuditCategory.PRIVACY -> Icons.Default.Lock
+    AuditCategory.BOOKINGS -> Icons.Default.DateRange
 }
 internal fun AuditKind.label()=when(this) {
     AuditKind.ACCOUNT_ENABLED -> R.string.admin_event_account_enabled
@@ -68,6 +70,14 @@ internal fun AuditKind.label()=when(this) {
     AuditKind.CONSENT_RECORDED -> R.string.admin_event_consent
     AuditKind.REQUEST_CREATED -> R.string.admin_event_request_created
     AuditKind.REQUEST_UPDATED -> R.string.admin_event_request_updated
+    AuditKind.BOOKING_REQUESTED -> R.string.admin_event_booking_requested
+    AuditKind.BOOKING_CONFIRMED -> R.string.admin_event_booking_confirmed
+    AuditKind.BOOKING_REJECTED -> R.string.admin_event_booking_rejected
+    AuditKind.BOOKING_CANCELLED -> R.string.admin_event_booking_cancelled
+    AuditKind.BOOKING_RESCHEDULED -> R.string.admin_event_booking_rescheduled
+    AuditKind.BOOKING_RETURNED -> R.string.admin_event_booking_returned
+    AuditKind.BOOKING_THERAPIST -> R.string.admin_event_booking_therapist
+    AuditKind.BOOKING_ATTENDANCE -> R.string.admin_event_booking_attendance
     AuditKind.OTHER -> R.string.admin_event_other
 }
 
@@ -93,6 +103,7 @@ internal fun AuditKind.label()=when(this) {
             val (therapist,patient)=event.targetId.split(':').let {(it.getOrNull(0) ?: "") to (it.getOrNull(1) ?: "")}
             stringResource(R.string.admin_event_link_target,event.targetName.ifBlank {shortId(therapist)},event.relatedName.ifBlank {shortId(patient)})
         } else stringResource(R.string.admin_event_reference,shortId(event.targetId))
+        AuditCategory.BOOKINGS -> event.targetName.ifBlank {stringResource(R.string.admin_event_reference,shortId(event.targetId))}
         else -> stringResource(R.string.admin_event_reference,shortId(event.targetId))
     }
     val actor=when {

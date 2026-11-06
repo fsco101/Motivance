@@ -26,7 +26,7 @@ Android paths are under `android/app/src/main/java/com/motivance/`. Web paths ar
 | Catalogue with therapists' exercises, up to 500 | Administrator row policy on `exercises` | `data/remote/SupabaseAuthRepository.kt` | `data/admin.ts` | `AdministrationRepositoryTest` | `admin.spec.ts`, contract `admin.test.ts` | Done |
 | Activate or deactivate an exercise | `admin_set_exercise` | `feature/admin/AdminCatalogue.kt` | `features/admin/CatalogueView.tsx` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
 | Publish a new exercise version | `admin_publish_exercise` | `feature/admin/AdminCatalogue.kt` | `features/admin/CatalogueView.tsx` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
-| Activity feed, categories, older events, system label | `admin_activity` | `feature/admin/AdminActivity.kt` | `features/admin/ActivityView.tsx`, `data/admin.ts` | `AdministrationTest`, `test_administration.py` | `admin.spec.ts`, `admin.test.ts`, contract `admin.test.ts` | Done |
+| Activity feed, categories including bookings, older events, system label | `admin_activity` | `feature/admin/AdminActivity.kt` | `features/admin/ActivityView.tsx`, `data/admin.ts` | `AdministrationTest`, `test_administration.py` | `admin.spec.ts`, `admin.test.ts`, contract `admin.test.ts` | Done |
 | A failed read clears loaded records | Client rule | `feature/admin/AdministrationViewModel.kt` | `features/admin/pages.tsx` | `AdministrationViewModelTest` | `admin.spec.ts` | Done |
 
 The web app refreshes itself after every change and when you return to the tab, so it has no separate Refresh button. Android's Refresh does the same job.

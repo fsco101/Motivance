@@ -339,7 +339,7 @@
       "github_issue": 68,
       "title": "Add conflict-safe bookings and the audit log",
       "description": "Enforce every booking rule on the server, so that simultaneous requests cannot both succeed, and record who changed what and when.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend",
       "estimate_points": 8,
@@ -411,65 +411,135 @@
         {
           "id": "MOT-51-AC1",
           "description": "bookings has a unique reference number, the statuses pending, confirmed, rejected, cancelled and rescheduled, and specific start and end times. Clients have no direct writes.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC2",
           "description": "Database exclusion constraints reject overlapping active bookings for one patient and for one therapist, even for a direct insert that bypasses the functions.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC3",
           "description": "Parallel requests for the last place in a slot: exactly the capacity succeed, proved by a concurrent test against real PostgREST.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC4",
           "description": "request_booking refuses holidays, closures, past times, times inside the minimum notice, full slots and accounts over the active-booking cap. A repeated client ID returns the original booking.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC5",
           "description": "scheduler_confirm requires a therapist and re-validates hours, holidays, closures, capacity and therapist conflicts at the moment of confirmation.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC6",
           "description": "Reject and cancel require a reason. Reschedule requires a specific slot and a therapist. Bulk reject applies to pending requests only.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC7",
           "description": "A patient can cancel only their own pending or confirmed booking, and only before the cut-off.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         },
         {
           "id": "MOT-51-AC8",
           "description": "Every status change writes who, what and when to an immutable booking_events row through a trigger, mirrored to audit_events. Both administrator activity feeds show it under a Bookings category, with the same wording.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql",
+            "web/src/data/admin.test.ts",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/AdministrationTest.kt"
+          ]
         },
         {
           "id": "MOT-51-AC9",
           "description": "Revoking the therapist role or disabling a therapist returns their future bookings to Pending without a therapist.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "scripts/test_booking.py",
+            "supabase/tests/bookings.test.sql",
+            "supabase/migrations/202611060003_bookings.sql"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T12:06:25.072245+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/booking-test-results.json",
+          "scripts/test_booking.py",
+          "supabase/tests/bookings.test.sql",
+          "supabase/migrations/202611060003_bookings.sql"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "scripts/test_booking.py",
+        "supabase/tests/bookings.test.sql",
+        "supabase/migrations/202611060003_bookings.sql"
+      ]
     },
     {
       "id": "MOT-52",

@@ -14,7 +14,7 @@ export type AdminLink = { therapist: string; therapistName: string; patient: str
 
 export type AdminExercise = { id: string; code: string; active: boolean; version: number; name: string; english: string; filipino: string; custom: boolean }
 
-export type AuditCategory = 'accounts' | 'links' | 'catalogue' | 'clinical' | 'privacy'
+export type AuditCategory = 'accounts' | 'links' | 'catalogue' | 'clinical' | 'privacy' | 'bookings'
 
 export type AuditEvent = {
   id: number; kind: string; category: AuditCategory; target: string; actor: string | null; recordedAt: string

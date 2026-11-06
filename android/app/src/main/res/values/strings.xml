@@ -759,4 +759,13 @@
     <string name="admin_filter_schedulers">Schedulers</string>
     <string name="admin_role_scheduler_detail">Can review booking requests and manage the center\'s calendar, with no access to clinical records.</string>
     <string name="admin_revoke_scheduler_detail">They will no longer be able to open scheduling.</string>
+    <string name="admin_category_bookings">Bookings</string>
+    <string name="admin_event_booking_requested">Booking requested</string>
+    <string name="admin_event_booking_confirmed">Booking confirmed</string>
+    <string name="admin_event_booking_rejected">Booking rejected</string>
+    <string name="admin_event_booking_cancelled">Booking cancelled</string>
+    <string name="admin_event_booking_rescheduled">Booking rescheduled</string>
+    <string name="admin_event_booking_returned">Booking returned to pending</string>
+    <string name="admin_event_booking_therapist">Booking therapist changed</string>
+    <string name="admin_event_booking_attendance">Attendance recorded</string>
 </resources>

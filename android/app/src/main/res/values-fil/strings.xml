@@ -759,4 +759,13 @@
     <string name="admin_filter_schedulers">Mga scheduler</string>
     <string name="admin_role_scheduler_detail">Maaaring suriin ang mga kahilingan sa booking at pamahalaan ang kalendaryo ng center, nang walang access sa mga clinical record.</string>
     <string name="admin_revoke_scheduler_detail">Hindi na nila mabubuksan ang pag-iiskedyul.</string>
+    <string name="admin_category_bookings">Mga booking</string>
+    <string name="admin_event_booking_requested">Hiniling ang booking</string>
+    <string name="admin_event_booking_confirmed">Kinumpirma ang booking</string>
+    <string name="admin_event_booking_rejected">Tinanggihan ang booking</string>
+    <string name="admin_event_booking_cancelled">Kinansela ang booking</string>
+    <string name="admin_event_booking_rescheduled">Inilipat ang iskedyul ng booking</string>
+    <string name="admin_event_booking_returned">Ibinalik sa nakabinbin ang booking</string>
+    <string name="admin_event_booking_therapist">Pinalitan ang therapist ng booking</string>
+    <string name="admin_event_booking_attendance">Naitala ang pagdalo</string>
 </resources>
