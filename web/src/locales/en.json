@@ -12,7 +12,9 @@
     "book": "Book",
     "bookings": "My bookings",
     "bookingsShort": "Bookings",
-    "requests": "Requests"
+    "requests": "Requests",
+    "schedule": "My Schedule",
+    "scheduleShort": "Schedule"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",

@@ -9,6 +9,8 @@ import { useCenterFormat } from './format'
 export type CalendarDay = {
   /** A date that can be chosen. Others stay readable, and can still be focused, so their reason can be heard. */
   enabled: boolean
+  /** Can be chosen, but has nothing to draw the eye, as on a schedule where only some dates hold anything. */
+  quiet?: boolean
   /** A small mark under the number, such as sessions on that day. */
   marked?: boolean
   /** Spoken with the date, because colour alone cannot carry it. */
@@ -82,7 +84,7 @@ export function MonthCalendar({ month, onMonth, canGoBack, canGoForward, selecte
                       aria-label={[format.calendarDay(date), info.note].filter(Boolean).join(', ')}
                       onClick={() => { setCursor(date); if (info.enabled) onSelect(date) }} onKeyDown={(event) => move(event, date)}
                       className={cn('relative mx-auto grid aspect-square w-full max-w-11 place-items-center rounded-control text-sm transition-colors transition-quick',
-                        chosen ? 'bg-lagoon font-bold text-paper' : info.enabled ? 'bg-tide font-semibold text-ink hover:bg-sprout-bright' : 'text-slate',
+                        chosen ? 'bg-lagoon font-bold text-paper' : info.quiet ? 'text-ink hover:bg-mist' : info.enabled ? 'bg-tide font-semibold text-ink hover:bg-sprout-bright' : 'text-slate',
                         !chosen && date === today && 'ring-1 ring-inset ring-lagoon')}>
                       {Number(date.slice(-2))}
                       {info.marked && <span aria-hidden className={cn('absolute bottom-1 size-1 rounded-full', chosen ? 'bg-paper' : 'bg-lagoon')} />}

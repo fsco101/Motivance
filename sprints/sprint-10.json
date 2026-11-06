@@ -4,7 +4,7 @@
   "title": "S10 - Schedules, calendar and notifications",
   "description": "Weeks 19-20. Exit: patients and therapists see their confirmed schedule by specific time, Schedulers run the calendar, and every booking change reaches people in the app and by email.",
   "goal": "Show people their confirmed schedule, let Schedulers run the calendar and keep everyone informed.",
-  "status": "planned",
+  "status": "in-progress",
   "weeks": {
     "start": 19,
     "end": 20
@@ -49,7 +49,7 @@
       "github_issue": 73,
       "title": "Add My Schedule for patients and therapists",
       "description": "Show patients and therapists the sessions a Scheduler has confirmed, laid out by specific time, on web and Android.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Android",
       "estimate_points": 8,
@@ -92,53 +92,145 @@
         {
           "id": "MOT-56-AC1",
           "description": "my_schedule and therapist_schedule return only confirmed and rescheduled sessions belonging to the signed-in person, each with a specific start and end time.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060006_my_schedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/schedule.test.ts",
+            "web/src/data/schedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+          ]
         },
         {
           "id": "MOT-56-AC2",
           "description": "A web month calendar marks days with sessions, and choosing a date lays that day out by time across the center's opening hours.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060006_my_schedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/schedule.test.ts",
+            "web/src/data/schedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+          ]
         },
         {
           "id": "MOT-56-AC3",
           "description": "A therapist sees, for any date, the patient booked at each time, with the reference number.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060006_my_schedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/schedule.test.ts",
+            "web/src/data/schedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+          ]
         },
         {
           "id": "MOT-56-AC4",
           "description": "A patient sees the specific time, therapist and location of each session.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060006_my_schedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/schedule.test.ts",
+            "web/src/data/schedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+          ]
         },
         {
           "id": "MOT-56-AC5",
           "description": "Android shows the same schedule for patients and therapists.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060006_my_schedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/schedule.test.ts",
+            "web/src/data/schedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+          ]
         },
         {
           "id": "MOT-56-AC6",
           "description": "Times show in Asia/Manila whatever the device's time zone, on both apps.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060006_my_schedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/schedule.test.ts",
+            "web/src/data/schedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+          ]
         },
         {
           "id": "MOT-56-AC7",
           "description": "A booking alone grants no clinical access: a therapist opens a patient's record only through an existing link, proved by a test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060006_my_schedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/schedule.spec.ts",
+            "web/tests/contract/schedule.test.ts",
+            "web/src/data/schedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+            "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T15:40:51.879836+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060006_my_schedule.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/schedule.spec.ts",
+          "web/tests/contract/schedule.test.ts",
+          "web/src/data/schedule.test.ts",
+          "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+          "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+          "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060006_my_schedule.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/schedule.spec.ts",
+        "web/tests/contract/schedule.test.ts",
+        "web/src/data/schedule.test.ts",
+        "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt",
+        "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt",
+        "android/core/domain/src/test/kotlin/com/motivance/domain/BookingTest.kt"
+      ]
     },
     {
       "id": "MOT-57",

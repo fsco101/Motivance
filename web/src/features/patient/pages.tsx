@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
+import { ButtonLink } from '@/components/Button'
 import { toast } from '@/components/Toast'
 import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, loadAvailability, loadHorizonDays, loadMyBookings, nextBooking, requestBooking, todayAt, type Booking, type Slot } from '@/data/booking'
 import { supabase } from '@/data/client'
@@ -10,6 +11,7 @@ import { failureKey } from '@/data/errors'
 import {
   joinTherapist, loadConsent, loadDataRequests, loadMyExercises, loadMySessions, requestData, thisWeek, withdrawConsent, type DataRequestKind, type MyExercise,
 } from '@/data/patient'
+import { SchedulePage } from '@/features/booking/SchedulePage'
 import { asLoad, ready, type Load } from '@/features/shared'
 import { ProfilePage } from '@/features/profile/pages'
 import { useProgressResults } from '@/features/therapist/history'
@@ -62,6 +64,11 @@ export function PatientExercisesPage() {
   const exercises = useMyExercises()
   const phone = usePhonePrompt()
   return <><PatientExercisesView load={asLoad(exercises)} base={BASE} onStart={phone.start} onCamera={phone.camera} />{phone.dialog}</>
+}
+
+export function PatientSchedulePage() {
+  const { t } = useTranslation()
+  return <SchedulePage audience="patient" actions={<ButtonLink to={`${BASE}/book`}>{t('booking.title')}</ButtonLink>} />
 }
 
 export function PatientBookPage() {

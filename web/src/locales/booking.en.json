@@ -197,6 +197,16 @@
       "invalid": "That request could not be read. Try again.",
       "invalid_range": "Those dates could not be read."
     },
-    "keep": "Keep booking"
+    "keep": "Keep booking",
+    "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
+    "scheduleDetailTherapist": "The patients booked with you, by date and time.",
+    "scheduleSession": "Your session",
+    "scheduleFree": "No session",
+    "scheduleChoose": "Choose a date to see it by time.",
+    "scheduleDay": "Sessions",
+    "scheduleNone": "No confirmed sessions this month.",
+    "scheduleNotLinked": "You are not linked to this patient, so their record stays closed.",
+    "scheduleCount_one": "{{count}} session",
+    "scheduleCount_other": "{{count}} sessions"
   }
 }

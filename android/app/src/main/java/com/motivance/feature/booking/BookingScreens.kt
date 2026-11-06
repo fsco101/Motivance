@@ -54,7 +54,7 @@ internal fun BookingStatus.tone()=when(this) {
 
 /** A month of dates, Monday first. Used for booking now, and for My Schedule. */
 @Composable internal fun MonthCalendar(month:YearMonth,selected:String?,today:LocalDate,canGoBack:Boolean,canGoForward:Boolean,
-    onMonth:(YearMonth)->Unit,enabled:(LocalDate)->Boolean,marked:(LocalDate)->Boolean,note:@Composable (LocalDate)->String?,onSelect:(LocalDate)->Unit) {
+    onMonth:(YearMonth)->Unit,enabled:(LocalDate)->Boolean,marked:(LocalDate)->Boolean,quiet:(LocalDate)->Boolean={false},note:@Composable (LocalDate)->String?,onSelect:(LocalDate)->Unit) {
     val format=rememberSessionFormat()
     Column(verticalArrangement=Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
@@ -69,27 +69,30 @@ internal fun BookingStatus.tone()=when(this) {
             Row(Modifier.fillMaxWidth()) {
                 week.forEach {date ->
                     if(date==null) Spacer(Modifier.weight(1f).heightIn(min=48.dp))
-                    else DayCell(date,date.toString()==selected,date==today,enabled(date),marked(date),format.calendarDay(date),note(date),Modifier.weight(1f)) {onSelect(date)}
+                    else DayCell(date,date.toString()==selected,date==today,enabled(date),marked(date),quiet(date),format.calendarDay(date),note(date),Modifier.weight(1f)) {onSelect(date)}
                 }
             }
         }
     }
 }
 
-@Composable private fun DayCell(date:LocalDate,chosen:Boolean,today:Boolean,enabled:Boolean,marked:Boolean,name:String,note:String?,modifier:Modifier,onClick:()->Unit) {
+/** A quiet day can be chosen but draws no eye, as on a schedule where only some dates hold anything. */
+@Composable private fun DayCell(date:LocalDate,chosen:Boolean,today:Boolean,enabled:Boolean,marked:Boolean,quiet:Boolean,name:String,note:String?,modifier:Modifier,onClick:()->Unit) {
     val scheme=MaterialTheme.colorScheme
     val spoken=listOfNotNull(name,note).joinToString(", ")
     Box(modifier.heightIn(min=48.dp).padding(2.dp).clip(MaterialTheme.shapes.small)
-        .background(if(chosen) scheme.primary else if(enabled) scheme.primaryContainer else Color.Transparent)
+        .background(if(chosen) scheme.primary else if(enabled && !quiet) scheme.primaryContainer else Color.Transparent)
         .clickable(enabled=enabled,onClick=onClick).semantics {contentDescription=spoken;selected=chosen},contentAlignment=Alignment.Center) {
         Text(date.dayOfMonth.toString(),style=MaterialTheme.typography.bodyMedium,fontWeight=if(chosen || today) FontWeight.Bold else FontWeight.Normal,
-            color=if(chosen) scheme.onPrimary else if(enabled) scheme.onPrimaryContainer else scheme.onSurfaceVariant)
+            color=if(chosen) scheme.onPrimary else if(quiet) scheme.onSurface else if(enabled) scheme.onPrimaryContainer else scheme.onSurfaceVariant)
         if(marked) Box(Modifier.align(Alignment.BottomCenter).padding(bottom=5.dp).size(4.dp).clip(MaterialTheme.shapes.extraSmall).background(if(chosen) scheme.onPrimary else scheme.primary))
     }
 }
 
-@Composable private fun dayMessage(day:BookingDay)=when(day.status) {
-    BookingDayStatus.HOLIDAY -> stringResource(R.string.booking_day_holiday,day.holiday.orEmpty())
+@Composable private fun dayMessage(day:BookingDay)=dayMessage(day.status,day.holiday)
+@Composable internal fun dayMessage(day:ScheduleDay)=dayMessage(day.status,day.holiday)
+@Composable private fun dayMessage(status:BookingDayStatus,holiday:String?)=when(status) {
+    BookingDayStatus.HOLIDAY -> stringResource(R.string.booking_day_holiday,holiday.orEmpty())
     BookingDayStatus.PAST -> stringResource(R.string.booking_day_past)
     BookingDayStatus.TOO_SOON -> stringResource(R.string.booking_day_too_soon)
     BookingDayStatus.TOO_FAR -> stringResource(R.string.booking_day_too_far)
@@ -170,11 +173,12 @@ internal fun BookingStatus.tone()=when(this) {
     }
 }
 
-@Composable fun ColumnScope.MyBookings(state:BookingState,vm:BookingViewModel,book:()->Unit) {
+@Composable fun ColumnScope.MyBookings(state:BookingState,vm:BookingViewModel,schedule:()->Unit,book:()->Unit) {
     val format=rememberSessionFormat()
     val now=remember(state.bookings) {Instant.now()}
     var confirming by remember {mutableStateOf<Booking?>(null)}
     ActionButton(R.string.booking_title,book)
+    ActionButton(R.string.schedule_title,schedule,outlined=true)
     if(BookingAction.LOAD in state.loading) LoadingNotice(R.string.booking_loading)
     if(state.failed && state.bookings.isEmpty()) FeedbackNotice(R.string.booking_load_failed,error=true) {vm.refresh()}
     if(state.loaded && state.bookings.isEmpty()) EmptyState(R.string.booking_empty_title,R.string.booking_empty_detail)

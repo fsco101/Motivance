@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 
 /** Runs against the design gallery, which uses the same components and views as the app. */
 const SCREENS = [
-  '/design/scheduler/requests', '/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
+  '/design/scheduler/requests', '/design/therapist/schedule', '/design/patient/schedule', '/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
   '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
 ]
 

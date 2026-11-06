@@ -1169,6 +1169,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      my_schedule: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
       profile_photo_upload: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1223,6 +1227,22 @@ export type Database = {
       save_my_profile: {
         Args: { p_details: Json }
         Returns: undefined
+      }
+      schedule_layout: {
+        Args: {
+          p_from: string
+          p_to: string
+          p_owner: string
+          p_therapist: boolean
+        }
+        Returns: Json
+      }
+      schedule_view: {
+        Args: {
+          b: Database["public"]["Tables"]["bookings"]["Row"]
+          p_therapist: boolean
+        }
+        Returns: Json
       }
       scheduler_assign_therapist: {
         Args: { p_booking: string; p_therapist: string }
@@ -1299,6 +1319,10 @@ export type Database = {
       slot_problem: {
         Args: { p_starts: string }
         Returns: string
+      }
+      therapist_schedule: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
       }
       username_allowed: {
         Args: { value: string }

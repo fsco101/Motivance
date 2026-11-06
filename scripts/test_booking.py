@@ -636,7 +636,157 @@ def requests(stack):
     stack.check('mine' in staff['slots'][0] and staff['slots'][0]['mine'] is False, 'A Scheduler holds no slots themselves')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests}
+CENTER_LOCATION = '12 Mabini Street, Quezon City'
+
+
+def manila_hour(value):
+    return datetime.fromisoformat(value).astimezone(timezone(timedelta(hours=8))).hour
+
+
+def schedule(stack):
+    """MOT-56: each person's confirmed sessions, laid out by time, and nothing clinical."""
+    # A blank location would compare equal to a blank location, so this needs a real one.
+    stack.sql(f"update public.center_settings set location='{CENTER_LOCATION}';")
+    try:
+        schedule_checks(stack)
+    finally:
+        stack.sql("update public.center_settings set location='';")
+
+
+def schedule_checks(stack):
+    _, ts = stack.user('patient', 'scheduler')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Linked')
+    omar, to = stack.user('patient', 'therapist', name='Booking Omar Unlinked')
+    ana, ta = stack.user('patient', name='Booking Ana Scheduled')
+    ben, tb = stack.user('patient', name='Booking Ben Assigned')
+    fresh = working_days(stack)
+    day, later, last, closing = next(fresh), next(fresh), next(fresh), next(fresh)
+
+    def request(token, start):
+        return stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)[1]
+
+    def days(name, token, start, end=None):
+        code, data = stack.rpc(name, {'p_from': str(start), 'p_to': str(end or start)}, token)
+        assert code == 200, data
+        return data['days']
+
+    def mine(token, start=day, end=None):
+        return days('my_schedule', token, start, end)
+
+    def working(token, start=day, end=None):
+        return days('therapist_schedule', token, start, end)
+
+    def sessions(found):
+        return [row['session'] for item in found for row in item['rows'] if row['session']]
+
+    def ids(found):
+        return [session['id'] for session in sessions(found)]
+
+    # Only what a Scheduler has confirmed.
+    booked = request(ta, manila(day, 10))
+    stack.check(ids(mine(ta)) == [], 'A request still waiting is not on My Schedule')
+    stack.check(ids(working(tt)) == [], 'Nor on a therapist schedule')
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': booked['id'], 'p_therapist': tess}, ts)[0] == 200, 'A Scheduler confirms a session')
+
+    found = mine(ta)
+    rows = found[0]['rows']
+    stack.check(found[0]['date'] == str(day) and found[0]['status'] == 'open', 'The day asked for comes back, open')
+    stack.check([manila_hour(row['starts_at']) for row in rows] == list(range(9, 17)), 'The day runs across the opening hours, in order')
+    stack.check(rows[1]['session'] and rows[1]['session']['id'] == booked['id'], 'The session sits at its own time')
+    stack.check(all(row['session'] is None for index, row in enumerate(rows) if index != 1), 'Every other hour is empty')
+    session = rows[1]['session']
+    stack.check(manila_hour(session['starts_at']) == 10 and manila_hour(session['ends_at']) == 11, 'A session has a specific start and end time')
+    stack.check(session['therapist_name'] == 'Booking Tess Linked' and session['location'] == CENTER_LOCATION and session['reference_no'] == booked['reference_no'], 'A patient sees the therapist, location and reference')
+
+    stack.check(ids(mine(tb)) == [], 'Another patient sees none of it')
+    stack.check(ids(mine(ta, day, day + timedelta(days=30))) == [booked['id']], 'A whole month can be read at once')
+    stack.check(len(mine(ta, day, day + timedelta(days=30))) == 31, 'Every date in the range comes back')
+    seen = sessions(working(tt))
+    stack.check([item['id'] for item in seen] == [booked['id']], 'The assigned therapist sees it')
+    stack.check(seen[0]['patient_name'] == 'Booking Ana Scheduled' and seen[0]['reference_no'] == booked['reference_no'], 'A therapist sees the patient and reference')
+    stack.check(manila_hour(seen[0]['starts_at']) == 10, 'At the same time')
+    stack.check('status_reason' not in seen[0] and 'previous_starts_at' not in seen[0], 'A therapist gets no more than a schedule needs')
+    stack.check(ids(working(to)) == [], 'Another therapist sees none of it')
+
+    # Whoever is asking has to be that kind of person.
+    range_of = {'p_from': str(day), 'p_to': str(day)}
+    stack.check(stack.rpc('therapist_schedule', range_of, tb)[0] == 403, 'A patient cannot open a therapist schedule')
+    staff, tstaff = stack.user('therapist')
+    stack.sql(f"delete from public.user_roles where user_id='{staff}' and role='patient';")
+    stack.check(stack.rpc('my_schedule', range_of, tstaff)[0] == 403, 'Someone who is not a patient has no My Schedule')
+    stack.check(stack.rpc('my_schedule', range_of)[0] == 401, 'Nor does someone signed out')
+    forged = dict(range_of, p_owner=ana, p_therapist=False)
+    stack.check(stack.rpc('schedule_layout', forged, tb)[0] in (403, 404), "A patient cannot ask for someone else's schedule directly")
+    stack.check(stack.rpc('schedule_layout', forged, tt)[0] in (403, 404), 'Nor can a therapist')
+    stack.check(refused(stack.rpc('my_schedule', {'p_from': str(day), 'p_to': str(day + timedelta(days=63))}, ta), 'booking_invalid_range'), 'A range that long is refused')
+
+    # A moved session moves. A cancelled one goes.
+    moved = manila(later, 14)
+    stack.check(stack.rpc('scheduler_reschedule', {'p_booking': booked['id'], 'p_starts': moved, 'p_therapist': tess}, ts)[0] == 200, 'A Scheduler moves the session')
+    stack.check(ids(mine(ta)) == [], 'It leaves its old date')
+    moved_rows = mine(ta, later)[0]['rows']
+    stack.check([manila_hour(row['starts_at']) for row in moved_rows if row['session']] == [14], 'It shows at its new time')
+    stack.check(sessions(mine(ta, later))[0]['status'] == 'rescheduled', 'A rescheduled session is on the schedule')
+    stack.check(ids(working(tt, later)) == [booked['id']], 'The therapist follows it')
+    stack.check(stack.rpc('scheduler_cancel', {'p_booking': booked['id'], 'p_reason': 'Test'}, ts)[0] == 200, 'A Scheduler cancels the session')
+    stack.check(ids(mine(ta, later)) == [] and ids(working(tt, later)) == [], 'A cancelled session leaves both schedules')
+    waiting = request(tb, manila(later, 9))
+    stack.check(stack.rpc('scheduler_reject', {'p_booking': waiting['id'], 'p_reason': 'Test'}, ts)[0] == 200, 'A Scheduler rejects a request')
+    stack.check(ids(mine(tb, later)) == [], 'A rejected request never appears')
+
+    # 7 AM in Manila is still the day before in UTC, so a day must be cut in the center's zone.
+    early = str(uuid.uuid4())
+    stack.sql(f"insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values('{early}','BK-EARLY-{early[:8]}','{ana}','{tess}','{manila(last, 7)}','{manila(last, 8)}','confirmed');")
+    stack.check(ids(mine(ta, last)) == [early], 'A session early on a Manila date stays on that date')
+    stack.check(ids(mine(ta, last - timedelta(days=1))) == [], 'It is not on the date UTC would give it')
+    stack.check(ids(working(tt, last)) == [early], 'The same for the therapist')
+    early_rows = mine(ta, last)[0]['rows']
+    stack.check(manila_hour(early_rows[0]['starts_at']) == 7 and len(early_rows) == 9, 'A session outside the hours still shows, with the hours around it')
+
+    # What the center's own calendar does to a day.
+    weekend = next_weekday(day, 6)
+    stack.check(mine(ta, weekend)[0]['status'] == 'closed' and mine(ta, weekend)[0]['rows'] == [], 'A day the center never opens has no hours')
+    holiday = date.fromisoformat(stack.sql("select min(starts_on) from public.center_holidays where starts_on>current_date+2 and extract(isodow from starts_on)<6;"))
+    found = mine(ta, holiday)[0]
+    stack.check(found['status'] == 'holiday' and found['holiday'] and found['rows'] == [], 'A holiday says which one, and has no hours')
+    stack.sql(f"""insert into public.center_closures(starts_at,ends_at,reason) values(('{closing} 13:00'::timestamp) at time zone 'Asia/Manila',('{closing} 15:00'::timestamp) at time zone 'Asia/Manila','Booking test closure');""")
+    try:
+        found = mine(ta, closing)[0]
+        stack.check(found['status'] == 'open' and [manila_hour(row['starts_at']) for row in found['rows']] == [9, 10, 11, 12, 15, 16], 'A closed part of a day drops out of its hours')
+        stack.sql(f"""update public.center_closures set starts_at=('{closing} 00:00'::timestamp) at time zone 'Asia/Manila',ends_at=('{closing} 23:59'::timestamp) at time zone 'Asia/Manila' where reason='Booking test closure';""")
+        found = mine(ta, closing)[0]
+        stack.check(found['status'] == 'closure' and found['rows'] == [], 'A day closed from start to end says so')
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test closure';")
+
+    # A booking alone opens nothing. The link is what grants a record.
+    stack.sql(f"insert into public.therapist_patients(therapist_id,patient_id,assigned_by) values('{tess}','{ben}','{tess}');")
+    stack.sql(f"""insert into public.patient_profiles(user_id,username,full_name,first_name,last_name,gender,birthdate,address,contact,avatar)
+ values('{ben}','booking_{ben[:8]}','Booking Fixture','Booking','Fixture','male','1990-01-01','Quezon City','0917 555 0142','person');""")
+    exercise = stack.sql("select id from public.exercise_versions where published and algorithm_key='elbow-flexion-v1' order by version desc limit 1;")
+    assignment, version = str(uuid.uuid4()), str(uuid.uuid4())
+    code, _ = stack.rpc('publish_prescription', {'p_assignment': assignment, 'p_version': version, 'p_patient': ben, 'p_exercise': exercise, 'p_side': 'left', 'p_low': 20, 'p_high': 90, 'p_repetitions': 5, 'p_parameters': {}}, tt)
+    stack.check(code == 200, 'A clinical record exists to protect')
+    record = str(uuid.uuid4())
+    stack.sql(f"""insert into public.sessions(id,patient_id,prescription_version_id,started_at,ended_at,status,app_version,model_version,algorithm_version)
+ values('{record}','{ben}','{version}',now(),now(),'completed','test','test','test');""")
+    assigned = request(tb, manila(day, 11))
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': assigned['id'], 'p_therapist': omar}, ts)[0] == 200, 'A Scheduler assigns an unlinked therapist')
+    seen = sessions(working(to))
+    stack.check([item['id'] for item in seen] == [assigned['id']] and seen[0]['patient_name'] == 'Booking Ben Assigned', 'The unlinked therapist sees who is booked')
+    stack.check(seen[0]['patient_id'] == ben and seen[0]['linked'] is False, 'The schedule says no link exists')
+    for table, query in [('sessions', 'patient_id'), ('prescription_versions', 'patient_id'), ('exercise_assignments', 'patient_id'), ('patient_profiles', 'user_id')]:
+        code, found = stack.api(f'/rest/v1/{table}?select=*&{query}=eq.{ben}', token=to)
+        stack.check(code == 200 and found == [], f'A booking alone opens nothing in {table}')
+        code, found = stack.api(f'/rest/v1/{table}?select=*&{query}=eq.{ben}', token=tt)
+        stack.check(code == 200 and len(found) >= 1, f'The linked therapist can read {table}, so the empty result above is real')
+    stack.sql(f"insert into public.therapist_patients(therapist_id,patient_id,assigned_by) values('{omar}','{ben}','{tess}');")
+    stack.check(sessions(working(to))[0]['linked'] is True, 'Once linked, the schedule says so')
+    stack.sql(f"update public.therapist_patients set active=false where therapist_id='{omar}' and patient_id='{ben}';")
+    stack.check(sessions(working(to))[0]['linked'] is False, 'A link that has ended no longer counts')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule}
 
 
 def main():

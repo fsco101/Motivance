@@ -12,7 +12,9 @@
     "book": "Mag-book",
     "bookings": "Mga booking ko",
     "bookingsShort": "Mga booking",
-    "requests": "Mga kahilingan"
+    "requests": "Mga kahilingan",
+    "schedule": "Iskedyul ko",
+    "scheduleShort": "Iskedyul"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",

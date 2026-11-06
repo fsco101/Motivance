@@ -97,6 +97,10 @@ The first command uses four disposable local users and cleans only those fixture
 
 For the optional native `CameraLifecycleTest`, use a camera source that actually supplies frames. On the headless test host the saved webcam0 setting supplied none; cold-booting the AVD with `-camera-back emulated -camera-front emulated -no-snapshot-load` passes the native smoke test without changing its saved camera preferences. Synthetic emulator imagery does not test patient tracking accuracy.
 
+## When memory is short
+
+The browser suite needs a lot of memory, and running out looks like failing tests. A crash shows as `Target crashed` or a worker exit code such as `3221225794`, with no assertion failing. Stop spare emulators before a full run. If a run is cut off, its tests skip their cleanup, so remove the leftover `motivance-web-*` accounts first, or `access_policies.test.sql` counts their sessions. Then rerun only the files it cut off, with `npx playwright test <files> --workers=1`.
+
 ## Live tests without touching a working emulator
 
 Live tests clear app data, and Gradle's `connected` tasks run on every attached device, so keep them away from an emulator you are using. Create a throwaway AVD in its own folder and name it by serial:

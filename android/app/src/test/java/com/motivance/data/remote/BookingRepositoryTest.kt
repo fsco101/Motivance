@@ -26,6 +26,13 @@ class BookingRepositoryTest {
                     {"date":"2026-12-07","status":"open","holiday":null,"slots":[{"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","remaining":2,"mine":true}]},
                     {"date":"2026-12-08","status":"holiday","holiday":"Feast","slots":[]},{"date":"2026-12-09","status":"too_soon","holiday":null,"slots":[]}]}"""
                 path=="/rest/v1/rpc/my_bookings" -> "[$booking]"
+                path=="/rest/v1/rpc/my_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
+                    {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null},
+                    {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":$booking}]},
+                    {"date":"2026-12-08","status":"holiday","holiday":"Feast","rows":[]}]}"""
+                path=="/rest/v1/rpc/therapist_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
+                    {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":{"id":"b1","reference_no":"BK-2026-000001","status":"rescheduled",
+                    "starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","attendance":null,"location":"","patient_id":"p1","patient_name":"Ana Dela Cruz","linked":false}}]}]}"""
                 path=="/rest/v1/rpc/request_booking" -> booking
                 path=="/rest/v1/rpc/cancel_my_booking" -> booking
                 else -> """{"access_token":"fixture-access","refresh_token":"fixture-refresh","user":{"id":"fixture-patient"}}"""
@@ -33,6 +40,33 @@ class BookingRepositoryTest {
             Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(if(refused!=null) 400 else 200).message("fixture").body(body.toResponseBody("application/json".toMediaType())).build()
         }.build()
         return SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture").also {runBlocking {it.signIn("fixture@example.test","fixture-password")}}
+    }
+
+    @Test fun aPatientsScheduleKeepsEachHourAndWhoTheyWillSee()=runBlocking {
+        val result=repository().loadSchedule("2026-12-01","2026-12-31",false)
+        assertEquals("2026-12-31",bodies["/rest/v1/rpc/my_schedule"]!!.getString("p_to"))
+        val day=result.days[0]
+        assertNull("An empty hour stays empty",day.rows[0].session)
+        val session=day.rows[1].session!!
+        assertEquals("2026-12-07T01:00:00+00:00",session.startsAt)
+        assertEquals("2026-12-07T02:00:00+00:00",session.endsAt)
+        assertEquals("Dana Reyes",session.therapist)
+        assertEquals("Quezon City",session.location)
+        assertNull(session.patient)
+        assertEquals(listOf(session),day.sessions)
+        assertEquals(BookingDayStatus.HOLIDAY,result.days[1].status)
+        assertEquals("Feast",result.days[1].holiday)
+    }
+
+    @Test fun aTherapistsScheduleNamesThePatientAndSaysWhetherTheyAreLinked()=runBlocking {
+        val session=repository().loadSchedule("2026-12-01","2026-12-31",true).days[0].sessions.single()
+        assertTrue("/rest/v1/rpc/therapist_schedule" in bodies)
+        assertFalse("/rest/v1/rpc/my_schedule" in bodies)
+        assertEquals(BookingStatus.RESCHEDULED,session.status)
+        assertEquals("Ana Dela Cruz",session.patient)
+        assertEquals("p1",session.patientId)
+        assertFalse(session.linked)
+        assertNull(session.therapist)
     }
 
     @Test fun availabilityKeepsEachDateAndItsSpecificTimes()=runBlocking {

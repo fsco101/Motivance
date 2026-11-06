@@ -197,6 +197,16 @@
       "invalid": "Hindi mabasa ang kahilingan. Subukang muli.",
       "invalid_range": "Hindi mabasa ang mga petsang iyan."
     },
-    "keep": "Panatilihin ang booking"
+    "keep": "Panatilihin ang booking",
+    "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
+    "scheduleDetailTherapist": "Ang mga pasyenteng naka-book sa iyo, ayon sa petsa at oras.",
+    "scheduleSession": "Iyong session",
+    "scheduleFree": "Walang session",
+    "scheduleChoose": "Pumili ng petsa para makita ito ayon sa oras.",
+    "scheduleDay": "Mga session",
+    "scheduleNone": "Walang kumpirmadong session ngayong buwan.",
+    "scheduleNotLinked": "Hindi ka naka-link sa pasyenteng ito, kaya sarado pa rin ang kanilang rekord.",
+    "scheduleCount_one": "{{count}} session",
+    "scheduleCount_other": "{{count}} session"
   }
 }

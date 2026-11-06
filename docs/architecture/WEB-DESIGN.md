@@ -91,6 +91,8 @@ Patients are often on a phone, so this is the one workspace built for one. Below
 
 The next exercise is the page's one bold element, because it is what a patient came to do. Starting it opens a suggestion to continue on the phone, with a store link and QR code once the app has an address, because movement is measured through the phone's camera. Nothing about an exercise runs in the browser.
 
+My Schedule shows a month to find a date, and that date by the hour, so a session reads in its place in the day. Only dates with a session stand out. The bottom bar holds five, so Book leaves it for My Schedule, and stays on the pages that lead to it.
+
 ## Scheduler workspace
 
 A Scheduler works through a queue, so Requests is one dense table: filters above, the chosen booking and its history beside it, and every decision in a dialog that names the patient and the time. Search, filters, sorting and paging run on the server, because the table has to stay correct however many bookings exist.

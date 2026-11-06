@@ -1,5 +1,6 @@
 import type { Availability, Booking } from '@/data/booking'
 import type { CatalogueExercise } from '@/data/catalogue'
+import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
 import type { RequestDetail, RequestRow, TherapistChoice } from '@/data/scheduler'
 import type { HistoricalSession } from '@/data/history'
 import type { MyExercise } from '@/data/patient'
@@ -108,6 +109,37 @@ export const requestDetail: RequestDetail = {
 export const therapistChoices: TherapistChoice[] = [
   { id: 't1', name: 'Dana Reyes', linked: true, busy: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true }, { id: 't3', name: 'Grace Tan', linked: false, busy: false },
 ]
+
+/** A working day by the hour, nine to five in Manila, with a session in the hours given. */
+const dayOf = (date: string, sessions: Record<number, Partial<ScheduleSession>>): ScheduleRow[] => Array.from({ length: 8 }, (_, index) => {
+  const hour = 9 + index
+  const at = (value: number) => `${date}T${String(value - 8).padStart(2, '0')}:00:00Z`
+  const session = sessions[hour]
+  return {
+    startsAt: at(hour), endsAt: at(hour + 1),
+    session: session ? { id: `s${date}${hour}`, reference: 'BK-2026-000158', status: 'confirmed', startsAt: at(hour), endsAt: at(hour + 1), location: 'Motivance Center, Quezon City', therapist: null, patientId: null, patient: null, linked: false, ...session } : null,
+  }
+})
+export const schedule: Schedule = {
+  days: [
+    { date: '2026-12-07', status: 'open', holiday: null, rows: dayOf('2026-12-07', { 9: { therapist: 'Dana Reyes', reference: 'BK-2026-000157' } }) },
+    { date: '2026-12-12', status: 'closed', holiday: null, rows: [] },
+    { date: '2026-12-14', status: 'open', holiday: null, rows: dayOf('2026-12-14', { 10: { therapist: 'Dana Reyes' } }) },
+    { date: '2026-12-15', status: 'open', holiday: null, rows: dayOf('2026-12-15', {}) },
+    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', rows: [] },
+  ],
+}
+export const therapistSchedule: Schedule = {
+  days: [
+    { date: '2026-12-12', status: 'closed', holiday: null, rows: [] },
+    {
+      date: '2026-12-14', status: 'open', holiday: null, rows: dayOf('2026-12-14', {
+        10: { patient: 'Ana Dela Cruz', patientId: 'p1', linked: true }, 13: { patient: 'Ramon Bautista', patientId: 'p2', linked: false, reference: 'BK-2026-000157', status: 'rescheduled' },
+      }),
+    },
+    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', rows: [] },
+  ],
+}
 
 export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 

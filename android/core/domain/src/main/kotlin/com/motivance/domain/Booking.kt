@@ -33,6 +33,24 @@ data class Booking(
     fun upcoming(now:Instant)=status.active && bookingInstant(endsAt).isAfter(now)
 }
 
+/** A session a Scheduler has confirmed. A patient's names the therapist. A therapist's names the patient, and says whether their record can be opened. */
+data class ScheduleSession(
+    val id:String,val reference:String,val status:BookingStatus,val startsAt:String,val endsAt:String,val location:String="",
+    val therapist:String?=null,val patientId:String?=null,val patient:String?=null,val linked:Boolean=false,
+)
+data class ScheduleRow(val startsAt:String,val endsAt:String,val session:ScheduleSession?=null)
+data class ScheduleDay(val date:String,val status:BookingDayStatus,val holiday:String?=null,val rows:List<ScheduleRow> = emptyList()) {
+    val sessions get()=rows.mapNotNull {it.session}
+}
+data class Schedule(val days:List<ScheduleDay> = emptyList()) {
+    fun day(date:String)=days.firstOrNull {it.date==date}
+    /** Where a month opens: the next date with a session, or today when nothing is ahead. A month with neither waits for a choice. */
+    fun openingDate(today:LocalDate):String? {
+        val date=today.toString()
+        return days.firstOrNull {it.date>=date && it.sessions.isNotEmpty()}?.date ?: days.firstOrNull {it.date==date}?.date
+    }
+}
+
 /** PostgreSQL writes an offset such as +00:00, which Instant.parse does not accept on every Android version. */
 fun bookingInstant(value:String):Instant=OffsetDateTime.parse(value).toInstant()
 
@@ -55,4 +73,6 @@ interface BookingRepository {
     suspend fun requestBooking(requestId:String,startsAt:String):Booking
     suspend fun loadMyBookings():List<Booking>
     suspend fun cancelBooking(id:String)
+    /** [therapist] reads the sessions assigned to this person instead of their own as a patient. */
+    suspend fun loadSchedule(from:String,to:String,therapist:Boolean):Schedule
 }

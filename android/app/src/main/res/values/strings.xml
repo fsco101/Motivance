@@ -832,4 +832,15 @@
     <string name="booking_error_too_late">It is too late to change this booking online. Contact the center.</string>
     <string name="booking_error_request">That could not be completed. Try again.</string>
     <string name="booking_keep">Keep booking</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="schedule_title">My Schedule</string>
+    <string name="schedule_detail_patient">Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.</string>
+    <string name="schedule_detail_therapist">The patients booked with you, by date and time.</string>
+    <string name="schedule_session">Your session</string>
+    <string name="schedule_free">No session</string>
+    <string name="schedule_choose">Choose a date to see it by time.</string>
+    <string name="schedule_none">No confirmed sessions this month.</string>
+    <string name="schedule_not_linked">You are not linked to this patient, so their record stays closed.</string>
+    <string name="schedule_open_record">Open record</string>
+    <string name="schedule_count">Sessions: %1$d</string>
 </resources>

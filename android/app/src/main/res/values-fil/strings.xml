@@ -832,4 +832,15 @@
     <string name="booking_error_too_late">Huli na para baguhin ang booking na ito online. Kontakin ang center.</string>
     <string name="booking_error_request">Hindi ito natapos. Subukang muli.</string>
     <string name="booking_keep">Panatilihin ang booking</string>
+    <string name="nav_schedule">Iskedyul</string>
+    <string name="schedule_title">Iskedyul ko</string>
+    <string name="schedule_detail_patient">Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.</string>
+    <string name="schedule_detail_therapist">Ang mga pasyenteng naka-book sa iyo, ayon sa petsa at oras.</string>
+    <string name="schedule_session">Iyong session</string>
+    <string name="schedule_free">Walang session</string>
+    <string name="schedule_choose">Pumili ng petsa para makita ito ayon sa oras.</string>
+    <string name="schedule_none">Walang kumpirmadong session ngayong buwan.</string>
+    <string name="schedule_not_linked">Hindi ka naka-link sa pasyenteng ito, kaya sarado pa rin ang kanilang rekord.</string>
+    <string name="schedule_open_record">Buksan ang rekord</string>
+    <string name="schedule_count">Mga session: %1$d</string>
 </resources>

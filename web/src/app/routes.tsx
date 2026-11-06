@@ -25,6 +25,7 @@ const PatientRecord = therapist('PatientRecordPage')
 const AssignExercise = therapist('AssignExercisePage')
 const Exercises = therapist('ExercisesPage')
 const Progress = therapist('ProgressPage')
+const TherapistSchedule = therapist('TherapistSchedulePage')
 const admin = (name: keyof typeof import('@/features/admin/pages')) => lazy(async () => ({ default: (await import('@/features/admin/pages'))[name] as ComponentType }))
 const AdminOverview = admin('AdminOverviewPage')
 const Accounts = admin('AccountsPage')
@@ -36,6 +37,7 @@ const SchedulerHome = scheduler('SchedulerHomePage')
 const SchedulerRequests = scheduler('SchedulerRequestsPage')
 const patient = (name: keyof typeof import('@/features/patient/pages')) => lazy(async () => ({ default: (await import('@/features/patient/pages'))[name] as ComponentType }))
 const PatientHome = patient('PatientHomePage')
+const PatientSchedule = patient('PatientSchedulePage')
 const PatientBook = patient('PatientBookPage')
 const PatientBookings = patient('PatientBookingsPage')
 const PatientExercises = patient('PatientExercisesPage')
@@ -131,6 +133,7 @@ export const routes: RouteObject[] = [
         path: 'therapist', element: <WorkspaceFrame workspace="therapist" />, handle: { crumb: 'nav.home' },
         children: [
           { index: true, element: <TherapistHome /> },
+          { path: 'schedule', element: <TherapistSchedule />, handle: { crumb: 'nav.schedule' } },
           {
             path: 'patients', handle: { crumb: 'nav.patients' },
             children: [
@@ -150,6 +153,7 @@ export const routes: RouteObject[] = [
         path: 'patient', element: <WorkspaceFrame workspace="patient" />, handle: { crumb: 'nav.home' },
         children: [
           { index: true, element: <PatientHome /> },
+          { path: 'schedule', element: <PatientSchedule />, handle: { crumb: 'nav.schedule' } },
           { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
           { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
           { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },

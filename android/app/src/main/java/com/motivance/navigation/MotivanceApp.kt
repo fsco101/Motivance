@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -91,6 +92,8 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
     val administration:AdministrationViewModel=viewModel()
     val booking:BookingViewModel=viewModel()
     val bookingState by booking.state.collectAsStateWithLifecycle()
+    val schedule:ScheduleViewModel=viewModel()
+    val scheduleState by schedule.state.collectAsStateWithLifecycle()
     val haptics=rememberHaptics()
     LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
     LaunchedEffect(Unit) {vm.restore()}
@@ -114,7 +117,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         else if(route !in setOf("LANDING","AUTH","SETUP","CAMERA","CHECK_COMPLETE")) route="AUTH"
     }
     if(auth.restoring) { AuthLoadingScreen(); return }
-    fun goBack() { route=parentRoute(route,auth.session!=null) }
+    fun goBack() { route=parentRoute(route,auth.session!=null,auth.session?.workspace(role)==UserRole.THERAPIST) }
     BackHandler(enabled=route!="LANDING" && route!="HOME") { goBack() }
     if(route=="CAMERA") { CameraPrototype(ownerId=auth.session?.userId ?: "local-demo") { route="CHECK_COMPLETE" }; return }
     if(route=="AUTH" && auth.session==null) {
@@ -137,11 +140,19 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
     LaunchedEffect(bookingPage,patientAccount) {
         when(bookingPage) {"HOME","BOOKINGS" -> booking.refresh();"BOOK" -> booking.openBooking()}
     }
-    val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PROFILE","ADMIN")
+    // A therapist has room for a schedule tab. A patient's five are full, so theirs opens from My bookings.
+    val therapistRole=actualRole==UserRole.THERAPIST
+    val schedulePage=route.takeIf {auth.session!=null && it=="SCHEDULE"}
+    LaunchedEffect(schedulePage,auth.session?.userId,therapistRole) {
+        schedule.configure(auth.session?.userId,therapistRole)
+        if(schedulePage!=null) schedule.open()
+    }
+    val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PROFILE","ADMIN")+(if(therapistRole) setOf("SCHEDULE") else emptySet())
     val activeTab=when(route) {
         "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
         "LOCAL_HISTORY" -> "PROFILE"
         "BOOK" -> "BOOKINGS"
+        "SCHEDULE" -> if(therapistRole) "SCHEDULE" else "BOOKINGS"
         else -> route
     }
     val accountName=overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account)
@@ -149,6 +160,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         rehabilitation.refreshNow()
         if(route=="PROGRESS" || route=="PATIENT_DETAIL") history.refresh()
         if(route=="BOOKINGS") booking.refresh()
+        if(route=="SCHEDULE") schedule.open()
         vm.loadOverview()
     }
     // Pull-to-refresh only shows its indicator for a refresh the person started, and clears once that work settles.
@@ -161,7 +173,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         }
         pulled=false
     }
-    val refreshable=auth.session!=null && route in setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PATIENT_DETAIL","PROFILE")
+    val refreshable=auth.session!=null && route in setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","SCHEDULE","PROGRESS","PATIENT_DETAIL","PROFILE")
     Scaffold(
         containerColor=MaterialTheme.colorScheme.background,
         topBar={BrandHeader(onProfile=if(auth.session!=null && route!="PROFILE") ({route="PROFILE"}) else null,
@@ -170,7 +182,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
             val destinations=when(actualRole) {
                 UserRole.ADMIN -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("ADMIN",R.string.role_admin,Icons.Default.Settings),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
                 UserRole.SCHEDULER -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
-                UserRole.THERAPIST -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("PATIENTS",R.string.nav_patients,Icons.Default.Person),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
+                UserRole.THERAPIST -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("SCHEDULE",R.string.nav_schedule,Icons.AutoMirrored.Filled.List),Triple("PATIENTS",R.string.nav_patients,Icons.Default.Person),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
                 else -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("EXERCISES",R.string.nav_exercises,Icons.Default.PlayArrow),Triple("BOOKINGS",R.string.nav_bookings,Icons.Default.Place),Triple("PROGRESS",R.string.nav_progress,Icons.Default.DateRange),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
             }
             Column {
@@ -189,7 +201,7 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
         PullToRefreshBox(isRefreshing=pulled && working,onRefresh={pulled=true; refreshWorkspace()},
             modifier=Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.TopCenter) {
         AnimatedContent(targetState=route to selectedPatient,modifier=Modifier.fillMaxSize(),transitionSpec={
-            val from=depth(initialState.first); val to=depth(targetState.first)
+            val from=depth(initialState.first,therapistRole); val to=depth(targetState.first,therapistRole)
             when {
                 to>from -> (slideInHorizontally(tween(260,easing=FastOutSlowInEasing)) {it/6}+fadeIn(tween(200,delayMillis=40))) togetherWith
                     (slideOutHorizontally(tween(220)) {-it/12}+fadeOut(tween(120)))
@@ -294,7 +306,11 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
                 }
                 "BOOKINGS" -> {
                     PageHeader(R.string.booking_my_title,R.string.booking_my_detail)
-                    MyBookings(bookingState,booking) {route="BOOK"}
+                    MyBookings(bookingState,booking,{route="SCHEDULE"}) {route="BOOK"}
+                }
+                "SCHEDULE" -> {
+                    PageHeader(R.string.schedule_title,if(therapistRole) R.string.schedule_detail_therapist else R.string.schedule_detail_patient)
+                    MySchedule(scheduleState,schedule,connected.workspace.patients.map {it.id}.toSet()) {selectedPatient=it; route="PATIENT_DETAIL"}
                 }
                 "BOOK" -> {
                     PageHeader(R.string.booking_title,R.string.booking_detail)
@@ -354,18 +370,20 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
 }
 
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
-private fun depth(route:String)=when(route) {
+private fun depth(route:String,therapist:Boolean)=when(route) {
     "ASSIGN" -> 2
     "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK" -> 1
+    "SCHEDULE" -> if(therapist) 0 else 1
     else -> 0
 }
 
-internal fun parentRoute(route:String,signedIn:Boolean)=when(route) {
+internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=when(route) {
     "AUTH" -> "LANDING"
     "CAMERA" -> "SETUP"
     "ASSIGN" -> "PATIENT_DETAIL"
     "PATIENT_DETAIL" -> "PATIENTS"
     "BOOK" -> "BOOKINGS"
+    "SCHEDULE" -> if(therapist) "HOME" else "BOOKINGS"
     "LOCAL_HISTORY" -> if(signedIn) "PROFILE" else "CHECK_COMPLETE"
     "SETUP" -> if(signedIn) "HOME" else "LANDING"
     else -> if(signedIn) "HOME" else "LANDING"

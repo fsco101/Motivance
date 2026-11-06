@@ -10,6 +10,7 @@ import { failureKey } from '@/data/errors'
 import { loadHistory, usable, type HistoricalSession } from '@/data/history'
 import { archiveCustomExercise, createCustomExercise, invitePatient, loadLatestSessions, loadPatientProfile, publishPrescription, revokePatientLink, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
 import { loadCatalogue, loadOverview, loadPatients, loadPlans } from '@/data/workspace'
+import { SchedulePage } from '@/features/booking/SchedulePage'
 import { asLoad, ready, useFormat, type Load } from '@/features/shared'
 import { AssignmentEditorView } from './AssignmentEditorView'
 import { ExercisesView } from './ExercisesView'
@@ -21,6 +22,10 @@ import { TherapistHomeView, type TherapistHome } from './TherapistHomeView'
 import { latestMovement, latestSeries, nameOf, reachedBy, recentFirst, romPoints, summarisePatients } from './summaries'
 
 const BASE = '/therapist'
+
+export function TherapistSchedulePage() {
+  return <SchedulePage audience="therapist" recordPath={(id) => `${BASE}/patients/${id}`} />
+}
 
 /** Everything the list pages share, read once, for this therapist's linked patients. */
 function useWorkspace() {

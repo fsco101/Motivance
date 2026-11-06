@@ -241,6 +241,8 @@ import java.time.OffsetDateTime
     override suspend fun requestBooking(requestId:String,startsAt:String)=authorized {token,_ -> BookingJson.booking(JSONObject(call("/rest/v1/rpc/request_booking",JSONObject().put("p_request",requestId).put("p_starts",startsAt),token)))}
     override suspend fun loadMyBookings()=authorized {token,_ -> BookingJson.bookings(JSONArray(call("/rest/v1/rpc/my_bookings",JSONObject(),token)))}
     override suspend fun cancelBooking(id:String) {authorized {token,_ -> call("/rest/v1/rpc/cancel_my_booking",JSONObject().put("p_booking",id),token)}}
+    override suspend fun loadSchedule(from:String,to:String,therapist:Boolean)=authorized {token,_ ->
+        BookingJson.schedule(JSONObject(call("/rest/v1/rpc/${if(therapist) "therapist_schedule" else "my_schedule"}",JSONObject().put("p_from",from).put("p_to",to),token)))}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }
