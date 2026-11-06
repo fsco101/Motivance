@@ -34,6 +34,12 @@ export async function loadInbox(db: Db): Promise<Inbox> {
   return { unread, rows: rows.map(decodeNotification) }
 }
 
+/** Email has no app to choose its language, so the server is told the reader's. */
+export async function saveLanguage(db: Db, language: string) {
+  const { error } = await db.rpc('set_my_language', { p_language: language === 'fil' ? 'fil' : 'en' })
+  if (error) throw error
+}
+
 /** With no list, everything. The server only ever touches the caller's own. */
 export async function markRead(db: Db, ids?: readonly string[]) {
   const { data, error } = await db.rpc('mark_notifications_read', { p_ids: ids ? [...ids] : undefined })

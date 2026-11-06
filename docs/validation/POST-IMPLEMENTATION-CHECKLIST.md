@@ -168,7 +168,9 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] On a physical phone's browser, walk through the patient workspace: home, exercises, progress, profile, and the suggestion to use the app.
 - [ ] Once the app has a public address, set `VITE_ANDROID_APP_URL` and confirm the store link and QR code open it on a phone.
 - [ ] On a phone with a working camera, withdraw consent on the web, then record a session: confirm it asks again and the session uploads. `SessionStoreTest` covers the storage step and passes on an emulator, but the whole journey has not been run.
-- [ ] Have a Filipino speaker review the booking and scheduling text in `web/src/locales/fil.json` and `android/app/src/main/res/values-fil/strings.xml`.
+- [ ] On a hosted project, follow `docs/operations/NOTIFICATIONS.md` and confirm a real email reaches an inbox through Gmail on port 465. Local runs resolve the mail server by address, so this also proves the mail library can look up `smtp.gmail.com` from a hosted Edge Function.
+- [ ] Add a session to a real calendar from an email, reschedule it, and confirm the calendar updates the same entry. Google Calendar and Apple Calendar treat downloaded files differently, so check both.
+- [ ] Have a Filipino speaker review the booking and scheduling text in `web/src/locales/fil.json`, `android/app/src/main/res/values-fil/strings.xml` and `supabase/functions/_shared/email.ts`.
 
 ## Recording results
 

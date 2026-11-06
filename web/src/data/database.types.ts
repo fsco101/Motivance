@@ -543,6 +543,53 @@ export type Database = {
           },
         ]
       }
+      notification_deliveries: {
+        Row: {
+          attempts: number
+          channel: string
+          claimed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          notification_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          channel: string
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          notification_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          notification_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           booking_id: string | null
@@ -827,6 +874,7 @@ export type Database = {
           id: string
           locale: string
           photo_url: string | null
+          preferred_language: string
         }
         Insert: {
           active?: boolean
@@ -834,6 +882,7 @@ export type Database = {
           id: string
           locale?: string
           photo_url?: string | null
+          preferred_language?: string
         }
         Update: {
           active?: boolean
@@ -841,6 +890,7 @@ export type Database = {
           id?: string
           locale?: string
           photo_url?: string | null
+          preferred_language?: string
         }
         Relationships: []
       }
@@ -1161,6 +1211,10 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
+      booking_calendar: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       booking_check_patient: {
         Args: {
           p_patient: string
@@ -1254,6 +1308,10 @@ export type Database = {
         Args: { p_starts: string; p_ends: string }
         Returns: string
       }
+      claim_notification_deliveries: {
+        Args: { p_channel?: string; p_limit?: number }
+        Returns: Json
+      }
       clear_my_profile_photo: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1278,6 +1336,14 @@ export type Database = {
           p_english: string
           p_filipino?: string
         }
+        Returns: string
+      }
+      dispatch_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      finish_notification_delivery: {
+        Args: { p_id: string; p_sent: boolean; p_error?: string }
         Returns: string
       }
       has_role: {
@@ -1539,6 +1605,10 @@ export type Database = {
       scheduler_time_off: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      set_my_language: {
+        Args: { p_language: string }
+        Returns: undefined
       }
       set_my_profile_photo: {
         Args: { p_public_id: string; p_version: number; p_signature: string }

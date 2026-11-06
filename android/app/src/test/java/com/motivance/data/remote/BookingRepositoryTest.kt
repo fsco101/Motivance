@@ -33,6 +33,7 @@ class BookingRepositoryTest {
                     {"id":"n3","kind":"confirmed","booking_id":"b1","read_at":"2026-12-02T02:00:00+00:00","created_at":"2026-11-30T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":null,"patient_name":"Ana","therapist_name":null,"reason":null}}]}"""
                 path=="/rest/v1/rpc/mark_notifications_read" -> "0"
+                path=="/rest/v1/rpc/set_my_language" -> ""
                 path=="/rest/v1/rpc/my_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
                     {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null},
                     {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":$booking}]},
@@ -96,6 +97,11 @@ class BookingRepositoryTest {
         assertTrue(note.unread)
         assertFalse(inbox.items.last().unread)
         assertNull(inbox.items.last().therapist)
+    }
+
+    @Test fun theReadersLanguageIsSent()=runBlocking {
+        repository().saveLanguage("fil")
+        assertEquals("fil",bodies["/rest/v1/rpc/set_my_language"]!!.getString("p_language"))
     }
 
     @Test fun aKindFromANewerServerIsLeftOut()=runBlocking {

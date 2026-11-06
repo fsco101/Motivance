@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -154,8 +155,12 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     // Administrators take no part in bookings, so they have no bell.
     val inboxOwner=auth.session?.userId?.takeIf {actualRole!=UserRole.ADMIN}
-    LaunchedEffect(inboxOwner,lifecycle) {
+    val language=LocalConfiguration.current.locales[0].language.let {if(it=="fil" || it=="tl") "fil" else "en"}
+    LaunchedEffect(inboxOwner,language) {
         notifications.configure(inboxOwner)
+        notifications.saveLanguage(language)
+    }
+    LaunchedEffect(inboxOwner,lifecycle) {
         if(inboxOwner!=null) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while(true) {notifications.refresh(); delay(NOTIFICATION_CHECK_MS)}
         }

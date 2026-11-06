@@ -64,6 +64,16 @@ data class NotificationsState(val owner:String="",val inbox:NotificationInbox=No
         }
     }
 
+    /** Quietly, because failing only leaves email in the language it was in. The next start tries again. */
+    fun saveLanguage(language:String) {
+        if(mutable.value.owner.isBlank()) return
+        viewModelScope.launch {
+            try {repository.saveLanguage(language)}
+            catch(e:CancellationException) {throw e}
+            catch(_:Exception) {}
+        }
+    }
+
     fun open(note:AppNotification) {if(note.unread) mark(listOf(note.id))}
     fun markAllRead() {if(mutable.value.inbox.unread>0) mark(null)}
 }

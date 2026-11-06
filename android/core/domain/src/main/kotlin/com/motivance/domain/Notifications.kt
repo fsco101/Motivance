@@ -21,4 +21,6 @@ interface NotificationRepository {
     suspend fun loadNotifications():NotificationInbox
     /** With no list, everything. The server only ever touches the caller's own. Returns how many stay unread. */
     suspend fun markNotificationsRead(ids:List<String>?):Int
+    /** Email has no app to choose its language, so the server is told the reader's. */
+    suspend fun saveLanguage(language:String)
 }

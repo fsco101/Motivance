@@ -27,6 +27,9 @@ class NotificationsViewModelTest {
             failure?.let {throw it}
             return waits.removeFirstOrNull()?.let {withContext(NonCancellable) {it.await()}} ?: inbox
         }
+        val languages=mutableListOf<String>()
+        var languageFailure:RemoteFailure?=null
+        override suspend fun saveLanguage(language:String) {languageFailure?.let {throw it};languages+=language}
         override suspend fun markNotificationsRead(ids:List<String>?):Int {
             marked+=ids
             markFailure?.let {throw it}
@@ -117,6 +120,26 @@ class NotificationsViewModelTest {
         vm.configure(null)
         assertEquals(0,vm.state.value.inbox.unread)
         assertTrue(vm.state.value.inbox.items.isEmpty())
+    }
+
+    @Test fun theServerIsToldTheReadersLanguage()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        vm.saveLanguage("fil");advanceUntilIdle()
+        assertEquals(listOf("fil"),remote.languages)
+    }
+
+    /** Failing only leaves email in the language it was in, so nobody needs interrupting. */
+    @Test fun aLanguageThatCouldNotBeSavedIsNotAnError()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        remote.languageFailure=RemoteFailure(503)
+        vm.saveLanguage("fil");advanceUntilIdle()
+        assertFalse(vm.state.value.failed)
+    }
+
+    @Test fun noLanguageIsSavedWithoutAnAccount()=runTest {
+        val remote=Remote();val vm=NotificationsViewModel(remote,Toaster())
+        vm.saveLanguage("fil");advanceUntilIdle()
+        assertTrue(remote.languages.isEmpty())
     }
 
     @Test fun nothingIsReadWithoutAnAccount()=runTest {

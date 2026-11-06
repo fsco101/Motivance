@@ -84,6 +84,7 @@ class Stack:
             return
         ids = ','.join("'" + str(uuid.UUID(user)) + "'" for user in self.users)
         self.sql(f"""begin; set local session_replication_role=replica;
+delete from public.notification_deliveries where notification_id in (select id from public.notifications where user_id in ({ids}) or booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids})));
 delete from public.notifications where user_id in ({ids}) or booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.audit_events where target_type='bookings' and target_id in (select id::text from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));

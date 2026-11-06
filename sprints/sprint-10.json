@@ -681,7 +681,7 @@
       "github_issue": 77,
       "title": "Send queued Gmail email with calendar links",
       "description": "Email people through Gmail without ever slowing a request, with a link that adds the session to their calendar.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend",
       "estimate_points": 8,
@@ -718,53 +718,124 @@
         {
           "id": "MOT-60-AC1",
           "description": "A booking action only writes a queue row, so email can never block or fail the request.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/email-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "scripts/test_email.py",
+            "supabase/migrations/202611060010_email_queue.sql",
+            "web/tests/contract/email.test.ts"
+          ]
         },
         {
           "id": "MOT-60-AC2",
           "description": "notification-dispatch needs a shared secret, claims rows so two runs cannot send one email twice, and retries with backoff before stopping as failed.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/email-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "scripts/test_email.py",
+            "supabase/migrations/202611060010_email_queue.sql",
+            "web/tests/contract/email.test.ts"
+          ]
         },
         {
           "id": "MOT-60-AC3",
           "description": "Templates in English and Filipino show the session date, specific time, therapist, location and reference number, in the recipient's language.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/email-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "scripts/test_email.py",
+            "supabase/migrations/202611060010_email_queue.sql",
+            "web/tests/contract/email.test.ts"
+          ]
         },
         {
           "id": "MOT-60-AC4",
           "description": "Confirmation and reschedule emails include an add-to-calendar link, and the .ics file updates the same calendar entry after a reschedule.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/email-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "scripts/test_email.py",
+            "supabase/migrations/202611060010_email_queue.sql",
+            "web/tests/contract/email.test.ts"
+          ]
         },
         {
           "id": "MOT-60-AC5",
           "description": "A real send to local Mailpit proves the template, the calendar link and retry behaviour. pg_cron drains the queue.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/email-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "scripts/test_email.py",
+            "supabase/migrations/202611060010_email_queue.sql",
+            "web/tests/contract/email.test.ts"
+          ]
         },
         {
           "id": "MOT-60-AC6",
           "description": "SMTP secrets live only in Edge secrets, the port is a separate setting, and docs/operations/NOTIFICATIONS.md explains setup.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/email-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "scripts/test_email.py",
+            "supabase/migrations/202611060010_email_queue.sql",
+            "web/tests/contract/email.test.ts"
+          ]
         },
         {
           "id": "MOT-60-AC7",
           "description": "A real email reaches an inbox through Gmail from a hosted project on port 465.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/email-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "scripts/test_email.py",
+            "supabase/migrations/202611060010_email_queue.sql",
+            "web/tests/contract/email.test.ts"
+          ],
+          "non_blocking": true,
+          "deferral_authority": "Plan approved by the owner, 2026-11-06: real Gmail delivery and port 465 from a hosted project cannot be proved locally.",
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "The dispatcher is built and proven against local Mailpit. A real Gmail delivery from a hosted project is deferred; not a development blocker."
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T17:16:30.194746+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/email-test-results.json",
+          "docs/operations/NOTIFICATIONS.md",
+          "scripts/test_email.py",
+          "supabase/migrations/202611060010_email_queue.sql",
+          "web/tests/contract/email.test.ts",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+        ],
+        "acceptance_basis": "engineering-implementation"
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/email-test-results.json",
+        "docs/operations/NOTIFICATIONS.md",
+        "scripts/test_email.py",
+        "supabase/migrations/202611060010_email_queue.sql",
+        "web/tests/contract/email.test.ts"
+      ]
     },
     {
       "id": "MOT-61",

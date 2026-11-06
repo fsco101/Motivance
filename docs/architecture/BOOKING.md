@@ -34,6 +34,7 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 - **The patient does not pick a therapist.** The Scheduler assigns one, and must before confirming. Therapists already linked to the patient are shown first.
 - **Closures and holidays must resolve every active booking they touch,** pending ones too. Otherwise a patient would keep a live request on a closed day and nobody would tell them.
 - **Notifications come from the audit log.** A trigger on `booking_events` writes them, so every change reaches the people it matters to, however it was made, including changes made while resolving a closure. A row holds facts rather than sentences, so each app writes the text in its reader's language. Nobody is told what they have just done themselves, and administrators have no bell, because they take no part in bookings.
+- **Email leaves through a queue.** A notification adds a row to `notification_deliveries`, so a booking never waits for Gmail and cannot fail because of it. `notification-dispatch` claims rows so two runs cannot send one email twice, and retries with growing waits before stopping as failed. The server keeps each person's language in `profiles.preferred_language`, because email has no app to choose it.
 - **Leave stays private.** A therapist's reason is seen only by Schedulers. A patient whose session is cancelled for it reads only that their therapist is away, and a therapist's own schedule shows the hours without the reason. Other therapists and patients do not see it at all.
 - **Leave resolves like a closure, with one more choice.** The center stays open, so a session can pass to another therapist at the same time. That is usually kinder than moving it.
 - **Changing the hours moves nothing.** Sessions already booked keep their time, because hours change far more often than people can be rung. The save reports how many now fall outside the hours, and the Calendar page keeps that on screen until someone looks at them. A closure or holiday is different: it means the center is shut, so each booking needs a decision first.
@@ -71,7 +72,7 @@ All are `security definer` functions that re-check the caller. A failed role che
 
 | Who | Functions |
 | --- | --- |
-| Any active account | `booking_availability(from, to)`, `mark_notifications_read(ids)`, `register_device(token, platform)` |
+| Any active account | `booking_availability(from, to)`, `my_notifications(limit)`, `mark_notifications_read(ids)`, `set_my_language(language)`, `register_device(token, platform)` |
 | Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist` |
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
 | Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_log_export` |

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, type ComponentType } from 'react'
+import { lazy, Suspense, useEffect, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useNavigate, type RouteObject } from 'react-router'
 import { useAuth, useSignedIn } from '@/auth/AuthProvider'
@@ -10,6 +10,7 @@ import { ButtonLink } from '@/components/Button'
 import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { SkeletonLines } from '@/features/shared'
+import { saveLanguage } from '@/data/notifications'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { Shell } from '@/layout/Shell'
 import { MotionArc } from '@/motion/MotionArc'
@@ -111,6 +112,9 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   const { userId, email, roles } = useSignedIn()
   const navigate = useNavigate()
   const held = workspacesOf(roles)
+  const { i18n } = useTranslation()
+  // Quietly, because failing only leaves email in the language it was in. The next visit tries again.
+  useEffect(() => { void saveLanguage(supabase(), i18n.language).catch(() => undefined) }, [i18n.language, userId])
   const profile = useQuery({
     queryKey: ['account', userId],
     queryFn: async () => {

@@ -32,3 +32,11 @@ subject = "Reset your Motivance password"
 content_path = "./supabase/templates/recovery.html"
 [analytics]
 enabled = false
+
+# Neither function is called with a signed-in person's token. The dispatcher checks its own shared secret, and a calendar
+# app has no way to sign in, so a long random token in the link is the key.
+[functions.notification-dispatch]
+verify_jwt = false
+
+[functions.booking-calendar]
+verify_jwt = false

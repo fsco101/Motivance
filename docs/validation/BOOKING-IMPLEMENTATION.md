@@ -271,3 +271,25 @@ The failed test measured sideways scrolling while the page was still sliding in.
 The first download reads 297 KB, up from 292 KB, which looked larger than a bell should cost. Comparing source maps with the previous commit shows it gained five small modules, about 7.5 KB of source, and removing the bell saves only 1.2 KB compressed. The rest is the bundler regrouping shared code between files, which compresses a little worse. Only 3 KB of margin is left, so later web work has to load on demand.
 
 The emulator check also covers what MOT-58 left open: leave on My Schedule has now been seen on an Android screen.
+
+## MOT-60: Queued Gmail email and calendar links
+
+Each notification adds a row to `notification_deliveries`, so a booking never waits for email and cannot fail because of it. `notification-dispatch` needs a shared secret, and claims rows with `for update skip locked` so two runs cannot send one email twice. A failure waits 2, 4, 8 and 16 minutes, then stops as failed. A row left claimed by a run that died comes back after 5 minutes. `pg_cron` calls the function every minute, with its address and secret in Vault, and does nothing until they are set.
+
+Emails come in English and Filipino, with the session date, specific time, therapist, location and reference number. The server did not know anyone's language, because it lived only on each device, so `profiles.preferred_language` now holds it, and both apps report it. This was not in the plan, but the criterion cannot be met without it.
+
+Confirmation and reschedule emails link to `booking-calendar`, which is public because a calendar app cannot sign in. A long random token is the only key, and the file names no patient. Every version of a booking's file has the same `UID` and a higher `SEQUENCE`, so a calendar replaces the entry.
+
+No test can reach a real inbox. `scripts/test_email.py` starts the functions with an environment pointing at Mailpit, reads the running function's mail server, and stops if it is anything else.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Real sends to Mailpit: the queue, the secret, both languages, calendar links, overlapping runs, retries, a dead run, HTML injection, and the scheduled job draining the queue | `python scripts/test_email.py` | 50 checks passed |
+| Booking and notification sections | `python scripts/test_booking.py` | 494 checks passed |
+| Contract tests, including every email kind in both languages and the calendar file format | `npm run test:contract` | 95 passed |
+| Browser tests with axe: notifications and schedule, including the language reaching the server | `npx playwright test tests/e2e/notifications.spec.ts tests/e2e/schedule.spec.ts --workers=1` | 15 passed |
+| Web unit tests | `npm test` | 216 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 219 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+
+Deferred, not passed: a real email reaching an inbox through Gmail from a hosted project on port 465. Locally the mail server is reached by address, because the mail library cannot resolve a Docker container's name inside the Edge runtime, so that check also proves it can look up `smtp.gmail.com` there.
