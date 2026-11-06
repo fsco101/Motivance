@@ -1,4 +1,4 @@
-import { CalendarBlankIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
 import type { ReactNode } from 'react'
@@ -10,18 +10,20 @@ import { cn } from '@/lib/cn'
 import { spring } from '@/motion/tokens'
 import { LanguageSwitch } from './LanguageSwitch'
 
-type NavItem = { path: string; label: string; icon: Icon; end?: boolean; /** For the bottom bar, where a long label would be cut off. */ short?: string }
+type NavItem = { path: string; label: string; icon: Icon; end?: boolean; /** For the bottom bar, where a long label would be cut off. */ short?: string; /** Left off the bottom bar, which holds five. The pages around it link to it. */ wide?: boolean }
 
 const NAV: Record<Workspace, readonly NavItem[]> = {
   therapist: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
+    { path: 'schedule', label: 'nav.schedule', icon: CalendarCheckIcon },
     { path: 'patients', label: 'nav.patients', icon: UsersThreeIcon },
     { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
     { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
   ],
   patient: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
-    { path: 'book', label: 'nav.book', icon: CalendarPlusIcon },
+    { path: 'schedule', label: 'nav.schedule', short: 'nav.scheduleShort', icon: CalendarCheckIcon },
+    { path: 'book', label: 'nav.book', icon: CalendarPlusIcon, wide: true },
     { path: 'bookings', label: 'nav.bookings', short: 'nav.bookingsShort', icon: CalendarBlankIcon },
     { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
     { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
@@ -29,6 +31,7 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
   scheduler: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
     { path: 'requests', label: 'nav.requests', icon: TrayIcon },
+    { path: 'calendar', label: 'nav.calendar', icon: CalendarDotsIcon },
   ],
   admin: [
     { path: '', label: 'nav.overview', icon: GaugeIcon, end: true },
@@ -83,7 +86,7 @@ function BottomBar({ workspace, base }: { workspace: Workspace; base: string }) 
   const { t } = useTranslation()
   return (
     <nav aria-label={t('nav.main')} className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper pb-[env(safe-area-inset-bottom)] tablet:hidden">
-      {NAV[workspace].map((item) => (
+      {NAV[workspace].filter((item) => !item.wide).map((item) => (
         <NavLink key={item.label} to={item.path ? `${base}/${item.path}` : base} end={item.end}
           className={({ isActive }) => cn('flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold', isActive ? 'text-lagoon-deep' : 'text-slate')}>
           {({ isActive }) => <><item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="text-xl" /><span className="max-w-full truncate px-1">{t(item.short ?? item.label)}</span></>}
@@ -149,10 +152,10 @@ function AccountMenu({ account, current, profilePath, onSwitch, onSignOut }: { a
   )
 }
 
-type Props = { workspace: Workspace; base: string; account: ShellAccount; onSwitch: (workspace: Workspace) => void; onSignOut: () => void; children: ReactNode }
+type Props = { workspace: Workspace; base: string; account: ShellAccount; onSwitch: (workspace: Workspace) => void; onSignOut: () => void; /** Beside the account menu, where a workspace has anything to announce. */ bell?: ReactNode; children: ReactNode }
 
 /** The frame of both workspaces. It takes everything as props, so the design gallery runs the same frame on sample data. */
-export function Shell({ workspace, base, account, onSwitch, onSignOut, children }: Props) {
+export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, children }: Props) {
   const { t } = useTranslation()
   return (
     <RadixTooltip.Provider>
@@ -164,6 +167,7 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, children 
             <Breadcrumbs />
             <div className="flex shrink-0 items-center gap-3">
               <LanguageSwitch />
+              {bell}
               <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
             </div>
           </div>

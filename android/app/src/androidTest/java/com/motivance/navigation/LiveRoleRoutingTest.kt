@@ -15,6 +15,8 @@ import org.junit.Test
  * The real app, one sign-in page, real accounts on the local backend. Needs a signed-out app, and is skipped unless
  * scripts/test_role_routing.py passes disposable accounts.
  */
+private const val SIGN_IN_ATTEMPTS=3
+
 class LiveRoleRoutingTest {
     @get:Rule val compose=createAndroidComposeRule<MainActivity>()
     private val args=InstrumentationRegistry.getArguments()
@@ -33,8 +35,14 @@ class LiveRoleRoutingTest {
         waitFor {compose.onAllNodes(hasText(text(R.string.email)) and isEnabled()).fetchSemanticsNodes().isNotEmpty()}
         compose.onNodeWithText(text(R.string.email)).performTextInput(email)
         compose.onNodeWithText(text(R.string.auth_password)).performTextInput(args.getString("password")!!)
-        compose.onNode(hasText(text(R.string.sign_in)) and hasClickAction()).tap()
-        waitFor {present(R.string.nav_profile)}
+        // The emulator's link to the host can drop a request. The app says so and keeps the form filled, so this tries again
+        // as a person would. It never retries past a sign-in that keeps failing, and role routing is checked after it.
+        repeat(SIGN_IN_ATTEMPTS) {
+            compose.onNode(hasText(text(R.string.sign_in)) and hasClickAction()).tap()
+            waitFor {present(R.string.nav_profile) || present(R.string.request_failed)}
+            if(present(R.string.nav_profile)) return
+        }
+        check(present(R.string.nav_profile)) {"Sign-in failed $SIGN_IN_ATTEMPTS times for $email"}
     }
     private fun signOut() {
         compose.onAllNodesWithText(text(R.string.nav_profile)).onFirst().performSemanticsAction(SemanticsActions.OnClick)

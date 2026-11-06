@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, type ComponentType } from 'react'
+import { lazy, Suspense, useEffect, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useNavigate, type RouteObject } from 'react-router'
 import { useAuth, useSignedIn } from '@/auth/AuthProvider'
@@ -10,6 +10,8 @@ import { ButtonLink } from '@/components/Button'
 import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { SkeletonLines } from '@/features/shared'
+import { saveLanguage } from '@/data/notifications'
+import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { Shell } from '@/layout/Shell'
 import { MotionArc } from '@/motion/MotionArc'
 import { AnimatedOutlet } from '@/motion/AnimatedOutlet'
@@ -18,6 +20,10 @@ import { AnimatedOutlet } from '@/motion/AnimatedOutlet'
 const gallery: RouteObject[] = import.meta.env.DEV ? (await import('@/gallery/routes')).galleryRoutes : []
 
 /** Each page is its own download, which keeps the first load small. */
+const notifications = (name: keyof typeof import('@/features/notifications/pages')) => lazy(async () => ({ default: (await import('@/features/notifications/pages'))[name] }))
+const PatientNotifications = notifications('PatientNotificationsPage')
+const TherapistNotifications = notifications('TherapistNotificationsPage')
+const SchedulerNotifications = notifications('SchedulerNotificationsPage')
 const therapist = (name: keyof typeof import('@/features/therapist/pages')) => lazy(async () => ({ default: (await import('@/features/therapist/pages'))[name] as ComponentType }))
 const TherapistHome = therapist('TherapistHomePage')
 const Patients = therapist('PatientsPage')
@@ -25,6 +31,7 @@ const PatientRecord = therapist('PatientRecordPage')
 const AssignExercise = therapist('AssignExercisePage')
 const Exercises = therapist('ExercisesPage')
 const Progress = therapist('ProgressPage')
+const TherapistSchedule = therapist('TherapistSchedulePage')
 const admin = (name: keyof typeof import('@/features/admin/pages')) => lazy(async () => ({ default: (await import('@/features/admin/pages'))[name] as ComponentType }))
 const AdminOverview = admin('AdminOverviewPage')
 const Accounts = admin('AccountsPage')
@@ -34,8 +41,10 @@ const Activity = admin('ActivityPage')
 const scheduler = (name: keyof typeof import('@/features/scheduler/pages')) => lazy(async () => ({ default: (await import('@/features/scheduler/pages'))[name] as ComponentType }))
 const SchedulerHome = scheduler('SchedulerHomePage')
 const SchedulerRequests = scheduler('SchedulerRequestsPage')
+const SchedulerCalendar = scheduler('SchedulerCalendarPage')
 const patient = (name: keyof typeof import('@/features/patient/pages')) => lazy(async () => ({ default: (await import('@/features/patient/pages'))[name] as ComponentType }))
 const PatientHome = patient('PatientHomePage')
+const PatientSchedule = patient('PatientSchedulePage')
 const PatientBook = patient('PatientBookPage')
 const PatientBookings = patient('PatientBookingsPage')
 const PatientExercises = patient('PatientExercisesPage')
@@ -103,6 +112,9 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   const { userId, email, roles } = useSignedIn()
   const navigate = useNavigate()
   const held = workspacesOf(roles)
+  const { i18n } = useTranslation()
+  // Quietly, because failing only leaves email in the language it was in. The next visit tries again.
+  useEffect(() => { void saveLanguage(supabase(), i18n.language).catch(() => undefined) }, [i18n.language, userId])
   const profile = useQuery({
     queryKey: ['account', userId],
     queryFn: async () => {
@@ -114,7 +126,7 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   // The server enforces this too; here it simply keeps people out of pages that would only fail.
   if (!held.includes(workspace)) return workspace === 'scheduler' ? <Forbidden /> : <Navigate to={homePath(roles)} replace />
   return (
-    <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))}
+    <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))} bell={workspace === 'admin' ? undefined : <NotificationBell base={workspacePath(workspace)} />}
       account={{ name: profile.data?.display_name || email, email, photo: profile.data?.photo_url, workspaces: held }}>
       <Suspense fallback={<SkeletonLines />}><AnimatedOutlet /></Suspense>
     </Shell>
@@ -131,6 +143,8 @@ export const routes: RouteObject[] = [
         path: 'therapist', element: <WorkspaceFrame workspace="therapist" />, handle: { crumb: 'nav.home' },
         children: [
           { index: true, element: <TherapistHome /> },
+          { path: 'schedule', element: <TherapistSchedule />, handle: { crumb: 'nav.schedule' } },
+          { path: 'notifications', element: <TherapistNotifications />, handle: { crumb: 'nav.notifications' } },
           {
             path: 'patients', handle: { crumb: 'nav.patients' },
             children: [
@@ -150,6 +164,8 @@ export const routes: RouteObject[] = [
         path: 'patient', element: <WorkspaceFrame workspace="patient" />, handle: { crumb: 'nav.home' },
         children: [
           { index: true, element: <PatientHome /> },
+          { path: 'schedule', element: <PatientSchedule />, handle: { crumb: 'nav.schedule' } },
+          { path: 'notifications', element: <PatientNotifications />, handle: { crumb: 'nav.notifications' } },
           { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
           { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
           { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
@@ -162,6 +178,8 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <SchedulerHome /> },
           { path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } },
+          { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } },
+          { path: 'notifications', element: <SchedulerNotifications />, handle: { crumb: 'nav.notifications' } },
           { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
         ],
       },

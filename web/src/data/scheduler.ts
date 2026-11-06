@@ -56,11 +56,12 @@ export async function loadDetail(db: Db, booking: string): Promise<RequestDetail
   }
 }
 
-export type TherapistChoice = { id: string; name: string; linked: boolean; busy: boolean }
+export type TherapistChoice = { id: string; name: string; linked: boolean; busy: boolean; onLeave: boolean }
 
 /** With no booking, every active therapist, for the filter. With one, those who could take it, linked ones first. */
-export async function loadTherapists(db: Db, booking?: string, startsAt?: string) {
-  return must(await db.rpc('scheduler_therapists', { p_booking: booking, p_starts: startsAt })) as unknown as TherapistChoice[]
+export async function loadTherapists(db: Db, booking?: string, startsAt?: string): Promise<TherapistChoice[]> {
+  const rows = must(await db.rpc('scheduler_therapists', { p_booking: booking, p_starts: startsAt })) as unknown as Array<Omit<TherapistChoice, 'onLeave'> & { on_leave: boolean }>
+  return rows.map(({ on_leave, ...row }) => ({ ...row, onLeave: on_leave }))
 }
 
 export async function loadStaffAvailability(db: Db, month: string): Promise<Availability> {

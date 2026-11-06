@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useSearchParams, type RouteObject } from 'react-router'
 import type { Slot } from '@/data/booking'
+import type { Closure, Holiday, TimeOff } from '@/data/calendar'
+import type { ScheduleAudience } from '@/data/schedule'
 import { NO_FILTERS as NO_REQUEST_FILTERS, type RequestRow } from '@/data/scheduler'
 import { SignInPage } from '@/auth/SignInPage'
 import type { Workspace } from '@/auth/roles'
@@ -23,6 +25,11 @@ import { ExercisesView } from '@/features/therapist/ExercisesView'
 import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
+import { ScheduleView } from '@/features/booking/ScheduleView'
+import { BellLink } from '@/features/notifications/NotificationBell'
+import { NotificationsView } from '@/features/notifications/NotificationsView'
+import { ClosureDialog, HolidayDialog, TimeOffDialog, type CalendarActions } from '@/features/scheduler/CalendarDialogs'
+import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
 import { RequestsView } from '@/features/scheduler/RequestsView'
 import { TherapistHomeView } from '@/features/therapist/TherapistHomeView'
@@ -51,7 +58,7 @@ const said = (message: string) => () => toast.show(message)
 
 function Frame({ workspace }: { workspace: Workspace }) {
   return (
-    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : workspace === 'scheduler' ? SCHEDULER : THERAPIST} onSignOut={said('Signed out')} onSwitch={said('Switched workspace')}
+    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : workspace === 'scheduler' ? SCHEDULER : THERAPIST} onSignOut={said('Signed out')} bell={workspace === 'admin' ? undefined : <BellLink to={`/design/${workspace}/notifications`} count={2} />} onSwitch={said('Switched workspace')}
       account={{ name: 'Dana Reyes', email: 'dana.reyes@example.test', workspaces: ['admin', 'therapist', 'patient'] }}>
       <AnimatedOutlet />
     </Shell>
@@ -103,6 +110,34 @@ const requestActions: RequestActions = {
   therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),
   reject: async () => toast.show('Rejected'), cancel: async () => toast.show('Cancelled'), reschedule: async () => toast.show('Rescheduled'), bulkReject: async () => toast.show('Rejected'),
 }
+const Notifications = () => <NotificationsView load={useDemo(data.inbox, { unread: 0, rows: [] })} onOpen={said('Opened')} onMarkAll={said('Marked read')} />
+
+function Schedule({ audience }: { audience: ScheduleAudience }) {
+  const [date, setDate] = useState<string | null>('2026-12-14')
+  const load = useDemo(audience === 'patient' ? data.schedule : data.therapistSchedule, { days: [] })
+  return <ScheduleView audience={audience} load={load} month="2026-12" onMonth={said('Changed month')} canGoBack canGoForward today="2026-12-01" date={date} onDate={setDate} recordPath={audience === 'therapist' ? (id) => `${THERAPIST}/patients/${id}` : undefined} />
+}
+
+const calendarActions: CalendarActions = {
+  impact: async () => data.affected, availability: async () => data.availability, therapists: async () => data.therapistChoices, saveHoliday: async () => toast.show('Saved'), saveClosure: async () => toast.show('Saved'), saveTimeOff: async () => toast.show('Saved'),
+}
+function SchedulerCalendar() {
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState((params.get('tab') ?? 'hours') as CalendarTab)
+  const [holiday, setHoliday] = useState<Holiday | null | undefined>()
+  const [closure, setClosure] = useState<Closure | null | undefined>()
+  const [timeOff, setTimeOff] = useState<TimeOff | null | undefined>()
+  return (
+    <>
+      <CalendarView load={useDemo(data.calendar, data.calendar)} tab={tab} onTab={setTab} outsideHours={params.has('outside') ? 2 : 0} onSaveHours={async () => toast.show('Saved')} onSaveSettings={async () => toast.show('Saved')}
+        onEditHoliday={setHoliday} onDeleteHoliday={said('Deleted')} onEditClosure={setClosure} onDeleteClosure={said('Deleted')} onEditTimeOff={setTimeOff} onDeleteTimeOff={said('Deleted')} />
+      {holiday !== undefined && <HolidayDialog holiday={holiday} actions={calendarActions} onClose={() => setHoliday(undefined)} />}
+      {closure !== undefined && <ClosureDialog closure={closure} actions={calendarActions} onClose={() => setClosure(undefined)} />}
+      {timeOff !== undefined && <TimeOffDialog entry={timeOff} therapists={data.therapistChoices} actions={calendarActions} onClose={() => setTimeOff(undefined)} />}
+    </>
+  )
+}
+
 function SchedulerRequests() {
   const [selected, setSelected] = useState<RequestRow | null>(data.requests[0]!)
   const [checked, setChecked] = useState<readonly string[]>([])
@@ -159,6 +194,8 @@ export const galleryRoutes: RouteObject[] = [{
       path: 'therapist', element: <Frame workspace="therapist" />, handle: { crumb: 'nav.home' },
       children: [
         { index: true, element: <Home /> },
+        { path: 'schedule', element: <Schedule audience="therapist" />, handle: { crumb: 'nav.schedule' } },
+        { path: 'notifications', element: <Notifications />, handle: { crumb: 'nav.notifications' } },
         { path: 'patients', handle: { crumb: 'nav.patients' }, children: [
           { index: true, element: <Patients /> },
           { path: ':id', handle: { crumb: () => 'Ana Dela Cruz' }, children: [
@@ -175,6 +212,8 @@ export const galleryRoutes: RouteObject[] = [{
       path: 'patient', element: <Frame workspace="patient" />, handle: { crumb: 'nav.home' },
       children: [
         { index: true, element: <PatientHome /> },
+        { path: 'schedule', element: <Schedule audience="patient" />, handle: { crumb: 'nav.schedule' } },
+        { path: 'notifications', element: <Notifications />, handle: { crumb: 'nav.notifications' } },
         { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
         { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
@@ -184,7 +223,7 @@ export const galleryRoutes: RouteObject[] = [{
     },
     {
       path: 'scheduler', element: <Frame workspace="scheduler" />, handle: { crumb: 'nav.home' },
-      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }],
+      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
     },
     {
       path: 'admin', element: <Frame workspace="admin" />, handle: { crumb: 'nav.overview' },

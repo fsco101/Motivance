@@ -171,3 +171,149 @@ A review before closing found problems the first tests had missed, and each now 
 All seven issues are implemented and closed. Both sprint exit criteria stay recorded as not passed, under a deferral the user authorised, because part of each needs a physical phone: MOT-54-AC7 (booking at large text sizes and with TalkBack) and the sprint demo in one sitting.
 
 Every step of the demo has passed in automated runs, though never as one continuous run. An administrator grants the Scheduler role in `web/tests/e2e/admin.spec.ts`. Patients request sessions in the browser tests, and in the real Android app on an emulator. Requests are confirmed and rejected in `web/tests/e2e/scheduler.spec.ts`. The live API test sends 10 parallel requests for the last place, and exactly 1 succeeds.
+
+## MOT-56: My Schedule
+
+Patients and therapists see the sessions a Scheduler has confirmed, at `/patient/schedule` and `/therapist/schedule` on the web, and on Android. A month calendar marks the dates with sessions, and choosing a date lays it out by the hour across the center's opening hours. Requests still waiting stay on My bookings.
+
+`my_schedule` and `therapist_schedule` share `schedule_layout`, which builds each day on the server, so the two apps cannot disagree about one. Days are cut in the center's zone: 7 AM in Manila is still the day before in UTC, and a session then stays on its Manila date. A session always shows, even if the hours around it have changed since it was confirmed.
+
+A booking grants no clinical access. `can_read_patient` is unchanged, and the schedule only says whether a link already exists, so the apps can offer the record. A therapist assigned to an unlinked patient sees their name and reference and nothing else. The live test reads empty results from four clinical tables as that therapist, and reads the same rows as the linked therapist, which shows the empty results are real.
+
+On Android a therapist has a Schedule tab. A patient's five tabs are full, so theirs opens from My bookings. On the web's phone bar, My Schedule takes Book's place, and Book stays on the pages around it.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: confirmed sessions only, each person's own, specific times, the Manila day boundary, closed days, holidays, closures, 403s, a forged owner, and no clinical access from a booking | `python scripts/test_booking.py schedule` | 54 checks passed |
+| All sections | `python scripts/test_booking.py` | 287 checks passed |
+| Contract tests | `npm run test:contract` | 45 passed |
+| Whole browser suite with axe, including 8 schedule tests, a browser set to New York and phone width | `npx playwright test --workers=2`, then the five files it cut off with `--workers=1` | 188 passed across the two runs, on the same code. See below. 83 opt-in tests did not run, as designed: design captures need `CAPTURE_DESIGNS` and the motion measurement needs `MEASURE_MOTION` |
+| Web unit tests | `npm test` | 208 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Android unit tests, 18 of them new | `gradlew :core:domain:test :app:testDebugUnitTest` | 200 passed |
+| Android resources, module boundaries and administrator parity | `python scripts/check_resources.py`, `check_module_boundaries.py`, `check_admin_parity.py` | Passed |
+| Both roles in the real Android app on a spare emulator set to New York, against the local backend | Driven through the UI | Passed. The phone reported EST and sessions read 9:00 AM Manila time. A patient saw the therapist, location and reference, and a pending request stayed off. A therapist saw both patients and their references, the linked record opened, and the unlinked card offered no record |
+| Live role routing on the spare emulator, including the therapist's new tab | `python scripts/test_role_routing.py` | 10 of 10 on the final build, with the retry described below |
+| Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
+
+The first full browser run did not finish cleanly, because the machine ran out of memory with an emulator and Android Studio open. Five tests crashed, with no assertion failing: one browser crash, three workers that could not start, and one failed `docker` command. The 48 tests after them in the same serial files did not run. Those five files were run again on the same code with one worker, and all 63 of their tests passed. The other 125 tests had already passed. The crash also left 7 disposable accounts behind, which made `access_policies.test.sql` count a stray session. Removing them with the suite's own cleanup restored all 69 database tests.
+
+`LiveRoleRoutingTest` failed intermittently during this issue, so it was compared with the commit before MOT-56, in alternating runs: 5 of 6 passed without MOT-56 and 4 of 6 with it, so MOT-56 did not cause this. Failures landed on different sign-ins and never on a role check. One caught on screen showed the app's own connection error with the form still filled, and the gateway logged the client closing the connection (status 499) about a second after the previous sign-out. Why the emulator's link drops is not established. The app behaves correctly here, so the test now tries a sign-in again when the app reports that failure, up to three times, as a person would. Role routing is still checked after every sign-in.
+
+## MOT-57: Calendar management and closure resolution
+
+The Calendar page at `/scheduler/calendar` edits the opening days and hours, session length, capacity, booking rules, center name and location, and manages holidays and closures. A closure covers a full day or a time range, with a required reason, and a holiday can run for several days.
+
+A closure or holiday that overlaps active bookings opens a second step listing each one. Every booking needs a decision, to reschedule or cancel, before the save is offered. The server insists on this too: `calendar_resolve` refuses a save unless each affected booking has exactly one decision, and reuses `scheduler_cancel` and `scheduler_reschedule`, so every existing rule still applies. The closure is saved first, so a move into it is refused by the same check as any other, and any failure undoes the whole save, including cancellations already made in it. A booking made while the Scheduler is deciding is caught at the save, and joins the list.
+
+Changing the hours moves nothing. Sessions already booked keep their time, and the page keeps a notice on screen saying how many now fall outside the hours.
+
+Test cleanup turns off foreign keys, so a closure made by a test Scheduler would have stayed behind and kept closing the center. Both cleanups now remove them.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: settings, hours, holidays, closures, the impact list, refusal without a decision, partial and extra decisions, all-or-nothing saves, a booking that arrives late, editing and deleting | `python scripts/test_booking.py calendar` | 70 checks passed |
+| All sections, with the 403 guard covering the new `scheduler_` functions | `python scripts/test_booking.py` | 385 checks passed |
+| Contract tests | `npm run test:contract` | 51 passed |
+| Browser tests with axe: Calendar, Scheduler, booking and the design gallery | `npx playwright test tests/e2e/calendar.spec.ts tests/e2e/scheduler.spec.ts tests/e2e/booking.spec.ts tests/e2e/design.spec.ts --workers=1` | 96 passed, and the opt-in motion measurement did not run |
+| Web unit tests | `npm test` | 212 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
+
+Hours and rules are shared by every browser suite, so `calendar.spec.ts` intercepts those two saves and checks what the page sends. The live API test runs them for real, one at a time. The whole browser suite is not rerun for each issue, because of the memory limit on this machine, and runs again before the sprint closes.
+
+## MOT-58: Therapist time off
+
+Schedulers add, edit and delete a therapist's leave on the Calendar page, as a specific time range. `booking_check_therapist` is the one gate for confirming, assigning and rescheduling, so a single check there refuses all three. The therapist picker marks who is on leave and will not offer them.
+
+Leave resolves like a closure, through the same `calendar_resolve`, but only that therapist's sessions need a decision. Because the center stays open, there is one more choice: a session can pass to another therapist at the same time.
+
+The reason stays with scheduling. A patient whose session is cancelled for leave reads only that their therapist is away, because they can see a cancellation's reason and a therapist's reason for being away is their own. A therapist's own schedule shows the hours without the reason. Other therapists and patients do not see it at all.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: adding and refusing leave, all three ways onto a session, the picker, only that therapist's sessions needing a decision, all-or-nothing saves, what My Schedule shows and to whom, editing and deleting | `python scripts/test_booking.py time_off` | 48 checks passed |
+| All sections | `python scripts/test_booking.py` | 445 checks passed |
+| Contract tests | `npm run test:contract` | 52 passed |
+| Browser tests with axe: Calendar, schedule, Scheduler and the design gallery | `npx playwright test tests/e2e/calendar.spec.ts tests/e2e/schedule.spec.ts tests/e2e/scheduler.spec.ts tests/e2e/design.spec.ts --workers=1` | 96 passed, and the opt-in motion measurement did not run |
+| Web unit tests | `npm test` | 213 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 201 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 292 KB of 300 KB |
+
+On Android, leave on My Schedule is covered by unit tests of the data it reads, and has not yet been seen on an emulator screen. That check runs before the sprint closes.
+
+## MOT-59: In-app notifications and scheduler alerts
+
+A trigger on `booking_events` writes notifications, so every change to a booking reaches the people it matters to, however it was made, including changes made while resolving a closure. Confirming, rejecting, rescheduling, cancelling and changing the therapist tell the patient and the therapists involved. New requests, patient cancellations and sessions that lose their therapist alert every active Scheduler. Nobody is told what they have just done themselves.
+
+A row holds facts rather than sentences, and each app writes the text, so it follows the reader's language and reads the time in Asia/Manila. Switching language rewrites what is already in the list. A Scheduler's reason goes to the patient only.
+
+The web has a bell in the header and a Notifications page for patients, therapists and Schedulers, and Android has the same bell and list. Administrators have neither, because they take no part in bookings. Opening a notification marks it read and goes to where the booking can be seen. Both apps check every minute while open, and Android ignores a result for an account that has since signed out.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: every kind of change, who hears and who does not, a closure, a therapist leaving, reading only your own, no writes or forged notifications, read and unread | `python scripts/test_booking.py notifications` | 49 checks passed |
+| All sections | `python scripts/test_booking.py` | 494 checks passed |
+| Contract tests | `npm run test:contract` | 52 passed |
+| Whole browser suite with axe, one browser at a time | `npx playwright test --workers=1` | 209 passed, 1 failed and 1 did not run. 83 opt-in tests did not run, as designed |
+| The two left over, after the fix below | `npx playwright test tests/e2e/notifications.spec.ts tests/e2e/schedule.spec.ts --workers=1` | 15 passed, so all 211 tests that run by default have passed on this code |
+| Web unit tests | `npm test` | 216 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 215 passed |
+| Android resources and module boundaries | `python scripts/check_resources.py`, `check_module_boundaries.py` | Passed |
+| The bell, the list and leave in the real Android app, on a spare emulator set to New York, against the local backend | Driven through the UI | Passed. The phone reported EST and a notification read 9:00 AM Manila time. Opening it went to My bookings or My Schedule, cleared the bell, and the server agreed. A therapist's leave showed on its hours, without the reason |
+| Live role routing on the spare emulator, with the new header | `python scripts/test_role_routing.py` | 5 of 5 |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The failed test measured sideways scrolling while the page was still sliding in. Settled pages do not overflow at 320, 360 or 390 pixels wide, so that test and the same check in `schedule.spec.ts` now wait for the page to settle.
+
+The first download reads 297 KB, up from 292 KB, which looked larger than a bell should cost. Comparing source maps with the previous commit shows it gained five small modules, about 7.5 KB of source, and removing the bell saves only 1.2 KB compressed. The rest is the bundler regrouping shared code between files, which compresses a little worse. Only 3 KB of margin is left, so later web work has to load on demand.
+
+The emulator check also covers what MOT-58 left open: leave on My Schedule has now been seen on an Android screen.
+
+## MOT-60: Queued Gmail email and calendar links
+
+Each notification adds a row to `notification_deliveries`, so a booking never waits for email and cannot fail because of it. `notification-dispatch` needs a shared secret, and claims rows with `for update skip locked` so two runs cannot send one email twice. A failure waits 2, 4, 8 and 16 minutes, then stops as failed. A row left claimed by a run that died comes back after 5 minutes. `pg_cron` calls the function every minute, with its address and secret in Vault, and does nothing until they are set.
+
+Emails come in English and Filipino, with the session date, specific time, therapist, location and reference number. The server did not know anyone's language, because it lived only on each device, so `profiles.preferred_language` now holds it, and both apps report it. This was not in the plan, but the criterion cannot be met without it.
+
+Confirmation and reschedule emails link to `booking-calendar`, which is public because a calendar app cannot sign in. A long random token is the only key, and the file names no patient. Every version of a booking's file has the same `UID` and a higher `SEQUENCE`, so a calendar replaces the entry.
+
+No test can reach a real inbox. `scripts/test_email.py` starts the functions with an environment pointing at Mailpit, reads the running function's mail server, and stops if it is anything else.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Real sends to Mailpit: the queue, the secret, both languages, calendar links, overlapping runs, retries, a dead run, HTML injection, and the scheduled job draining the queue | `python scripts/test_email.py` | 50 checks passed |
+| Booking and notification sections | `python scripts/test_booking.py` | 494 checks passed |
+| Contract tests, including every email kind in both languages and the calendar file format | `npm run test:contract` | 95 passed |
+| Browser tests with axe: notifications and schedule, including the language reaching the server | `npx playwright test tests/e2e/notifications.spec.ts tests/e2e/schedule.spec.ts --workers=1` | 15 passed |
+| Web unit tests | `npm test` | 216 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 219 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+
+Deferred, not passed: a real email reaching an inbox through Gmail from a hosted project on port 465. Locally the mail server is reached by address, because the mail library cannot resolve a Docker container's name inside the Edge runtime, so that check also proves it can look up `smtp.gmail.com` there.
+
+## MOT-61: Reminders and expiring old requests
+
+`enqueue_booking_reminders` runs every 5 minutes and reminds the patient and therapist 24 hours and 1 hour before a confirmed session. The session's start time is part of each reminder's key, so a job that runs twice finds the key and sends nothing, and a session that moves has a new key and gets fresh reminders. Cancelled, rejected and pending bookings get none.
+
+`expire_stale_bookings` runs every 15 minutes and rejects pending requests whose time has passed. The patient is told, through the same trigger as any rejection.
+
+The booking history records the system as the actor for both, and the audit log for expiry. Reminders stay out of the administrators' feed, which they would only fill up, so no new label was needed on either app.
+
+System reasons were checked for in six places, so each platform now has one place that turns a reason code into words: `useReasonText` on the web and `bookingReasonText` on Android, plus the email template.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: both windows, exactly once including overlapping runs, a moved session, sessions that get none, the audit trail, expiry, and access | `python scripts/test_booking.py reminders` | 37 checks passed |
+| All sections | `python scripts/test_booking.py` | 531 checks passed |
+| Real sends to Mailpit | `python scripts/test_email.py` | 50 checks passed |
+| Contract tests | `npm run test:contract` | 101 passed |
+| Browser tests with axe: notifications, Scheduler, booking and patient | `npx playwright test tests/e2e/notifications.spec.ts tests/e2e/scheduler.spec.ts tests/e2e/booking.spec.ts tests/e2e/patient.spec.ts --workers=1` | 41 passed |
+| Web unit tests | `npm test` | 216 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 220 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The expiry job closes exactly what the Scheduler's outdated-requests test creates, so that suite pauses the job with `cron.alter_job` and restores it at the end, even after a failure.

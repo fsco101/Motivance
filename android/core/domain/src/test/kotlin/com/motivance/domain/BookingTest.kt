@@ -7,6 +7,36 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BookingTest {
+    private fun sessionDay(date:String,booked:Boolean=true)=ScheduleDay(date,BookingDayStatus.OPEN,rows=listOf(
+        ScheduleRow("${date}T01:00:00+00:00","${date}T02:00:00+00:00",if(booked) ScheduleSession("s$date","BK",BookingStatus.CONFIRMED,"${date}T01:00:00+00:00","${date}T02:00:00+00:00") else null)))
+
+    @Test fun aScheduleOpensOnTheNextSessionNotAnEarlierOne() {
+        val schedule=Schedule(listOf(sessionDay("2026-12-01"),sessionDay("2026-12-14",booked=false),sessionDay("2026-12-20")))
+        assertEquals("2026-12-20",schedule.openingDate(LocalDate.parse("2026-12-14")))
+    }
+
+    @Test fun aScheduleCountsASessionToday() {
+        assertEquals("2026-12-14",Schedule(listOf(sessionDay("2026-12-14"),sessionDay("2026-12-20"))).openingDate(LocalDate.parse("2026-12-14")))
+    }
+
+    @Test fun aScheduleFallsBackToTodayWhenNothingIsAhead() {
+        assertEquals("2026-12-14",Schedule(listOf(sessionDay("2026-12-01"),sessionDay("2026-12-14",booked=false))).openingDate(LocalDate.parse("2026-12-14")))
+    }
+
+    @Test fun aLaterMonthOpensOnItsFirstSession() {
+        assertEquals("2027-01-08",Schedule(listOf(sessionDay("2027-01-05",booked=false),sessionDay("2027-01-08"))).openingDate(LocalDate.parse("2026-12-14")))
+    }
+
+    @Test fun aMonthWithNothingAheadAndNoTodayWaitsForAChoice() {
+        assertNull(Schedule(listOf(sessionDay("2026-11-05"))).openingDate(LocalDate.parse("2026-12-14")))
+        assertNull(Schedule(listOf(sessionDay("2027-01-05",booked=false))).openingDate(LocalDate.parse("2026-12-14")))
+    }
+
+    @Test fun aDayCountsOnlyItsSessions() {
+        assertEquals(1,sessionDay("2026-12-14").sessions.size)
+        assertTrue(sessionDay("2026-12-14",booked=false).sessions.isEmpty())
+    }
+
     private fun booking(starts:String,status:BookingStatus=BookingStatus.CONFIRMED)=Booking(starts,"BK",status,null,starts,starts.replace("01:00","02:00"),null,null)
     private val now=Instant.parse("2026-12-01T00:00:00Z")
 

@@ -39,7 +39,7 @@ function Actions({ onClose, keep, children }: { onClose: () => void; keep?: stri
 }
 
 /** Linked therapists come first from the server. A busy therapist cannot be chosen, so the conflict is seen before it is refused. */
-function TherapistPicker({ load, value, onChange, current }: { load: Load<TherapistChoice[]>; value: string | null; onChange: (id: string) => void; current: string | null }) {
+export function TherapistPicker({ load, value, onChange, current }: { load: Load<TherapistChoice[]>; value: string | null; onChange: (id: string) => void; current: string | null }) {
   const { t } = useTranslation()
   return (
     <Loadable load={load} skeleton={<SkeletonLines rows={3} />}>
@@ -48,13 +48,13 @@ function TherapistPicker({ load, value, onChange, current }: { load: Load<Therap
           <legend className="mb-2 font-semibold">{t('booking.therapist')}</legend>
           <div className="grid max-h-64 gap-2 overflow-y-auto">
             {choices.map((choice) => {
-              const blocked = choice.busy && choice.id !== current
+              const blocked = choice.onLeave || (choice.busy && choice.id !== current)
               return (
                 <label key={choice.id} className={cn('flex min-h-11 items-center gap-3 rounded-control border border-line px-3 py-2', blocked ? 'bg-mist text-slate' : 'cursor-pointer hover:border-lagoon', value === choice.id && 'border-lagoon bg-tide')}>
                   <input type="radio" name="therapist" className="accent-lagoon" disabled={blocked} checked={value === choice.id} onChange={() => onChange(choice.id)} />
                   <span className="min-w-0 flex-1 font-semibold">{choice.name}</span>
                   {choice.linked && <StatusPill tone="positive">{t('scheduler.linked')}</StatusPill>}
-                  {blocked && <StatusPill tone="caution">{t('scheduler.busy')}</StatusPill>}
+                  {blocked && <StatusPill tone="caution">{t(choice.onLeave ? 'scheduler.onLeave' : 'scheduler.busy')}</StatusPill>}
                 </label>
               )
             })}
@@ -65,13 +65,13 @@ function TherapistPicker({ load, value, onChange, current }: { load: Load<Therap
   )
 }
 
-function useTherapists(actions: RequestActions, row: RequestRow, startsAt?: string) {
+export function useTherapists(actions: Pick<RequestActions, 'therapists'>, row: { id: string }, startsAt?: string) {
   return useQuery({ queryKey: ['scheduler', 'choices', row.id, startsAt ?? null], queryFn: () => actions.therapists(row.id, startsAt) })
 }
 
 /** The first free therapist, unless one is already chosen and still free. */
-function pick(chosen: string | null, choices: readonly TherapistChoice[] | undefined, current: string | null) {
-  const usable = (choices ?? []).filter((choice) => !choice.busy || choice.id === current)
+export function pick(chosen: string | null, choices: readonly TherapistChoice[] | undefined, current: string | null) {
+  const usable = (choices ?? []).filter((choice) => !choice.onLeave && (!choice.busy || choice.id === current))
   return usable.find((choice) => choice.id === chosen)?.id ?? usable.find((choice) => choice.id === current)?.id ?? usable[0]?.id ?? null
 }
 

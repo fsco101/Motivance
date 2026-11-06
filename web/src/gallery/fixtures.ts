@@ -1,7 +1,10 @@
 import type { Availability, Booking } from '@/data/booking'
+import type { AffectedBooking, CenterCalendar } from '@/data/calendar'
 import type { CatalogueExercise } from '@/data/catalogue'
+import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
 import type { RequestDetail, RequestRow, TherapistChoice } from '@/data/scheduler'
 import type { HistoricalSession } from '@/data/history'
+import type { Inbox } from '@/data/notifications'
 import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent } from '@/features/admin/types'
@@ -106,8 +109,74 @@ export const requestDetail: RequestDetail = {
   events: [{ id: 1, action: 'requested', actorRole: 'patient', actor: 'Ana Dela Cruz', fromStatus: null, toStatus: 'pending', toStartsAt: '2026-12-14T02:00:00Z', reason: null, recordedAt: '2026-11-05T02:00:00Z' }],
 }
 export const therapistChoices: TherapistChoice[] = [
-  { id: 't1', name: 'Dana Reyes', linked: true, busy: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true }, { id: 't3', name: 'Grace Tan', linked: false, busy: false },
+  { id: 't1', name: 'Dana Reyes', linked: true, busy: false, onLeave: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true, onLeave: false }, { id: 't3', name: 'Grace Tan', linked: false, busy: false, onLeave: true },
+  { id: 't4', name: 'Rico Santos', linked: false, busy: false, onLeave: false },
 ]
+
+/** A working day by the hour, nine to five in Manila, with a session in the hours given. */
+const dayOf = (date: string, sessions: Record<number, Partial<ScheduleSession>>, leave: readonly number[] = []): ScheduleRow[] => Array.from({ length: 8 }, (_, index) => {
+  const hour = 9 + index
+  const at = (value: number) => `${date}T${String(value - 8).padStart(2, '0')}:00:00Z`
+  const session = sessions[hour]
+  return {
+    startsAt: at(hour), endsAt: at(hour + 1), onLeave: !session && leave.includes(hour),
+    session: session ? { id: `s${date}${hour}`, reference: 'BK-2026-000158', status: 'confirmed', startsAt: at(hour), endsAt: at(hour + 1), location: 'Motivance Center, Quezon City', therapist: null, patientId: null, patient: null, linked: false, ...session } : null,
+  }
+})
+export const schedule: Schedule = {
+  days: [
+    { date: '2026-12-07', status: 'open', holiday: null, onLeave: false, rows: dayOf('2026-12-07', { 9: { therapist: 'Dana Reyes', reference: 'BK-2026-000157' } }) },
+    { date: '2026-12-12', status: 'closed', holiday: null, onLeave: false, rows: [] },
+    { date: '2026-12-14', status: 'open', holiday: null, onLeave: false, rows: dayOf('2026-12-14', { 10: { therapist: 'Dana Reyes' } }) },
+    { date: '2026-12-15', status: 'open', holiday: null, onLeave: false, rows: dayOf('2026-12-15', {}) },
+    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', onLeave: false, rows: [] },
+  ],
+}
+export const therapistSchedule: Schedule = {
+  days: [
+    { date: '2026-12-12', status: 'closed', holiday: null, onLeave: false, rows: [] },
+    {
+      date: '2026-12-14', status: 'open', holiday: null, onLeave: true, rows: dayOf('2026-12-14', {
+        10: { patient: 'Ana Dela Cruz', patientId: 'p1', linked: true }, 13: { patient: 'Ramon Bautista', patientId: 'p2', linked: false, reference: 'BK-2026-000157', status: 'rescheduled' },
+      }, [15, 16]),
+    },
+    { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', onLeave: false, rows: [] },
+  ],
+}
+
+export const calendar: CenterCalendar = {
+  settings: {
+    centerName: 'Motivance Therapy Center', location: 'Motivance Center, Quezon City', slotMinutes: 60, slotCapacity: 3, cancelCutoffHours: 24, rescheduleCutoffHours: 24, minimumNoticeHours: 24,
+    bookingHorizonDays: 60, maxActiveBookings: 5, maxSelfReschedules: 2,
+  },
+  hours: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, isOpen: weekday < 6, opensAt: '09:00', closesAt: '17:00' })),
+  holidays: [
+    { id: 'h1', name: 'Christmas Day', kind: 'regular', startsOn: '2026-12-25', endsOn: '2026-12-25' },
+    { id: 'h2', name: 'Year-end break', kind: 'seasonal', startsOn: '2026-12-28', endsOn: '2027-01-01' },
+  ],
+  closures: [
+    { id: 'c1', startsAt: '2026-12-11T16:00:00Z', endsAt: '2026-12-12T16:00:00Z', allDay: true, reason: 'Water supply maintenance' },
+    { id: 'c2', startsAt: '2026-12-09T05:00:00Z', endsAt: '2026-12-09T07:00:00Z', allDay: false, reason: 'Staff training' },
+  ],
+  timeOff: [
+    { id: 'o1', therapistId: 't1', therapist: 'Dana Reyes', startsAt: '2026-12-16T01:00:00Z', endsAt: '2026-12-16T05:00:00Z', reason: 'Conference' },
+    { id: 'o2', therapistId: 't2', therapist: 'Omar Lim', startsAt: '2026-12-21T01:00:00Z', endsAt: '2026-12-23T09:00:00Z', reason: 'Family leave' },
+  ],
+}
+export const affected: AffectedBooking[] = [
+  { id: 'q1', reference: 'BK-2026-000158', status: 'pending', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', patient: 'Ana Dela Cruz', therapistId: null, therapist: null },
+  { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', startsAt: '2026-12-14T03:00:00Z', endsAt: '2026-12-14T04:00:00Z', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes' },
+]
+
+const noteFacts = { reference: 'BK-2026-000158', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, patient: 'Ana Dela Cruz', therapist: 'Dana Reyes', reason: null, readAt: null }
+export const inbox: Inbox = {
+  unread: 2,
+  rows: [
+    { ...noteFacts, id: 'n1', kind: 'confirmed', createdAt: '2026-12-01T02:00:00Z' },
+    { ...noteFacts, id: 'n2', kind: 'cancelled', reason: 'Water supply maintenance', startsAt: '2026-12-09T02:00:00Z', endsAt: '2026-12-09T03:00:00Z', createdAt: '2026-11-30T05:00:00Z' },
+    { ...noteFacts, id: 'n3', kind: 'rescheduled', previousStartsAt: '2026-12-02T02:00:00Z', readAt: '2026-11-29T05:00:00Z', createdAt: '2026-11-28T05:00:00Z' },
+  ],
+}
 
 export const summary: AdminSummary = { accounts: 214, disabled: 3, patients: 183, therapists: 24, schedulers: 3, admins: 4, activeLinks: 171, unlinkedPatients: 15, exercises: 9, activeExercises: 7, sessionsWeek: 412, pendingRequests: 2 }
 

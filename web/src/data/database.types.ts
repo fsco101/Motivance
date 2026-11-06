@@ -543,6 +543,101 @@ export type Database = {
           },
         ]
       }
+      notification_deliveries: {
+        Row: {
+          attempts: number
+          channel: string
+          claimed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          notification_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          channel: string
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          notification_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          notification_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          data: Json
+          dedupe_key: string
+          id: string
+          kind: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          dedupe_key: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_invitations: {
         Row: {
           accepted_at: string | null
@@ -779,6 +874,7 @@ export type Database = {
           id: string
           locale: string
           photo_url: string | null
+          preferred_language: string
         }
         Insert: {
           active?: boolean
@@ -786,6 +882,7 @@ export type Database = {
           id: string
           locale?: string
           photo_url?: string | null
+          preferred_language?: string
         }
         Update: {
           active?: boolean
@@ -793,6 +890,7 @@ export type Database = {
           id?: string
           locale?: string
           photo_url?: string | null
+          preferred_language?: string
         }
         Relationships: []
       }
@@ -980,6 +1078,54 @@ export type Database = {
           },
         ]
       }
+      therapist_time_off: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          reason: string
+          starts_at: string
+          therapist_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          reason: string
+          starts_at: string
+          therapist_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          reason?: string
+          starts_at?: string
+          therapist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_time_off_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "therapist_time_off_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           role: string
@@ -1065,6 +1211,10 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
+      booking_calendar: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       booking_check_patient: {
         Args: {
           p_patient: string
@@ -1095,6 +1245,41 @@ export type Database = {
         Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
         Returns: Json
       }
+      calendar_affected: {
+        Args: { p_starts: string; p_ends: string; p_therapist?: string }
+        Returns: {
+          attendance: string | null
+          attendance_at: string | null
+          attendance_by: string | null
+          calendar_token: string
+          client_request_id: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          patient_id: string
+          previous_starts_at: string | null
+          reference_no: string
+          self_reschedules: number
+          starts_at: string
+          status: string
+          status_reason: string | null
+          therapist_id: string | null
+          updated_at: string
+        }[]
+      }
+      calendar_outside_hours: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      calendar_resolve: {
+        Args: {
+          p_starts: string
+          p_ends: string
+          p_resolutions: Json
+          p_therapist?: string
+        }
+        Returns: number
+      }
       can_prescribe: {
         Args: { target: string }
         Returns: boolean
@@ -1115,9 +1300,17 @@ export type Database = {
         Args: { p_from: string; p_to: string; p_staff: boolean }
         Returns: Json
       }
+      center_day_start: {
+        Args: { p_day: string }
+        Returns: string
+      }
       center_problem: {
         Args: { p_starts: string; p_ends: string }
         Returns: string
+      }
+      claim_notification_deliveries: {
+        Args: { p_channel?: string; p_limit?: number }
+        Returns: Json
       }
       clear_my_profile_photo: {
         Args: Record<PropertyKey, never>
@@ -1145,6 +1338,22 @@ export type Database = {
         }
         Returns: string
       }
+      dispatch_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      enqueue_booking_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      expire_stale_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      finish_notification_delivery: {
+        Args: { p_id: string; p_sent: boolean; p_error?: string }
+        Returns: string
+      }
       has_role: {
         Args: { wanted: string }
         Returns: boolean
@@ -1161,6 +1370,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      mark_notifications_read: {
+        Args: { p_ids?: string[] }
+        Returns: number
+      }
       my_booking_view: {
         Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
         Returns: Json
@@ -1168,6 +1381,35 @@ export type Database = {
       my_bookings: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      my_notifications: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      my_schedule: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      notify: {
+        Args: {
+          p_user: string
+          p_kind: string
+          p_booking: string
+          p_data: Json
+          p_event: number
+          p_actor: string
+        }
+        Returns: undefined
+      }
+      notify_schedulers: {
+        Args: {
+          p_kind: string
+          p_booking: string
+          p_data: Json
+          p_event: number
+          p_actor: string
+        }
+        Returns: undefined
       }
       profile_photo_upload: {
         Args: Record<PropertyKey, never>
@@ -1224,6 +1466,22 @@ export type Database = {
         Args: { p_details: Json }
         Returns: undefined
       }
+      schedule_layout: {
+        Args: {
+          p_from: string
+          p_to: string
+          p_owner: string
+          p_therapist: boolean
+        }
+        Returns: Json
+      }
+      schedule_view: {
+        Args: {
+          b: Database["public"]["Tables"]["bookings"]["Row"]
+          p_therapist: boolean
+        }
+        Returns: Json
+      }
       scheduler_assign_therapist: {
         Args: { p_booking: string; p_therapist: string }
         Returns: Json
@@ -1255,6 +1513,10 @@ export type Database = {
         Args: { p_bookings: string[]; p_reason: string }
         Returns: number
       }
+      scheduler_calendar_impact: {
+        Args: { p_starts: string; p_ends: string; p_therapist?: string }
+        Returns: Json
+      }
       scheduler_cancel: {
         Args: { p_booking: string; p_reason: string }
         Returns: Json
@@ -1262,6 +1524,18 @@ export type Database = {
       scheduler_confirm: {
         Args: { p_booking: string; p_therapist?: string }
         Returns: Json
+      }
+      scheduler_delete_closure: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      scheduler_delete_holiday: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      scheduler_delete_time_off: {
+        Args: { p_id: string }
+        Returns: undefined
       }
       scheduler_patients: {
         Args: { p_search?: string; p_limit?: number }
@@ -1280,9 +1554,69 @@ export type Database = {
         }
         Returns: Json
       }
+      scheduler_save_closure: {
+        Args: {
+          p_id: string
+          p_starts: string
+          p_ends: string
+          p_all_day: boolean
+          p_reason: string
+          p_resolutions?: Json
+        }
+        Returns: Json
+      }
+      scheduler_save_holiday: {
+        Args: {
+          p_id: string
+          p_name: string
+          p_kind: string
+          p_starts_on: string
+          p_ends_on: string
+          p_resolutions?: Json
+        }
+        Returns: Json
+      }
+      scheduler_save_hours: {
+        Args: { p_hours: Json }
+        Returns: Json
+      }
+      scheduler_save_settings: {
+        Args: {
+          p_center_name: string
+          p_location: string
+          p_slot_minutes: number
+          p_slot_capacity: number
+          p_cancel_cutoff_hours: number
+          p_reschedule_cutoff_hours: number
+          p_minimum_notice_hours: number
+          p_booking_horizon_days: number
+          p_max_active_bookings: number
+          p_max_self_reschedules: number
+        }
+        Returns: Json
+      }
+      scheduler_save_time_off: {
+        Args: {
+          p_id: string
+          p_therapist: string
+          p_starts: string
+          p_ends: string
+          p_reason: string
+          p_resolutions?: Json
+        }
+        Returns: Json
+      }
       scheduler_therapists: {
         Args: { p_booking?: string; p_starts?: string }
         Returns: Json
+      }
+      scheduler_time_off: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      set_my_language: {
+        Args: { p_language: string }
+        Returns: undefined
       }
       set_my_profile_photo: {
         Args: { p_public_id: string; p_version: number; p_signature: string }
@@ -1299,6 +1633,10 @@ export type Database = {
       slot_problem: {
         Args: { p_starts: string }
         Returns: string
+      }
+      therapist_schedule: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
       }
       username_allowed: {
         Args: { value: string }

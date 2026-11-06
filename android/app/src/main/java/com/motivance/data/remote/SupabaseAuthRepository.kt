@@ -29,7 +29,7 @@ import java.time.OffsetDateTime
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null,
     private val cloudinaryApi:String=CLOUDINARY_API,
-) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -241,6 +241,12 @@ import java.time.OffsetDateTime
     override suspend fun requestBooking(requestId:String,startsAt:String)=authorized {token,_ -> BookingJson.booking(JSONObject(call("/rest/v1/rpc/request_booking",JSONObject().put("p_request",requestId).put("p_starts",startsAt),token)))}
     override suspend fun loadMyBookings()=authorized {token,_ -> BookingJson.bookings(JSONArray(call("/rest/v1/rpc/my_bookings",JSONObject(),token)))}
     override suspend fun cancelBooking(id:String) {authorized {token,_ -> call("/rest/v1/rpc/cancel_my_booking",JSONObject().put("p_booking",id),token)}}
+    override suspend fun loadNotifications()=authorized {token,_ -> BookingJson.inbox(JSONObject(call("/rest/v1/rpc/my_notifications",JSONObject(),token)))}
+    override suspend fun markNotificationsRead(ids:List<String>?)=authorized {token,_ ->
+        call("/rest/v1/rpc/mark_notifications_read",JSONObject().put("p_ids",ids?.let {JSONArray(it)} ?: JSONObject.NULL),token).trim().toInt()}
+    override suspend fun saveLanguage(language:String) {authorized {token,_ -> call("/rest/v1/rpc/set_my_language",JSONObject().put("p_language",language),token)}}
+    override suspend fun loadSchedule(from:String,to:String,therapist:Boolean)=authorized {token,_ ->
+        BookingJson.schedule(JSONObject(call("/rest/v1/rpc/${if(therapist) "therapist_schedule" else "my_schedule"}",JSONObject().put("p_from",from).put("p_to",to),token)))}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }

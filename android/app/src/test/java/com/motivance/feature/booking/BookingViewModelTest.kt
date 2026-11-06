@@ -37,6 +37,7 @@ class BookingViewModelTest {
         }
         override suspend fun loadMyBookings():List<Booking> =wait?.let {withContext(NonCancellable) {it.await()}} ?: listOf(booking)
         override suspend fun cancelBooking(id:String) {refusal?.let {throw it};cancelled+=id}
+        override suspend fun loadSchedule(from:String,to:String,therapist:Boolean)=Schedule()
     }
 
     private fun viewModel(remote:Remote,toasts:Toaster=Toaster())=BookingViewModel(remote,toasts).also {it.configure("owner")}
