@@ -293,3 +293,27 @@ No test can reach a real inbox. `scripts/test_email.py` starts the functions wit
 | Database tests | `npx supabase test db` | 69 passed |
 
 Deferred, not passed: a real email reaching an inbox through Gmail from a hosted project on port 465. Locally the mail server is reached by address, because the mail library cannot resolve a Docker container's name inside the Edge runtime, so that check also proves it can look up `smtp.gmail.com` there.
+
+## MOT-61: Reminders and expiring old requests
+
+`enqueue_booking_reminders` runs every 5 minutes and reminds the patient and therapist 24 hours and 1 hour before a confirmed session. The session's start time is part of each reminder's key, so a job that runs twice finds the key and sends nothing, and a session that moves has a new key and gets fresh reminders. Cancelled, rejected and pending bookings get none.
+
+`expire_stale_bookings` runs every 15 minutes and rejects pending requests whose time has passed. The patient is told, through the same trigger as any rejection.
+
+The booking history records the system as the actor for both, and the audit log for expiry. Reminders stay out of the administrators' feed, which they would only fill up, so no new label was needed on either app.
+
+System reasons were checked for in six places, so each platform now has one place that turns a reason code into words: `useReasonText` on the web and `bookingReasonText` on Android, plus the email template.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: both windows, exactly once including overlapping runs, a moved session, sessions that get none, the audit trail, expiry, and access | `python scripts/test_booking.py reminders` | 37 checks passed |
+| All sections | `python scripts/test_booking.py` | 531 checks passed |
+| Real sends to Mailpit | `python scripts/test_email.py` | 50 checks passed |
+| Contract tests | `npm run test:contract` | 101 passed |
+| Browser tests with axe: notifications, Scheduler, booking and patient | `npx playwright test tests/e2e/notifications.spec.ts tests/e2e/scheduler.spec.ts tests/e2e/booking.spec.ts tests/e2e/patient.spec.ts --workers=1` | 41 passed |
+| Web unit tests | `npm test` | 216 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 220 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The expiry job closes exactly what the Scheduler's outdated-requests test creates, so that suite pauses the job with `cron.alter_job` and restores it at the end, even after a failure.

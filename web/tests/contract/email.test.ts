@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { renderEmail, type Delivery } from '../../../supabase/functions/_shared/email'
 import { renderCalendar, type CalendarBooking } from '../../../supabase/functions/_shared/ics'
 
-const KINDS = ['confirmed', 'rejected', 'cancelled', 'rescheduled', 'therapist_changed', 'returned_to_pending', 'session_assigned', 'session_moved', 'session_cancelled', 'session_removed', 'request_received', 'patient_cancelled', 'needs_therapist']
+const KINDS = ['confirmed', 'rejected', 'cancelled', 'rescheduled', 'therapist_changed', 'returned_to_pending', 'session_assigned', 'session_moved', 'session_cancelled', 'session_removed', 'request_received', 'patient_cancelled', 'needs_therapist', 'reminder', 'session_reminder']
 const links = { site: 'https://app.example.test', functions: 'https://api.example.test/functions/v1' }
 
 const delivery = (overrides: Partial<Delivery> = {}): Delivery => ({
@@ -66,6 +66,18 @@ describe('a booking email', () => {
     const { text } = renderEmail(delivery({ kind: 'returned_to_pending', data: { ...delivery().data, reason: 'therapist_unavailable' } }), links)
     expect(text).toContain('Your therapist is no longer available.')
     expect(text).not.toContain('therapist_unavailable')
+  })
+
+  it('explains a request the system closed, rather than showing its code', () => {
+    const { text } = renderEmail(delivery({ kind: 'rejected', data: { ...delivery().data, reason: 'request_expired' } }), links)
+    expect(text).toContain('The time passed before this request could be confirmed.')
+    expect(text).not.toContain('request_expired')
+  })
+
+  it('reminds a therapist who is coming', () => {
+    const { subject, text } = renderEmail(delivery({ kind: 'session_reminder' }), links)
+    expect(subject).toBe('Session reminder: Ana Dela Cruz')
+    expect(plain(text)).toContain('Reminder: Ana Dela Cruz is booked with you on Monday, December 14, 2026, 9:00 AM – 10:00 AM.')
   })
 
   it('cannot be injected through a name or reason', () => {

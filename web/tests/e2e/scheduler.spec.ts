@@ -26,6 +26,7 @@ const book = async (person: TestUser, start: string) => {
   return data as { id: string; reference_no: string }
 }
 const status = (booking: string) => sql(`select status from public.bookings where id='${booking}'`)
+const expiryJob = (active: boolean) => sql(`select cron.alter_job((select jobid from cron.job where jobname='expire-booking-requests'),active:=${active})`)
 
 const noViolations = () => expect.poll(async () => {
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
@@ -59,6 +60,7 @@ test.beforeAll(async ({ browser }) => {
 })
 
 test.afterAll(async () => {
+  expiryJob(true)
   await page.close()
   removeUsers([scheduler, linked, other, ana, ben, cara])
 })
@@ -197,6 +199,8 @@ test('a therapist who has just become busy can be swapped without leaving the di
 })
 
 test('outdated requests are found and rejected together', async () => {
+  // These rows are exactly what the expiry job closes, so it waits until this suite has finished with them.
+  expiryJob(false)
   const past = (days: number) => `now()-interval '${days} days'`
   const ids = [randomUUID(), randomUUID()]
   sql(`insert into public.bookings(id,reference_no,patient_id,starts_at,ends_at,status) values

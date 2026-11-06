@@ -3,7 +3,7 @@ package com.motivance.domain
 enum class NotificationKind(val key:String) {
     CONFIRMED("confirmed"),REJECTED("rejected"),CANCELLED("cancelled"),RESCHEDULED("rescheduled"),THERAPIST_CHANGED("therapist_changed"),RETURNED_TO_PENDING("returned_to_pending"),
     SESSION_ASSIGNED("session_assigned"),SESSION_MOVED("session_moved"),SESSION_CANCELLED("session_cancelled"),SESSION_REMOVED("session_removed"),
-    REQUEST_RECEIVED("request_received"),PATIENT_CANCELLED("patient_cancelled"),NEEDS_THERAPIST("needs_therapist");
+    REQUEST_RECEIVED("request_received"),PATIENT_CANCELLED("patient_cancelled"),NEEDS_THERAPIST("needs_therapist"),REMINDER("reminder"),SESSION_REMINDER("session_reminder");
     /** A kind this version does not know is left out, so a newer server never shows a blank row. */
     companion object {fun of(value:String)=entries.firstOrNull {it.key==value}}
 }

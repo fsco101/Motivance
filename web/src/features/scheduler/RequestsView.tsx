@@ -8,7 +8,7 @@ import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/
 import { SelectField, TextField } from '@/components/Field'
 import { ACTIVE, type BookingStatus } from '@/data/booking'
 import { NO_FILTERS, PAGE_SIZE, type RequestDetail, type RequestFilters, type RequestRow, type RequestSort, type SortKey, type TherapistChoice } from '@/data/scheduler'
-import { statusTone, useCenterFormat } from '@/features/booking/format'
+import { statusTone, useCenterFormat, useReasonText } from '@/features/booking/format'
 import { Fact, Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { spring } from '@/motion/tokens'
 import type { RequestActionKind } from './RequestDialogs'
@@ -26,6 +26,7 @@ type Props = {
 function History({ load }: { load: Load<RequestDetail> }) {
   const { t } = useTranslation()
   const format = useCenterFormat()
+  const reasonText = useReasonText('scheduler')
   return (
     <Loadable load={load} skeleton={<SkeletonLines rows={3} />}>
       {({ events }) => (
@@ -35,7 +36,7 @@ function History({ load }: { load: Load<RequestDetail> }) {
               <p className="font-semibold">{t(`scheduler.event.${event.action}`, event.action)}</p>
               <p className="text-slate">{event.actor ?? t('scheduler.system')}, {format.day(event.recordedAt)} {format.time(event.recordedAt)}</p>
               {event.toStartsAt && event.action === 'rescheduled' && <p className="text-slate">{t('scheduler.movedTo', { when: `${format.day(event.toStartsAt)}, ${format.time(event.toStartsAt)}` })}</p>}
-              {event.reason && <p className="text-slate">{event.reason === 'therapist_unavailable' ? t('scheduler.reasonTherapist') : event.reason}</p>}
+              {event.reason && <p className="text-slate">{reasonText(event.reason)}</p>}
             </li>
           ))}
         </ol>
@@ -47,6 +48,7 @@ function History({ load }: { load: Load<RequestDetail> }) {
 function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Load<RequestDetail> | null; onClose: () => void; onAct: Props['onAct'] }) {
   const { t } = useTranslation()
   const format = useCenterFormat()
+  const reasonText = useReasonText('scheduler')
   const active = ACTIVE.includes(row.status)
   return (
     <motion.aside aria-label={t('scheduler.details', { reference: row.reference })} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={spring.layout}
@@ -62,7 +64,7 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
       <dl className="mt-4 grid gap-3">
         <Fact term={t('scheduler.when')}>{format.when(row.startsAt, row.endsAt)}</Fact>
         {(row.therapist || active) && <Fact term={t('booking.therapist')}>{row.therapist ?? t('booking.noTherapist')}</Fact>}
-        {row.reason && <Fact term={t('booking.reason')}>{row.reason === 'therapist_unavailable' ? t('scheduler.reasonTherapist') : row.reason}</Fact>}
+        {row.reason && <Fact term={t('booking.reason')}>{reasonText(row.reason)}</Fact>}
       </dl>
       {active && (
         <div className="mt-5 flex flex-wrap gap-2">

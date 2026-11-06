@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { EmptyState, PageHeader, Panel } from '@/components/Display'
 import type { AppNotification, Inbox } from '@/data/notifications'
-import { useCenterFormat } from '@/features/booking/format'
+import { useCenterFormat, useReasonText } from '@/features/booking/format'
 import { Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
 
@@ -23,6 +23,7 @@ export function NotificationsView({ load, onOpen, onMarkAll }: { load: Load<Inbo
   const { t } = useTranslation()
   const format = useCenterFormat()
   const text = useNotificationText()
+  const reasonText = useReasonText()
   const unread = load.status === 'ready' ? load.data.unread : 0
   return (
     <>
@@ -37,7 +38,7 @@ export function NotificationsView({ load, onOpen, onMarkAll }: { load: Load<Inbo
                     <span aria-hidden className={cn('mt-2 size-2 shrink-0 rounded-full', !note.readAt && 'bg-lagoon')} />
                     <span className="min-w-0 flex-1">
                       <span className={cn('block', !note.readAt && 'font-semibold')}>{text(note)}</span>
-                      {note.reason && <span className="block text-sm">{note.reason === 'therapist_unavailable' ? t('notifications.therapistUnavailable') : note.reason}</span>}
+                      {note.reason && <span className="block text-sm">{reasonText(note.reason)}</span>}
                       <span className="block text-sm text-slate">
                         {format.day(note.createdAt)}, {format.time(note.createdAt)}
                         {!note.readAt && <span className="sr-only">, {t('notifications.unread')}</span>}

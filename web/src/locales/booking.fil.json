@@ -56,13 +56,15 @@
       "rescheduled": "Na-reschedule",
       "returned_to_pending": "Ibinalik sa nakabinbin",
       "therapist_changed": "Pinalitan ang therapist",
-      "attendance_marked": "Naitala ang pagdalo"
+      "attendance_marked": "Naitala ang pagdalo",
+      "reminder_sent": "Naipadala ang paalala"
     },
     "bulkDetail_one": "Tanggihan ang {{count}} nakabinbing kahilingan. Ang nakabinbin pa lang ang magbabago.",
     "bulkDetail_other": "Tanggihan ang {{count}} nakabinbing kahilingan. Ang mga nakabinbin pa lang ang magbabago.",
     "bulkDone_one": "Natanggihan ang {{count}} kahilingan.",
     "bulkDone_other": "Natanggihan ang {{count}} kahilingan.",
-    "onLeave": "Naka-leave"
+    "onLeave": "Naka-leave",
+    "reasonExpired": "Lumipas ang oras bago may nakapagpasya."
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
@@ -210,7 +212,8 @@
     "scheduleNone": "Walang kumpirmadong session ngayong buwan.",
     "scheduleNotLinked": "Hindi ka naka-link sa pasyenteng ito, kaya sarado pa rin ang kanilang rekord.",
     "scheduleCount_one": "{{count}} session",
-    "scheduleCount_other": "{{count}} session"
+    "scheduleCount_other": "{{count}} session",
+    "reasonExpired": "Lumipas ang oras bago makumpirma ang kahilingang ito."
   },
   "calendar": {
     "title": "Kalendaryo ng center",
@@ -317,7 +320,6 @@
     "unread": "hindi pa nababasa",
     "noneTitle": "Walang bago",
     "noneDetail": "Lalabas dito ang mga pagbabago sa iyong mga booking.",
-    "therapistUnavailable": "Hindi na available ang iyong therapist.",
     "confirmed": "Kumpirmado ang iyong session sa {{when}} kasama si {{therapist}}.",
     "rejected": "Hindi naaprubahan ang iyong kahilingan para sa {{when}}.",
     "cancelled": "Kinansela ang iyong session sa {{when}}.",
@@ -330,6 +332,8 @@
     "session_removed": "Hindi na sa iyo ang session kay {{patient}} sa {{was}}.",
     "request_received": "Humiling si {{patient}} ng {{when}}.",
     "patient_cancelled": "Kinansela ni {{patient}} ang session sa {{when}}.",
-    "needs_therapist": "Kailangan ng therapist ang session ni {{patient}} sa {{when}}."
+    "needs_therapist": "Kailangan ng therapist ang session ni {{patient}} sa {{when}}.",
+    "reminder": "Paalala: ang iyong session ay sa {{when}} kasama si {{therapist}}.",
+    "session_reminder": "Paalala: naka-book sa iyo si {{patient}} sa {{when}}."
   }
 }

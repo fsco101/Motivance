@@ -6,6 +6,16 @@ export const statusTone: Record<BookingStatus, 'positive' | 'neutral' | 'caution
   pending: 'caution', confirmed: 'positive', rescheduled: 'primary', rejected: 'danger', cancelled: 'neutral',
 }
 
+/** The server writes a code for reasons of its own, and a person's own words otherwise, which are shown as they are. */
+export function useReasonText(reader: 'patient' | 'scheduler' = 'patient') {
+  const { t } = useTranslation()
+  return (reason: string) => {
+    if (reason === 'therapist_unavailable') return t(reader === 'patient' ? 'booking.reasonTherapist' : 'scheduler.reasonTherapist')
+    if (reason === 'request_expired') return t(reader === 'patient' ? 'booking.reasonExpired' : 'scheduler.reasonExpired')
+    return reason
+  }
+}
+
 /** Session times always read in the center's zone, so a patient travelling or a browser set elsewhere still sees the real time. */
 export function useCenterFormat(zone = CENTER_ZONE) {
   const { i18n } = useTranslation()

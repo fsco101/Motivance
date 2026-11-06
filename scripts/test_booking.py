@@ -1214,7 +1214,108 @@ def notifications(stack):
     stack.check(len(stack.rpc('my_notifications', {'p_limit': 2}, ta)[1]['rows']) == 2, 'The list can be limited')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications}
+def reminders(stack):
+    """MOT-61: reminders before a session, exactly once, and an end for requests nobody decided."""
+    _, ts = stack.user('patient', 'scheduler', name='Booking Sol Reminders')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Reminders')
+    omar, to = stack.user('patient', 'therapist', name='Booking Omar Reminders')
+    ana, ta = stack.user('patient', name='Booking Ana Reminders')
+    ben, tb = stack.user('patient', name='Booking Ben Reminders')
+
+    def insert(patient, hours, status='confirmed', therapist=tess):
+        booking = str(uuid.uuid4())
+        person = f"'{therapist}'" if therapist else 'null'
+        stack.sql(f"""insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status)
+ values('{booking}','BK-REM-{booking[:8]}','{patient}',{person},now()+interval '{hours} hours',now()+interval '{hours} hours'+interval '1 hour','{status}');""")
+        return booking
+
+    def run():
+        return int(stack.sql('select public.enqueue_booking_reminders();'))
+
+    def notes(token, booking, kind):
+        return [row for row in stack.rpc('my_notifications', {'p_limit': 200}, token)[1]['rows'] if row['booking_id'] == booking and row['kind'] == kind]
+
+    def events(booking, action):
+        return int(stack.sql(f"select count(*) from public.booking_events where booking_id='{booking}' and action='{action}';"))
+
+    # The two windows.
+    day = insert(ana, 23)
+    hour = insert(ben, 0.5, therapist=omar)
+    far = insert(ana, 30)
+    past = insert(ben, -2, therapist=omar)
+    run()
+    stack.check(len(notes(ta, day, 'reminder')) == 1, 'A patient is reminded the day before')
+    note = notes(ta, day, 'reminder')[0]['data']
+    stack.check(note['window'] == '24h' and note['therapist_name'] == 'Booking Tess Reminders', 'With who they will see')
+    stack.check(len(notes(tt, day, 'session_reminder')) == 1, 'And so is the therapist')
+    stack.check(notes(tt, day, 'session_reminder')[0]['data']['patient_name'] == 'Booking Ana Reminders', 'With who is coming')
+    stack.check(notes(tb, hour, 'reminder')[0]['data']['window'] == '1h', 'A session within the hour gets the hour reminder')
+    stack.check(len(notes(to, hour, 'session_reminder')) == 1, 'The therapist too')
+    stack.check(notes(ta, far, 'reminder') == [], 'A session further off gets nothing yet')
+    stack.check(notes(tb, past, 'reminder') == [], 'A session that has gone gets nothing')
+
+    # Exactly once.
+    before = len(stack.rpc('my_notifications', {'p_limit': 200}, ta)[1]['rows'])
+    stack.check(run() == 0 and run() == 0, 'Running the job again finds nothing to do')
+    stack.check(len(notes(ta, day, 'reminder')) == 1 and len(notes(tt, day, 'session_reminder')) == 1, 'Each reminder exists once')
+    stack.check(len(stack.rpc('my_notifications', {'p_limit': 200}, ta)[1]['rows']) == before, 'And nothing else was added')
+    results = together([lambda: stack.sql('select public.enqueue_booking_reminders();') for _ in range(4)])
+    stack.check(all(item == '0' for item in results), 'Nor when several runs overlap')
+    fresh_race = insert(ben, 21, therapist=omar)
+    stack.check(sum(int(item) for item in together([lambda: stack.sql('select public.enqueue_booking_reminders();') for _ in range(4)])) >= 1, 'A new session is picked up')
+    stack.check(len(notes(tb, fresh_race, 'reminder')) == 1, 'Once, even with runs overlapping')
+
+    # The same session can have both, as it reaches each window.
+    stack.sql(f"update public.bookings set starts_at=now()+interval '40 minutes',ends_at=now()+interval '100 minutes' where id='{day}';")
+    run()
+    windows = sorted(row['data']['window'] for row in notes(ta, day, 'reminder'))
+    stack.check(windows == ['1h', '24h'], 'A session gets both reminders')
+
+    # A moved session starts again. One that has gone gets none.
+    moved = insert(ana, 19)
+    run()
+    stack.check(len(notes(ta, moved, 'reminder')) == 1, 'A session is reminded')
+    stack.sql(f"update public.bookings set status='rescheduled',starts_at=now()+interval '17 hours',ends_at=now()+interval '18 hours' where id='{moved}';")
+    run()
+    stack.check(len(notes(ta, moved, 'reminder')) == 2, 'A rescheduled session gets a fresh reminder')
+    newest = notes(ta, moved, 'reminder')[0]['data']['starts_at']
+    stack.check(newest == stack.sql(f"select to_jsonb(starts_at)#>>'{{}}' from public.bookings where id='{moved}';"), 'For its new time')
+    cancelled = insert(ana, 15, 'cancelled')
+    waiting = insert(ben, 13, 'pending', None)
+    rejected = insert(ben, 11, 'rejected', None)
+    run()
+    stack.check(notes(ta, cancelled, 'reminder') == [], 'A cancelled session gets none')
+    stack.check(notes(tb, waiting, 'reminder') == [], 'A request still waiting gets none')
+    stack.check(notes(tb, rejected, 'reminder') == [], 'Nor a rejected one')
+    stack.check(stack.sql(f"select count(*) from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{day}' and n.kind='reminder';") == '2', 'Each reminder is queued for email')
+
+    # The audit log.
+    stack.check(events(hour, 'reminder_sent') == 1, 'The booking history records a reminder')
+    stack.check(stack.sql(f"select actor_role,actor_id is null from public.booking_events where booking_id='{hour}' and action='reminder_sent';") == 'system|t', 'With the system as the actor')
+    stack.check(stack.sql(f"select count(*) from public.audit_events where target_id='{hour}' and action='reminder_sent';") == '0', "And leaves the administrators' feed alone")
+
+    # Requests nobody decided.
+    stale = insert(ana, -5, 'pending', None)
+    upcoming = insert(ana, 40, 'pending', None)
+    over = insert(ben, -8, therapist=omar)
+    stack.check(stack.sql('select public.expire_stale_bookings();') != '0', 'The job finds a request whose time has passed')
+    stack.check(stack.sql(f"select status,status_reason from public.bookings where id='{stale}';") == 'rejected|request_expired', 'It is rejected with a stated reason')
+    stack.check(stack.sql(f"select status from public.bookings where id='{upcoming}';") == 'pending', 'One still to come is left alone')
+    stack.check(stack.sql(f"select status from public.bookings where id='{over}';") == 'confirmed', 'A confirmed session in the past is left alone')
+    told = notes(ta, stale, 'rejected')
+    stack.check(len(told) == 1 and told[0]['data']['reason'] == 'request_expired', 'The patient is told')
+    stack.check(stack.sql(f"select actor_role,actor_id is null from public.booking_events where booking_id='{stale}' and action='rejected';") == 'system|t', 'The booking history records the system')
+    stack.check(stack.sql(f"select actor_id is null from public.audit_events where target_id='{stale}' and action='rejected';") == 't', 'And so does the audit log')
+    stack.check(stack.sql('select public.expire_stale_bookings();') == '0', 'Running it again changes nothing')
+    stack.check(len(notes(ta, stale, 'rejected')) == 1, 'And tells nobody twice')
+
+    # Only the schedule runs these.
+    stack.check(stack.rpc('enqueue_booking_reminders', {}, ts)[0] in (403, 404), 'A Scheduler cannot run the reminders')
+    stack.check(stack.rpc('expire_stale_bookings', {}, ts)[0] in (403, 404), 'Nor expire requests')
+    stack.check(stack.sql("select count(*) from cron.job where jobname in ('booking-reminders','expire-booking-requests') and active;") == '2', 'Both jobs are scheduled')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders}
 
 
 def main():

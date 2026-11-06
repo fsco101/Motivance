@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.motivance.R
 import com.motivance.designsystem.*
 import com.motivance.domain.*
+import com.motivance.feature.booking.bookingReasonText
 import com.motivance.feature.booking.rememberSessionFormat
 
 /** Written here from the facts, so it follows the reader's language and the center's time. */
@@ -38,6 +39,8 @@ import com.motivance.feature.booking.rememberSessionFormat
         NotificationKind.REQUEST_RECEIVED -> stringResource(R.string.notification_request_received,patient,at)
         NotificationKind.PATIENT_CANCELLED -> stringResource(R.string.notification_patient_cancelled,patient,at)
         NotificationKind.NEEDS_THERAPIST -> stringResource(R.string.notification_needs_therapist,patient,at)
+        NotificationKind.REMINDER -> stringResource(R.string.notification_reminder,at,therapist)
+        NotificationKind.SESSION_REMINDER -> stringResource(R.string.notification_session_reminder,patient,at)
     }
 }
 
@@ -50,7 +53,7 @@ import com.motivance.feature.booking.rememberSessionFormat
             Box(Modifier.padding(top=7.dp).size(8.dp).clip(MaterialTheme.shapes.extraSmall).background(if(note.unread) scheme.primary else Color.Transparent))
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 Text(notificationText(note,format),style=MaterialTheme.typography.bodyMedium,fontWeight=if(note.unread) FontWeight.SemiBold else FontWeight.Normal)
-                note.reason?.let {Text(if(it=="therapist_unavailable") stringResource(R.string.notifications_therapist_unavailable) else it,style=MaterialTheme.typography.bodySmall)}
+                note.reason?.let {Text(bookingReasonText(it),style=MaterialTheme.typography.bodySmall)}
                 if(note.createdAt.isNotBlank()) Text("${format.day(note.createdAt)}, ${format.time(note.createdAt)}",style=MaterialTheme.typography.bodySmall)
             }
         }

@@ -853,7 +853,6 @@
     <string name="notifications_none_detail">Changes to your bookings will show here.</string>
     <string name="notifications_loading">Loading notifications</string>
     <string name="notifications_failed">Notifications could not be updated. Try again.</string>
-    <string name="notifications_therapist_unavailable">Your therapist is no longer available.</string>
     <string name="notification_confirmed">Your session on %1$s is confirmed with %2$s.</string>
     <string name="notification_rejected">Your request for %1$s was not approved.</string>
     <string name="notification_cancelled">Your session on %1$s was cancelled.</string>
@@ -867,4 +866,7 @@
     <string name="notification_request_received">%1$s requested %2$s.</string>
     <string name="notification_patient_cancelled">%1$s cancelled their session on %2$s.</string>
     <string name="notification_needs_therapist">The session with %1$s on %2$s needs a therapist.</string>
+    <string name="notification_reminder">Reminder: your session is on %1$s with %2$s.</string>
+    <string name="notification_session_reminder">Reminder: %1$s is booked with you on %2$s.</string>
+    <string name="booking_reason_expired">The time passed before this request could be confirmed.</string>
 </resources>

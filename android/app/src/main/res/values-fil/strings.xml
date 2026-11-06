@@ -853,7 +853,6 @@
     <string name="notifications_none_detail">Lalabas dito ang mga pagbabago sa iyong mga booking.</string>
     <string name="notifications_loading">Nilo-load ang mga abiso</string>
     <string name="notifications_failed">Hindi ma-update ang mga abiso. Subukang muli.</string>
-    <string name="notifications_therapist_unavailable">Hindi na available ang iyong therapist.</string>
     <string name="notification_confirmed">Kumpirmado ang iyong session sa %1$s kasama si %2$s.</string>
     <string name="notification_rejected">Hindi naaprubahan ang iyong kahilingan para sa %1$s.</string>
     <string name="notification_cancelled">Kinansela ang iyong session sa %1$s.</string>
@@ -867,4 +866,7 @@
     <string name="notification_request_received">Humiling si %1$s ng %2$s.</string>
     <string name="notification_patient_cancelled">Kinansela ni %1$s ang session sa %2$s.</string>
     <string name="notification_needs_therapist">Kailangan ng therapist ang session ni %1$s sa %2$s.</string>
+    <string name="notification_reminder">Paalala: ang iyong session ay sa %1$s kasama si %2$s.</string>
+    <string name="notification_session_reminder">Paalala: naka-book sa iyo si %1$s sa %2$s.</string>
+    <string name="booking_reason_expired">Lumipas ang oras bago makumpirma ang kahilingang ito.</string>
 </resources>

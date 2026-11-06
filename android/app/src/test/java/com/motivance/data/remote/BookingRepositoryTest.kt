@@ -29,6 +29,8 @@ class BookingRepositoryTest {
                 path=="/rest/v1/rpc/my_notifications" -> """{"unread":1,"rows":[
                     {"id":"n1","kind":"rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":"2026-12-07T02:00:00+00:00","patient_name":"Ana","therapist_name":"Dana","reason":"Training"}},
+                    {"id":"n4","kind":"reminder","booking_id":"b1","read_at":"2026-12-01T02:00:00+00:00","created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
+                     "ends_at":"2026-12-14T03:00:00+00:00","patient_name":"Ana","therapist_name":"Dana","window":"24h"}},
                     {"id":"n2","kind":"from_a_newer_server","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{}},
                     {"id":"n3","kind":"confirmed","booking_id":"b1","read_at":"2026-12-02T02:00:00+00:00","created_at":"2026-11-30T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":null,"patient_name":"Ana","therapist_name":null,"reason":null}}]}"""
@@ -104,8 +106,12 @@ class BookingRepositoryTest {
         assertEquals("fil",bodies["/rest/v1/rpc/set_my_language"]!!.getString("p_language"))
     }
 
+    @Test fun aReminderIsRead()=runBlocking {
+        assertEquals(NotificationKind.REMINDER,repository().loadNotifications().items.first {it.id=="n4"}.kind)
+    }
+
     @Test fun aKindFromANewerServerIsLeftOut()=runBlocking {
-        assertEquals(listOf("n1","n3"),repository().loadNotifications().items.map {it.id})
+        assertEquals(listOf("n1","n4","n3"),repository().loadNotifications().items.map {it.id})
     }
 
     @Test fun markingSendsTheIdsOrNoneForEverything()=runBlocking {

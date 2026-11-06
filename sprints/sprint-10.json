@@ -842,7 +842,7 @@
       "github_issue": 78,
       "title": "Add reminders and expire old requests",
       "description": "Remind people before sessions, and stop old requests sitting at Pending forever.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend",
       "estimate_points": 3,
@@ -876,41 +876,85 @@
         {
           "id": "MOT-61-AC1",
           "description": "Patients and therapists get reminders 24 hours and 1 hour before a confirmed session.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060011_reminders_and_expiry.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-61-AC2",
           "description": "Each reminder is sent exactly once, even if the job runs repeatedly, proved by a test.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060011_reminders_and_expiry.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-61-AC3",
           "description": "A rescheduled session gets fresh reminders, and a cancelled session gets none.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060011_reminders_and_expiry.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-61-AC4",
           "description": "Pending requests whose time has passed are rejected automatically with a stated reason, and the patient is told.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060011_reminders_and_expiry.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         },
         {
           "id": "MOT-61-AC5",
           "description": "Both jobs run on pg_cron, and the audit log records the system as the actor.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060011_reminders_and_expiry.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/notifications.spec.ts",
+            "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-06T17:31:37.392932+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060011_reminders_and_expiry.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/notifications.spec.ts",
+          "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060011_reminders_and_expiry.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/notifications.spec.ts",
+        "android/app/src/test/java/com/motivance/data/remote/BookingRepositoryTest.kt"
+      ]
     },
     {
       "id": "MOT-62",

@@ -103,9 +103,25 @@ test('a reason reaches the patient, everything can be marked read, and the text 
   await expect(note).toBeVisible()
 })
 
+test('a reminder and a request nobody decided read in plain words', async ({ browser }) => {
+  const soon = randomUUID()
+  const stale = randomUUID()
+  sql(`insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values('${soon}','BK-SOON-${tag}','${ana.id}','${therapist.id}',now()+interval '20 hours',now()+interval '21 hours','confirmed')`)
+  sql(`insert into public.bookings(id,reference_no,patient_id,starts_at,ends_at,status) values('${stale}','BK-STALE-${tag}','${ana.id}',now()-interval '2 days',now()-interval '2 days'+interval '1 hour','pending')`)
+  sql(`select public.enqueue_booking_reminders(); select public.expire_stale_bookings();`)
+  const page = await signIn(browser, ana, /\/patient$/)
+  await page.goto('/patient/notifications')
+  await expect(page.getByRole('button', { name: /^Reminder: your session is on/ })).toContainText(`Zed ${tag}`)
+  const closed = page.getByRole('button', { name: /was not approved/ })
+  await expect(closed).toContainText('The time passed before this request could be confirmed.')
+  await expect(closed).not.toContainText('request_expired')
+  await page.goto('/patient/bookings')
+  await expect(page.getByText('The time passed before this request could be confirmed.')).toBeVisible()
+})
+
 test('a phone shows the bell and the list without sideways scrolling', async ({ browser }) => {
   const page = await signIn(browser, ana, /\/patient$/, { viewport: { width: 360, height: 740 } })
-  await page.getByRole('link', { name: 'Notifications', exact: true }).click()
+  await page.getByRole('link', { name: /^Notifications/ }).click()
   await expect(page.getByRole('button', { name: /was cancelled/ })).toBeVisible()
   // The route slides in, so this waits for it to settle. A page that really is too wide never does.
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)

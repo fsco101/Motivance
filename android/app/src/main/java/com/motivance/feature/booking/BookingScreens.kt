@@ -37,6 +37,13 @@ private const val MONTHS_AHEAD=3L
     return remember(locale) {SessionFormat(locale)}
 }
 
+/** The server writes a code for reasons of its own, and a person's own words otherwise, which are shown as they are. */
+@Composable fun bookingReasonText(reason:String)=when(reason) {
+    "therapist_unavailable" -> stringResource(R.string.booking_reason_therapist)
+    "request_expired" -> stringResource(R.string.booking_reason_expired)
+    else -> reason
+}
+
 internal fun BookingStatus.label()=when(this) {
     BookingStatus.PENDING -> R.string.booking_status_pending
     BookingStatus.CONFIRMED -> R.string.booking_status_confirmed
@@ -163,7 +170,7 @@ internal fun BookingStatus.tone()=when(this) {
         if(booking.location.isNotBlank()) DetailRow(stringResource(R.string.booking_location),booking.location)
         DetailRow(stringResource(R.string.booking_reference),booking.reference)
         booking.previousStartsAt?.let {Text(stringResource(R.string.booking_moved_from,format.day(it)),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
-        booking.reason?.let {DetailRow(stringResource(R.string.booking_reason),if(it=="therapist_unavailable") stringResource(R.string.booking_reason_therapist) else it)}
+        booking.reason?.let {DetailRow(stringResource(R.string.booking_reason),bookingReasonText(it))}
         if(booking.upcoming(now)) {
             if(booking.canCancel) {
                 ActionButton(R.string.booking_cancel,cancel,outlined=true,enabled=enabled)

@@ -69,6 +69,22 @@ select name from vault.decrypted_secrets where name like 'notification_dispatch%
 
 A run that dies after Gmail accepts an email but before recording it will send that email again when the row comes back. A duplicate is the safer failure, because the alternative is a patient never hearing about a change.
 
+## Scheduled jobs
+
+| Job | Runs | Does |
+| --- | --- | --- |
+| `notification-dispatch` | Every minute | Calls the Edge Function, if there is anything to send |
+| `booking-reminders` | Every 5 minutes | Reminds patients and therapists 24 hours and 1 hour before a confirmed session |
+| `expire-booking-requests` | Every 15 minutes | Rejects pending requests whose time has passed, and tells the patient |
+
+Reminders and expiry run inside the database, so they keep working with no Edge secrets. Without the Vault secrets above, their notifications still appear in both apps, and only the email waits.
+
+To pause a job, for example during maintenance, use `cron.alter_job`. The `postgres` role cannot update `cron.job` directly.
+
+```sql
+select cron.alter_job((select jobid from cron.job where jobname='booking-reminders'), active := false);
+```
+
 ## Calendar links
 
 Confirmation and reschedule emails link to `booking-calendar` with the booking's long random token. A calendar app cannot sign in, so that token is the only key, and the file names no patient. Every version of a booking's file has the same `UID` and a higher `SEQUENCE`, so a calendar that supports updates replaces the entry instead of adding a second one.

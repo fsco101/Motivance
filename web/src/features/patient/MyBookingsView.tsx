@@ -4,12 +4,13 @@ import { ButtonLink, Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/Dialog'
 import { EmptyState, PageHeader, Panel, StatusPill } from '@/components/Display'
 import { ACTIVE, isUpcoming, upcomingBookings, type Booking } from '@/data/booking'
-import { statusTone, useCenterFormat } from '@/features/booking/format'
+import { statusTone, useCenterFormat, useReasonText } from '@/features/booking/format'
 import { Fact, Loadable, SkeletonCards, type Load } from '@/features/shared'
 
 function BookingCard({ booking, onCancel }: { booking: Booking; onCancel: (booking: Booking) => void }) {
   const { t } = useTranslation()
   const format = useCenterFormat()
+  const reasonText = useReasonText()
   const active = isUpcoming(booking)
   return (
     <li className="rounded-card border border-line bg-paper p-5 shadow-rest">
@@ -26,7 +27,7 @@ function BookingCard({ booking, onCancel }: { booking: Booking; onCancel: (booki
         <Fact term={t('booking.reference')}>{booking.reference}</Fact>
       </dl>
       {booking.previousStartsAt && <p className="mt-3 text-sm text-slate">{t('booking.movedFrom', { when: format.day(booking.previousStartsAt) })}</p>}
-      {booking.reason && <p className="mt-3 text-sm"><span className="font-semibold">{t('booking.reason')}: </span>{booking.reason === 'therapist_unavailable' ? t('booking.reasonTherapist') : booking.reason}</p>}
+      {booking.reason && <p className="mt-3 text-sm"><span className="font-semibold">{t('booking.reason')}: </span>{reasonText(booking.reason)}</p>}
       {active && (
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
           {booking.canCancel ? (

@@ -1342,6 +1342,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      enqueue_booking_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      expire_stale_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       finish_notification_delivery: {
         Args: { p_id: string; p_sent: boolean; p_error?: string }
         Returns: string

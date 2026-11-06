@@ -25,6 +25,8 @@ const LINES: Record<Language, Record<string, Line>> = {
     request_received: { subject: 'New request: {patient}', body: '{patient} requested {when}.' },
     patient_cancelled: { subject: 'Patient cancelled: {patient}', body: '{patient} cancelled their session on {when}.' },
     needs_therapist: { subject: 'Needs a therapist: {patient}', body: 'The session with {patient} on {when} needs a therapist.' },
+    reminder: { subject: 'Session reminder', body: 'Reminder: your session is on {when} with {therapist}.' },
+    session_reminder: { subject: 'Session reminder: {patient}', body: 'Reminder: {patient} is booked with you on {when}.' },
   },
   fil: {
     confirmed: { subject: 'Kumpirmado ang iyong session', body: 'Kumpirmado ang iyong session sa {when} kasama si {therapist}.' },
@@ -40,12 +42,14 @@ const LINES: Record<Language, Record<string, Line>> = {
     request_received: { subject: 'Bagong kahilingan: {patient}', body: 'Humiling si {patient} ng {when}.' },
     patient_cancelled: { subject: 'Nagkansela ang pasyente: {patient}', body: 'Kinansela ni {patient} ang session sa {when}.' },
     needs_therapist: { subject: 'Kailangan ng therapist: {patient}', body: 'Kailangan ng therapist ang session ni {patient} sa {when}.' },
+    reminder: { subject: 'Paalala sa session', body: 'Paalala: ang iyong session ay sa {when} kasama si {therapist}.' },
+    session_reminder: { subject: 'Paalala sa session: {patient}', body: 'Paalala: naka-book sa iyo si {patient} sa {when}.' },
   },
 }
 
 const LABELS = {
-  en: { hello: 'Hello {name},', date: 'Date', time: 'Time', therapist: 'Therapist', location: 'Location', reference: 'Reference', reason: 'Reason', calendar: 'Add to calendar', open: 'Open Motivance', pending: 'To be assigned', unavailable: 'Your therapist is no longer available.' },
-  fil: { hello: 'Kumusta {name},', date: 'Petsa', time: 'Oras', therapist: 'Therapist', location: 'Lokasyon', reference: 'Reference', reason: 'Dahilan', calendar: 'Idagdag sa kalendaryo', open: 'Buksan ang Motivance', pending: 'Itatalaga pa', unavailable: 'Hindi na available ang iyong therapist.' },
+  en: { hello: 'Hello {name},', date: 'Date', time: 'Time', therapist: 'Therapist', location: 'Location', reference: 'Reference', reason: 'Reason', calendar: 'Add to calendar', open: 'Open Motivance', pending: 'To be assigned', unavailable: 'Your therapist is no longer available.', expired: 'The time passed before this request could be confirmed.' },
+  fil: { hello: 'Kumusta {name},', date: 'Petsa', time: 'Oras', therapist: 'Therapist', location: 'Lokasyon', reference: 'Reference', reason: 'Dahilan', calendar: 'Idagdag sa kalendaryo', open: 'Buksan ang Motivance', pending: 'Itatalaga pa', unavailable: 'Hindi na available ang iyong therapist.', expired: 'Lumipas ang oras bago makumpirma ang kahilingang ito.' },
 }
 
 /** These kinds leave a session on the reader's calendar. A session that has gone needs no link to add it. */
@@ -73,7 +77,7 @@ export function renderEmail(delivery: Delivery, links: Links) {
   const range = `${clock(data.starts_at)} – ${clock(data.ends_at)}`
   const was = data.previous_starts_at ?? data.starts_at
   const values = { when: `${day(data.starts_at)}, ${range}`, was: `${day(was)}, ${clock(was)}`, patient: data.patient_name ?? '', therapist: data.therapist_name ?? label.pending }
-  const reason = data.reason === 'therapist_unavailable' ? label.unavailable : data.reason ?? null
+  const reason = data.reason === 'therapist_unavailable' ? label.unavailable : data.reason === 'request_expired' ? label.expired : data.reason ?? null
   const facts: Array<[string, string]> = [[label.date, day(data.starts_at)], [label.time, range], [label.therapist, data.therapist_name ?? label.pending]]
   if (delivery.location) facts.push([label.location, delivery.location])
   facts.push([label.reference, data.reference_no])

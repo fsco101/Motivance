@@ -56,13 +56,15 @@
       "rescheduled": "Rescheduled",
       "returned_to_pending": "Returned to pending",
       "therapist_changed": "Therapist changed",
-      "attendance_marked": "Attendance recorded"
+      "attendance_marked": "Attendance recorded",
+      "reminder_sent": "Reminder sent"
     },
     "bulkDetail_one": "Reject {{count}} pending request. Only a request still pending will change.",
     "bulkDetail_other": "Reject {{count}} pending requests. Only requests still pending will change.",
     "bulkDone_one": "{{count}} request rejected.",
     "bulkDone_other": "{{count}} requests rejected.",
-    "onLeave": "On leave"
+    "onLeave": "On leave",
+    "reasonExpired": "The time passed before anyone decided."
   },
   "patient": {
     "greeting": "Hello, {{name}}",
@@ -210,7 +212,8 @@
     "scheduleNone": "No confirmed sessions this month.",
     "scheduleNotLinked": "You are not linked to this patient, so their record stays closed.",
     "scheduleCount_one": "{{count}} session",
-    "scheduleCount_other": "{{count}} sessions"
+    "scheduleCount_other": "{{count}} sessions",
+    "reasonExpired": "The time passed before this request could be confirmed."
   },
   "calendar": {
     "title": "Center calendar",
@@ -317,7 +320,6 @@
     "unread": "unread",
     "noneTitle": "Nothing new",
     "noneDetail": "Changes to your bookings will show here.",
-    "therapistUnavailable": "Your therapist is no longer available.",
     "confirmed": "Your session on {{when}} is confirmed with {{therapist}}.",
     "rejected": "Your request for {{when}} was not approved.",
     "cancelled": "Your session on {{when}} was cancelled.",
@@ -330,6 +332,8 @@
     "session_removed": "Your session with {{patient}} on {{was}} is no longer yours.",
     "request_received": "{{patient}} requested {{when}}.",
     "patient_cancelled": "{{patient}} cancelled their session on {{when}}.",
-    "needs_therapist": "The session with {{patient}} on {{when}} needs a therapist."
+    "needs_therapist": "The session with {{patient}} on {{when}} needs a therapist.",
+    "reminder": "Reminder: your session is on {{when}} with {{therapist}}.",
+    "session_reminder": "Reminder: {{patient}} is booked with you on {{when}}."
   }
 }
