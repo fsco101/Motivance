@@ -6,7 +6,7 @@ type Db = SupabaseClient<Database>
 export type NotificationKind =
   | 'confirmed' | 'rejected' | 'cancelled' | 'rescheduled' | 'therapist_changed' | 'returned_to_pending'
   | 'session_assigned' | 'session_moved' | 'session_cancelled' | 'session_removed'
-  | 'request_received' | 'patient_cancelled' | 'needs_therapist' | 'reminder' | 'session_reminder' | 'place_open'
+  | 'request_received' | 'patient_cancelled' | 'needs_therapist' | 'reminder' | 'session_reminder' | 'place_open' | 'patient_rescheduled'
 
 /** Facts rather than sentences: the text is written here, so it follows the reader's language. */
 export type AppNotification = {

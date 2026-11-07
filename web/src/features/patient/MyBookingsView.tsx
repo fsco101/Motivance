@@ -7,7 +7,7 @@ import { ACTIVE, isUpcoming, upcomingBookings, type Booking, type WaitlistEntry 
 import { statusTone, useCenterFormat, useReasonText } from '@/features/booking/format'
 import { Fact, Loadable, SkeletonCards, type Load } from '@/features/shared'
 
-function BookingCard({ booking, onCancel }: { booking: Booking; onCancel: (booking: Booking) => void }) {
+function BookingCard({ booking, base, onCancel }: { booking: Booking; base: string; onCancel: (booking: Booking) => void }) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const reasonText = useReasonText()
@@ -29,13 +29,17 @@ function BookingCard({ booking, onCancel }: { booking: Booking; onCancel: (booki
       {booking.previousStartsAt && <p className="mt-3 text-sm text-slate">{t('booking.movedFrom', { when: format.day(booking.previousStartsAt) })}</p>}
       {booking.reason && <p className="mt-3 text-sm"><span className="font-semibold">{t('booking.reason')}: </span>{reasonText(booking.reason)}</p>}
       {active && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
-          {booking.canCancel ? (
-            <>
-              <Button size="sm" variant="secondary" onClick={() => onCancel(booking)}>{t('booking.cancel')}</Button>
-              {booking.cancelUntil && <span className="text-sm text-slate">{t('booking.cancelUntil', { when: `${format.day(booking.cancelUntil)}, ${format.time(booking.cancelUntil)}` })}</span>}
-            </>
-          ) : <span className="text-sm text-slate">{t('booking.cancelClosed')}</span>}
+        <div className="mt-4 grid gap-2 border-t border-line pt-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {booking.canReschedule && <ButtonLink size="sm" variant="secondary" to={`${base}/bookings/${booking.id}/move`}>{t('booking.reschedule')}</ButtonLink>}
+            {booking.canCancel && <Button size="sm" variant="secondary" onClick={() => onCancel(booking)}>{t('booking.cancel')}</Button>}
+          </div>
+          {booking.canReschedule && booking.rescheduleUntil
+            ? <span className="text-sm text-slate">{t('booking.rescheduleLeft', { moves: booking.reschedulesLeft, when: `${format.day(booking.rescheduleUntil)}, ${format.time(booking.rescheduleUntil)}` })}</span>
+            : <span className="text-sm text-slate">{t('booking.rescheduleClosed')}</span>}
+          {booking.canCancel
+            ? booking.cancelUntil && <span className="text-sm text-slate">{t('booking.cancelUntil', { when: `${format.day(booking.cancelUntil)}, ${format.time(booking.cancelUntil)}` })}</span>
+            : <span className="text-sm text-slate">{t('booking.cancelClosed')}</span>}
         </div>
       )}
     </li>
@@ -63,12 +67,12 @@ function WaitlistCard({ entry, onBook, onLeave }: { entry: WaitlistEntry; onBook
   )
 }
 
-function Section({ title, bookings, onCancel }: { title: string; bookings: readonly Booking[]; onCancel: (booking: Booking) => void }) {
+function Section({ title, bookings, base, onCancel }: { title: string; bookings: readonly Booking[]; base: string; onCancel: (booking: Booking) => void }) {
   if (bookings.length === 0) return null
   return (
     <section aria-label={title} className="mb-6">
       <h2 className="mb-3 text-xl font-bold">{title}</h2>
-      <ul className="grid items-start gap-4 desk:grid-cols-2">{bookings.map((booking) => <BookingCard key={booking.id} booking={booking} onCancel={onCancel} />)}</ul>
+      <ul className="grid items-start gap-4 desk:grid-cols-2">{bookings.map((booking) => <BookingCard key={booking.id} booking={booking} base={base} onCancel={onCancel} />)}</ul>
     </section>
   )
 }
@@ -91,14 +95,14 @@ export function MyBookingsView({ load, waitlist, base, onCancel, onBook, onLeave
           if (bookings.length === 0 && waitlist.length === 0) return <Panel><EmptyState title={t('booking.emptyTitle')} detail={t('booking.emptyDetail')} /></Panel>
           return (
             <>
-              <Section title={t('booking.upcoming')} bookings={upcomingBookings(bookings)} onCancel={setConfirming} />
+              <Section title={t('booking.upcoming')} bookings={upcomingBookings(bookings)} base={base} onCancel={setConfirming} />
               {waitlist.length > 0 && (
                 <section aria-label={t('booking.waitlist')} className="mb-6">
                   <h2 className="mb-3 text-xl font-bold">{t('booking.waitlist')}</h2>
                   <ul className="grid items-start gap-4 desk:grid-cols-2">{waitlist.map((entry) => <WaitlistCard key={entry.id} entry={entry} onBook={onBook} onLeave={onLeave} />)}</ul>
                 </section>
               )}
-              <Section title={t('booking.earlier')} bookings={bookings.filter((booking) => !isUpcoming(booking))} onCancel={setConfirming} />
+              <Section title={t('booking.earlier')} bookings={bookings.filter((booking) => !isUpcoming(booking))} base={base} onCancel={setConfirming} />
             </>
           )
         }}

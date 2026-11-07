@@ -219,7 +219,9 @@
       "invalid_range": "Hindi mabasa ang mga petsang iyan.",
       "unresolved": "May mga bagong booking sa oras na ito. Suriin ang mga ito at subukang muli.",
       "therapist_on_leave": "Naka-leave ang therapist na iyon sa oras na iyon.",
-      "not_full": "May bakante na ulit sa oras na ito, kaya maaari mo itong i-book."
+      "not_full": "May bakante na ulit sa oras na ito, kaya maaari mo itong i-book.",
+      "reschedule_late": "Huli na para ilipat ang session na ito online. Makipag-ugnayan sa center.",
+      "reschedule_limit": "Hindi na muling maililipat online ang session na ito. Makipag-ugnayan sa center."
     },
     "keep": "Panatilihin ang booking",
     "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
@@ -247,7 +249,18 @@
     "waiting": "Naghihintay",
     "placeOpen": "May bakante",
     "placeOpenDetail": "May bakante ngayon. Makukuha ito ng unang mag-book.",
-    "bookPlace": "I-book ang oras na ito"
+    "bookPlace": "I-book ang oras na ito",
+    "reschedule": "Ilipat ang session",
+    "rescheduleLeft": "Natitirang paglipat: {{moves}}. Maaari mo itong ilipat hanggang {{when}}.",
+    "rescheduleClosed": "Hindi na ito maililipat online. Makipag-ugnayan sa center.",
+    "rescheduleTitle": "Ilipat ang iyong session",
+    "rescheduleDetail": "Pumili ng bagong petsa at oras. Kukumpirmahin itong muli ng Scheduler, at maaaring magbago ang iyong therapist.",
+    "currentTime": "Ang iyong session ngayon",
+    "newTime": "Bagong oras",
+    "moveHere": "Ilipat sa oras na ito",
+    "moving": "Inililipat",
+    "moved": "Nailipat ang session. Kukumpirmahin ito ng Scheduler.",
+    "moveClosedTitle": "Hindi na maililipat ang session na ito"
   },
   "calendar": {
     "title": "Kalendaryo ng center",
@@ -369,6 +382,7 @@
     "needs_therapist": "Kailangan ng therapist ang session ni {{patient}} sa {{when}}.",
     "reminder": "Paalala: ang iyong session ay sa {{when}} kasama si {{therapist}}.",
     "session_reminder": "Paalala: naka-book sa iyo si {{patient}} sa {{when}}.",
-    "place_open": "May bakante na sa {{when}}. Makukuha ito ng unang mag-book."
+    "place_open": "May bakante na sa {{when}}. Makukuha ito ng unang mag-book.",
+    "patient_rescheduled": "Inilipat ni {{patient}} ang session sa {{when}}. Kailangan itong kumpirmahin."
   }
 }

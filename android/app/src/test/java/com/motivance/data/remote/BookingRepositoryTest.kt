@@ -29,6 +29,7 @@ class BookingRepositoryTest {
                 path=="/rest/v1/rpc/my_waitlist" -> """[{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00","open":true}]"""
                 path=="/rest/v1/rpc/join_waitlist" -> """{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00"}"""
                 path=="/rest/v1/rpc/leave_waitlist" -> ""
+                path=="/rest/v1/rpc/reschedule_my_booking" -> booking
                 path=="/rest/v1/rpc/my_notifications" -> """{"unread":1,"rows":[
                     {"id":"n1","kind":"rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":"2026-12-07T02:00:00+00:00","patient_name":"Ana","therapist_name":"Dana","reason":"Training"}},
@@ -109,6 +110,25 @@ class BookingRepositoryTest {
         assertEquals("fil",bodies["/rest/v1/rpc/set_my_language"]!!.getString("p_language"))
     }
 
+    @Test fun movingSendsTheSessionAndTheTime()=runBlocking {
+        repository().rescheduleBooking("b1","2026-12-09T02:00:00+00:00")
+        val body=bodies["/rest/v1/rpc/reschedule_my_booking"]
+        assertEquals("b1",body?.getString("p_booking"))
+        assertEquals("2026-12-09T02:00:00+00:00",body?.getString("p_starts"))
+    }
+    @Test fun aBookingSaysWhetherItCanBeMoved() {
+        val moved=BookingJson.booking(JSONObject(booking).put("can_reschedule",true).put("reschedule_until","2026-12-06T01:00:00+00:00").put("reschedules_left",1))
+        assertTrue(moved.canReschedule)
+        assertEquals("2026-12-06T01:00:00+00:00",moved.rescheduleUntil)
+        assertEquals(1,moved.reschedulesLeft)
+        assertFalse("An older server says nothing, and nothing moves",BookingJson.booking(JSONObject(booking)).canReschedule)
+    }
+    @Test fun aPatientsMoveIsRead() {
+        val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n8","kind":"patient_rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
+            "data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00","patient_name":"Ana"}}]}""")).items.single()
+        assertEquals(NotificationKind.PATIENT_RESCHEDULED,note.kind)
+        assertEquals("Ana",note.patient)
+    }
     @Test fun aPlaceOnTheWaitlistIsRead()=runBlocking {
         assertEquals(listOf(WaitlistEntry("w1","2026-12-09T02:00:00+00:00","2026-12-09T03:00:00+00:00",open=true)),repository().loadWaitlist())
     }

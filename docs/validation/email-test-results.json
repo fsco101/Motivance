@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-06T19:47:06.812147+00:00",
+  "generated_at": "2026-11-06T20:20:07.024414+00:00",
   "checks_passed": 60,
   "checks": [
     "A booking does not wait for email",

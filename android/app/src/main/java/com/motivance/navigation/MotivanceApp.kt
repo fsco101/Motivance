@@ -142,9 +142,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
             while(true) {rehabilitation.syncAssignments(); delay(ASSIGNMENT_CHECK_MS)}
         }
     }
-    val bookingPage=route.takeIf {patientAccount!=null && it in setOf("HOME","BOOKINGS","BOOK")}
+    val bookingPage=route.takeIf {patientAccount!=null && it in setOf("HOME","BOOKINGS","BOOK","MOVE")}
     LaunchedEffect(bookingPage,patientAccount) {
-        when(bookingPage) {"HOME","BOOKINGS" -> booking.refresh();"BOOK" -> booking.openBooking()}
+        when(bookingPage) {"HOME","BOOKINGS" -> booking.refresh();"BOOK" -> booking.openBooking();"MOVE" -> booking.showMonth(bookingState.month)}
     }
     // A therapist has room for a schedule tab. A patient's five are full, so theirs opens from My bookings.
     val therapistRole=actualRole==UserRole.THERAPIST
@@ -169,7 +169,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     val activeTab=when(route) {
         "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
         "LOCAL_HISTORY" -> "PROFILE"
-        "BOOK" -> "BOOKINGS"
+        "BOOK","MOVE" -> "BOOKINGS"
         "SCHEDULE" -> if(therapistRole) "SCHEDULE" else "BOOKINGS"
         "NOTIFICATIONS" -> "HOME"
         else -> route
@@ -327,7 +327,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "BOOKINGS" -> {
                     PageHeader(R.string.booking_my_title,R.string.booking_my_detail)
-                    MyBookings(bookingState,booking,{route="SCHEDULE"}) {route="BOOK"}
+                    MyBookings(bookingState,booking,{route="SCHEDULE"},{booking.startMove(it);route="MOVE"}) {route="BOOK"}
                 }
                 "NOTIFICATIONS" -> {
                     PageHeader(R.string.nav_notifications,R.string.notifications_detail)
@@ -343,6 +343,10 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "BOOK" -> {
                     PageHeader(R.string.booking_title,R.string.booking_detail)
                     BookSession(bookingState,booking) {route="BOOKINGS"}
+                }
+                "MOVE" -> {
+                    PageHeader(R.string.booking_reschedule_title,R.string.booking_reschedule_detail)
+                    MoveSession(bookingState,booking) {route="BOOKINGS"}
                 }
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
@@ -400,7 +404,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
 private fun depth(route:String,therapist:Boolean)=when(route) {
     "ASSIGN" -> 2
-    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","NOTIFICATIONS" -> 1
+    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","MOVE","NOTIFICATIONS" -> 1
     "SCHEDULE" -> if(therapist) 0 else 1
     else -> 0
 }
@@ -410,7 +414,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
     "CAMERA" -> "SETUP"
     "ASSIGN" -> "PATIENT_DETAIL"
     "PATIENT_DETAIL" -> "PATIENTS"
-    "BOOK" -> "BOOKINGS"
+    "BOOK","MOVE" -> "BOOKINGS"
     "SCHEDULE" -> if(therapist) "HOME" else "BOOKINGS"
     "LOCAL_HISTORY" -> if(signedIn) "PROFILE" else "CHECK_COMPLETE"
     "SETUP" -> if(signedIn) "HOME" else "LANDING"

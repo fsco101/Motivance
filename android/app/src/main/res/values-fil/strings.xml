@@ -888,4 +888,17 @@
     <string name="booking_book_place">I-book ang oras na ito</string>
     <string name="booking_error_not_full">May bakante na ulit sa oras na ito, kaya maaari mo itong i-book.</string>
     <string name="notification_place_open">May bakante na sa %1$s. Makukuha ito ng unang mag-book.</string>
+    <string name="booking_reschedule">Ilipat ang session</string>
+    <string name="booking_reschedule_left">Natitirang paglipat: %1$d. Maaari mo itong ilipat hanggang %2$s.</string>
+    <string name="booking_reschedule_closed">Hindi na ito maililipat online. Makipag-ugnayan sa center.</string>
+    <string name="booking_reschedule_title">Ilipat ang iyong session</string>
+    <string name="booking_reschedule_detail">Pumili ng bagong petsa at oras. Kukumpirmahin itong muli ng Scheduler, at maaaring magbago ang iyong therapist.</string>
+    <string name="booking_current_time">Ang iyong session ngayon</string>
+    <string name="booking_new_time">Bagong oras</string>
+    <string name="booking_move_here">Ilipat sa oras na ito</string>
+    <string name="booking_moving">Inililipat</string>
+    <string name="booking_moved">Nailipat ang session. Kukumpirmahin ito ng Scheduler.</string>
+    <string name="booking_error_reschedule_late">Huli na para ilipat ang session na ito online. Makipag-ugnayan sa center.</string>
+    <string name="booking_error_reschedule_limit">Hindi na muling maililipat online ang session na ito. Makipag-ugnayan sa center.</string>
+    <string name="notification_patient_rescheduled">Inilipat ni %1$s ang session sa %2$s. Kailangan itong kumpirmahin.</string>
 </resources>

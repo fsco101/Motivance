@@ -42,6 +42,7 @@ import com.motivance.feature.booking.rememberSessionFormat
         NotificationKind.REMINDER -> stringResource(R.string.notification_reminder,at,therapist)
         NotificationKind.SESSION_REMINDER -> stringResource(R.string.notification_session_reminder,patient,at)
         NotificationKind.PLACE_OPEN -> stringResource(R.string.notification_place_open,at)
+        NotificationKind.PATIENT_RESCHEDULED -> stringResource(R.string.notification_patient_rescheduled,patient,at)
     }
 }
 

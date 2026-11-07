@@ -18,7 +18,8 @@
     "calendar": "Calendar",
     "notifications": "Notifications",
     "notificationsUnread_one": "Notifications, {{shown}} unread",
-    "notificationsUnread_other": "Notifications, {{shown}} unread"
+    "notificationsUnread_other": "Notifications, {{shown}} unread",
+    "moveSession": "Move session"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Sign out",

@@ -14,10 +14,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class BookingAction { LOAD, MONTH, REQUEST, CANCEL, WAITLIST }
+enum class BookingAction { LOAD, MONTH, REQUEST, CANCEL, WAITLIST, MOVE }
 
 data class BookingState(
-    val owner:String="",val month:YearMonth=YearMonth.from(centerToday()),val availability:BookingAvailability=BookingAvailability(),val bookings:List<Booking> = emptyList(),val waitlist:List<WaitlistEntry> = emptyList(),
+    val owner:String="",val month:YearMonth=YearMonth.from(centerToday()),val availability:BookingAvailability=BookingAvailability(),val bookings:List<Booking> = emptyList(),val waitlist:List<WaitlistEntry> = emptyList(),val moving:Booking?=null,
     val date:String?=null,val slot:BookingSlot?=null,val busy:Boolean=false,val activeAction:BookingAction?=null,val loading:Set<BookingAction> = emptySet(),
     val failed:Boolean=false,val loaded:Boolean=false,
 )
@@ -39,6 +39,8 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
     "booking_unavailable" -> R.string.booking_error_unavailable
     "booking_too_late" -> R.string.booking_error_too_late
     "booking_not_full" -> R.string.booking_error_not_full
+    "booking_reschedule_late" -> R.string.booking_error_reschedule_late
+    "booking_reschedule_limit" -> R.string.booking_error_reschedule_limit
     else -> R.string.booking_error_request
 }
 
@@ -87,7 +89,7 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
         job=viewModelScope.launch {
             try {
                 val next=work(current)
-                if(mutable.value.owner==current.owner) mutable.value=mutable.value.copy(availability=next.availability,bookings=next.bookings,waitlist=next.waitlist,date=next.date,slot=next.slot,busy=false,activeAction=null,failed=false,loaded=true)
+                if(mutable.value.owner==current.owner) mutable.value=mutable.value.copy(availability=next.availability,bookings=next.bookings,waitlist=next.waitlist,moving=next.moving,date=next.date,slot=next.slot,busy=false,activeAction=null,failed=false,loaded=true)
             } catch(e:CancellationException) {throw e}
             catch(e:Exception) {
                 if(mutable.value.owner==current.owner) {
@@ -105,7 +107,11 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
         val waitlist=repository.loadWaitlist()
         ;{it.copy(bookings=bookings,waitlist=waitlist)}
     }
-    fun openBooking()=showMonth(mutable.value.month)
+    fun openBooking() {
+        mutable.value=mutable.value.copy(moving=null)
+        showMonth(mutable.value.month)
+    }
+    fun startMove(booking:Booking) {mutable.value=mutable.value.copy(moving=booking,date=null,slot=null)}
     fun showMonth(month:YearMonth) {
         mutable.value=mutable.value.copy(month=month,date=null,slot=null)
         read(BookingAction.MONTH) {
@@ -114,7 +120,11 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
         }
     }
     fun selectDate(date:String) {mutable.value=mutable.value.copy(date=date,slot=null)}
-    fun selectSlot(slot:BookingSlot) {if(slot.bookable || slot.joinable) mutable.value=mutable.value.copy(slot=slot)}
+    fun selectSlot(slot:BookingSlot) {
+        // Moving a session needs a free place: the waitlist is for a time the patient does not hold anything for.
+        val allowed=slot.bookable || (slot.joinable && mutable.value.moving==null)
+        if(allowed) mutable.value=mutable.value.copy(slot=slot)
+    }
 
     /** The time may be gone, so what is on screen must not stand. */
     private fun refused(error:Exception):Int {
@@ -136,6 +146,18 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
             toasts.show(R.string.booking_requested)
             done()
             it.copy(bookings=bookings,slot=null,date=null)
+        }
+    }
+
+    fun move(done:()->Unit) {
+        val slot=mutable.value.slot ?: return
+        val booking=mutable.value.moving ?: return
+        perform(BookingAction.MOVE,failure={refused(it)}) {
+            repository.rescheduleBooking(booking.id,slot.startsAt)
+            val bookings=repository.loadMyBookings()
+            toasts.show(R.string.booking_moved)
+            done()
+            it.copy(bookings=bookings,slot=null,date=null,moving=null)
         }
     }
 

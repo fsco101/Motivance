@@ -18,7 +18,8 @@
     "calendar": "Kalendaryo",
     "notifications": "Mga abiso",
     "notificationsUnread_one": "Mga abiso, {{shown}} hindi pa nababasa",
-    "notificationsUnread_other": "Mga abiso, {{shown}} hindi pa nababasa"
+    "notificationsUnread_other": "Mga abiso, {{shown}} hindi pa nababasa",
+    "moveSession": "Ilipat ang session"
   },
   "account": {
     "menu": "Account", "profile": "Profile", "signOut": "Mag-sign out",

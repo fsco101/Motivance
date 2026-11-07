@@ -109,6 +109,16 @@ describe('a booking email', () => {
     expect(renderEmail(delivery({ kind: 'place_open', data }), links).subject).toBe('A place has opened')
   })
 
+  it('says a patient\'s move needs confirming, and offers no calendar link for a time nobody has confirmed', () => {
+    for (const language of ['en', 'fil'] as const) {
+      const { subject, text } = renderEmail(delivery({ kind: 'patient_rescheduled', language }), links)
+      expect(subject).toContain('Ana Dela Cruz')
+      expect(text).toContain('Ana Dela Cruz')
+      expect(text).not.toContain('booking-calendar')
+    }
+    expect(renderEmail(delivery({ kind: 'patient_rescheduled' }), links).text).toContain('It needs confirming.')
+  })
+
   it('refuses a kind it has no words for, rather than sending a blank email', () => {
     expect(() => renderEmail(delivery({ kind: 'unknown' }), links)).toThrow('Unknown notification kind')
   })

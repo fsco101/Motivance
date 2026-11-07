@@ -1497,7 +1497,141 @@ def waitlist_checks(stack):
     stack.check(all(item['starts_at'] > (datetime.now(timezone.utc) + timedelta(hours=8)).isoformat() for item in entries(td)), 'And a time too soon to book drops off the list')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist}
+def self_reschedule(stack):
+    """MOT-64: patients move their own sessions, within the rules."""
+    settings = stack.sql("select slot_capacity||','||max_self_reschedules||','||reschedule_cutoff_hours from public.center_settings;").split(',')
+    try:
+        self_reschedule_checks(stack)
+    finally:
+        stack.sql("delete from public.therapist_time_off where reason='Booking test move';")
+        stack.sql(f'update public.center_settings set slot_capacity={settings[0]},max_self_reschedules={settings[1]},reschedule_cutoff_hours={settings[2]} where id;')
+
+
+def self_reschedule_checks(stack):
+    sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Move')
+    sam, _ = stack.user('patient', 'scheduler', name='Booking Sam Move')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Move')
+    stack.sql(f"delete from public.user_roles where user_id='{tess}' and role='patient';")
+    omar, _ = stack.user('patient', 'therapist', name='Booking Omar Move')
+    ana, ta = stack.user('patient', name='Booking Ana Move')
+    ben, tb = stack.user('patient', name='Booking Ben Move')
+    cai, tc = stack.user('patient', name='Booking Cai Move')
+    fresh = working_days(stack, 6)
+    day, other, third, fourth, fifth, sixth = (next(fresh) for _ in range(6))
+
+    def request(token, start):
+        code, data = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)
+        assert code == 200, data
+        return data
+
+    def confirm(booking, therapist=tess):
+        code, data = stack.rpc('scheduler_confirm', {'p_booking': booking['id'], 'p_therapist': therapist}, ts)
+        assert code == 200, data
+
+    def move(booking, start, token=ta):
+        return stack.rpc('reschedule_my_booking', {'p_booking': booking['id'], 'p_starts': start}, token)
+
+    def row(booking):
+        return stack.sql(f"select status,coalesce(therapist_id::text,'none'),self_reschedules from public.bookings where id='{booking['id']}';").split('|')
+
+    def view(booking, token=ta):
+        return next(item for item in stack.rpc('my_bookings', {}, token)[1] if item['id'] == booking['id'])
+
+    def kinds(person):
+        return stack.sql(f"select coalesce(string_agg(kind,',' order by created_at),'') from public.notifications where user_id='{person}' and kind in ('patient_rescheduled','session_removed','session_moved','rescheduled');")
+
+    # A request that is still waiting moves and keeps waiting.
+    first = request(ta, manila(day, 9))
+    seen = view(first)
+    stack.check(seen['can_reschedule'] is True and seen['reschedules_left'] == 2 and seen['reschedule_until'] is not None, 'The server says a session can be moved, until when and how often')
+    code, moved = move(first, manila(day, 10))
+    stack.check(code == 200 and manila_hour(moved['starts_at']) == 10 and moved['status'] == 'pending', 'A patient can move a request to a specific slot')
+    stack.check(row(first)[2] == '1' and moved['reschedules_left'] == 1 and moved['previous_starts_at'] is not None, 'That uses a move and remembers where it was')
+    stack.check(kinds(sol) == 'patient_rescheduled' and kinds(sam) == 'patient_rescheduled', 'Every Scheduler hears about it')
+    stack.check(kinds(ana) == '', 'The patient is not told what they just did')
+
+    # Moving to where it already is, as after a lost response, changes nothing.
+    stack.check(move(first, manila(day, 10))[0] == 200 and row(first)[2] == '1', 'A retry uses no move')
+    stack.check(kinds(sol) == 'patient_rescheduled', 'And tells nobody')
+
+    # A confirmed session goes back to Pending and keeps a therapist who is free.
+    confirm(first)
+    stack.check(row(first)[0] == 'confirmed', 'Fixture: the session is confirmed')
+    code, moved = move(first, manila(day, 13))
+    stack.check(code == 200 and row(first)[:2] == ['pending', tess], 'A confirmed session returns to Pending and keeps a therapist who is free')
+    stack.check(kinds(tess) == 'patient_rescheduled', 'The therapist hears about it, as a move that needs confirming')
+    event = stack.sql(f"select actor_role,action,from_status,to_status from public.booking_events where booking_id='{first['id']}' order by id desc limit 1;")
+    stack.check(event == 'patient|rescheduled|confirmed|pending', 'The audit trail records who moved it and what it was')
+    schedule = stack.rpc('therapist_schedule', {'p_from': str(day), 'p_to': str(day)}, tt)[1]['days'][0]
+    stack.check(not any(item['session'] and item['session']['id'] == first['id'] for item in schedule['rows']), 'It leaves My Schedule until a Scheduler confirms it')
+    stack.check(stack.rpc('scheduler_confirm', {'p_booking': first['id']}, ts)[0] == 200 and row(first)[0] == 'confirmed', 'A Scheduler confirms it again, with the same therapist')
+
+    # No moves left.
+    stack.check(view(first)['reschedules_left'] == 0 and view(first)['can_reschedule'] is False, 'With no moves left the server says so')
+    stack.check(refused(move(first, manila(day, 15)), 'booking_reschedule_limit'), 'And refuses another')
+
+    # A therapist who is busy, or away, at the new time does not stay.
+    busy = request(tb, manila(other, 11))
+    confirm(busy)
+    second = request(ta, manila(other, 9))
+    confirm(second)
+    before = kinds(tess)
+    code, _ = move(second, manila(other, 11))
+    stack.check(code == 200 and row(second)[:2] == ['pending', 'none'], 'A therapist who is busy at the new time does not stay')
+    stack.check(kinds(tess) == before + ',session_removed', 'They are told the session is no longer theirs')
+    third_booking = request(tc, manila(third, 9))
+    confirm(third_booking, omar)
+    stack.check(stack.rpc('scheduler_save_time_off', {'p_id': None, 'p_therapist': omar, 'p_starts': manila(third, 12), 'p_ends': manila(third, 14), 'p_reason': 'Booking test move', 'p_resolutions': []}, ts)[0] == 200, 'Fixture: the therapist is away that afternoon')
+    stack.check(move(third_booking, manila(third, 12), tc)[0] == 200 and row(third_booking)[:2] == ['pending', 'none'], 'Nor does a therapist who is away')
+
+    # A session a Scheduler moved can be moved again by the patient, and needs confirming again.
+    fourth_booking = request(tc, manila(fourth, 9))
+    confirm(fourth_booking, omar)
+    assert stack.rpc('scheduler_reschedule', {'p_booking': fourth_booking['id'], 'p_starts': manila(fourth, 10), 'p_therapist': omar}, ts)[0] == 200
+    stack.check(row(fourth_booking)[0] == 'rescheduled', 'Fixture: a Scheduler moved it')
+    stack.check(move(fourth_booking, manila(fourth, 11), tc)[0] == 200 and row(fourth_booking)[0] == 'pending', 'A rescheduled session returns to Pending too')
+
+    # The new time obeys every rule a new request does.
+    target = request(tb, manila(fifth, 9))
+    other_one = request(tb, manila(fifth, 10))
+    saturday = next_weekday(fifth, 6)
+    stack.check(refused(move(target, manila(fifth, 10), tb), 'booking_overlap'), 'A patient cannot move onto their own session')
+    stack.check(refused(move(target, manila(fifth, 11, 30), tb), 'booking_off_grid'), 'Only a real slot')
+    stack.check(refused(move(target, manila(saturday, 10), tb), 'booking_closed_day'), 'Not on a closed day')
+    stack.check(refused(move(target, (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat(), tb), 'booking_too_soon'), 'Not inside the notice period')
+    stack.check(refused(move(target, (datetime.now(timezone.utc) + timedelta(days=200)).isoformat(), tb), 'booking_too_far'), 'Not past the booking horizon')
+    stack.check(refused(move(target, None, tb), 'booking_invalid'), 'A time is needed')
+    stack.check(refused(move(target, manila(fifth, 14)), 'booking_unavailable'), "Nobody moves someone else's session")
+    stack.check(move(target, manila(fifth, 14), tt)[0] == 403, 'Moving your own session is for patients')
+    stack.check(stack.rpc('cancel_my_booking', {'p_booking': other_one['id']}, tb)[0] == 200 and refused(move(other_one, manila(fifth, 15), tb), 'booking_state'), 'A cancelled session stays cancelled')
+
+    # Full, and a race for the last place, and the place left behind.
+    stack.sql('update public.center_settings set slot_capacity=1 where id;')
+    wanted = manila(sixth, 9)
+    holding = request(tc, wanted)
+    stack.check(refused(move(target, wanted, tb), 'booking_full'), 'A full time cannot be moved into')
+    assert stack.rpc('join_waitlist', {'p_starts': wanted}, ta)[0] == 200
+    spare = manila(sixth, 10)
+    assert move(holding, spare, tc)[0] == 200
+    stack.check(stack.sql(f"select count(*) from public.notifications where user_id='{ana}' and kind='place_open';") == '1', 'Moving away opens the place for whoever is waiting')
+    assert stack.rpc('leave_waitlist', {'p_starts': wanted}, ta)[0] == 204
+    contest = request(ta, manila(sixth, 14))
+    results = together([lambda: move(target, wanted, tb), lambda: move(contest, wanted, ta)])
+    stack.check(sum(result[0] == 200 for result in results) == 1 and sum(refused(result, 'booking_full') for result in results) == 1, 'Two moves into the last place: exactly one succeeds')
+    stack.sql('update public.center_settings set slot_capacity=3 where id;')
+
+    # The cut-off is the center's, and it is about the time the session has now.
+    soon = {'id': str(uuid.uuid4())}
+    stack.sql(f"""insert into public.bookings(id,reference_no,patient_id,starts_at,ends_at,status)
+ values('{soon['id']}','BK-MOVE-{soon['id'][:8]}','{cai}',date_trunc('hour',now())+interval '5 hours',date_trunc('hour',now())+interval '6 hours','pending');""")
+    stack.check(view(soon, tc)['can_reschedule'] is False and view(soon, tc)['reschedules_left'] == 2, 'Past the cut-off the server says it cannot be moved, whatever moves are left')
+    stack.check(refused(move(soon, manila(sixth, 16), tc), 'booking_reschedule_late'), 'And refuses')
+    later = request(tc, manila(sixth, 15))
+    stack.sql('update public.center_settings set max_self_reschedules=0 where id;')
+    stack.check(view(later, tc)['can_reschedule'] is False and refused(move(later, manila(sixth, 16), tc), 'booking_reschedule_limit'), 'A center can turn moving off')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist, 'self_reschedule': self_reschedule}
 
 
 def main():

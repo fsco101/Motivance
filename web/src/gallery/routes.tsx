@@ -14,6 +14,7 @@ import { CatalogueView } from '@/features/admin/CatalogueView'
 import { LinksView } from '@/features/admin/LinksView'
 import { BookSessionView } from '@/features/patient/BookSessionView'
 import { MyBookingsView } from '@/features/patient/MyBookingsView'
+import { RescheduleView } from '@/features/patient/RescheduleView'
 import { ConnectPanel, PrivacyPanel } from '@/features/patient/PatientCareView'
 import { PatientExercisesView } from '@/features/patient/PatientExercisesView'
 import { PatientHomeView } from '@/features/patient/PatientHomeView'
@@ -89,6 +90,12 @@ function PatientBook() {
   const [chosen, setChosen] = useState<Slot | null>(null)
   return <BookSessionView load={useDemo(data.availability, { ...data.availability, days: [] })} month={data.availability.days[0]!.date.slice(0, 7)} onMonth={said('Changed month')} canGoBack={false} canGoForward today={data.availability.days[0]!.date}
     date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onRequest={said('Requested')} onJoin={said('Joined the waitlist')} onLeave={said('Left the waitlist')} busy={false} />
+}
+function PatientMove() {
+  const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
+  const [chosen, setChosen] = useState<Slot | null>(null)
+  return <RescheduleView booking={data.myBookings[0]!} load={useDemo(data.availability, { ...data.availability, days: [] })} month={data.availability.days[0]!.date.slice(0, 7)} onMonth={said('Changed month')} canGoBack={false} canGoForward today={data.availability.days[0]!.date}
+    date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onMove={said('Moved')} busy={false} />
 }
 const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.myBookings, [])} waitlist={data.waitlist} onCancel={said('Cancelled')} onBook={said('Requested')} onLeave={said('Left the waitlist')} />
 function PatientProgress() {
@@ -224,6 +231,7 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'notifications', element: <Notifications />, handle: { crumb: 'nav.notifications' } },
         { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
         { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
+        { path: 'bookings/move', element: <PatientMove />, handle: { crumb: 'nav.moveSession' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
         { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },

@@ -168,7 +168,7 @@
       "github_issue": 81,
       "title": "Add patient self-service reschedule",
       "description": "Let patients move their own sessions within the rules, without calling the center.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web + Android",
       "estimate_points": 5,
@@ -198,35 +198,79 @@
         {
           "id": "MOT-64-AC1",
           "description": "A patient can move their own pending or confirmed booking to another specific slot, on web and Android.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-64-AC2",
           "description": "The server enforces the reschedule cut-off and the maximum number of self-reschedules.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-64-AC3",
           "description": "A confirmed booking returns to Pending for the Scheduler to re-confirm, and keeps its therapist only if they are free at the new time.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-64-AC4",
           "description": "The assigned therapist and Schedulers are notified.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T03:52:41.111072+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060016_self_reschedule.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/reschedule.spec.ts",
+          "web/tests/contract/reschedule.test.ts",
+          "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060016_self_reschedule.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/reschedule.spec.ts",
+        "web/tests/contract/reschedule.test.ts",
+        "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+      ]
     },
     {
       "id": "MOT-65",

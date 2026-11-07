@@ -219,7 +219,9 @@
       "invalid_range": "Those dates could not be read.",
       "unresolved": "New bookings fall in this time. Review them and try again.",
       "therapist_on_leave": "That therapist is on leave at that time.",
-      "not_full": "This time has places again, so you can book it."
+      "not_full": "This time has places again, so you can book it.",
+      "reschedule_late": "It is too late to move this session online. Contact the center.",
+      "reschedule_limit": "This session cannot be moved again online. Contact the center."
     },
     "keep": "Keep booking",
     "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
@@ -247,7 +249,18 @@
     "waiting": "Waiting",
     "placeOpen": "Place open",
     "placeOpenDetail": "A place is open now. The first to book gets it.",
-    "bookPlace": "Book this time"
+    "bookPlace": "Book this time",
+    "reschedule": "Move session",
+    "rescheduleLeft": "Moves left: {{moves}}. You can move it until {{when}}.",
+    "rescheduleClosed": "This can no longer be moved online. Contact the center.",
+    "rescheduleTitle": "Move your session",
+    "rescheduleDetail": "Choose a new date and time. A Scheduler confirms it again, and your therapist may change.",
+    "currentTime": "Your session now",
+    "newTime": "New time",
+    "moveHere": "Move to this time",
+    "moving": "Moving",
+    "moved": "Session moved. A Scheduler will confirm it.",
+    "moveClosedTitle": "This session cannot be moved"
   },
   "calendar": {
     "title": "Center calendar",
@@ -369,6 +382,7 @@
     "needs_therapist": "The session with {{patient}} on {{when}} needs a therapist.",
     "reminder": "Reminder: your session is on {{when}} with {{therapist}}.",
     "session_reminder": "Reminder: {{patient}} is booked with you on {{when}}.",
-    "place_open": "A place has opened on {{when}}. The first to book gets it."
+    "place_open": "A place has opened on {{when}}. The first to book gets it.",
+    "patient_rescheduled": "{{patient}} moved their session to {{when}}. It needs confirming."
   }
 }

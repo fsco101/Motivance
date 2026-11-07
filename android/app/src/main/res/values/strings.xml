@@ -888,4 +888,17 @@
     <string name="booking_book_place">Book this time</string>
     <string name="booking_error_not_full">This time has places again, so you can book it.</string>
     <string name="notification_place_open">A place has opened on %1$s. The first to book gets it.</string>
+    <string name="booking_reschedule">Move session</string>
+    <string name="booking_reschedule_left">Moves left: %1$d. You can move it until %2$s.</string>
+    <string name="booking_reschedule_closed">This can no longer be moved online. Contact the center.</string>
+    <string name="booking_reschedule_title">Move your session</string>
+    <string name="booking_reschedule_detail">Choose a new date and time. A Scheduler confirms it again, and your therapist may change.</string>
+    <string name="booking_current_time">Your session now</string>
+    <string name="booking_new_time">New time</string>
+    <string name="booking_move_here">Move to this time</string>
+    <string name="booking_moving">Moving</string>
+    <string name="booking_moved">Session moved. A Scheduler will confirm it.</string>
+    <string name="booking_error_reschedule_late">It is too late to move this session online. Contact the center.</string>
+    <string name="booking_error_reschedule_limit">This session cannot be moved again online. Contact the center.</string>
+    <string name="notification_patient_rescheduled">%1$s moved their session to %2$s. It needs confirming.</string>
 </resources>

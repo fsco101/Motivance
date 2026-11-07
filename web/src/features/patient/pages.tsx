@@ -1,24 +1,25 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { ButtonLink } from '@/components/Button'
 import { toast } from '@/components/Toast'
-import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, joinWaitlist, leaveWaitlist, loadAvailability, loadHorizonDays, loadMyBookings, loadMyWaitlist, nextBooking, requestBooking, todayAt, type Booking, type Slot, type WaitlistEntry } from '@/data/booking'
+import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, joinWaitlist, leaveWaitlist, loadAvailability, loadHorizonDays, loadMyBookings, loadMyWaitlist, nextBooking, requestBooking, rescheduleMyBooking, todayAt, type Booking, type Slot, type WaitlistEntry } from '@/data/booking'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
 import {
   joinTherapist, loadConsent, loadDataRequests, loadMyExercises, loadMySessions, requestData, thisWeek, withdrawConsent, type DataRequestKind, type MyExercise,
 } from '@/data/patient'
 import { SchedulePage } from '@/features/booking/SchedulePage'
-import { asLoad, ready, type Load } from '@/features/shared'
+import { asLoad, Loadable, ready, SkeletonCards, type Load } from '@/features/shared'
 import { ProfilePage } from '@/features/profile/pages'
 import { useProgressResults } from '@/features/therapist/history'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from '@/features/therapist/ProgressView'
 import '@/locales/booking'
 import { BookSessionView } from './BookSessionView'
 import { MyBookingsView } from './MyBookingsView'
+import { MoveClosedView, RescheduleView } from './RescheduleView'
 import { ConnectPanel, PrivacyPanel, type PrivacyState } from './PatientCareView'
 import { PatientExercisesView } from './PatientExercisesView'
 import { PatientHomeView, type PatientHome } from './PatientHomeView'
@@ -71,21 +72,33 @@ export function PatientSchedulePage() {
   return <SchedulePage audience="patient" actions={<ButtonLink to={`${BASE}/book`}>{t('booking.title')}</ButtonLink>} />
 }
 
-export function PatientBookPage() {
-  const { t } = useTranslation()
-  const client = useQueryClient()
-  const navigate = useNavigate()
+/** The month, date and time being chosen, shared by booking a session and moving one. */
+function useSlotChoice() {
   const [today] = useState(() => todayAt(CENTER_ZONE))
   const first = today.slice(0, 7)
   const [month, setMonth] = useState(first)
   const [date, setDate] = useState<string | null>(null)
   const [chosen, setChosen] = useState<Slot | null>(null)
-  const [busy, setBusy] = useState(false)
-  // One ID per chosen time, so trying again after a lost response returns the same booking instead of a second one.
-  const attempt = useRef<{ startsAt: string; request: string } | null>(null)
   const availability = useQuery({ queryKey: ['booking', 'availability', month], queryFn: () => loadAvailability(supabase(), month) })
   const horizon = useQuery({ queryKey: ['booking', 'horizon'], queryFn: () => loadHorizonDays(supabase()) })
   const last = addDays(today, horizon.data ?? 0).slice(0, 7)
+  const picker = {
+    load: asLoad(availability), month, canGoBack: month > first, canGoForward: month < last, today, date, chosen,
+    onMonth: (next: string) => { setMonth(next); setDate(null); setChosen(null) },
+    onDate: (next: string) => { setDate(next); setChosen(null) },
+    onChoose: setChosen,
+  }
+  return { chosen, setChosen, availability, picker }
+}
+
+export function PatientBookPage() {
+  const { t } = useTranslation()
+  const client = useQueryClient()
+  const navigate = useNavigate()
+  const { chosen, setChosen, availability, picker } = useSlotChoice()
+  const [busy, setBusy] = useState(false)
+  // One ID per chosen time, so trying again after a lost response returns the same booking instead of a second one.
+  const attempt = useRef<{ startsAt: string; request: string } | null>(null)
   const request = async () => {
     if (!chosen) return
     if (attempt.current?.startsAt !== chosen.startsAt) attempt.current = { startsAt: chosen.startsAt, request: crypto.randomUUID() }
@@ -120,9 +133,44 @@ export function PatientBookPage() {
     }
   }
   return (
-    <BookSessionView load={asLoad(availability)} month={month} canGoBack={month > first} canGoForward={month < last} today={today} date={date} chosen={chosen} busy={busy} onRequest={() => void request()}
-      onJoin={() => void waitlist((startsAt) => joinWaitlist(supabase(), startsAt), 'booking.joinedWaitlist')} onLeave={() => void waitlist((startsAt) => leaveWaitlist(supabase(), startsAt), 'booking.leftWaitlist')}
-      onMonth={(next) => { setMonth(next); setDate(null); setChosen(null) }} onDate={(next) => { setDate(next); setChosen(null) }} onChoose={setChosen} />
+    <BookSessionView {...picker} busy={busy} onRequest={() => void request()}
+      onJoin={() => void waitlist((startsAt) => joinWaitlist(supabase(), startsAt), 'booking.joinedWaitlist')} onLeave={() => void waitlist((startsAt) => leaveWaitlist(supabase(), startsAt), 'booking.leftWaitlist')} />
+  )
+}
+
+export function PatientReschedulePage() {
+  const { t } = useTranslation()
+  const { id } = useParams()
+  const client = useQueryClient()
+  const navigate = useNavigate()
+  const bookings = useMyBookings()
+  const { chosen, setChosen, availability, picker } = useSlotChoice()
+  const [busy, setBusy] = useState(false)
+  const move = async () => {
+    if (!chosen || !id) return
+    setBusy(true)
+    try {
+      await rescheduleMyBooking(supabase(), id, chosen.startsAt)
+      toast.show(t('booking.moved'))
+      // Leaving first: this page would otherwise flash that the session cannot be moved once its last move is used.
+      void navigate(`${BASE}/bookings`)
+      await client.invalidateQueries({ queryKey: ['booking'] })
+    } catch (failure) {
+      toast.show(t(bookingFailureKey(failure)), 'error')
+      // The time may be gone, so what is on screen must not stand.
+      setChosen(null)
+      await availability.refetch()
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <Loadable load={asLoad(bookings)} skeleton={<SkeletonCards count={1} />}>
+      {(rows) => {
+        const booking = rows.find((item) => item.id === id)
+        return booking?.canReschedule ? <RescheduleView booking={booking} {...picker} busy={busy} onMove={() => void move()} /> : <MoveClosedView base={BASE} />
+      }}
+    </Loadable>
   )
 }
 

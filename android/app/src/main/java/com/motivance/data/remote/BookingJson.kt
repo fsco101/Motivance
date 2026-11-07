@@ -16,7 +16,7 @@ object BookingJson {
 
     fun booking(json:JSONObject)=Booking(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.PENDING,json.text("status_reason"),
         json.getString("starts_at"),json.getString("ends_at"),json.text("previous_starts_at"),json.text("therapist_name"),
-        json.text("location").orEmpty(),json.text("cancel_until"),json.optBoolean("can_cancel"))
+        json.text("location").orEmpty(),json.text("cancel_until"),json.optBoolean("can_cancel"),json.text("reschedule_until"),json.optBoolean("can_reschedule"),json.optInt("reschedules_left"))
 
     fun bookings(json:JSONArray)=json.objects().map {booking(it)}
 

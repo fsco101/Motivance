@@ -35,6 +35,7 @@ class ScheduleViewModelTest {
         override suspend fun requestBooking(requestId:String,startsAt:String):Booking=throw AssertionError("A schedule requests nothing")
         override suspend fun loadMyBookings()=emptyList<Booking>()
         override suspend fun cancelBooking(id:String) {}
+        override suspend fun rescheduleBooking(id:String,startsAt:String) {}
         override suspend fun loadWaitlist()=emptyList<WaitlistEntry>()
         override suspend fun joinWaitlist(startsAt:String) {}
         override suspend fun leaveWaitlist(startsAt:String) {}

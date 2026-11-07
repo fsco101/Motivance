@@ -33,6 +33,7 @@ enum class BookingStatus { PENDING, CONFIRMED, REJECTED, CANCELLED, RESCHEDULED;
 data class Booking(
     val id:String,val reference:String,val status:BookingStatus,val reason:String?,val startsAt:String,val endsAt:String,val previousStartsAt:String?,
     val therapist:String?,val location:String="",val cancelUntil:String?=null,val canCancel:Boolean=false,
+    val rescheduleUntil:String?=null,val canReschedule:Boolean=false,val reschedulesLeft:Int=0,
 ) {
     fun upcoming(now:Instant)=status.active && bookingInstant(endsAt).isAfter(now)
 }
@@ -77,6 +78,7 @@ interface BookingRepository {
     suspend fun requestBooking(requestId:String,startsAt:String):Booking
     suspend fun loadMyBookings():List<Booking>
     suspend fun cancelBooking(id:String)
+    suspend fun rescheduleBooking(id:String,startsAt:String)
     suspend fun loadWaitlist():List<WaitlistEntry>
     suspend fun joinWaitlist(startsAt:String)
     suspend fun leaveWaitlist(startsAt:String)

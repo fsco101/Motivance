@@ -48,6 +48,7 @@ const PatientHome = patient('PatientHomePage')
 const PatientSchedule = patient('PatientSchedulePage')
 const PatientBook = patient('PatientBookPage')
 const PatientBookings = patient('PatientBookingsPage')
+const PatientReschedule = patient('PatientReschedulePage')
 const PatientExercises = patient('PatientExercisesPage')
 const PatientProgress = patient('PatientProgressPage')
 const PatientProfile = patient('PatientProfilePage')
@@ -169,6 +170,7 @@ export const routes: RouteObject[] = [
           { path: 'notifications', element: <PatientNotifications />, handle: { crumb: 'nav.notifications' } },
           { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
           { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
+          { path: 'bookings/:id/move', element: <PatientReschedule />, handle: { crumb: 'nav.moveSession' } },
           { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
           { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },

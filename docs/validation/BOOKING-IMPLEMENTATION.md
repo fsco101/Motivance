@@ -380,3 +380,25 @@ Two older tests pinned the rule this changes, that a full slot cannot be chosen.
 The whole live suite also caught a fault in a new check: raising the capacity told one patient about two slots whenever that patient had lost an earlier race, which is correct, so the check now looks at one slot. It had passed alone only when that patient won.
 
 A physical phone is still to be tried, and is on the checklist.
+
+## MOT-64: Patient self-service reschedule
+
+A patient can move their own pending, confirmed or rescheduled session to another specific slot, on the web and on Android. A move is a new request for a new time: it obeys every rule a request does, plus the reschedule cut-off and the maximum number of moves, and a Scheduler confirms it again, so a confirmed session returns to Pending. The therapist stays only if they are free then, which includes not being on leave.
+
+Schedulers and the therapist are told. A therapist who stays hears it as a move that needs confirming, with no calendar link, because the new time is not theirs to plan around yet. A therapist who cannot stay hears the session is no longer theirs. Moving to the time a session already has changes nothing and uses no move, so a retry after a lost response is safe. The place left behind opens for anyone on the waitlist.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: each rule, the therapist staying or going, the limit and cut-off, who hears, a race for the last place, the waitlist | `python scripts/test_booking.py self_reschedule` | 36 checks passed |
+| All sections | `python scripts/test_booking.py` | 625 checks passed |
+| Email wording, and no calendar link on a move that needs confirming | `npm run test:contract` | 119 passed, three runs in a row |
+| Browser tests with axe: the card, the move page, a time taken while choosing, no moves left, an old link | `npx playwright test reschedule booking waitlist design patient notifications --workers=1` | All passed, over two runs on the same code. `booking` and `design` finished in a first run the system then stopped for low memory, with no assertion failing. The four files it cut off were rerun with one worker: 28 passed |
+| Real sends to Mailpit | `python scripts/test_email.py` | 60 checks passed |
+| Web unit tests | `npm test` | 244 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 237 passed |
+| The app on a throwaway emulator, against the local backend | Driven through its UI, checking the screen and the server at each step | 8 checks passed: moving a confirmed session as a patient, then reading the news as the therapist |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The contract suite failed once more while this was tested, this time because a count was compared across two reads while another file was adding accounts. That was the third failure caused by test files sharing one database at the same moment, after the notification race and the set-up time limit in MOT-62, so `npm run test:contract` now runs its files one at a time. It takes 50 seconds rather than 15, and CI uses the same script.
+
+A physical phone is still to be tried, and is on the checklist.

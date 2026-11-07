@@ -28,6 +28,7 @@ const LINES: Record<Language, Record<string, Line>> = {
     reminder: { subject: 'Session reminder', body: 'Reminder: your session is on {when} with {therapist}.' },
     session_reminder: { subject: 'Session reminder: {patient}', body: 'Reminder: {patient} is booked with you on {when}.' },
     place_open: { subject: 'A place has opened', body: 'A place has opened on {when}. The first to book gets it.' },
+    patient_rescheduled: { subject: 'Session moved by patient: {patient}', body: '{patient} moved their session to {when}. It needs confirming.' },
   },
   fil: {
     confirmed: { subject: 'Kumpirmado ang iyong session', body: 'Kumpirmado ang iyong session sa {when} kasama si {therapist}.' },
@@ -46,6 +47,7 @@ const LINES: Record<Language, Record<string, Line>> = {
     reminder: { subject: 'Paalala sa session', body: 'Paalala: ang iyong session ay sa {when} kasama si {therapist}.' },
     session_reminder: { subject: 'Paalala sa session: {patient}', body: 'Paalala: naka-book sa iyo si {patient} sa {when}.' },
     place_open: { subject: 'May bakante na', body: 'May bakante na sa {when}. Makukuha ito ng unang mag-book.' },
+    patient_rescheduled: { subject: 'Inilipat ng pasyente ang session: {patient}', body: 'Inilipat ni {patient} ang session sa {when}. Kailangan itong kumpirmahin.' },
   },
 }
 

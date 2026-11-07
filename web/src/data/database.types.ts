@@ -1511,6 +1511,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      reschedule_my_booking: {
+        Args: { p_booking: string; p_starts: string }
+        Returns: Json
+      }
       revoke_patient_link: {
         Args: { p_patient: string }
         Returns: undefined

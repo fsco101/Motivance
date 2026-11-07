@@ -171,8 +171,9 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] On a hosted project, follow `docs/operations/NOTIFICATIONS.md` and confirm a real email reaches an inbox through Gmail on port 465. Local runs resolve the mail server by address, so this also proves the mail library can look up `smtp.gmail.com` from a hosted Edge Function.
 - [ ] Add a session to a real calendar from an email, reschedule it, and confirm the calendar updates the same entry. Google Calendar and Apple Calendar treat downloaded files differently, so check both.
 - [ ] Have a Filipino speaker review the booking and scheduling text in `web/src/locales/fil.json`, `android/app/src/main/res/values-fil/strings.xml` and `supabase/functions/_shared/email.ts`.
+- [ ] On a physical phone, join a waitlist for a full time, watch the place open from a second account, and book it from My bookings. It passed on an emulator against the local backend; a real phone and a real network have not been tried.
+- [ ] On a physical phone, move a session from My bookings, and check that a date with no free time still reads clearly at large text sizes and with TalkBack.
 
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
-- [ ] On a physical phone, join a waitlist for a full time, watch the place open from a second account, and book it from My bookings. It passed on an emulator against the local backend; a real phone and a real network have not been tried.
