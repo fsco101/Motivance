@@ -30,6 +30,7 @@ class BookingRepositoryTest {
                 path=="/rest/v1/rpc/join_waitlist" -> """{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00"}"""
                 path=="/rest/v1/rpc/leave_waitlist" -> ""
                 path=="/rest/v1/rpc/reschedule_my_booking" -> booking
+                path=="/rest/v1/rpc/register_device" || path=="/rest/v1/rpc/unregister_device" -> ""
                 path=="/rest/v1/rpc/mark_attendance" -> """{"id":"b1","attendance":"no_show"}"""
                 path=="/rest/v1/rpc/my_notifications" -> """{"unread":1,"rows":[
                     {"id":"n1","kind":"rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
@@ -136,6 +137,13 @@ class BookingRepositoryTest {
         assertEquals("2026-12-06T01:00:00+00:00",moved.rescheduleUntil)
         assertEquals(1,moved.reschedulesLeft)
         assertFalse("An older server says nothing, and nothing moves",BookingJson.booking(JSONObject(booking)).canReschedule)
+    }
+    @Test fun aPhoneIsRegisteredAndRemovedByItsToken()=runBlocking {
+        repository().registerDevice("token-1")
+        assertEquals("token-1",bodies["/rest/v1/rpc/register_device"]?.getString("p_token"))
+        assertEquals("android",bodies["/rest/v1/rpc/register_device"]?.getString("p_platform"))
+        repository().unregisterDevice("token-1")
+        assertEquals("token-1",bodies["/rest/v1/rpc/unregister_device"]?.getString("p_token"))
     }
     @Test fun aWeeklyCourseIsReadAsOneNotification() {
         val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n9","kind":"series_booked","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",

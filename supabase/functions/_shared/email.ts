@@ -113,5 +113,5 @@ export function renderEmail(delivery: Delivery, links: Links) {
 ${calendar ? button(calendar, label.calendar) : ''}${button(site, label.open)}
 <p style="margin:16px 0 0;font-size:13px;color:#4c6670">${escapeHtml(delivery.center_name)}</p>
 </div></body></html>`
-  return { subject: oneLine(fill(lines.subject, values)), text, html }
+  return { subject: oneLine(fill(lines.subject, values)), sentence, text, html }
 }

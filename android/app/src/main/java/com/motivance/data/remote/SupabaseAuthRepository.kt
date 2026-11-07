@@ -249,6 +249,8 @@ import java.time.OffsetDateTime
     override suspend fun loadNotifications()=authorized {token,_ -> BookingJson.inbox(JSONObject(call("/rest/v1/rpc/my_notifications",JSONObject(),token)))}
     override suspend fun markNotificationsRead(ids:List<String>?)=authorized {token,_ ->
         call("/rest/v1/rpc/mark_notifications_read",JSONObject().put("p_ids",ids?.let {JSONArray(it)} ?: JSONObject.NULL),token).trim().toInt()}
+    override suspend fun registerDevice(token:String) {authorized {bearer,_ -> call("/rest/v1/rpc/register_device",JSONObject().put("p_token",token).put("p_platform","android"),bearer)}}
+    override suspend fun unregisterDevice(token:String) {authorized {bearer,_ -> call("/rest/v1/rpc/unregister_device",JSONObject().put("p_token",token),bearer)}}
     override suspend fun saveLanguage(language:String) {authorized {token,_ -> call("/rest/v1/rpc/set_my_language",JSONObject().put("p_language",language),token)}}
     override suspend fun loadSchedule(from:String,to:String,therapist:Boolean)=authorized {token,_ ->
         BookingJson.schedule(JSONObject(call("/rest/v1/rpc/${if(therapist) "therapist_schedule" else "my_schedule"}",JSONObject().put("p_from",from).put("p_to",to),token)))}

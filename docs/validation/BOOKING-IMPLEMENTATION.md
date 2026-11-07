@@ -498,3 +498,30 @@ The public pages' text moved into its own file, which loads with them, so the fi
 The second browser run was needed because an older test, "the page offers no sign-up", pinned the rule this issue changes. It now proves that sign-in leads someone new to sign-up. The 14 tests behind it in that serial file did not run the first time, and all 22 in the file passed the second.
 
 Reviewing the pages by eye found two things the tests had not: the header crowded the logo on a phone, so Create account now sits in the page's main button and the footer there, and the step samples floated away from the text below them.
+
+## MOT-69: FCM push, ready for credentials
+
+Everything FCM needs is built, and push starts working when the owner adds the credentials. `docs/operations/NOTIFICATIONS.md` lists the exact steps and values.
+
+The Firebase values come from `android/.env` and Firebase starts by hand, with its automatic start removed from the manifest, so a build without them has no Firebase running and asks for nothing. With them, the app asks for permission after sign-in, registers its token and shows what arrives. Signing out removes the token, so nobody on a shared phone hears about the last person's sessions.
+
+`notification-dispatch` sends through FCM HTTP v1 with a signed service account token, and marks each push skipped until `FCM_SERVICE_ACCOUNT` is set. A message carries data only, so the app builds the notification and a lock screen shows that there is news, not a patient's name. The words are the email's, in the reader's language. A token FCM reports dead is removed. A temporary failure waits and tries again as email does, and stops as failed after 5 attempts.
+
+**What has not been proved.** No real Firebase project exists yet, so no real token has been issued and no real push has reached a phone. The stub proves what the server sends, and the emulator proves what the app does with a message, but the join between them through Google is deferred to the owner's credentials, and is on the checklist.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Against a stub FCM server: skipping with no credentials, the request format, the signed token verified with the account's key, language, several phones, dead tokens, retries, stopping as failed, a refused account, no phone, a disabled account | `python scripts/test_push.py` | 30 checks passed |
+| Live API: which phone belongs to whom, and the dispatcher's functions being closed to everyone else | `python scripts/test_booking.py devices` | 14 checks passed |
+| All sections | `python scripts/test_booking.py` | 749 checks passed |
+| Real sends to Mailpit, with a push row now beside each email | `python scripts/test_email.py` | 64 checks passed |
+| Contract tests, including the message, FCM's answers and the service account signature | `npm run test:contract` | 159 passed |
+| Android unit tests, including the rules for asking, registering and signing out | `gradlew :core:domain:test :app:testDebugUnitTest` | 253 passed |
+| Android lint, resources and module boundaries | `gradlew :app:lintDebug`, `check_resources.py`, `check_module_boundaries.py` | Passed |
+| A build with no Firebase values, on a throwaway emulator against the local backend | Driven through its UI | 5 checks passed: no prompt, the permission untouched, no phone registered, nothing of Firebase in the app's log, and no crash. A weekly course's notification was also read on screen, which MOT-66 had left open |
+| A build with placeholder Firebase values, on the same emulator | Driven through its UI | 7 checks passed: the prompt after sign-in, the answer kept, no crash when no token can be issued, and a tap opening Notifications with the app running and from cold |
+| A real notification on a real Android system | `am instrument -e class com.motivance.data.push.PushNotifierTest` | 5 passed, including the private version a lock screen shows |
+| Browser tests with axe | `npx playwright test notifications booking --workers=1` | 19 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+
+The first check that a tap opens Notifications passed falsely, because it matched the bell's label on Home, and a screenshot showed Home. That launch also lacked the flags a real notification carries, so the app was right and the check was wrong. The check now looks for the Notifications page itself, with the real flags.

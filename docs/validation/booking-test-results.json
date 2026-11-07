@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-07T05:25:14.385623+00:00",
-  "checks_passed": 735,
+  "generated_at": "2026-11-07T05:54:33.458884+00:00",
+  "checks_passed": 749,
   "checks": [
     "A patient cannot grant the Scheduler role",
     "A therapist cannot grant the Scheduler role",
@@ -736,7 +736,21 @@
     "Demo: the Scheduler can see it",
     "Demo: a weekly course shows its one conflicting date before saving",
     "Demo: saving books the three that pass",
-    "Demo: the dashboard reads the figures from the server"
+    "Demo: the dashboard reads the figures from the server",
+    "A patient registers their phone",
+    "A therapist can too",
+    "Registering again changes nothing",
+    "A phone belongs to whoever signed in last",
+    "Nobody can remove another person's phone",
+    "Signing out removes your own",
+    "A token that cannot be real is refused",
+    "Only Android is supported",
+    "Signing in is required",
+    "Nobody reads the tokens",
+    "A disabled account cannot register",
+    "claim_notification_deliveries is for the dispatcher alone",
+    "skip_push_deliveries is for the dispatcher alone",
+    "remove_device_tokens is for the dispatcher alone"
   ],
   "environment": "real local Auth and PostgREST with disposable synthetic accounts"
 }

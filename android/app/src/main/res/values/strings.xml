@@ -911,4 +911,6 @@
     <string name="notification_series_assigned">%1$s is booked with you weekly, from %2$s to %3$s. Sessions: %4$d.</string>
     <string name="notification_series_cancelled">Your weekly sessions from %1$s were cancelled. Sessions: %2$d.</string>
     <string name="notification_session_series_cancelled">Your weekly sessions with %1$s from %2$s were cancelled. Sessions: %3$d.</string>
+    <string name="push_channel">Booking updates</string>
+    <string name="push_public_title">You have a booking update</string>
 </resources>

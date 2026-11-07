@@ -177,7 +177,7 @@
       "github_issue": 86,
       "title": "Set up FCM push, ready for credentials",
       "description": "Build everything FCM needs, so that push starts working when the owner adds the credentials.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Android + Backend",
       "estimate_points": 5,
@@ -215,47 +215,135 @@
         {
           "id": "MOT-69-AC1",
           "description": "The app builds and runs normally with no Firebase values, and does nothing push-related until they are set.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC2",
           "description": "With values set, the app asks for notification permission, registers its token through register_device, and shows received notifications.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC3",
           "description": "notification-dispatch sends push through FCM HTTP v1 when FCM_SERVICE_ACCOUNT is set, and marks push deliveries skipped otherwise.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC4",
           "description": "A stub FCM endpoint proves the request format, retries and removal of dead tokens.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC5",
           "description": "docs/operations/NOTIFICATIONS.md lists the exact steps and values the owner needs to supply.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC6",
           "description": "A real push reaches a real phone with the owner's Firebase credentials.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ],
+          "non_blocking": true,
+          "deferral_authority": "Owner decision, 2026-11-06, recorded in the issue: build the setup last, credentials follow later. No Firebase project exists yet.",
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Everything FCM needs is built and proved against a stub server and on an emulator. A real push through Google to a real phone needs the owner's Firebase credentials; not a development blocker."
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T05:55:01.007941+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/push-test-results.json",
+          "docs/operations/NOTIFICATIONS.md",
+          "supabase/migrations/202611060020_push.sql",
+          "supabase/functions/notification-dispatch/index.ts",
+          "scripts/test_push.py",
+          "web/tests/contract/push.test.ts",
+          "android/app/src/main/java/com/motivance/data/push/Push.kt",
+          "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+        ],
+        "acceptance_basis": "engineering-implementation"
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/push-test-results.json",
+        "docs/operations/NOTIFICATIONS.md",
+        "supabase/migrations/202611060020_push.sql",
+        "supabase/functions/notification-dispatch/index.ts",
+        "scripts/test_push.py",
+        "web/tests/contract/push.test.ts",
+        "android/app/src/main/java/com/motivance/data/push/Push.kt",
+        "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+      ]
     },
     {
       "id": "MOT-70",

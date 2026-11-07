@@ -545,6 +545,35 @@ export type Database = {
           },
         ]
       }
+      device_tokens: {
+        Row: {
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          platform: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_assignments: {
         Row: {
           active: boolean
@@ -1570,9 +1599,17 @@ export type Database = {
         }
         Returns: string
       }
+      register_device: {
+        Args: { p_token: string; p_platform?: string }
+        Returns: undefined
+      }
       release_therapist_bookings: {
         Args: { p_therapist: string }
         Returns: undefined
+      }
+      remove_device_tokens: {
+        Args: { p_tokens: string[] }
+        Returns: number
       }
       request_booking: {
         Args: { p_request: string; p_starts: string }
@@ -1820,6 +1857,14 @@ export type Database = {
         Args: { p_public_id: string; p_version: number; p_signature: string }
         Returns: string
       }
+      skip_notification_delivery: {
+        Args: { p_id: string; p_reason: string }
+        Returns: undefined
+      }
+      skip_push_deliveries: {
+        Args: { p_reason: string }
+        Returns: number
+      }
       slot_load: {
         Args: { p_starts: string; p_ends: string }
         Returns: number
@@ -1835,6 +1880,10 @@ export type Database = {
       therapist_schedule: {
         Args: { p_from: string; p_to: string }
         Returns: Json
+      }
+      unregister_device: {
+        Args: { p_token: string }
+        Returns: undefined
       }
       username_allowed: {
         Args: { value: string }

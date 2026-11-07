@@ -60,6 +60,15 @@ import com.motivance.feature.notifications.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.rehabilitation.*
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.motivance.data.push.PushPrompt
+import com.motivance.data.push.PushSetup
+import com.motivance.data.push.notificationsAllowed
+import com.motivance.data.push.pushPrompt
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -73,17 +82,17 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
 private const val NOTIFICATION_CHECK_MS=60_000L
 
 /** The toast host wraps the whole app because several screens below return early and draw without the scaffold. */
-@Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster) {
+@Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster,openInbox:Boolean=false,inboxOpened:()->Unit={}) {
     CompositionLocalProvider(LocalToaster provides toaster) {
         Box(Modifier.fillMaxSize()) {
-            AppContent(vm)
+            AppContent(vm,openInbox,inboxOpened)
             ToastHost(toaster,Modifier.align(Alignment.TopCenter))
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun AppContent(vm: AuthViewModel) {
+@Composable private fun AppContent(vm: AuthViewModel,openInbox:Boolean,inboxOpened:()->Unit) {
     val auth by vm.state.collectAsStateWithLifecycle()
     val overview by vm.overview.collectAsStateWithLifecycle()
     val exercise:ExerciseSessionViewModel=viewModel()
@@ -121,6 +130,20 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         if(auth.session==null) selectedRole=null
         if(auth.session!=null) { route="HOME"; vm.loadOverview() }
         else if(route !in setOf("LANDING","AUTH","SETUP","CAMERA","CHECK_COMPLETE")) route="AUTH"
+    }
+    // With no Firebase values this never asks and never registers, so the app behaves as if push did not exist.
+    val context=LocalContext.current
+    val askForPush=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted) vm.registerPush()}
+    LaunchedEffect(auth.session?.userId) {
+        when(pushPrompt(PushSetup.enabled,auth.session!=null,Build.VERSION.SDK_INT,notificationsAllowed(context))) {
+            PushPrompt.ASK -> askForPush.launch(Manifest.permission.POST_NOTIFICATIONS)
+            PushPrompt.REGISTER -> vm.registerPush()
+            PushPrompt.NOTHING -> Unit
+        }
+    }
+    // After the sign-in above has set its route, so a tap on a notification is what the person sees.
+    LaunchedEffect(openInbox,auth.session?.userId) {
+        if(openInbox && auth.session!=null) {route="NOTIFICATIONS";inboxOpened()}
     }
     if(auth.restoring) { AuthLoadingScreen(); return }
     fun goBack() { route=parentRoute(route,auth.session!=null,auth.session?.workspace(role)==UserRole.THERAPIST) }

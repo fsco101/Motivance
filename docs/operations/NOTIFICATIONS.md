@@ -39,6 +39,53 @@ Keep every value below out of Git and out of chat. Supabase blocks ports 25 and 
 | `PUBLIC_SITE_URL` | Edge secrets | The link back to the app |
 | `PUBLIC_FUNCTIONS_URL` | Edge secrets | Where calendar links point |
 
+## Push notifications
+
+Push is built and waiting for credentials. With none set, the app builds and runs normally and does nothing push-related, and `notification-dispatch` marks each push `skipped` with the reason `FCM_SERVICE_ACCOUNT is not set`. Email and the in-app bell are unaffected.
+
+To turn it on:
+
+1. In the [Firebase console](https://console.firebase.google.com/), create a project, or use an existing one.
+2. Add an Android app to it. The package name is `com.motivance`, and `com.motivance.debug` for a debug build, so add both if you test with a debug build.
+3. Open Project settings, then the General tab, and copy four values from the Android app into `android/.env`. They are public client values, so they ship in the app. Do not download or commit `google-services.json`: the app does not use it.
+
+   | Value in `android/.env` | Where it is in the console |
+   | --- | --- |
+   | `FIREBASE_PROJECT_ID` | Project ID |
+   | `FIREBASE_APP_ID` | App ID, which starts with `1:` |
+   | `FIREBASE_API_KEY` | Web API key |
+   | `FIREBASE_SENDER_ID` | Cloud Messaging tab, Sender ID |
+
+4. Rebuild and install the app. After sign-in it asks for permission to show notifications.
+5. In Project settings, open Service accounts, and choose Generate new private key. Keep this file secret and out of Git. It is the only push secret, and it never goes in the app.
+6. Give it to the Edge Functions, then redeploy the dispatcher.
+
+   ```powershell
+   supabase secrets set FCM_SERVICE_ACCOUNT="$(Get-Content -Raw path\to\service-account.json)"
+   supabase functions deploy notification-dispatch
+   ```
+
+7. On a phone signed in as a patient, have a Scheduler confirm a session. The notification should arrive within about a minute. Then tick the real push check in [the follow-up checklist](../validation/POST-IMPLEMENTATION-CHECKLIST.md).
+
+| Variable | Where | For |
+| --- | --- | --- |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`, `FIREBASE_API_KEY`, `FIREBASE_SENDER_ID` | `android/.env` | Public client values. All four are needed |
+| `FCM_SERVICE_ACCOUNT` | Edge secrets | The service account's whole JSON file. A secret |
+| `FCM_API_URL` | Edge secrets, tests only | Points the dispatcher at a stub. Leave it unset everywhere real |
+
+A message carries data only, so the app builds the notification itself. A lock screen shows only that there is an update, because a message can name a patient. Signing out removes the phone's token, and FCM reporting a token dead removes it too. A person's phone is theirs alone: a token moves with each sign-in.
+
+| Delivery status | Meaning |
+| --- | --- |
+| `skipped`, `FCM_SERVICE_ACCOUNT is not set` | Push is not turned on yet |
+| `skipped`, `No device` | Nobody to reach: no phone registered, or the phone is gone. Not a failure |
+| `pending`, with `FCM 503` or similar | FCM had a temporary problem, and it will try again |
+| `failed` | Stopped after 5 attempts. Check the service account and the project ID |
+
+If every push fails with `Could not get an FCM access token`, the service account is wrong or has been revoked. Check it first.
+
+`python scripts/test_push.py` proves the request format, retries and removal of dead tokens against a stub on this machine. It never reaches Google, and it is not proof that a real phone receives anything.
+
 ## Testing locally
 
 `python scripts/test_email.py` starts the functions, sends real email to local Mailpit, and removes what it created. It stops if the running function has any other mail server, so it cannot reach a real inbox. Read what it sent at <http://127.0.0.1:54324>.
@@ -56,6 +103,7 @@ select status, attempts, next_attempt_at, last_error from public.notification_de
 | Status | Meaning | What to do |
 | --- | --- | --- |
 | `pending` | Waiting, or waiting to retry | Nothing. Waits grow from 2 to 16 minutes |
+| `skipped` | A push with nobody to reach, or with push not turned on | Nothing. See [Push notifications](#push-notifications) |
 | `sending` | Claimed by a run | Nothing. A row claimed for over 5 minutes comes back by itself |
 | `sent` | Handed to Gmail | Nothing |
 | `failed` | Stopped after 5 attempts | Fix the cause, then set `status='pending'` and `attempts=0` to try again |

@@ -75,6 +75,9 @@ def clear_mail():
 class Functions:
     """The Edge Functions, started with Mailpit's address, and refused if they would reach anything else."""
 
+    def __init__(self, extra=None):
+        self.extra = extra or {}
+
     def __enter__(self):
         # An address, because the mail library's name lookup cannot resolve a Docker container's name inside the Edge runtime.
         mail_host = subprocess.run(['docker', 'inspect', '-f', '{{(index .NetworkSettings.Networks "supabase_network_motivance").IPAddress}}', MAIL_CONTAINER], capture_output=True, text=True).stdout.strip()
@@ -82,7 +85,7 @@ class Functions:
             raise SystemExit('Mailpit is not running')
         handle, self.path = tempfile.mkstemp(suffix='.env', text=True)
         with os.fdopen(handle, 'w', encoding='utf-8') as file:
-            file.writelines(f'{key}={value}\n' for key, value in {**ENVIRONMENT, 'SMTP_HOST': mail_host}.items())
+            file.writelines(f'{key}={value}\n' for key, value in {**ENVIRONMENT, 'SMTP_HOST': mail_host, **self.extra}.items())
         command = ['npx.cmd' if os.name == 'nt' else 'npx', '--yes', 'supabase@2.20.12', 'functions', 'serve', '--env-file', self.path]
         self.process = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(90):
@@ -103,7 +106,7 @@ class Functions:
 
 
 def status(stack, booking_or_id):
-    return stack.sql(f"select d.status from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{booking_or_id}' order by d.created_at desc limit 1;")
+    return stack.sql(f"select d.status from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{booking_or_id}' and d.channel='email' order by d.created_at desc limit 1;")
 
 
 def checks(stack):
@@ -218,7 +221,7 @@ def checks(stack):
     made = [request(token, manila(later, hour)) for token, hour in [(ta, 10), (tb, 12), (ta, 13), (tb, 14)]]
     for booking in made:
         act('scheduler_confirm', {'p_booking': booking['id'], 'p_therapist': tess})
-    waiting = int(stack.sql("select count(*) from public.notification_deliveries where status='pending';"))
+    waiting = int(stack.sql("select count(*) from public.notification_deliveries where status='pending' and channel='email';"))
     stack.check(waiting >= 8, 'A real backlog is waiting')
     results = together([dispatch, dispatch, dispatch, dispatch])
     stack.check(all(code == 200 for code, _ in results), 'Runs can overlap')
@@ -233,7 +236,7 @@ def checks(stack):
     drain()
     stack.sql(f"update auth.users set email=null where id='{ana}';")
     act('scheduler_cancel', {'p_booking': c['id'], 'p_reason': 'Test'})
-    row = f"(select d.id from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{c['id']}' and n.user_id='{ana}' and n.kind='cancelled')"
+    row = f"(select d.id from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where d.channel='email' and n.booking_id='{c['id']}' and n.user_id='{ana}' and n.kind='cancelled')"
     waits = []
     for attempt in range(1, 6):
         stack.sql(f"update public.notification_deliveries set next_attempt_at=now() where id={row};")
@@ -253,10 +256,10 @@ def checks(stack):
     clear_mail()
     d = request(ta, manila(other, 14))
     act('scheduler_confirm', {'p_booking': d['id'], 'p_therapist': tess})
-    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now()-interval '10 minutes' from public.notifications n where n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
+    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now()-interval '10 minutes' from public.notifications n where x.channel='email' and n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
     drain()
     stack.check(len(inbox(addresses[ana])) == 1, 'A row left claimed by a dead run is picked up again')
-    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now() from public.notifications n where n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
+    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now() from public.notifications n where x.channel='email' and n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
     clear_mail()
     drain()
     stack.check(inbox(addresses[ana]) == [], 'One being sent right now is left alone')

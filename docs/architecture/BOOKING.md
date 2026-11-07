@@ -48,6 +48,9 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 - **A figure counts what its page lists.** Each number on the Scheduler's dashboard comes from `scheduler_summary` and opens the page it counted, already filtered. Utilization is booked sessions as a share of the places in open slots from Monday to Sunday, counting the whole week so the figure does not shrink as the week passes. Booked means confirmed or rescheduled, because a pending request is not yet a session. A session left outside changed hours is not in an open slot, so it is not counted. With no open slots there is no share, and the page says so rather than showing zero.
 - **Web sign-up is Android's sign-up.** It has the same four steps and rules, and sends the same `patient_profile` details, so the same trigger makes the account and enforces the same limits. A username already in use can only fail inside that trigger, which Auth reports as a database error, so the page sends the person back to change it with everything else kept.
 - **Booking starts at sign-up.** Book a Session opens sign-up, and the wish to book survives sign-up and sign-in, so a patient arrives on the booking page. Staff who follow the same link still reach their own workspace.
+- **Push is off until it is turned on.** The Firebase values come from `android/.env` and Firebase starts by hand, so an app built without them has no Firebase running and asks for no permission. The dispatcher marks pushes skipped until `FCM_SERVICE_ACCOUNT` is set.
+- **A lock screen stays private.** A push carries data only, so the app builds the notification and hides its text on a lock screen, because a message can name a patient. The words are the email's, in the reader's language, so the two cannot disagree.
+- **A phone belongs to whoever signed in last.** A token moves with each sign-in, and signing out removes it, so nobody on a shared phone hears about the last person's sessions. One delivery reaches every phone a person has, and counts as sent if any phone got it, because trying again would repeat it there.
 - **Waiting holds nothing.** A place on the waitlist reserves no capacity, so anyone can book a place that opens, whether they were waiting or not. A time that can no longer be booked, because it is closed or inside the notice period, drops off the list rather than leaving someone waiting for nothing.
 - **One opening is one message.** A burst of cancellations tells each person once. If the slot fills again, the next place is news.
 - **A notification never costs anyone their booking.** It runs inside the change it reports, so `notify` skips a recipient who disappeared part-way through rather than failing the whole change.
@@ -137,6 +140,7 @@ Patient pages always filter to the signed-in account, because row-level security
 | `PUBLIC_SITE_URL` | Edge secrets | Links in emails |
 | `VITE_ANDROID_APP_URL` | `web/.env` | Store link and QR code. The app is not on Play yet, so until this is set the page shows the instruction without a link |
 | `FCM_SERVICE_ACCOUNT` | Edge secrets | Added by the owner later |
+| `FCM_API_URL` | Edge secrets, tests only | Points the dispatcher at a stub |
 | `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`, `FIREBASE_API_KEY`, `FIREBASE_SENDER_ID` | `android/.env` | Added by the owner later |
 
 ## Before going live

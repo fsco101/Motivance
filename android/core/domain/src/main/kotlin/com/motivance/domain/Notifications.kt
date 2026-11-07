@@ -26,4 +26,14 @@ interface NotificationRepository {
     suspend fun markNotificationsRead(ids:List<String>?):Int
     /** Email has no app to choose its language, so the server is told the reader's. */
     suspend fun saveLanguage(language:String)
+    /** Tells the server this phone can be reached. Only the app knows about Firebase, so all this takes is the token. */
+    suspend fun registerDevice(token:String)
+    suspend fun unregisterDevice(token:String)
+}
+
+/** Whether this phone hears push notifications for the signed-in account. Off by default, so nothing here needs Firebase. */
+interface PushDevices {
+    suspend fun register() {}
+    suspend fun unregister() {}
+    object None:PushDevices
 }

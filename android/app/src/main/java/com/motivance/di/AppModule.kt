@@ -4,7 +4,11 @@ import com.motivance.domain.RehabilitationRepository
 import com.motivance.domain.AdministrationRepository
 import com.motivance.domain.BookingRepository
 import com.motivance.domain.NotificationRepository
+import com.motivance.data.push.DeviceTokens
+import com.motivance.data.push.FirebaseDeviceTokens
+import com.motivance.data.push.PushRegistrar
 import com.motivance.data.remote.SupabaseAuthRepository
+import com.motivance.domain.PushDevices
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,4 +21,6 @@ abstract class AppModule {
     @Binds @Singleton abstract fun administration(impl: SupabaseAuthRepository): AdministrationRepository
     @Binds @Singleton abstract fun booking(impl: SupabaseAuthRepository): BookingRepository
     @Binds @Singleton abstract fun notifications(impl: SupabaseAuthRepository): NotificationRepository
+    @Binds @Singleton abstract fun deviceTokens(impl: FirebaseDeviceTokens): DeviceTokens
+    @Binds @Singleton abstract fun pushDevices(impl: PushRegistrar): PushDevices
 }

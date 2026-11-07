@@ -16,6 +16,8 @@ class NotificationsViewModelTest {
     private fun note(id:String,readAt:String?=null)=AppNotification(id,NotificationKind.CONFIRMED,"BK-2026-000001","2026-12-07T01:00:00+00:00","2026-12-07T02:00:00+00:00",readAt=readAt)
 
     private inner class Remote:NotificationRepository {
+        override suspend fun registerDevice(token:String) {}
+        override suspend fun unregisterDevice(token:String) {}
         var inbox=NotificationInbox(2,listOf(note("a"),note("b"),note("c","2026-12-01T00:00:00Z")))
         var failure:RemoteFailure?=null
         var markFailure:RemoteFailure?=null

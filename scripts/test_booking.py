@@ -90,6 +90,7 @@ delete from public.audit_events where target_type='bookings' and target_id in (s
 delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in ({ids}) or therapist_id in ({ids}));
 delete from public.bookings where patient_id in ({ids}) or therapist_id in ({ids});
 delete from public.booking_series where patient_id in ({ids}) or therapist_id in ({ids});
+delete from public.device_tokens where user_id in ({ids});
 delete from public.booking_waitlist where patient_id in ({ids});
 delete from public.session_measurements where session_id in (select id from public.sessions where patient_id in ({ids}));
 delete from public.sessions where patient_id in ({ids}); delete from public.consents where patient_id in ({ids});
@@ -1293,7 +1294,7 @@ def reminders(stack):
     stack.check(notes(ta, cancelled, 'reminder') == [], 'A cancelled session gets none')
     stack.check(notes(tb, waiting, 'reminder') == [], 'A request still waiting gets none')
     stack.check(notes(tb, rejected, 'reminder') == [], 'Nor a rejected one')
-    stack.check(stack.sql(f"select count(*) from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{day}' and n.kind='reminder';") == '2', 'Each reminder is queued for email')
+    stack.check(stack.sql(f"select count(*) from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where d.channel='email' and n.booking_id='{day}' and n.kind='reminder';") == '2', 'Each reminder is queued for email')
 
     # The audit log.
     stack.check(events(hour, 'reminder_sent') == 1, 'The booking history records a reminder')
@@ -2036,7 +2037,37 @@ def s11_demo_steps(stack):
     stack.check(code == 200 and figures['pending'] >= 0 and figures['today'] >= 0 and figures['places'] >= 0, 'Demo: the dashboard reads the figures from the server')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist, 'self_reschedule': self_reschedule, 'attendance': attendance, 'series': series, 'summary': summary, 's11_demo': s11_demo}
+def devices(stack):
+    """MOT-69: which phone belongs to whom."""
+    ana, ta = stack.user('patient', name='Booking Ana Device')
+    ben, tb = stack.user('patient', name='Booking Ben Device')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Device')
+    token = 'device-' + uuid.uuid4().hex + uuid.uuid4().hex
+
+    def owner(value=token):
+        return stack.sql(f"select coalesce((select user_id::text from public.device_tokens where token='{value}'),'none');")
+
+    def register(person, value=token, platform='android'):
+        return stack.rpc('register_device', {'p_token': value, 'p_platform': platform}, person)
+
+    stack.check(register(ta)[0] == 204 and owner() == ana, 'A patient registers their phone')
+    stack.check(register(tt, 'therapist-' + token)[0] == 204, 'A therapist can too')
+    stack.check(register(ta)[0] == 204 and stack.sql(f"select count(*) from public.device_tokens where token='{token}';") == '1', 'Registering again changes nothing')
+    stack.check(register(tb)[0] == 204 and owner() == ben, 'A phone belongs to whoever signed in last')
+    stack.check(stack.rpc('unregister_device', {'p_token': token}, ta)[0] == 204 and owner() == ben, 'Nobody can remove another person\'s phone')
+    stack.check(stack.rpc('unregister_device', {'p_token': token}, tb)[0] == 204 and owner() == 'none', 'Signing out removes your own')
+    stack.check(refused(register(ta, 'short'), 'booking_invalid'), 'A token that cannot be real is refused')
+    stack.check(refused(register(ta, token, 'ios'), 'booking_invalid'), 'Only Android is supported')
+    stack.check(stack.rpc('register_device', {'p_token': token, 'p_platform': 'android'})[0] in (401, 403), 'Signing in is required')
+    stack.check(stack.api('/rest/v1/device_tokens?select=*', token=ta)[0] in (401, 403), 'Nobody reads the tokens')
+    stack.sql(f"update public.profiles set active=false where id='{ana}';")
+    stack.check(register(ta, 'disabled-' + token)[0] == 403, 'A disabled account cannot register')
+    stack.sql(f"update public.profiles set active=true where id='{ana}';")
+    for name_, args in (('claim_notification_deliveries', {'p_channel': 'push'}), ('skip_push_deliveries', {'p_reason': 'x'}), ('remove_device_tokens', {'p_tokens': [token]})):
+        stack.check(stack.rpc(name_, args, ta)[0] in (401, 403), f'{name_} is for the dispatcher alone')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist, 'self_reschedule': self_reschedule, 'attendance': attendance, 'series': series, 'summary': summary, 's11_demo': s11_demo, 'devices': devices}
 
 
 def main():
