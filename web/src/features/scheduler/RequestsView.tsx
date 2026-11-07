@@ -37,6 +37,7 @@ function History({ load }: { load: Load<RequestDetail> }) {
               <p className="font-semibold">{t(`scheduler.event.${event.action}`, event.action)}</p>
               <p className="text-slate">{event.actor ?? t('scheduler.system')}, {format.day(event.recordedAt)} {format.time(event.recordedAt)}</p>
               {event.toStartsAt && event.action === 'rescheduled' && <p className="text-slate">{t('scheduler.movedTo', { when: `${format.day(event.toStartsAt)}, ${format.time(event.toStartsAt)}` })}</p>}
+              {event.toAttendance && <p className="text-slate">{t(`booking.attendance.${event.toAttendance}`)}</p>}
               {event.reason && <p className="text-slate">{reasonText(event.reason)}</p>}
             </li>
           ))}

@@ -99,6 +99,12 @@ export const upcomingBookings = (bookings: readonly Booking[], now = Date.now())
 
 export const nextBooking = (bookings: readonly Booking[], now = Date.now()) => upcomingBookings(bookings, now)[0] ?? null
 
+export type Attendance = 'attended' | 'no_show'
+
+export async function markAttendance(db: Db, booking: string, attendance: Attendance) {
+  must(await db.rpc('mark_attendance', { p_booking: booking, p_attendance: attendance }))
+}
+
 /** A place in the line for a full time. Open means a place is free now, and the first to book gets it. */
 export type WaitlistEntry = { id: string; startsAt: string; endsAt: string; open: boolean }
 

@@ -402,3 +402,29 @@ Schedulers and the therapist are told. A therapist who stays hears it as a move 
 The contract suite failed once more while this was tested, this time because a count was compared across two reads while another file was adding accounts. That was the third failure caused by test files sharing one database at the same moment, after the notification race and the set-up time limit in MOT-62, so `npm run test:contract` now runs its files one at a time. It takes 50 seconds rather than 15, and CI uses the same script.
 
 A physical phone is still to be tried, and is on the checklist.
+
+## MOT-65: Attendance
+
+The assigned therapist or a Scheduler can mark a session attended or no-show once it has started, and marking again corrects it. Nobody else can: `mark_attendance` refuses other therapists, patients and administrators with a 403, and clients have no direct write. The same mark twice changes nothing, so a double tap records one event.
+
+Therapists mark from My Schedule on the web and Android. Schedulers mark from the confirmed schedule, which gains an attendance column, a filter and an attendance column in both exports. "Not marked" means a session that has started, because one still to come needs nothing yet. The server says when a session has started, so the apps cannot disagree with it about the moment marking opens.
+
+Every change is recorded with what it was, in the booking's history and the audit log. A mark describes the time a session had, so moving a session clears it.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: who can mark, correcting, the history, refusals, the filters, moving a session | `python scripts/test_booking.py attendance` | 26 checks passed |
+| All sections | `python scripts/test_booking.py` | 651 checks passed |
+| Contract tests | `npm run test:contract` | 124 passed |
+| Browser tests with axe: marking and correcting, a patient seeing no marks, the column, filters and an opened export, the history | `npx playwright test attendance schedule confirmed-schedule scheduler design admin --workers=1` | 126 passed. 83 opt-in tests did not run, as designed |
+| Web unit tests | `npm test` | 244 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 242 passed |
+| Android lint | `gradlew :app:lintDebug` | Passed |
+| The app on a throwaway emulator, against the local backend | Driven through its UI, checking the server at each step | 5 checks passed: both marks offered, marking, correcting, the history, and no marks on a session still to come |
+| Database tests | `npx supabase test db` | 69 passed |
+| Administrator parity | `python scripts/check_admin_parity.py` | Passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The Schedule table was also looked at by eye at 1024 and 1440 pixels. The two marks stack at the narrower width and nothing scrolls sideways.
+
+A physical phone is still to be tried, and is on the checklist.

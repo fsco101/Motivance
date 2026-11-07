@@ -82,7 +82,10 @@
     "exportAllDates": "All dates",
     "exportGenerated": "Generated {{when}}",
     "noneScheduled": "No confirmed sessions",
-    "noneScheduledDetail": "Sessions appear here once a Scheduler confirms them."
+    "noneScheduledDetail": "Sessions appear here once a Scheduler confirms them.",
+    "anyAttendance": "Any attendance",
+    "unmarked": "Not marked",
+    "notStarted": "Not started"
   },
   "patient": {
     "greeting": "Hello, {{name}}",
@@ -221,7 +224,8 @@
       "therapist_on_leave": "That therapist is on leave at that time.",
       "not_full": "This time has places again, so you can book it.",
       "reschedule_late": "It is too late to move this session online. Contact the center.",
-      "reschedule_limit": "This session cannot be moved again online. Contact the center."
+      "reschedule_limit": "This session cannot be moved again online. Contact the center.",
+      "not_started": "This session has not started yet."
     },
     "keep": "Keep booking",
     "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
@@ -260,7 +264,14 @@
     "moveHere": "Move to this time",
     "moving": "Moving",
     "moved": "Session moved. A Scheduler will confirm it.",
-    "moveClosedTitle": "This session cannot be moved"
+    "moveClosedTitle": "This session cannot be moved",
+    "attendance": {
+      "attended": "Attended",
+      "no_show": "No-show"
+    },
+    "attendanceTitle": "Attendance",
+    "attendanceFor": "Attendance for {{patient}}",
+    "attendanceSaved": "Attendance saved."
   },
   "calendar": {
     "title": "Center calendar",

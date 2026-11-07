@@ -901,4 +901,9 @@
     <string name="booking_error_reschedule_late">It is too late to move this session online. Contact the center.</string>
     <string name="booking_error_reschedule_limit">This session cannot be moved again online. Contact the center.</string>
     <string name="notification_patient_rescheduled">%1$s moved their session to %2$s. It needs confirming.</string>
+    <string name="booking_attendance_title">Attendance</string>
+    <string name="booking_attended">Attended</string>
+    <string name="booking_no_show">No-show</string>
+    <string name="booking_attendance_saved">Attendance saved.</string>
+    <string name="booking_error_not_started">This session has not started yet.</string>
 </resources>

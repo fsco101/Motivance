@@ -50,12 +50,14 @@ export type Database = {
           actor_id: string | null
           actor_role: string
           booking_id: string
+          from_attendance: string | null
           from_starts_at: string | null
           from_status: string | null
           from_therapist: string | null
           id: number
           reason: string | null
           recorded_at: string
+          to_attendance: string | null
           to_starts_at: string | null
           to_status: string | null
           to_therapist: string | null
@@ -65,12 +67,14 @@ export type Database = {
           actor_id?: string | null
           actor_role: string
           booking_id: string
+          from_attendance?: string | null
           from_starts_at?: string | null
           from_status?: string | null
           from_therapist?: string | null
           id?: never
           reason?: string | null
           recorded_at?: string
+          to_attendance?: string | null
           to_starts_at?: string | null
           to_status?: string | null
           to_therapist?: string | null
@@ -80,12 +84,14 @@ export type Database = {
           actor_id?: string | null
           actor_role?: string
           booking_id?: string
+          from_attendance?: string | null
           from_starts_at?: string | null
           from_status?: string | null
           from_therapist?: string | null
           id?: never
           reason?: string | null
           recorded_at?: string
+          to_attendance?: string | null
           to_starts_at?: string | null
           to_status?: string | null
           to_therapist?: string | null
@@ -1419,6 +1425,10 @@ export type Database = {
         Args: { p_starts: string }
         Returns: undefined
       }
+      mark_attendance: {
+        Args: { p_booking: string; p_attendance: string }
+        Returns: Json
+      }
       mark_notifications_read: {
         Args: { p_ids?: string[] }
         Returns: number
@@ -1563,6 +1573,7 @@ export type Database = {
           p_descending?: boolean
           p_limit?: number
           p_offset?: number
+          p_attendance?: string
         }
         Returns: Json
       }

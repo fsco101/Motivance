@@ -39,6 +39,7 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
     "booking_unavailable" -> R.string.booking_error_unavailable
     "booking_too_late" -> R.string.booking_error_too_late
     "booking_not_full" -> R.string.booking_error_not_full
+    "booking_not_started" -> R.string.booking_error_not_started
     "booking_reschedule_late" -> R.string.booking_error_reschedule_late
     "booking_reschedule_limit" -> R.string.booking_error_reschedule_limit
     else -> R.string.booking_error_request

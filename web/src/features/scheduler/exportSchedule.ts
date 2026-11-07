@@ -1,9 +1,9 @@
 /** Everything here is loaded on export only, so none of it reaches the first download. */
 
-export type ExportLine = { date: string; time: string; patient: string; therapist: string; status: string; reference: string }
+export type ExportLine = { date: string; time: string; patient: string; therapist: string; status: string; attendance: string; reference: string }
 export type ExportDocument = { center: string; title: string; range: string; generated: string; columns: ExportLine; lines: readonly ExportLine[]; fileName: string }
 
-const KEYS = ['date', 'time', 'patient', 'therapist', 'status', 'reference'] as const
+const KEYS = ['date', 'time', 'patient', 'therapist', 'status', 'attendance', 'reference'] as const
 
 export async function saveXlsx(document: ExportDocument) {
   const { default: writeXlsxFile } = await import('write-excel-file/browser')

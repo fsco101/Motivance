@@ -32,7 +32,8 @@ object BookingJson {
     })
 
     private fun session(json:JSONObject)=ScheduleSession(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.CONFIRMED,
-        json.getString("starts_at"),json.getString("ends_at"),json.text("location").orEmpty(),json.text("therapist_name"),json.text("patient_id"),json.text("patient_name"),json.optBoolean("linked"))
+        json.getString("starts_at"),json.getString("ends_at"),json.text("location").orEmpty(),json.text("therapist_name"),json.text("patient_id"),json.text("patient_name"),json.optBoolean("linked"),
+        json.text("attendance"),json.optBoolean("started"))
 
     fun schedule(json:JSONObject)=Schedule(json.getJSONArray("days").objects().map {day ->
         ScheduleDay(day.getString("date"),BookingDayStatus.of(day.getString("status")),day.text("holiday"),day.getJSONArray("rows").objects().map {row ->

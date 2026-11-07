@@ -901,4 +901,9 @@
     <string name="booking_error_reschedule_late">Huli na para ilipat ang session na ito online. Makipag-ugnayan sa center.</string>
     <string name="booking_error_reschedule_limit">Hindi na muling maililipat online ang session na ito. Makipag-ugnayan sa center.</string>
     <string name="notification_patient_rescheduled">Inilipat ni %1$s ang session sa %2$s. Kailangan itong kumpirmahin.</string>
+    <string name="booking_attendance_title">Pagdalo</string>
+    <string name="booking_attended">Dumalo</string>
+    <string name="booking_no_show">Hindi dumating</string>
+    <string name="booking_attendance_saved">Nai-save ang pagdalo.</string>
+    <string name="booking_error_not_started">Hindi pa nagsisimula ang session na ito.</string>
 </resources>

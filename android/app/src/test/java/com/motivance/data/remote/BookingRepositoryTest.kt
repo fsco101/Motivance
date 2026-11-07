@@ -30,6 +30,7 @@ class BookingRepositoryTest {
                 path=="/rest/v1/rpc/join_waitlist" -> """{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00"}"""
                 path=="/rest/v1/rpc/leave_waitlist" -> ""
                 path=="/rest/v1/rpc/reschedule_my_booking" -> booking
+                path=="/rest/v1/rpc/mark_attendance" -> """{"id":"b1","attendance":"no_show"}"""
                 path=="/rest/v1/rpc/my_notifications" -> """{"unread":1,"rows":[
                     {"id":"n1","kind":"rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":"2026-12-07T02:00:00+00:00","patient_name":"Ana","therapist_name":"Dana","reason":"Training"}},
@@ -110,6 +111,19 @@ class BookingRepositoryTest {
         assertEquals("fil",bodies["/rest/v1/rpc/set_my_language"]!!.getString("p_language"))
     }
 
+    @Test fun markingSendsTheSessionAndTheMark()=runBlocking {
+        repository().markAttendance("b1","no_show")
+        val body=bodies["/rest/v1/rpc/mark_attendance"]
+        assertEquals("b1",body?.getString("p_booking"))
+        assertEquals("no_show",body?.getString("p_attendance"))
+    }
+    @Test fun aSessionSaysWhetherItHasStartedAndWhatWasMarked() {
+        val days="""{"days":[{"date":"2026-11-02","status":"open","holiday":null,"rows":[{"starts_at":"2026-11-02T01:00:00+00:00","ends_at":"2026-11-02T02:00:00+00:00","session":
+            {"id":"b1","reference_no":"BK-2026-000001","status":"confirmed","starts_at":"2026-11-02T01:00:00+00:00","ends_at":"2026-11-02T02:00:00+00:00","location":"","attendance":"attended","started":true,"patient_name":"Ana"}}]}]}"""
+        val session=BookingJson.schedule(JSONObject(days)).days.single().sessions.single()
+        assertEquals("attended",session.attendance)
+        assertTrue(session.started)
+    }
     @Test fun movingSendsTheSessionAndTheTime()=runBlocking {
         repository().rescheduleBooking("b1","2026-12-09T02:00:00+00:00")
         val body=bodies["/rest/v1/rpc/reschedule_my_booking"]

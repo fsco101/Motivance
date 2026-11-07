@@ -1,5 +1,7 @@
 package com.motivance.feature.booking
 
+import com.motivance.R
+import com.motivance.designsystem.ToastTone
 import com.motivance.designsystem.Toaster
 import com.motivance.domain.*
 import java.time.LocalDate
@@ -36,12 +38,44 @@ class ScheduleViewModelTest {
         override suspend fun loadMyBookings()=emptyList<Booking>()
         override suspend fun cancelBooking(id:String) {}
         override suspend fun rescheduleBooking(id:String,startsAt:String) {}
+        var refusal:RemoteFailure?=null
+        val marks=mutableListOf<Pair<String,String>>()
+        override suspend fun markAttendance(id:String,attendance:String) {refusal?.let {throw it};marks+=id to attendance}
         override suspend fun loadWaitlist()=emptyList<WaitlistEntry>()
         override suspend fun joinWaitlist(startsAt:String) {}
         override suspend fun leaveWaitlist(startsAt:String) {}
     }
 
     private fun viewModel(remote:Remote,therapist:Boolean=false)=ScheduleViewModel(remote,Toaster()).also {it.configure("owner",therapist)}
+
+    private val session=ScheduleSession("b1","BK-2026-000001",BookingStatus.CONFIRMED,"2026-11-02T01:00:00+00:00","2026-11-02T02:00:00+00:00",patient="Ana",started=true)
+
+    @Test fun markingSendsTheSessionAndReadsTheMonthAgain()=runTest {
+        val remote=Remote();val toasts=Toaster();val vm=ScheduleViewModel(remote,toasts).also {it.configure("owner",true)}
+        vm.open();advanceUntilIdle()
+        val reads=remote.reads.size
+        vm.mark(session,"no_show");advanceUntilIdle()
+        assertEquals(listOf("b1" to "no_show"),remote.marks)
+        assertEquals(reads+1,remote.reads.size)
+        assertEquals(R.string.booking_attendance_saved,toasts.current.value?.message)
+        assertNull(vm.state.value.marking)
+    }
+
+    @Test fun aRefusedMarkExplainsWhyAndStillReadsTheMonth()=runTest {
+        val remote=Remote();val toasts=Toaster();val vm=ScheduleViewModel(remote,toasts).also {it.configure("owner",true)}
+        remote.refusal=RemoteFailure(400,"booking_not_started")
+        vm.mark(session,"attended");advanceUntilIdle()
+        assertEquals(R.string.booking_error_not_started,toasts.current.value?.message)
+        assertEquals(ToastTone.ERROR,toasts.current.value?.tone)
+        assertEquals(1,remote.reads.size)
+        assertNull(vm.state.value.marking)
+    }
+
+    @Test fun oneMarkAtATime()=runTest {
+        val remote=Remote();val vm=viewModel(remote,therapist=true)
+        vm.mark(session,"attended");vm.mark(session,"no_show");advanceUntilIdle()
+        assertEquals(listOf("b1" to "attended"),remote.marks)
+    }
 
     @Test fun aMonthOpensOnTheNextSession()=runTest {
         val remote=Remote();val vm=viewModel(remote)

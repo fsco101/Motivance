@@ -82,7 +82,10 @@
     "exportAllDates": "Lahat ng petsa",
     "exportGenerated": "Ginawa noong {{when}}",
     "noneScheduled": "Walang kumpirmadong session",
-    "noneScheduledDetail": "Lalabas dito ang mga session kapag nakumpirma na ng Scheduler."
+    "noneScheduledDetail": "Lalabas dito ang mga session kapag nakumpirma na ng Scheduler.",
+    "anyAttendance": "Anumang pagdalo",
+    "unmarked": "Hindi pa namarkahan",
+    "notStarted": "Hindi pa nagsisimula"
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
@@ -221,7 +224,8 @@
       "therapist_on_leave": "Naka-leave ang therapist na iyon sa oras na iyon.",
       "not_full": "May bakante na ulit sa oras na ito, kaya maaari mo itong i-book.",
       "reschedule_late": "Huli na para ilipat ang session na ito online. Makipag-ugnayan sa center.",
-      "reschedule_limit": "Hindi na muling maililipat online ang session na ito. Makipag-ugnayan sa center."
+      "reschedule_limit": "Hindi na muling maililipat online ang session na ito. Makipag-ugnayan sa center.",
+      "not_started": "Hindi pa nagsisimula ang session na ito."
     },
     "keep": "Panatilihin ang booking",
     "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
@@ -260,7 +264,14 @@
     "moveHere": "Ilipat sa oras na ito",
     "moving": "Inililipat",
     "moved": "Nailipat ang session. Kukumpirmahin ito ng Scheduler.",
-    "moveClosedTitle": "Hindi na maililipat ang session na ito"
+    "moveClosedTitle": "Hindi na maililipat ang session na ito",
+    "attendance": {
+      "attended": "Dumalo",
+      "no_show": "Hindi dumating"
+    },
+    "attendanceTitle": "Pagdalo",
+    "attendanceFor": "Pagdalo ni {{patient}}",
+    "attendanceSaved": "Nai-save ang pagdalo."
   },
   "calendar": {
     "title": "Kalendaryo ng center",

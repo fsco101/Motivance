@@ -173,6 +173,7 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] Have a Filipino speaker review the booking and scheduling text in `web/src/locales/fil.json`, `android/app/src/main/res/values-fil/strings.xml` and `supabase/functions/_shared/email.ts`.
 - [ ] On a physical phone, join a waitlist for a full time, watch the place open from a second account, and book it from My bookings. It passed on an emulator against the local backend; a real phone and a real network have not been tried.
 - [ ] On a physical phone, move a session from My bookings, and check that a date with no free time still reads clearly at large text sizes and with TalkBack.
+- [ ] On a physical phone, mark a session attended, correct it to a no-show, and check the two marks read clearly at large text sizes and with TalkBack. It passed on an emulator against the local backend.
 
 ## Recording results
 

@@ -277,7 +277,7 @@
       "github_issue": 82,
       "title": "Add attendance tracking to My Schedule",
       "description": "Record who came, so no-shows are visible.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web + Android",
       "estimate_points": 3,
@@ -307,35 +307,79 @@
         {
           "id": "MOT-65-AC1",
           "description": "The assigned therapist or a Scheduler can mark a session attended or no-show, once it has started, and correct it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-65-AC2",
           "description": "Nobody else can, enforced on the server.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-65-AC3",
           "description": "Therapists mark attendance from My Schedule on web and Android.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-65-AC4",
           "description": "Attendance appears in the Scheduler's schedule, its filters and its exports, and every change is audited.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T04:20:30.434826+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060017_attendance.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/attendance.spec.ts",
+          "web/tests/contract/attendance.test.ts",
+          "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060017_attendance.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/attendance.spec.ts",
+        "web/tests/contract/attendance.test.ts",
+        "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+      ]
     },
     {
       "id": "MOT-66",

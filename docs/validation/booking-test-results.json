@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T20:18:07.924948+00:00",
-  "checks_passed": 625,
+  "generated_at": "2026-11-07T04:19:09.212960+00:00",
+  "checks_passed": 651,
   "checks": [
     "A patient cannot grant the Scheduler role",
     "A therapist cannot grant the Scheduler role",
@@ -626,7 +626,33 @@
     "Two moves into the last place: exactly one succeeds",
     "Past the cut-off the server says it cannot be moved, whatever moves are left",
     "And refuses",
-    "A center can turn moving off"
+    "A center can turn moving off",
+    "The assigned therapist marks a session attended, once it has started",
+    "And can correct it",
+    "Every change is recorded with what it was, and the same mark again is no change",
+    "And reaches the audit log",
+    "Fixture: an administrator can read the feed",
+    "A Scheduler can mark any session",
+    "Another therapist cannot",
+    "Nor can the patient",
+    "Nor an administrator",
+    "Nobody writes it directly",
+    "A session under way can be marked",
+    "A session still to come cannot",
+    "A session never confirmed cannot",
+    "Nor a cancelled one",
+    "Only the two marks exist",
+    "A session that does not exist says so",
+    "My Schedule shows the mark and that the session has started",
+    "And that a session still to come has not",
+    "The Scheduler can filter to no-shows",
+    "And to who came",
+    "Not marked means started and unmarked, and leaves out what is still to come",
+    "Each row says whether it has started",
+    "The table sorts by attendance",
+    "Only the known filters",
+    "The history says what the mark was",
+    "Moving a session clears its mark"
   ],
   "environment": "real local Auth and PostgREST with disposable synthetic accounts"
 }

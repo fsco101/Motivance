@@ -40,6 +40,7 @@ class BookingViewModelTest {
         }
         override suspend fun loadMyBookings():List<Booking> =wait?.let {withContext(NonCancellable) {it.await()}} ?: listOf(booking)
         override suspend fun cancelBooking(id:String) {refusal?.let {throw it};cancelled+=id}
+        override suspend fun markAttendance(id:String,attendance:String) {}
         val moved=mutableListOf<Pair<String,String>>()
         override suspend fun rescheduleBooking(id:String,startsAt:String) {refusal?.let {throw it};moved+=id to startsAt}
         var waitlist=emptyList<WaitlistEntry>()

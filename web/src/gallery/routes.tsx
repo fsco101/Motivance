@@ -133,7 +133,7 @@ function SchedulerSchedule() {
   const [filters, setFilters] = useState(NO_SCHEDULE_FILTERS)
   const rows = data.requests.filter((row) => row.status === 'confirmed' || row.status === 'rescheduled')
   return <ConfirmedScheduleView load={useDemo({ rows, total: rows.length }, { rows: [], total: 0 })} therapists={data.therapistChoices} patients={[{ id: 'p1', name: 'Ana Dela Cruz' }]} filters={filters} onFilters={setFilters}
-    sort={{ key: 'starts_at', direction: 'asc' }} onSort={said('Sorted')} page={0} onPage={said('Paged')} exporting={null} onExport={said('Exported')} />
+    sort={{ key: 'starts_at', direction: 'asc' }} onSort={said('Sorted')} page={0} onPage={said('Paged')} exporting={null} onExport={said('Exported')} onMark={said('Marked')} marking={false} />
 }
 
 function SchedulerCalendar() {

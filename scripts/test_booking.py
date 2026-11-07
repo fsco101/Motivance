@@ -1631,7 +1631,87 @@ def self_reschedule_checks(stack):
     stack.check(view(later, tc)['can_reschedule'] is False and refused(move(later, manila(sixth, 16), tc), 'booking_reschedule_limit'), 'A center can turn moving off')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist, 'self_reschedule': self_reschedule}
+def attendance(stack):
+    """MOT-65: who came, recorded by the people who were there."""
+    _, ts = stack.user('patient', 'scheduler', name='Booking Sol Attendance')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Attendance')
+    omar, to = stack.user('patient', 'therapist', name='Booking Omar Attendance')
+    _, tadmin = stack.user('patient', 'admin', name='Booking Admin Attendance')
+    ana, ta = stack.user('patient', name='Booking Ana Attendance')
+    ben, _ = stack.user('patient', name='Booking Ben Attendance')
+
+    def insert(hours, status='confirmed', therapist=tess, patient=ana):
+        booking = str(uuid.uuid4())
+        person = f"'{therapist}'" if therapist else 'null'
+        stack.sql(f"""insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status)
+ values('{booking}','BK-ATT-{booking[:8]}','{patient}',{person},now()+interval '{hours} hours',now()+interval '{hours} hours'+interval '1 hour','{status}');""")
+        return booking
+
+    def mark(booking, value, token=tt):
+        return stack.rpc('mark_attendance', {'p_booking': booking, 'p_attendance': value}, token)
+
+    def state(booking):
+        return stack.sql(f"select coalesce(attendance,'none'),coalesce(attendance_by::text,'none'),attendance_at is not null from public.bookings where id='{booking}';").split('|')
+
+    def history(booking):
+        return stack.sql(f"select string_agg(actor_role||':'||coalesce(from_attendance,'none')||'>'||coalesce(to_attendance,'none'),',' order by id) from public.booking_events where booking_id='{booking}' and action='attendance_marked';")
+
+    past = insert(-30)
+    stack.check(mark(past, 'attended')[0] == 200 and state(past) == ['attended', tess, 't'], 'The assigned therapist marks a session attended, once it has started')
+    stack.check(mark(past, 'no_show')[0] == 200 and state(past)[0] == 'no_show', 'And can correct it')
+    stack.check(mark(past, 'no_show')[0] == 200 and history(past) == 'therapist:none>attended,therapist:attended>no_show', 'Every change is recorded with what it was, and the same mark again is no change')
+    stack.check(stack.sql(f"select count(*) from public.audit_events where target_type='bookings' and action='attendance_marked' and target_id='{past}';") == '2', 'And reaches the audit log')
+    stack.check(stack.rpc('admin_activity', {}, tadmin)[0] == 200, 'Fixture: an administrator can read the feed')
+
+    second = insert(-27, patient=ben)
+    stack.check(mark(second, 'attended', ts)[0] == 200 and history(second) == 'scheduler:none>attended', 'A Scheduler can mark any session')
+    stack.check(mark(past, 'attended', to)[0] == 403 and state(past)[0] == 'no_show', 'Another therapist cannot')
+    stack.check(mark(past, 'attended', ta)[0] == 403, 'Nor can the patient')
+    stack.check(mark(past, 'attended', tadmin)[0] == 403, 'Nor an administrator')
+    stack.check(stack.api(f'/rest/v1/bookings?id=eq.{past}', {'attendance': 'attended'}, tt, method='PATCH')[0] in (401, 403) and state(past)[0] == 'no_show', 'Nobody writes it directly')
+
+    running = insert(-0.5, therapist=omar)
+    stack.check(mark(running, 'attended', to)[0] == 200, 'A session under way can be marked')
+    future = insert(40)
+    stack.check(refused(mark(future, 'attended'), 'booking_not_started') and state(future)[0] == 'none', 'A session still to come cannot')
+    stack.check(refused(mark(insert(-24, 'pending', None), 'attended', ts), 'booking_state'), 'A session never confirmed cannot')
+    stack.check(refused(mark(insert(-21, 'cancelled'), 'attended'), 'booking_state'), 'Nor a cancelled one')
+    stack.check(refused(mark(past, None), 'booking_invalid') and refused(mark(past, 'maybe'), 'booking_invalid'), 'Only the two marks exist')
+    stack.check(refused(mark(str(uuid.uuid4()), 'attended'), 'booking_unavailable'), 'A session that does not exist says so')
+
+    # What the people reading a schedule see.
+    on = stack.sql(f"select (starts_at at time zone 'Asia/Manila')::date from public.bookings where id='{past}';")
+    days = stack.rpc('therapist_schedule', {'p_from': on, 'p_to': on}, tt)[1]['days']
+    session = next(row['session'] for row in days[0]['rows'] if row['session'] and row['session']['id'] == past)
+    stack.check(session['attendance'] == 'no_show' and session['started'] is True, 'My Schedule shows the mark and that the session has started')
+    on = stack.sql(f"select (starts_at at time zone 'Asia/Manila')::date from public.bookings where id='{future}';")
+    days = stack.rpc('therapist_schedule', {'p_from': on, 'p_to': on}, tt)[1]['days']
+    session = next(row['session'] for row in days[0]['rows'] if row['session'] and row['session']['id'] == future)
+    stack.check(session['attendance'] is None and session['started'] is False, 'And that a session still to come has not')
+
+    def table(**filters):
+        code, data = stack.rpc('scheduler_bookings', {'p_search': 'Booking', 'p_therapist': tess, 'p_statuses': ['confirmed', 'rescheduled'], **filters}, ts)
+        assert code == 200, data
+        return data
+
+    stack.check(table(p_attendance='no_show')['total'] == 1 and table(p_attendance='no_show')['rows'][0]['id'] == past, 'The Scheduler can filter to no-shows')
+    stack.check([row['id'] for row in table(p_attendance='attended')['rows']] == [second], 'And to who came')
+    unmarked = insert(-18)
+    found = [row['id'] for row in table(p_attendance='unmarked')['rows']]
+    stack.check(unmarked in found and future not in found and past not in found, 'Not marked means started and unmarked, and leaves out what is still to come')
+    rows = {row['id']: row for row in table()['rows']}
+    stack.check(rows[past]['attendance'] == 'no_show' and rows[past]['started'] is True and rows[future]['started'] is False, 'Each row says whether it has started')
+    stack.check(stack.rpc('scheduler_bookings', {'p_sort': 'attendance', 'p_therapist': tess}, ts)[0] == 200, 'The table sorts by attendance')
+    stack.check(refused(stack.rpc('scheduler_bookings', {'p_attendance': 'maybe'}, ts), 'booking_invalid'), 'Only the known filters')
+    detail = stack.rpc('scheduler_booking_detail', {'p_booking': past}, ts)[1]
+    stack.check(detail['events'][0]['action'] == 'attendance_marked' and detail['events'][0]['to_attendance'] == 'no_show', 'The history says what the mark was')
+
+    # A mark describes the time a session had.
+    day = next(working_days(stack, 12))
+    stack.check(stack.rpc('scheduler_reschedule', {'p_booking': past, 'p_starts': manila(day, 9), 'p_therapist': tess}, ts)[0] == 200 and state(past) == ['none', 'none', 'f'], 'Moving a session clears its mark')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist, 'self_reschedule': self_reschedule, 'attendance': attendance}
 
 
 def main():

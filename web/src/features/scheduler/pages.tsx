@@ -5,7 +5,7 @@ import { ButtonLink } from '@/components/Button'
 import { ConfirmDialog } from '@/components/Dialog'
 import { PageHeader, Panel } from '@/components/Display'
 import { toast } from '@/components/Toast'
-import { addDays, bookingFailureKey, CENTER_ZONE, isStale, todayAt } from '@/data/booking'
+import { addDays, bookingFailureKey, CENTER_ZONE, isStale, markAttendance, todayAt, type Attendance } from '@/data/booking'
 import { useCenterFormat } from '@/features/booking/format'
 import { deleteClosure, deleteHoliday, deleteTimeOff, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, saveTimeOff, type CenterDay, type CenterSettings, type Closure, type Holiday, type TimeOff } from '@/data/calendar'
 import { supabase } from '@/data/client'
@@ -111,6 +111,8 @@ export function SchedulerSchedulePage() {
   const [sort, setSort] = useState<RequestSort>({ key: 'starts_at', direction: 'asc' })
   const [page, setPage] = useState(0)
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
+  const [marking, setMarking] = useState(false)
+  const act = useSchedulerAction()
   const sessions = useQuery({ queryKey: ['scheduler', 'schedule', filters, sort, page], queryFn: () => loadConfirmed(supabase(), filters, sort, page), placeholderData: keepPreviousData })
   const therapists = useQuery({ queryKey: ['scheduler', 'therapists'], queryFn: () => loadTherapists(supabase()) })
   const patients = useQuery({ queryKey: ['scheduler', 'patients'], queryFn: () => loadPatientChoices(supabase()) })
@@ -121,6 +123,12 @@ export function SchedulerSchedulePage() {
     if (filters.from) return t('scheduler.exportFrom', { from: date(filters.from) })
     if (filters.to) return t('scheduler.exportUntil', { to: date(filters.to) })
     return t('scheduler.exportAllDates')
+  }
+  const mark = async (row: RequestRow, attendance: Attendance) => {
+    setMarking(true)
+    // A refusal has already been shown, and the table has been read again.
+    await act(() => markAttendance(supabase(), row.id, attendance), t('booking.attendanceSaved')).catch(() => undefined)
+    setMarking(false)
   }
   const save = async (kind: ExportFormat) => {
     setExporting(kind)
@@ -134,8 +142,8 @@ export function SchedulerSchedulePage() {
       const plain = (value: string) => value.replace(/\s+/g, ' ')
       const document = {
         center, title: t('scheduler.scheduleTitle'), range: range(), generated: t('scheduler.exportGenerated', { when: plain(`${format.day(now)}, ${format.time(now)}`) }), fileName: `motivance-schedule-${today}`,
-        columns: { date: t('scheduler.exportDate'), time: t('scheduler.exportTime'), patient: t('scheduler.patient'), therapist: t('booking.therapist'), status: t('scheduler.status'), reference: t('booking.reference') },
-        lines: rows.map((row) => ({ date: format.day(row.startsAt), time: plain(format.range(row.startsAt, row.endsAt)), patient: row.patient, therapist: row.therapist ?? '', status: t(`booking.status.${row.status}`), reference: row.reference })),
+        columns: { date: t('scheduler.exportDate'), time: t('scheduler.exportTime'), patient: t('scheduler.patient'), therapist: t('booking.therapist'), status: t('scheduler.status'), attendance: t('booking.attendanceTitle'), reference: t('booking.reference') },
+        lines: rows.map((row) => ({ date: format.day(row.startsAt), time: plain(format.range(row.startsAt, row.endsAt)), patient: row.patient, therapist: row.therapist ?? '', status: t(`booking.status.${row.status}`), attendance: row.attendance ? t(`booking.attendance.${row.attendance}`) : '', reference: row.reference })),
       }
       await (kind === 'xlsx' ? saveXlsx(document) : savePdf(document))
       toast.show(t('scheduler.exported', { count: rows.length }))
@@ -149,7 +157,7 @@ export function SchedulerSchedulePage() {
   if (sessions.data && page > lastPage) setPage(lastPage)
   return (
     <ConfirmedScheduleView load={asLoad(sessions)} therapists={therapists.data ?? []} patients={patients.data ?? []} filters={filters} onFilters={(next: ScheduleFilters) => { setFilters(next); setPage(0) }}
-      sort={sort} onSort={(next) => { setSort(next); setPage(0) }} page={page} onPage={setPage} exporting={exporting} onExport={(kind) => void save(kind)} />
+      sort={sort} onSort={(next) => { setSort(next); setPage(0) }} page={page} onPage={setPage} exporting={exporting} onExport={(kind) => void save(kind)} onMark={(row, attendance) => void mark(row, attendance)} marking={marking} />
   )
 }
 

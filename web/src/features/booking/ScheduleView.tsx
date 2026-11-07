@@ -2,9 +2,11 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Notice, PageHeader, Panel, Skeleton, StatusPill } from '@/components/Display'
+import type { Attendance } from '@/data/booking'
 import { sessionsOn, type Schedule, type ScheduleAudience, type ScheduleDay, type ScheduleSession } from '@/data/schedule'
 import { Fact, Loadable, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
+import { AttendanceControl } from './AttendanceControl'
 import { statusTone, useCenterFormat } from './format'
 import { MonthCalendar, type CalendarDay } from './MonthCalendar'
 
@@ -13,9 +15,14 @@ type Props = {
   date: string | null; onDate: (date: string) => void; actions?: ReactNode
   /** Where a linked patient's record opens. A booking alone opens nothing, so an unlinked patient has no link here. */
   recordPath?: (patientId: string) => string
+  /** Marks who came. Only a therapist has this, and only once a session has started. */
+  onMark?: (session: ScheduleSession, attendance: Attendance) => void
+  marking?: boolean
 }
 
-function SessionDetails({ session, audience, recordPath }: { session: ScheduleSession; audience: ScheduleAudience; recordPath?: Props['recordPath'] }) {
+type Details = { audience: ScheduleAudience; recordPath?: Props['recordPath']; onMark?: Props['onMark']; marking?: boolean }
+
+function SessionDetails({ session, audience, recordPath, onMark, marking }: Details & { session: ScheduleSession }) {
   const { t } = useTranslation()
   const record = session.linked && session.patientId && recordPath ? recordPath(session.patientId) : null
   return (
@@ -32,12 +39,18 @@ function SessionDetails({ session, audience, recordPath }: { session: ScheduleSe
         <Fact term={t('booking.reference')}><span className="numeric">{session.reference}</span></Fact>
       </dl>
       {audience === 'therapist' && !record && <p className="mt-2 text-sm text-slate">{t('booking.scheduleNotLinked')}</p>}
+      {onMark && session.started && (
+        <div className="mt-3">
+          <p className="mb-1.5 text-sm font-semibold">{t('booking.attendanceTitle')}</p>
+          <AttendanceControl value={session.attendance} label={t('booking.attendanceFor', { patient: session.patient ?? '' })} disabled={marking} onMark={(value) => onMark(session, value)} />
+        </div>
+      )}
     </div>
   )
 }
 
 /** The chosen date by time, across the center's hours, so a session reads in its place in the day. */
-function Agenda({ day, audience, recordPath }: { day: ScheduleDay | undefined; audience: ScheduleAudience; recordPath?: Props['recordPath'] }) {
+function Agenda({ day, audience, recordPath, onMark, marking }: Details & { day: ScheduleDay | undefined }) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   if (!day) return <p className="text-sm text-slate">{t('booking.scheduleChoose')}</p>
@@ -50,7 +63,7 @@ function Agenda({ day, audience, recordPath }: { day: ScheduleDay | undefined; a
           {day.rows.map((row) => (
             <li key={row.startsAt} className="flex flex-wrap items-start gap-x-4 gap-y-1 py-2.5">
               <span className={cn('w-40 shrink-0 text-sm', row.session ? 'font-semibold' : 'text-slate')}>{format.range(row.startsAt, row.endsAt)}</span>
-              {row.session ? <SessionDetails session={row.session} audience={audience} recordPath={recordPath} /> : <span className={cn('text-sm', row.onLeave ? 'font-semibold' : 'text-slate')}>{t(row.onLeave ? 'scheduler.onLeave' : 'booking.scheduleFree')}</span>}
+              {row.session ? <SessionDetails session={row.session} audience={audience} recordPath={recordPath} onMark={onMark} marking={marking} /> : <span className={cn('text-sm', row.onLeave ? 'font-semibold' : 'text-slate')}>{t(row.onLeave ? 'scheduler.onLeave' : 'booking.scheduleFree')}</span>}
             </li>
           ))}
         </ol>
@@ -60,7 +73,7 @@ function Agenda({ day, audience, recordPath }: { day: ScheduleDay | undefined; a
 }
 
 /** What a Scheduler has confirmed: a month to find a date, and that date laid out by time. Requests still waiting stay on My bookings. */
-export function ScheduleView({ audience, load, month, onMonth, canGoBack, canGoForward, today, date, onDate, actions, recordPath }: Props) {
+export function ScheduleView({ audience, load, month, onMonth, canGoBack, canGoForward, today, date, onDate, actions, recordPath, onMark, marking }: Props) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const days = load.status === 'ready' ? load.data.days : []
@@ -81,7 +94,7 @@ export function ScheduleView({ audience, load, month, onMonth, canGoBack, canGoF
         </Panel>
         <Panel title={date ? format.calendarDay(date) : t('booking.scheduleDay')}>
           <Loadable load={load} skeleton={<div className="grid gap-2">{[0, 1, 2, 3].map((index) => <Skeleton key={index} className="h-12 rounded-control" />)}</div>}>
-            {(schedule) => <Agenda day={schedule.days.find((item) => item.date === date)} audience={audience} recordPath={recordPath} />}
+            {(schedule) => <Agenda day={schedule.days.find((item) => item.date === date)} audience={audience} recordPath={recordPath} onMark={onMark} marking={marking} />}
           </Loadable>
         </Panel>
       </div>
