@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 
 /** Runs against the design gallery, which uses the same components and views as the app. */
 const SCREENS = [
-  '/design/patient/notifications', '/design/patient/bookings/move', '/design/scheduler', '/design/scheduler/schedule', '/design/scheduler/schedule?series', '/design/scheduler/requests', '/design/scheduler/calendar', '/design/scheduler/calendar?tab=holidays', '/design/scheduler/calendar?tab=closures', '/design/scheduler/calendar?tab=timeoff', '/design/scheduler/calendar?outside', '/design/therapist/schedule', '/design/patient/schedule', '/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
+  '/design/patient/notifications', '/design/patient/bookings/move', '/design/scheduler', '/design/scheduler/schedule', '/design/scheduler/schedule?series', '/design/scheduler/requests', '/design/scheduler/calendar', '/design/scheduler/calendar?tab=holidays', '/design/scheduler/calendar?tab=closures', '/design/scheduler/calendar?tab=timeoff', '/design/scheduler/calendar?outside', '/design/therapist/schedule', '/design/patient/schedule', '/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/sign-up', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
   '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
 ]
 
@@ -328,7 +328,7 @@ test('an account opens by keyboard alone', async ({ page }) => {
 test.describe('public pages', () => {
   test('the landing page and sign-in fit a phone', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 })
-    for (const path of ['/design/landing', '/design/sign-in']) {
+    for (const path of ['/design/landing', '/design/sign-in', '/design/sign-up']) {
       await page.goto(path)
       await page.waitForLoadState('networkidle')
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)

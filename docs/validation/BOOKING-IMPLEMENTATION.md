@@ -473,3 +473,28 @@ Looking at the page by eye found a fault no test had caught. With reduced motion
 ## S11 outcome
 
 All five issues are implemented and closed, with no criterion deferred. The sprint demo ran for real, in one sitting, through the same API the apps call, in `python scripts/test_booking.py s11_demo` (8 checks): a patient joined a waitlist and heard when the place opened, moved a session, a therapist marked a no-show, a Scheduler booked a weekly course with one conflicting date, and read the dashboard. Physical phones are still to be tried, and are on the checklist.
+
+## MOT-68: Web sign-up and the landing page
+
+The public page now speaks to patients first: what Motivance does for them, how booking works in three steps, Book a Session, sign-in, sign-up and the Android app, then the care team and the privacy facts. The skeleton the owner reviewed stays as the page's one bold element. Each step shows the product's real pieces at rest, and every claim was checked against what the product does today. With no app address set, the page says the app is not in a store yet rather than offering a dead link.
+
+Web sign-up has Android's four steps and rules, reuses the checks already in `data/profile.ts` and sends the same `patient_profile` details, so the same database trigger makes the account. It ends with the emailed code, and Book a Session carries through sign-up and sign-in to the booking page. Staff following the same link still reach their own workspace.
+
+**Local Auth sends through a real Gmail account.** The first draft of the browser test would have sent real mail to a made-up address, and this was caught before it ran, so nothing was sent. The test now holds back only the send: what the browser posts makes the account through Auth and the same trigger, and the code it enters is the real one the email would have carried. A contract test proves the real refusals, which fail in the database before any email. A real inbox is on the checklist.
+
+The public pages' text moved into its own file, which loads with them, so the first download fell from 297 KB to 296 KB even with a new page.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Sign-up rules, and the same details under the same names as Android | `npm test` | 253 passed |
+| Real refusals, a patient and only a patient, no sign-in before the code | `npm run test:contract` | 139 passed |
+| Sign-up in the browser with axe: every step, editing, the agreement, a username in use, a wrong code, the code, reaching booking | `npx playwright test signup --workers=1` | 6 passed |
+| The landing page: what it offers, Filipino, axe and no sideways scroll at 360, 768, 1024 and 1440, keyboard with visible focus | `npx playwright test landing --workers=1` | 8 passed |
+| Each role reaching its own dashboard, and everything these pages touch | `npx playwright test landing signup auth design patient --workers=1` | 120 passed, over two runs on the same code. 83 opt-in tests did not run, as designed |
+| All live API sections | `python scripts/test_booking.py` | 735 checks passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 296 KB of 300 KB |
+
+The second browser run was needed because an older test, "the page offers no sign-up", pinned the rule this issue changes. It now proves that sign-in leads someone new to sign-up. The 14 tests behind it in that serial file did not run the first time, and all 22 in the file passed the second.
+
+Reviewing the pages by eye found two things the tests had not: the header crowded the logo on a phone, so Create account now sits in the page's main button and the footer there, and the step samples floated away from the text below them.

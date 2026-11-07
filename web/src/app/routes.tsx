@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, Outlet, useNavigate, type RouteObject } from 'react-router'
+import { Navigate, Outlet, useNavigate, useSearchParams, type RouteObject } from 'react-router'
 import { useAuth, useSignedIn } from '@/auth/AuthProvider'
 import { IdleGuard } from '@/auth/IdleGuard'
 import { SignInPage } from '@/auth/SignInPage'
@@ -54,6 +54,7 @@ const PatientProgress = patient('PatientProgressPage')
 const PatientProfile = patient('PatientProfilePage')
 const Profile = lazy(async () => ({ default: (await import('@/features/profile/pages')).ProfilePage }))
 const LandingPage = lazy(async () => ({ default: (await import('@/landing/LandingPage')).LandingPage }))
+const SignUpPage = lazy(async () => ({ default: (await import('@/auth/SignUpPage')).SignUpPage }))
 
 function Splash() {
   const { t } = useTranslation()
@@ -73,12 +74,14 @@ function Unavailable() {
   return <main className="mx-auto grid min-h-dvh max-w-[40rem] content-center px-6"><Notice title={t('common.loadFailedTitle')} onRetry={retry}>{t('common.loadFailed')}</Notice></main>
 }
 
-function SignedOutOnly() {
+function SignedOutOnly({ signUp = false }: { signUp?: boolean }) {
   const { state } = useAuth()
+  const [params] = useSearchParams()
   if (state.status === 'loading') return <Splash />
   if (state.status === 'unavailable') return <Unavailable />
-  if (state.status === 'signedIn') return <Navigate to="/" replace />
-  return <SignInPage notice={state.reason} />
+  // Someone who came to book goes on to book, but only a patient books: staff still reach their own workspace.
+  if (state.status === 'signedIn') return <Navigate to={params.get('next') === 'book' && homePath(state.roles) === workspacePath('patient') ? '/patient/book' : '/'} replace />
+  return signUp ? <Suspense fallback={<Splash />}><SignUpPage /></Suspense> : <SignInPage notice={state.reason} />
 }
 
 function SignedInOnly() {
@@ -138,6 +141,7 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
 export const routes: RouteObject[] = [
   { index: true, element: <Front /> },
   { path: 'sign-in', element: <SignedOutOnly /> },
+  { path: 'sign-up', element: <SignedOutOnly signUp /> },
   {
     element: <SignedInOnly />,
     children: [

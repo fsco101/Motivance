@@ -4,7 +4,7 @@
   "title": "S12 - Front door, push and handover",
   "description": "Weeks 23-24. Exit: the public page sells booking and accepts sign-ups, FCM push is ready for credentials, and the full feature passes final regression with its changes and settings written down.",
   "goal": "Open the front door to patients and finish the feature.",
-  "status": "planned",
+  "status": "in-progress",
   "weeks": {
     "start": 23,
     "end": 24
@@ -48,7 +48,7 @@
       "github_issue": 85,
       "title": "Add web sign-up and redesign the landing page",
       "description": "Turn the public page into the way in for patients, now that every role uses the web app.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Product designer",
       "estimate_points": 8,
@@ -85,41 +85,92 @@
         {
           "id": "MOT-68-AC1",
           "description": "The page has a clear value proposition, how booking works in 3 steps, a Book a Session action, sign-in and sign-up, and a mobile app section.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC2",
           "description": "Web sign-up applies the same rules and consent as Android and finishes with the emailed code.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC3",
           "description": "After sign-in, each role reaches its own dashboard: Admin, Scheduler, Therapist or Patient.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC4",
           "description": "The page is responsive and passes WCAG AA contrast and keyboard checks with axe.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC5",
           "description": "Every claim is something the product does today, in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T05:27:53.831027+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/src/auth/SignUpPage.tsx",
+          "web/src/landing/LandingPage.tsx",
+          "web/tests/e2e/signup.spec.ts",
+          "web/tests/e2e/landing.spec.ts",
+          "web/tests/contract/signup.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/src/auth/SignUpPage.tsx",
+        "web/src/landing/LandingPage.tsx",
+        "web/tests/e2e/signup.spec.ts",
+        "web/tests/e2e/landing.spec.ts",
+        "web/tests/contract/signup.test.ts"
+      ]
     },
     {
       "id": "MOT-69",

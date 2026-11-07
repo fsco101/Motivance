@@ -174,6 +174,8 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] On a physical phone, join a waitlist for a full time, watch the place open from a second account, and book it from My bookings. It passed on an emulator against the local backend; a real phone and a real network have not been tried.
 - [ ] On a physical phone, move a session from My bookings, and check that a date with no free time still reads clearly at large text sizes and with TalkBack.
 - [ ] On a physical phone, mark a session attended, correct it to a no-show, and check the two marks read clearly at large text sizes and with TalkBack. It passed on an emulator against the local backend.
+- [ ] Sign up on the web with a real inbox, on a hosted project, and confirm the code arrives and works. Browser tests hold back the send, because local Auth sends through a real mail account.
+- [ ] Have a Filipino speaker review `web/src/locales/landing.fil.json`.
 
 ## Recording results
 

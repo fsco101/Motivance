@@ -27,25 +27,14 @@
   },
   "auth": {
     "backHome": "Back to home", "recoveryStep": "Step {{step}} of 2", "capsLock": "Caps Lock is on.", "sharedComputer": "On a shared computer? You are signed out after 15 minutes without activity.",
-    "welcome": "Welcome back.", "description": "Sign in to your Motivance account.", "promise": "See how far each patient moves, and set how far they go next.",
+    "welcome": "Welcome back.", "description": "Sign in to your Motivance account.", "promise": "Your sessions, your exercises and your progress, in one place.",
     "recoveryHeading": "Let’s get you back in.", "recoveryDescription": "Enter your email to request a password reset code.", "newPasswordDescription": "Enter your email code and choose a new password.",
     "email": "Email", "password": "Password", "newPassword": "New password", "emailCode": "Email code", "signIn": "Sign in", "sendCode": "Send reset code", "savePassword": "Save new password",
     "forgotPassword": "Forgot password?", "backToSignIn": "Back to sign in", "resendCode": "Send a new code",
     "invalidEmail": "Enter a valid email address.", "passwordRequired": "Enter your password.", "passwordShort": "Use at least 8 characters.", "codeRequired": "Enter the code from your email.",
     "recoverySent": "If this email has an account, a reset code is on its way.", "signedOutIdle": "You were signed out after 15 minutes without activity.", "accountDisabled": "This account is disabled. Contact your administrator.",
-    "mobileHint": "Patients use the Motivance mobile app."
-  },
-  "landing": {
-    "title": "See how far every patient moves.", "lead": "Motivance follows movement through a phone camera and counts each repetition against the range you prescribe. You set the target, your patient does the work, and the results reach your desk.",
-    "signInStaff": "Sign in as staff", "how": "How it works", "step1": "Set the range", "step1Detail": "Choose an exercise, drag the arc to the start and target angles, and publish it to your patient.",
-    "step2": "The patient moves", "step2Detail": "At home, the phone camera follows the joint and counts each repetition that reaches the target and returns.", "phoneCount": "Repetitions",
-    "step3": "Review the result", "step3Detail": "Measured range and repetitions arrive here, session by session, so you can adjust the plan.",
-    "forWhom": "One place for each job", "therapists": "Therapists", "therapistsDetail": "Invite patients, prescribe ranges and your own exercises, and follow progress on a large screen.",
-    "administrators": "Administrators", "administratorsDetail": "Manage accounts, care-team links and the exercise catalogue. Every change is confirmed and audited.",
-    "patients": "Patients", "patientsDetail": "Exercises run in the Motivance mobile app, because they need the phone camera.",
-    "privacyTitle": "Camera frames stay on the phone.", "privacyDetail": "Only consented movement summaries are saved. No images, video or landmarks are stored.", "notValidated": "Development prototype. Movement measurements require professional validation.",
-    "demoLabel": "A sample skeleton measuring elbow flexion", "demoSlider": "Forearm angle", "demoHint": "Take the hand and move the arm yourself.", "demoSample": "Sample movement, not patient data.",
-    "demoStart": "Start at {{degrees}}° or below", "demoReach": "Reach {{degrees}}°", "demoReturn": "Return to {{degrees}}°", "demoCount": "{{count}} of {{target}}", "demoCountLabel": "Repetitions counted"
+    "newHere": "New to Motivance?",
+    "createAccount": "Create an account"
   },
   "custom": {
     "add": "Add custom exercise", "title": "New custom exercise", "help": "Describe the movement and choose the joint the camera measures. Only you can assign this exercise.", "name": "Exercise name", "joint": "Joint the camera measures",

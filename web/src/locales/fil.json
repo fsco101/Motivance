@@ -27,25 +27,14 @@
   },
   "auth": {
     "backHome": "Bumalik sa home", "recoveryStep": "Hakbang {{step}} sa 2", "capsLock": "Naka-on ang Caps Lock.", "sharedComputer": "Nasa shared na computer? Masa-sign out ka matapos ang 15 minutong walang aktibidad.",
-    "welcome": "Maligayang pagbabalik.", "description": "Mag-sign in sa iyong Motivance account.", "promise": "Tingnan kung gaano kalayo ang galaw ng bawat pasyente, at itakda ang susunod na target.",
+    "welcome": "Maligayang pagbabalik.", "description": "Mag-sign in sa iyong Motivance account.", "promise": "Ang iyong mga session, ehersisyo at progreso, sa iisang lugar.",
     "recoveryHeading": "Bumalik sa iyong account.", "recoveryDescription": "Ilagay ang email para humiling ng code sa pag-reset ng password.", "newPasswordDescription": "Ilagay ang code mula sa email at pumili ng bagong password.",
     "email": "Email", "password": "Password", "newPassword": "Bagong password", "emailCode": "Code mula sa email", "signIn": "Mag-sign in", "sendCode": "Ipadala ang reset code", "savePassword": "I-save ang bagong password",
     "forgotPassword": "Nakalimutan ang password?", "backToSignIn": "Bumalik sa pag-sign in", "resendCode": "Magpadala ng bagong code",
     "invalidEmail": "Maglagay ng wastong email address.", "passwordRequired": "Ilagay ang iyong password.", "passwordShort": "Gumamit ng hindi bababa sa 8 character.", "codeRequired": "Ilagay ang code mula sa iyong email.",
     "recoverySent": "Kung may account ang email na ito, ipinapadala na ang reset code.", "signedOutIdle": "Na-sign out ka matapos ang 15 minutong walang aktibidad.", "accountDisabled": "Naka-disable ang account na ito. Makipag-ugnayan sa iyong administrador.",
-    "mobileHint": "Ginagamit ng mga pasyente ang Motivance mobile app."
-  },
-  "landing": {
-    "title": "Tingnan kung gaano kalayo ang galaw ng bawat pasyente.", "lead": "Sinusubaybayan ng Motivance ang galaw gamit ang camera ng telepono at binibilang ang bawat ulit ayon sa saklaw na nireseta mo. Ikaw ang nagtatakda ng target, ang pasyente ang gumagawa, at dumarating sa iyo ang resulta.",
-    "signInStaff": "Mag-sign in bilang staff", "how": "Paano ito gumagana", "step1": "Itakda ang saklaw", "step1Detail": "Pumili ng ehersisyo, i-drag ang arko sa simula at target na anggulo, at ilathala ito sa iyong pasyente.",
-    "step2": "Gumagalaw ang pasyente", "step2Detail": "Sa bahay, sinusundan ng camera ng telepono ang kasukasuan at binibilang ang bawat ulit na umaabot sa target at bumabalik.", "phoneCount": "Mga ulit",
-    "step3": "Suriin ang resulta", "step3Detail": "Dumarating dito ang nasukat na saklaw at mga ulit, bawat sesyon, para maiayos mo ang plano.",
-    "forWhom": "Isang lugar para sa bawat gawain", "therapists": "Mga therapist", "therapistsDetail": "Mag-imbita ng pasyente, magreseta ng saklaw at sarili mong ehersisyo, at subaybayan ang pag-unlad sa malaking screen.",
-    "administrators": "Mga administrator", "administratorsDetail": "Pamahalaan ang mga account, ugnayan ng care team at katalogo ng ehersisyo. Kinukumpirma at itinatala ang bawat pagbabago.",
-    "patients": "Mga pasyente", "patientsDetail": "Sa Motivance mobile app ginagawa ang mga ehersisyo, dahil kailangan ang camera ng telepono.",
-    "privacyTitle": "Nananatili sa telepono ang camera.", "privacyDetail": "Buod lamang na pinahintulutan ang sine-save. Walang sine-save na larawan, video o landmark.", "notValidated": "Development prototype. Kailangan ng propesyonal na pagpapatunay sa mga sukat.",
-    "demoLabel": "Halimbawang skeleton na sumusukat ng elbow flexion", "demoSlider": "Anggulo ng bisig", "demoHint": "Hawakan ang kamay at igalaw ang braso.", "demoSample": "Halimbawang galaw, hindi datos ng pasyente.",
-    "demoStart": "Magsimula sa {{degrees}}° o mas mababa", "demoReach": "Abutin ang {{degrees}}°", "demoReturn": "Bumalik sa {{degrees}}°", "demoCount": "{{count}} sa {{target}}", "demoCountLabel": "Nabilang na ulit"
+    "newHere": "Bago sa Motivance?",
+    "createAccount": "Gumawa ng account"
   },
   "custom": {
     "add": "Magdagdag ng custom na ehersisyo", "title": "Bagong custom na ehersisyo", "help": "Ilarawan ang galaw at piliin ang kasukasuang susukatin ng camera. Ikaw lamang ang makakapagtalaga ng ehersisyong ito.", "name": "Pangalan ng ehersisyo", "joint": "Kasukasuang susukatin ng camera",

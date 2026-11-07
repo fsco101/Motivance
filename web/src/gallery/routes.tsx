@@ -5,6 +5,7 @@ import type { Closure, Holiday, TimeOff } from '@/data/calendar'
 import type { ScheduleAudience } from '@/data/schedule'
 import { NO_FILTERS as NO_REQUEST_FILTERS, NO_SCHEDULE_FILTERS, type RequestRow } from '@/data/scheduler'
 import { SignInPage } from '@/auth/SignInPage'
+import { SignUpPage } from '@/auth/SignUpPage'
 import type { Workspace } from '@/auth/roles'
 import { toast } from '@/components/Toast'
 import { AccountsView } from '@/features/admin/AccountsView'
@@ -195,7 +196,7 @@ const profileActions: ProfileActions = {
 const Profile = () => <ProfileView load={useDemo(data.profile, { ...data.profile, complete: false, consent: false, username: '', photo: null })} actions={profileActions} />
 
 const SCREENS = [
-  ['Landing', '/design/landing'], ['Sign-in', '/design/sign-in'], ['Components', '/design/components'],
+  ['Landing', '/design/landing'], ['Sign-in', '/design/sign-in'], ['Sign-up', '/design/sign-up'], ['Components', '/design/components'],
   ['Therapist home', THERAPIST], ['Patients', `${THERAPIST}/patients`], ['Patient record', `${THERAPIST}/patients/p1`], ['Assignment editor', `${THERAPIST}/patients/p1/assign`], ['Exercises', `${THERAPIST}/exercises`], ['Progress', `${THERAPIST}/progress`],
   ['Admin overview', ADMIN], ['Accounts', `${ADMIN}/accounts`], ['Links', `${ADMIN}/links`], ['Catalogue', `${ADMIN}/catalogue`], ['Activity', `${ADMIN}/activity`], ['Profile', `${ADMIN}/profile`],
 ] as const
@@ -216,6 +217,7 @@ export const galleryRoutes: RouteObject[] = [{
     { index: true, element: <Index /> },
     { path: 'components', element: <ComponentGallery /> },
     { path: 'sign-in', element: <SignInPage /> },
+    { path: 'sign-up', element: <SignUpPage /> },
     { path: 'landing', element: <LandingPage /> },
     {
       path: 'therapist', element: <Frame workspace="therapist" />, handle: { crumb: 'nav.home' },
