@@ -89,7 +89,7 @@ export const KINDS: Record<string, string> = {
   'exercises:deactivate': 'exerciseDeactivated', 'exercise_versions:publish': 'versionPublished', 'prescription_versions:insert': 'prescription', 'sessions:insert': 'session',
   'consents:insert': 'consent', 'data_requests:insert': 'requestCreated', 'data_requests:update': 'requestUpdated', 'bookings:requested': 'bookingRequested', 'bookings:confirmed': 'bookingConfirmed',
   'bookings:rejected': 'bookingRejected', 'bookings:cancelled': 'bookingCancelled', 'bookings:rescheduled': 'bookingRescheduled', 'bookings:returned_to_pending': 'bookingReturned',
-  'bookings:therapist_changed': 'bookingTherapist', 'bookings:attendance_marked': 'bookingAttendance', 'bookings:export': 'bookingExported',
+  'bookings:therapist_changed': 'bookingTherapist', 'bookings:attendance_marked': 'bookingAttendance', 'bookings:series_booked': 'bookingSeries', 'bookings:export': 'bookingExported',
 }
 
 /** Mirrors AuditEvent.kind on Android. */

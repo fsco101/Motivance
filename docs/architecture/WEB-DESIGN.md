@@ -81,7 +81,8 @@ The sidebar and top bar stay in place while the page scrolls. Below 1024 px the 
 Visitors reach the landing page at `/`; a signed-in account skips it and goes to its workspace. These two pages also work on a phone, as does the patient workspace. The staff workspaces start at 768 px.
 
 - **Landing hero.** A front-facing skeleton measures elbow flexion by itself, and anyone can take the hand and move it, by pointer or arrow keys. The angle, the prescribed band and the repetition count respond using the same rule as the app. It is labelled as sample movement, and it stops playing when it leaves the screen or someone takes over.
-- **Landing content.** Three numbered steps (they really are a sequence), who each part is for, and the privacy facts in Android's own words. There are no statistics, logos or quotes, because the product has none yet.
+- **Landing content.** The page speaks to patients first: what Motivance does for them, how booking works, and the Android app, then the care team and the privacy facts in Android's own words. The three booking steps are numbered because they are a sequence, and each shows the product's real pieces at rest rather than an icon. There are no statistics, logos or quotes, because the product has none yet. The app section offers a link and QR code only when the app has an address, and otherwise says it is not in a store yet.
+- **Sign-up.** Four steps and an email code, in the same frame as sign-in, with the model person's arm rising as the steps pass. Like Android, Continue is always available, and a step shows what is wrong only after someone tries to leave it. Attention moves to each new step's heading, so a screen reader announces it.
 - **Sign-in model person.** A dial read as a car speedometer, so the owner replaced it with a person. Their arm rests low, rises through a soft arc as the form is completed, and eases down on an error. The body is one set of curved anatomical outlines rather than capsules, so it reads as human. It shows the same character as the Android guide, in the same clothes.
 - **Sign-in details.** Warns when Caps Lock is on, moves between sign-in and the two recovery steps with a short transition, and states the 15-minute sign-out for shared computers.
 
@@ -99,11 +100,15 @@ The bell sits in the header for patients, therapists and Schedulers, and opens a
 
 ## Scheduler workspace
 
+The workspace opens on three figures: pending requests, today's sessions and this week's utilization. Each opens the page it counted, already filtered, and the page says what utilization means. A share of nothing shows a dash rather than a zero.
+
 A Scheduler works through a queue, so Requests is one dense table: filters above, the chosen booking and its history beside it, and every decision in a dialog that names the patient and the time. Search, filters, sorting and paging run on the server, because the table has to stay correct however many bookings exist.
 
 The list can change under a Scheduler, so it never trusts what is on screen. A refused action always reloads the list. If the booking itself has changed, the dialog closes to show what happened. If only the choice is wrong, such as a therapist who has just become busy, it stays open with the updated choices. A selection counts only rows still pending, so the number in a bulk confirmation is the number that will change.
 
-The confirmed schedule is the same kind of table as Requests, with exports beside the title. An export covers everything the filters match, not the page on screen, and the page says so. Its code loads only when someone exports, because it is by far the heaviest thing a Scheduler uses and most visits never need it.
+The confirmed schedule is the same kind of table as Requests, with exports beside the title. Attendance is marked in the table once a session has started, with both marks side by side, so correcting one is the same single action as making it. An export covers everything the filters match, not the page on screen, and the page says so. Its code loads only when someone exports, because it is by far the heaviest thing a Scheduler uses and most visits never need it.
+
+A weekly course starts from the Schedule page. The dialog takes the patient, therapist, first session and number of weeks, then lists every date with what would stop it, so nothing is saved blind. The rest of a course can be cancelled from any of its sessions, in the details beside Requests.
 
 The Calendar page keeps hours and rules together, with holidays and closures on tabs of their own. A closure or holiday that overlaps active bookings opens a second step listing each one, and it cannot save until every booking is rescheduled or cancelled. The time being closed is removed from the choices, so nobody can move a booking into it. Nothing is applied until the save, which either all happens or none of it does.
 

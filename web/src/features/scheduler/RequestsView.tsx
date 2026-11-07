@@ -37,6 +37,7 @@ function History({ load }: { load: Load<RequestDetail> }) {
               <p className="font-semibold">{t(`scheduler.event.${event.action}`, event.action)}</p>
               <p className="text-slate">{event.actor ?? t('scheduler.system')}, {format.day(event.recordedAt)} {format.time(event.recordedAt)}</p>
               {event.toStartsAt && event.action === 'rescheduled' && <p className="text-slate">{t('scheduler.movedTo', { when: `${format.day(event.toStartsAt)}, ${format.time(event.toStartsAt)}` })}</p>}
+              {event.toAttendance && <p className="text-slate">{t(`booking.attendance.${event.toAttendance}`)}</p>}
               {event.reason && <p className="text-slate">{reasonText(event.reason)}</p>}
             </li>
           ))}
@@ -51,6 +52,8 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
   const format = useCenterFormat()
   const reasonText = useReasonText('scheduler')
   const active = ACTIVE.includes(row.status)
+  // The rest of the course can go together, from any of its sessions.
+  const remaining = detail?.status === 'ready' ? detail.data.seriesRemaining : 0
   return (
     <motion.aside aria-label={t('scheduler.details', { reference: row.reference })} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={spring.layout}
       className="rounded-card border border-line bg-paper p-5 shadow-rest desk:sticky desk:top-19">
@@ -66,6 +69,7 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
         <Fact term={t('scheduler.when')}>{format.when(row.startsAt, row.endsAt)}</Fact>
         {(row.therapist || active) && <Fact term={t('booking.therapist')}>{row.therapist ?? t('booking.noTherapist')}</Fact>}
         {row.reason && <Fact term={t('booking.reason')}>{reasonText(row.reason)}</Fact>}
+        {remaining > 0 && <Fact term={t('scheduler.seriesRemaining')}>{remaining}</Fact>}
       </dl>
       {active && (
         <div className="mt-5 flex flex-wrap gap-2">
@@ -77,6 +81,7 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
             : <Button size="sm" variant="quiet" onClick={() => onAct('cancel', row)}>{t('booking.cancel')}</Button>}
         </div>
       )}
+      {remaining > 0 && <Button className="mt-2" size="sm" variant="quiet" onClick={() => onAct('series', row)}>{t('scheduler.seriesCancel')}</Button>}
       <h3 className="mb-2 mt-6 font-sans text-base font-bold">{t('scheduler.history')}</h3>
       {detail && <History load={detail} />}
     </motion.aside>
@@ -98,7 +103,7 @@ export function RequestsView({ load, therapists, filters, onFilters, sort, onSor
     { key: 'starts_at', header: t('scheduler.when'), sortable: true, cell: (row) => <><span className="block whitespace-nowrap font-semibold">{format.day(row.startsAt)}</span><span className="whitespace-nowrap text-slate">{format.range(row.startsAt, row.endsAt)}</span></> },
     { key: 'patient', header: t('scheduler.patient'), sortable: true, cell: (row) => <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(row) }} className="text-left font-semibold hover:underline">{row.patient}</button> },
     { key: 'therapist', header: t('booking.therapist'), sortable: true, cell: (row) => row.therapist ?? (ACTIVE.includes(row.status) && <span className="text-slate">{t('booking.noTherapist')}</span>) },
-    { key: 'status', header: t('scheduler.status'), sortable: true, cell: (row) => <StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill> },
+    { key: 'status', header: t('scheduler.status'), sortable: true, cell: (row) => <span className="flex flex-wrap gap-1"><StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill>{row.seriesId && <StatusPill>{t('scheduler.seriesLabel')}</StatusPill>}</span> },
     { key: 'reference_no', header: t('booking.reference'), hideBelow: 'desk', sortable: true, cell: (row) => <span className="numeric whitespace-nowrap">{row.reference}</span> },
     { key: 'created_at', header: t('scheduler.requested'), hideBelow: 'wide', sortable: true, cell: (row) => <span className="whitespace-nowrap">{format.day(row.createdAt)}</span> },
   ]

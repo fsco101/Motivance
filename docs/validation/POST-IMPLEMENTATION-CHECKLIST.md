@@ -171,8 +171,18 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] On a hosted project, follow `docs/operations/NOTIFICATIONS.md` and confirm a real email reaches an inbox through Gmail on port 465. Local runs resolve the mail server by address, so this also proves the mail library can look up `smtp.gmail.com` from a hosted Edge Function.
 - [ ] Add a session to a real calendar from an email, reschedule it, and confirm the calendar updates the same entry. Google Calendar and Apple Calendar treat downloaded files differently, so check both.
 - [ ] Have a Filipino speaker review the booking and scheduling text in `web/src/locales/fil.json`, `android/app/src/main/res/values-fil/strings.xml` and `supabase/functions/_shared/email.ts`.
+- [ ] On a physical phone, join a waitlist for a full time, watch the place open from a second account, and book it from My bookings. It passed on an emulator against the local backend; a real phone and a real network have not been tried.
+- [ ] On a physical phone, move a session from My bookings, and check that a date with no free time still reads clearly at large text sizes and with TalkBack.
+- [ ] On a physical phone, mark a session attended, correct it to a no-show, and check the two marks read clearly at large text sizes and with TalkBack. It passed on an emulator against the local backend.
+- [ ] Sign up on the web with a real inbox, on a hosted project, and confirm the code arrives and works. Browser tests hold back the send, because local Auth sends through a real mail account.
+- [ ] Have a Filipino speaker review `web/src/locales/landing.fil.json`.
+- [ ] With the owner's Firebase project and credentials, follow `docs/operations/NOTIFICATIONS.md`, and confirm a real push reaches a real phone, that tapping it opens Notifications, and that a lock screen hides its text. Tests so far use a stub FCM server, and no real token has ever been issued.
+- [ ] On a hosted project, apply migrations `202611060001` to `202611060020`, deploy `notification-dispatch` and `booking-calendar`, set the secrets in `docs/operations/NOTIFICATIONS.md`, and confirm the three scheduled jobs run. Everything so far ran on the local stack.
+- [ ] Before opening booking to patients, enter the center's real name, address and capacity in the Calendar settings, because the seeded values are placeholders.
+- [ ] Have the deployment owner approve retention for booking data and review what passes through Gmail and Google. `docs/operations/DATA-LIFECYCLE.md` lists it.
+- [ ] Have a Scheduler run a real week on a large screen: decide requests, resolve a closure, book a weekly course and export the schedule. Nobody who does this work has used it yet.
+- [ ] With local Auth pointed at a mail catcher rather than real SMTP, run `python scripts/test_local_auth.py`. It refuses to run against real SMTP, which is how the local stack is set up, so the final regression did not run it.
 
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
-- [ ] On a physical phone, join a waitlist for a full time, watch the place open from a second account, and book it from My bookings. It passed on an emulator against the local backend; a real phone and a real network have not been tried.

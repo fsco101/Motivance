@@ -28,7 +28,7 @@ private const val MONTHS_EITHER_WAY=12L
 }
 
 /** A patient reads who they will see and where. A therapist reads who is coming, and a record opens only through a link. */
-@Composable private fun SessionCard(session:ScheduleSession,therapist:Boolean,canOpen:Boolean,open:()->Unit) {
+@Composable private fun SessionCard(session:ScheduleSession,therapist:Boolean,canOpen:Boolean,marking:Boolean,mark:(String)->Unit,open:()->Unit) {
     val format=rememberSessionFormat()
     ClinicalCard(accent=MaterialTheme.colorScheme.primary) {
         Row(verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -46,6 +46,14 @@ private const val MONTHS_EITHER_WAY=12L
         if(therapist) {
             if(!session.linked) Text(stringResource(R.string.schedule_not_linked),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
             else if(canOpen) ActionButton(R.string.schedule_open_record,open,outlined=true)
+            if(session.started) {
+                Text(stringResource(R.string.booking_attendance_title),style=MaterialTheme.typography.titleSmall,modifier=Modifier.semantics {heading()})
+                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                    listOf("attended" to R.string.booking_attended,"no_show" to R.string.booking_no_show).forEach {(value,label) ->
+                        FilterChip(session.attendance==value,{mark(value)},{Text(stringResource(label))},Modifier.heightIn(min=48.dp),enabled=!marking)
+                    }
+                }
+            }
         }
     }
 }
@@ -76,7 +84,7 @@ private const val MONTHS_EITHER_WAY=12L
             day.rows.forEach {row -> key(row.startsAt) {
                 val session=row.session
                 if(session==null) EmptyHour(row)
-                else SessionCard(session,state.therapist,session.patientId in patients) {session.patientId?.let(openPatient)}
+                else SessionCard(session,state.therapist,session.patientId in patients,state.marking!=null,{vm.mark(session,it)}) {session.patientId?.let(openPatient)}
             }}
         }
     }

@@ -75,6 +75,9 @@ def clear_mail():
 class Functions:
     """The Edge Functions, started with Mailpit's address, and refused if they would reach anything else."""
 
+    def __init__(self, extra=None):
+        self.extra = extra or {}
+
     def __enter__(self):
         # An address, because the mail library's name lookup cannot resolve a Docker container's name inside the Edge runtime.
         mail_host = subprocess.run(['docker', 'inspect', '-f', '{{(index .NetworkSettings.Networks "supabase_network_motivance").IPAddress}}', MAIL_CONTAINER], capture_output=True, text=True).stdout.strip()
@@ -82,7 +85,7 @@ class Functions:
             raise SystemExit('Mailpit is not running')
         handle, self.path = tempfile.mkstemp(suffix='.env', text=True)
         with os.fdopen(handle, 'w', encoding='utf-8') as file:
-            file.writelines(f'{key}={value}\n' for key, value in {**ENVIRONMENT, 'SMTP_HOST': mail_host}.items())
+            file.writelines(f'{key}={value}\n' for key, value in {**ENVIRONMENT, 'SMTP_HOST': mail_host, **self.extra}.items())
         command = ['npx.cmd' if os.name == 'nt' else 'npx', '--yes', 'supabase@2.20.12', 'functions', 'serve', '--env-file', self.path]
         self.process = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(90):
@@ -103,7 +106,7 @@ class Functions:
 
 
 def status(stack, booking_or_id):
-    return stack.sql(f"select d.status from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{booking_or_id}' order by d.created_at desc limit 1;")
+    return stack.sql(f"select d.status from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{booking_or_id}' and d.channel='email' order by d.created_at desc limit 1;")
 
 
 def checks(stack):
@@ -218,7 +221,7 @@ def checks(stack):
     made = [request(token, manila(later, hour)) for token, hour in [(ta, 10), (tb, 12), (ta, 13), (tb, 14)]]
     for booking in made:
         act('scheduler_confirm', {'p_booking': booking['id'], 'p_therapist': tess})
-    waiting = int(stack.sql("select count(*) from public.notification_deliveries where status='pending';"))
+    waiting = int(stack.sql("select count(*) from public.notification_deliveries where status='pending' and channel='email';"))
     stack.check(waiting >= 8, 'A real backlog is waiting')
     results = together([dispatch, dispatch, dispatch, dispatch])
     stack.check(all(code == 200 for code, _ in results), 'Runs can overlap')
@@ -233,7 +236,7 @@ def checks(stack):
     drain()
     stack.sql(f"update auth.users set email=null where id='{ana}';")
     act('scheduler_cancel', {'p_booking': c['id'], 'p_reason': 'Test'})
-    row = f"(select d.id from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where n.booking_id='{c['id']}' and n.user_id='{ana}' and n.kind='cancelled')"
+    row = f"(select d.id from public.notification_deliveries d join public.notifications n on n.id=d.notification_id where d.channel='email' and n.booking_id='{c['id']}' and n.user_id='{ana}' and n.kind='cancelled')"
     waits = []
     for attempt in range(1, 6):
         stack.sql(f"update public.notification_deliveries set next_attempt_at=now() where id={row};")
@@ -253,10 +256,10 @@ def checks(stack):
     clear_mail()
     d = request(ta, manila(other, 14))
     act('scheduler_confirm', {'p_booking': d['id'], 'p_therapist': tess})
-    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now()-interval '10 minutes' from public.notifications n where n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
+    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now()-interval '10 minutes' from public.notifications n where x.channel='email' and n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
     drain()
     stack.check(len(inbox(addresses[ana])) == 1, 'A row left claimed by a dead run is picked up again')
-    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now() from public.notifications n where n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
+    stack.sql(f"update public.notification_deliveries x set status='sending',claimed_at=now() from public.notifications n where x.channel='email' and n.id=x.notification_id and n.booking_id='{d['id']}' and n.user_id='{ana}';")
     clear_mail()
     drain()
     stack.check(inbox(addresses[ana]) == [], 'One being sent right now is left alone')
@@ -348,6 +351,35 @@ def waitlist_mail(stack):
         stack.sql(f'update public.center_settings set slot_capacity={capacity} where id;')
 
 
+def series_mail(stack):
+    """MOT-66: a weekly course is one email each, however many sessions it has, in each reader's language."""
+    _, ts = stack.user('patient', 'scheduler', name='Email Sol Series')
+    tess, tt = stack.user('patient', 'therapist', name='Email Tess Series')
+    ana, ta = stack.user('patient', name='Email Ana Series')
+    assert stack.rpc('set_my_language', {'p_language': 'fil'}, ta)[0] == 204
+    first = stack.sql("""select d::date from generate_series(current_date+200,current_date+260,interval '1 day') d where extract(isodow from d)<6
+ and not exists(select 1 from public.center_holidays h,generate_series(0,3) n where (d+make_interval(weeks=>n))::date between h.starts_on and h.ends_on) order by d limit 1;""")
+    addresses = {person: stack.sql(f"select email from auth.users where id='{person}';") for person in (ana, tess)}
+    clear_mail()
+    code, made = stack.rpc('scheduler_series_create', {'p_request': str(uuid.uuid4()), 'p_patient': ana, 'p_therapist': tess, 'p_starts': manila(date.fromisoformat(first), 13), 'p_weeks': 4}, ts)
+    assert code == 200, made
+
+    def drain():
+        for _ in range(12):
+            if dispatch()[1]['claimed'] == 0:
+                return
+
+    drain()
+    patient, therapist = only(addresses[ana]), only(addresses[tess])
+    stack.check(patient['Subject'] == 'Naka-book ang iyong lingguhang session' and 'Mga session: 4.' in patient['Text'], 'Series: the patient gets one email for the course, in Filipino')
+    stack.check(therapist['Subject'] == 'Weekly sessions: Email Ana Series' and 'Sessions: 4.' in therapist['Text'], 'Series: the therapist gets one too')
+    stack.check('booking-calendar' not in patient['Text'], 'Series: it offers no calendar link, because one link cannot hold a course')
+    clear_mail()
+    assert stack.rpc('scheduler_series_cancel', {'p_series': made['id'], 'p_reason': 'Course finished early'}, ts)[0] == 200
+    drain()
+    stack.check(only(addresses[ana])['Subject'] == 'Kinansela ang iyong lingguhang session', 'Series: cancelling it is one email')
+
+
 def main():
     stack = Stack()
     try:
@@ -355,6 +387,7 @@ def main():
             checks(stack)
             sprint_demo(stack)
             waitlist_mail(stack)
+            series_mail(stack)
         REPORT.write_text(json.dumps({'generated_at': datetime.now(timezone.utc).isoformat(), 'checks_passed': len(stack.checks), 'checks': stack.checks,
                                       'environment': 'real local Auth, PostgREST, Edge Functions and Mailpit with disposable synthetic accounts'}, indent=2) + '\n', encoding='utf-8')
         print(f'{len(stack.checks)} checks passed.')

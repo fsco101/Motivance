@@ -29,6 +29,9 @@ class BookingRepositoryTest {
                 path=="/rest/v1/rpc/my_waitlist" -> """[{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00","open":true}]"""
                 path=="/rest/v1/rpc/join_waitlist" -> """{"id":"w1","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00"}"""
                 path=="/rest/v1/rpc/leave_waitlist" -> ""
+                path=="/rest/v1/rpc/reschedule_my_booking" -> booking
+                path=="/rest/v1/rpc/register_device" || path=="/rest/v1/rpc/unregister_device" -> ""
+                path=="/rest/v1/rpc/mark_attendance" -> """{"id":"b1","attendance":"no_show"}"""
                 path=="/rest/v1/rpc/my_notifications" -> """{"unread":1,"rows":[
                     {"id":"n1","kind":"rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00","data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00",
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":"2026-12-07T02:00:00+00:00","patient_name":"Ana","therapist_name":"Dana","reason":"Training"}},
@@ -109,6 +112,52 @@ class BookingRepositoryTest {
         assertEquals("fil",bodies["/rest/v1/rpc/set_my_language"]!!.getString("p_language"))
     }
 
+    @Test fun markingSendsTheSessionAndTheMark()=runBlocking {
+        repository().markAttendance("b1","no_show")
+        val body=bodies["/rest/v1/rpc/mark_attendance"]
+        assertEquals("b1",body?.getString("p_booking"))
+        assertEquals("no_show",body?.getString("p_attendance"))
+    }
+    @Test fun aSessionSaysWhetherItHasStartedAndWhatWasMarked() {
+        val days="""{"days":[{"date":"2026-11-02","status":"open","holiday":null,"rows":[{"starts_at":"2026-11-02T01:00:00+00:00","ends_at":"2026-11-02T02:00:00+00:00","session":
+            {"id":"b1","reference_no":"BK-2026-000001","status":"confirmed","starts_at":"2026-11-02T01:00:00+00:00","ends_at":"2026-11-02T02:00:00+00:00","location":"","attendance":"attended","started":true,"patient_name":"Ana"}}]}]}"""
+        val session=BookingJson.schedule(JSONObject(days)).days.single().sessions.single()
+        assertEquals("attended",session.attendance)
+        assertTrue(session.started)
+    }
+    @Test fun movingSendsTheSessionAndTheTime()=runBlocking {
+        repository().rescheduleBooking("b1","2026-12-09T02:00:00+00:00")
+        val body=bodies["/rest/v1/rpc/reschedule_my_booking"]
+        assertEquals("b1",body?.getString("p_booking"))
+        assertEquals("2026-12-09T02:00:00+00:00",body?.getString("p_starts"))
+    }
+    @Test fun aBookingSaysWhetherItCanBeMoved() {
+        val moved=BookingJson.booking(JSONObject(booking).put("can_reschedule",true).put("reschedule_until","2026-12-06T01:00:00+00:00").put("reschedules_left",1))
+        assertTrue(moved.canReschedule)
+        assertEquals("2026-12-06T01:00:00+00:00",moved.rescheduleUntil)
+        assertEquals(1,moved.reschedulesLeft)
+        assertFalse("An older server says nothing, and nothing moves",BookingJson.booking(JSONObject(booking)).canReschedule)
+    }
+    @Test fun aPhoneIsRegisteredAndRemovedByItsToken()=runBlocking {
+        repository().registerDevice("token-1")
+        assertEquals("token-1",bodies["/rest/v1/rpc/register_device"]?.getString("p_token"))
+        assertEquals("android",bodies["/rest/v1/rpc/register_device"]?.getString("p_platform"))
+        repository().unregisterDevice("token-1")
+        assertEquals("token-1",bodies["/rest/v1/rpc/unregister_device"]?.getString("p_token"))
+    }
+    @Test fun aWeeklyCourseIsReadAsOneNotification() {
+        val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n9","kind":"series_booked","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
+            "data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-07T02:00:00+00:00","ends_at":"2026-12-07T03:00:00+00:00","last_starts_at":"2027-01-25T02:00:00+00:00","sessions":7,"therapist_name":"Dana"}}]}""")).items.single()
+        assertEquals(NotificationKind.SERIES_BOOKED,note.kind)
+        assertEquals(7,note.sessions)
+        assertEquals("2027-01-25T02:00:00+00:00",note.lastStartsAt)
+    }
+    @Test fun aPatientsMoveIsRead() {
+        val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n8","kind":"patient_rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
+            "data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00","patient_name":"Ana"}}]}""")).items.single()
+        assertEquals(NotificationKind.PATIENT_RESCHEDULED,note.kind)
+        assertEquals("Ana",note.patient)
+    }
     @Test fun aPlaceOnTheWaitlistIsRead()=runBlocking {
         assertEquals(listOf(WaitlistEntry("w1","2026-12-09T02:00:00+00:00","2026-12-09T03:00:00+00:00",open=true)),repository().loadWaitlist())
     }

@@ -1,6 +1,7 @@
-import { createClient } from 'npm:@supabase/supabase-js@2.45.4'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.45.4'
 import nodemailer from 'npm:nodemailer@6.9.16'
 import { renderEmail, type Delivery } from '../_shared/email.ts'
+import { accessToken, fcmUrl, readServiceAccount, sendToDevices, type PushDelivery } from '../_shared/push.ts'
 
 const required = (name: string) => {
   const value = Deno.env.get(name)
@@ -17,6 +18,49 @@ function sameSecret(given: string | null, expected: string) {
 }
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+
+/** Push rides the same queue as email. With no service account there is nothing to send it through, so each row is marked skipped rather than left waiting. */
+async function dispatchPush(db: SupabaseClient) {
+  const raw = Deno.env.get('FCM_SERVICE_ACCOUNT')
+  const results = { claimed: 0, sent: 0, failed: 0, skipped: 0 }
+  if (!raw) {
+    const { data } = await db.rpc('skip_push_deliveries', { p_reason: 'FCM_SERVICE_ACCOUNT is not set' })
+    return { ...results, skipped: (data as number | null) ?? 0 }
+  }
+  const { data, error } = await db.rpc('claim_notification_deliveries', { p_channel: 'push', p_limit: 20 })
+  if (error) throw new Error('Could not read the push queue')
+  const claimed = data as PushDelivery[]
+  results.claimed = claimed.length
+  const account = readServiceAccount(raw)
+  const url = fcmUrl(Deno.env.get('FCM_API_URL') ?? 'https://fcm.googleapis.com', account)
+  let token: string | null = null
+  for (const delivery of claimed) {
+    if (delivery.tokens.length === 0) {
+      await db.rpc('skip_notification_delivery', { p_id: delivery.id, p_reason: 'No device' })
+      results.skipped += 1
+      continue
+    }
+    try {
+      token ??= await accessToken(account)
+      const { overall, dead, detail } = await sendToDevices(delivery, url, token)
+      if (dead.length > 0) await db.rpc('remove_device_tokens', { p_tokens: dead })
+      if (overall === 'sent') {
+        await db.rpc('finish_notification_delivery', { p_id: delivery.id, p_sent: true })
+        results.sent += 1
+      } else if (overall === 'dead') {
+        await db.rpc('skip_notification_delivery', { p_id: delivery.id, p_reason: 'No device' })
+        results.skipped += 1
+      } else {
+        await db.rpc('finish_notification_delivery', { p_id: delivery.id, p_sent: false, p_error: detail })
+        results.failed += 1
+      }
+    } catch (failure) {
+      await db.rpc('finish_notification_delivery', { p_id: delivery.id, p_sent: false, p_error: failure instanceof Error ? failure.message : 'Send failed' })
+      results.failed += 1
+    }
+  }
+  return results
+}
 
 Deno.serve(async (request) => {
   if (!sameSecret(request.headers.get('x-dispatch-secret'), required('NOTIFICATION_DISPATCH_SECRET'))) return json({ error: 'Not allowed' }, 401)
@@ -45,5 +89,6 @@ Deno.serve(async (request) => {
       results.failed += 1
     }
   }
-  return json({ claimed: claimed.length, ...results })
+  const push = await dispatchPush(db).catch(() => null)
+  return json({ claimed: claimed.length, ...results, push })
 })

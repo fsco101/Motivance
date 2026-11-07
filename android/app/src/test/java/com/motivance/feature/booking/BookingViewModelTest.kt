@@ -40,6 +40,9 @@ class BookingViewModelTest {
         }
         override suspend fun loadMyBookings():List<Booking> =wait?.let {withContext(NonCancellable) {it.await()}} ?: listOf(booking)
         override suspend fun cancelBooking(id:String) {refusal?.let {throw it};cancelled+=id}
+        override suspend fun markAttendance(id:String,attendance:String) {}
+        val moved=mutableListOf<Pair<String,String>>()
+        override suspend fun rescheduleBooking(id:String,startsAt:String) {refusal?.let {throw it};moved+=id to startsAt}
         var waitlist=emptyList<WaitlistEntry>()
         val joined=mutableListOf<String>()
         val left=mutableListOf<String>()
@@ -50,6 +53,50 @@ class BookingViewModelTest {
     }
 
     private fun viewModel(remote:Remote,toasts:Toaster=Toaster())=BookingViewModel(remote,toasts).also {it.configure("owner")}
+
+    @Test fun movingSendsTheSessionAndTheNewTimeThenReturnsToTheList()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        var finished=false
+        vm.startMove(booking);vm.selectSlot(slot);vm.move {finished=true};advanceUntilIdle()
+        assertEquals(listOf(booking.id to slot.startsAt),remote.moved)
+        assertTrue(finished)
+        assertNull("The move is over",vm.state.value.moving)
+        assertNull(vm.state.value.slot)
+    }
+
+    @Test fun moveNeedsAFreePlace()=runTest {
+        val vm=viewModel(Remote())
+        vm.startMove(booking)
+        vm.selectSlot(full);assertNull("The waitlist is not for a session being moved",vm.state.value.slot)
+        vm.selectSlot(slot);assertEquals(slot,vm.state.value.slot)
+    }
+
+    @Test fun aRefusedMoveExplainsWhyAndStaysOnTheMove()=runTest {
+        val remote=Remote();val toasts=Toaster();val vm=viewModel(remote,toasts)
+        remote.refusal=RemoteFailure(400,"booking_reschedule_limit")
+        val before=remote.availabilityLoads
+        vm.startMove(booking);vm.selectSlot(slot);vm.move {fail("A refused move goes nowhere")};advanceUntilIdle()
+        assertEquals(R.string.booking_error_reschedule_limit,toasts.current.value?.message)
+        assertEquals(booking,vm.state.value.moving)
+        assertNull(vm.state.value.slot)
+        assertEquals(before+1,remote.availabilityLoads)
+    }
+
+    @Test fun lateMovesHaveTheirOwnWords()=runTest {
+        val remote=Remote();val toasts=Toaster();val vm=viewModel(remote,toasts)
+        remote.refusal=RemoteFailure(400,"booking_reschedule_late")
+        vm.startMove(booking);vm.selectSlot(slot);vm.move {};advanceUntilIdle()
+        assertEquals(R.string.booking_error_reschedule_late,toasts.current.value?.message)
+    }
+
+    /** Backing out of a move must not leave the next booking unable to choose a full time. */
+    @Test fun openingBookingForgetsAMove()=runTest {
+        val vm=viewModel(Remote())
+        vm.startMove(booking)
+        vm.openBooking();advanceUntilIdle()
+        assertNull(vm.state.value.moving)
+        vm.selectSlot(full);assertEquals(full,vm.state.value.slot)
+    }
 
     @Test fun aFullTimeCanBeChosenToWaitFor()=runTest {
         val vm=viewModel(Remote())

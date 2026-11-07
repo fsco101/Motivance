@@ -4,7 +4,7 @@
   "title": "S11 - Self-service and scheduling tools",
   "description": "Weeks 21-22. Exit: patients can wait for a full slot and move their own sessions, attendance is tracked, Schedulers can book a weekly course, and a dashboard shows the state of the center.",
   "goal": "Reduce manual scheduling work for patients and staff.",
-  "status": "in-progress",
+  "status": "completed",
   "weeks": {
     "start": 21,
     "end": 22
@@ -17,13 +17,20 @@
   "exit_criteria": [
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
-      "passed": false,
-      "evidence": []
+      "passed": true,
+      "evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ]
     },
     {
       "description": "Join a waitlist and get told when the place opens, reschedule a session as a patient, mark a no-show, book a weekly course with one conflicting date, and read the dashboard.",
-      "passed": false,
-      "evidence": []
+      "passed": true,
+      "evidence": [
+        "docs/validation/booking-test-results.json",
+        "scripts/test_booking.py"
+      ]
     }
   ],
   "demo": "Join a waitlist and get told when the place opens, reschedule a session as a patient, mark a no-show, book a weekly course with one conflicting date, and read the dashboard.",
@@ -38,9 +45,13 @@
   },
   "total_estimate_points": 21,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-07T05:06:07.430073+00:00",
+    "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+    "evidence": [
+      "docs/validation/BOOKING-IMPLEMENTATION.md",
+      "docs/validation/booking-test-results.json",
+      "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+    ]
   },
   "issues": [
     {
@@ -168,7 +179,7 @@
       "github_issue": 81,
       "title": "Add patient self-service reschedule",
       "description": "Let patients move their own sessions within the rules, without calling the center.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web + Android",
       "estimate_points": 5,
@@ -198,42 +209,86 @@
         {
           "id": "MOT-64-AC1",
           "description": "A patient can move their own pending or confirmed booking to another specific slot, on web and Android.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-64-AC2",
           "description": "The server enforces the reschedule cut-off and the maximum number of self-reschedules.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-64-AC3",
           "description": "A confirmed booking returns to Pending for the Scheduler to re-confirm, and keeps its therapist only if they are free at the new time.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-64-AC4",
           "description": "The assigned therapist and Schedulers are notified.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060016_self_reschedule.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/reschedule.spec.ts",
+            "web/tests/contract/reschedule.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T03:52:41.111072+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060016_self_reschedule.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/reschedule.spec.ts",
+          "web/tests/contract/reschedule.test.ts",
+          "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060016_self_reschedule.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/reschedule.spec.ts",
+        "web/tests/contract/reschedule.test.ts",
+        "android/app/src/test/java/com/motivance/feature/booking/BookingViewModelTest.kt"
+      ]
     },
     {
       "id": "MOT-65",
       "github_issue": 82,
       "title": "Add attendance tracking to My Schedule",
       "description": "Record who came, so no-shows are visible.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web + Android",
       "estimate_points": 3,
@@ -263,42 +318,86 @@
         {
           "id": "MOT-65-AC1",
           "description": "The assigned therapist or a Scheduler can mark a session attended or no-show, once it has started, and correct it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-65-AC2",
           "description": "Nobody else can, enforced on the server.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-65-AC3",
           "description": "Therapists mark attendance from My Schedule on web and Android.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         },
         {
           "id": "MOT-65-AC4",
           "description": "Attendance appears in the Scheduler's schedule, its filters and its exports, and every change is audited.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060017_attendance.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/attendance.spec.ts",
+            "web/tests/contract/attendance.test.ts",
+            "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T04:20:30.434826+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060017_attendance.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/attendance.spec.ts",
+          "web/tests/contract/attendance.test.ts",
+          "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060017_attendance.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/attendance.spec.ts",
+        "web/tests/contract/attendance.test.ts",
+        "android/app/src/test/java/com/motivance/feature/booking/ScheduleViewModelTest.kt"
+      ]
     },
     {
       "id": "MOT-66",
       "github_issue": 83,
       "title": "Add weekly repeat bookings",
       "description": "Let a Scheduler book the same weekly time for a course of therapy in one step.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Backend + Web",
       "estimate_points": 5,
@@ -337,42 +436,86 @@
         {
           "id": "MOT-66-AC1",
           "description": "A Scheduler chooses a patient, therapist, first session and number of weeks, and sees each date with any conflict before saving.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060018_weekly_series.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/series.spec.ts",
+            "web/tests/contract/series.test.ts"
+          ]
         },
         {
           "id": "MOT-66-AC2",
           "description": "Saving creates confirmed bookings only for the dates that pass, each checked under the same rules as any booking.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060018_weekly_series.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/series.spec.ts",
+            "web/tests/contract/series.test.ts"
+          ]
         },
         {
           "id": "MOT-66-AC3",
           "description": "The patient and therapist get one notification for the series, not one per date.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060018_weekly_series.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/series.spec.ts",
+            "web/tests/contract/series.test.ts"
+          ]
         },
         {
           "id": "MOT-66-AC4",
           "description": "The remaining sessions of a series can be cancelled together, with a reason.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060018_weekly_series.sql",
+            "scripts/test_booking.py",
+            "scripts/test_email.py",
+            "web/tests/e2e/series.spec.ts",
+            "web/tests/contract/series.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T04:41:26.268350+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060018_weekly_series.sql",
+          "scripts/test_booking.py",
+          "scripts/test_email.py",
+          "web/tests/e2e/series.spec.ts",
+          "web/tests/contract/series.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060018_weekly_series.sql",
+        "scripts/test_booking.py",
+        "scripts/test_email.py",
+        "web/tests/e2e/series.spec.ts",
+        "web/tests/contract/series.test.ts"
+      ]
     },
     {
       "id": "MOT-67",
       "github_issue": 84,
       "title": "Build the Scheduler dashboard",
       "description": "Open the Scheduler workspace on the numbers that need attention.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Backend",
       "estimate_points": 3,
@@ -401,29 +544,61 @@
         {
           "id": "MOT-67-AC1",
           "description": "The dashboard shows pending requests, today's sessions and utilization this week, all from the server.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060019_scheduler_summary.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/dashboard.spec.ts",
+            "web/tests/contract/summary.test.ts"
+          ]
         },
         {
           "id": "MOT-67-AC2",
           "description": "Utilization is booked sessions as a share of available places in open slots this week, and the page says so.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060019_scheduler_summary.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/dashboard.spec.ts",
+            "web/tests/contract/summary.test.ts"
+          ]
         },
         {
           "id": "MOT-67-AC3",
           "description": "Each figure opens the page that explains it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060019_scheduler_summary.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/dashboard.spec.ts",
+            "web/tests/contract/summary.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T05:06:07.425882+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060019_scheduler_summary.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/dashboard.spec.ts",
+          "web/tests/contract/summary.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060019_scheduler_summary.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/dashboard.spec.ts",
+        "web/tests/contract/summary.test.ts"
+      ]
     }
   ],
   "plan_reference": "docs/architecture/BOOKING.md"

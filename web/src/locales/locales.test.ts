@@ -5,6 +5,8 @@ import bookingEn from './booking.en.json'
 import bookingFil from './booking.fil.json'
 import en from './en.json'
 import fil from './fil.json'
+import landingEn from './landing.en.json'
+import landingFil from './landing.fil.json'
 
 type Tree = { [key: string]: string | Tree }
 
@@ -16,8 +18,8 @@ function flatten(tree: Tree, prefix = ''): Record<string, string> {
 const placeholders = (text: string) => [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort()
 
 describe('English and Filipino', () => {
-  const english = { ...flatten(en), ...flatten(bookingEn) }
-  const filipino = { ...flatten(fil), ...flatten(bookingFil) }
+  const english = { ...flatten(en), ...flatten(bookingEn), ...flatten(landingEn) }
+  const filipino = { ...flatten(fil), ...flatten(bookingFil), ...flatten(landingFil) }
 
   it('have the same keys', () => {
     expect(Object.keys(filipino).sort()).toEqual(Object.keys(english).sort())
@@ -25,6 +27,10 @@ describe('English and Filipino', () => {
 
   it('keep booking text apart, so loading it can never replace other text', () => {
     expect(Object.keys(bookingEn).filter((section) => section in en)).toEqual([])
+  })
+
+  it('keep the public pages\' text apart for the same reason', () => {
+    expect(Object.keys(landingEn).filter((section) => section in en || section in bookingEn)).toEqual([])
   })
 
   it('use the same placeholders', () => {

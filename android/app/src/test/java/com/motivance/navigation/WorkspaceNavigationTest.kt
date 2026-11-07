@@ -7,6 +7,8 @@ class WorkspaceNavigationTest {
     @Test fun detailBackReturnsToItsOwningWorkspace() {
         assertEquals("PATIENT_DETAIL",parentRoute("ASSIGN",true))
         assertEquals("PATIENTS",parentRoute("PATIENT_DETAIL",true))
+        assertEquals("BOOKINGS",parentRoute("BOOK",true))
+        assertEquals("BOOKINGS",parentRoute("MOVE",true))
         assertEquals("PROFILE",parentRoute("LOCAL_HISTORY",true))
         assertEquals("CHECK_COMPLETE",parentRoute("LOCAL_HISTORY",false))
         assertEquals("LANDING",parentRoute("SETUP",false))

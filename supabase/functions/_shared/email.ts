@@ -3,7 +3,7 @@
 export type Language = 'en' | 'fil'
 export type Delivery = {
   id: string; kind: string; email: string | null; name: string | null; language: Language; calendar_token: string | null; location: string; center_name: string; time_zone: string
-  data: { reference_no?: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null }
+  data: { reference_no?: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null; sessions?: number; last_starts_at?: string | null }
 }
 export type Links = { site: string; functions: string }
 
@@ -28,6 +28,11 @@ const LINES: Record<Language, Record<string, Line>> = {
     reminder: { subject: 'Session reminder', body: 'Reminder: your session is on {when} with {therapist}.' },
     session_reminder: { subject: 'Session reminder: {patient}', body: 'Reminder: {patient} is booked with you on {when}.' },
     place_open: { subject: 'A place has opened', body: 'A place has opened on {when}. The first to book gets it.' },
+    patient_rescheduled: { subject: 'Session moved by patient: {patient}', body: '{patient} moved their session to {when}. It needs confirming.' },
+    series_booked: { subject: 'Your weekly sessions are booked', body: 'Weekly sessions booked with {therapist}, from {when} to {last}. Sessions: {sessions}.' },
+    series_assigned: { subject: 'Weekly sessions: {patient}', body: '{patient} is booked with you weekly, from {when} to {last}. Sessions: {sessions}.' },
+    series_cancelled: { subject: 'Your weekly sessions were cancelled', body: 'Your weekly sessions from {when} were cancelled. Sessions: {sessions}.' },
+    session_series_cancelled: { subject: 'Weekly sessions cancelled: {patient}', body: 'Your weekly sessions with {patient} from {when} were cancelled. Sessions: {sessions}.' },
   },
   fil: {
     confirmed: { subject: 'Kumpirmado ang iyong session', body: 'Kumpirmado ang iyong session sa {when} kasama si {therapist}.' },
@@ -46,6 +51,11 @@ const LINES: Record<Language, Record<string, Line>> = {
     reminder: { subject: 'Paalala sa session', body: 'Paalala: ang iyong session ay sa {when} kasama si {therapist}.' },
     session_reminder: { subject: 'Paalala sa session: {patient}', body: 'Paalala: naka-book sa iyo si {patient} sa {when}.' },
     place_open: { subject: 'May bakante na', body: 'May bakante na sa {when}. Makukuha ito ng unang mag-book.' },
+    patient_rescheduled: { subject: 'Inilipat ng pasyente ang session: {patient}', body: 'Inilipat ni {patient} ang session sa {when}. Kailangan itong kumpirmahin.' },
+    series_booked: { subject: 'Naka-book ang iyong lingguhang session', body: 'Naka-book ang iyong lingguhang session kasama si {therapist}, mula {when} hanggang {last}. Mga session: {sessions}.' },
+    series_assigned: { subject: 'Lingguhang session: {patient}', body: 'Naka-book sa iyo si {patient} linggu-linggo, mula {when} hanggang {last}. Mga session: {sessions}.' },
+    series_cancelled: { subject: 'Kinansela ang iyong lingguhang session', body: 'Kinansela ang iyong lingguhang session mula {when}. Mga session: {sessions}.' },
+    session_series_cancelled: { subject: 'Kinansela ang lingguhang session: {patient}', body: 'Kinansela ang lingguhang session mo kasama si {patient} mula {when}. Mga session: {sessions}.' },
   },
 }
 
@@ -78,7 +88,8 @@ export function renderEmail(delivery: Delivery, links: Links) {
   const { data } = delivery
   const range = `${clock(data.starts_at)} – ${clock(data.ends_at)}`
   const was = data.previous_starts_at ?? data.starts_at
-  const values = { when: `${day(data.starts_at)}, ${range}`, was: `${day(was)}, ${clock(was)}`, patient: data.patient_name ?? '', therapist: data.therapist_name ?? label.pending }
+  const values = { when: `${day(data.starts_at)}, ${range}`, was: `${day(was)}, ${clock(was)}`, patient: data.patient_name ?? '', therapist: data.therapist_name ?? label.pending,
+    sessions: String(data.sessions ?? ''), last: data.last_starts_at ? day(data.last_starts_at) : '' }
   const reason = data.reason === 'therapist_unavailable' ? label.unavailable : data.reason === 'request_expired' ? label.expired : data.reason ?? null
   // A place on the waitlist is a time, not yet a session, so it has no therapist or reference.
   const facts: Array<[string, string]> = [[label.date, day(data.starts_at)], [label.time, range]]
@@ -102,5 +113,5 @@ export function renderEmail(delivery: Delivery, links: Links) {
 ${calendar ? button(calendar, label.calendar) : ''}${button(site, label.open)}
 <p style="margin:16px 0 0;font-size:13px;color:#4c6670">${escapeHtml(delivery.center_name)}</p>
 </div></body></html>`
-  return { subject: oneLine(fill(lines.subject, values)), text, html }
+  return { subject: oneLine(fill(lines.subject, values)), sentence, text, html }
 }

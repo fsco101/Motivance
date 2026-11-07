@@ -2,7 +2,7 @@ import { LockKeyIcon } from '@phosphor-icons/react'
 import { AnimatePresence, m as motion, useReducedMotion } from 'motion/react'
 import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Button } from '@/components/Button'
 import { Notice } from '@/components/Display'
 import { PasswordField, TextField } from '@/components/Field'
@@ -22,6 +22,8 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
   const { t } = useTranslation()
   const { signIn } = useAuth()
   const reduced = useReducedMotion()
+  const [params] = useSearchParams()
+  const next = params.get('next') === 'book' ? '?next=book' : ''
   const [step, setStep] = useState<Step>('signIn')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -159,7 +161,7 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
         </div>
         <div className="mx-auto w-full max-w-[26rem] border-t border-line pt-4 text-sm text-slate">
           <p className="flex items-start gap-2"><LockKeyIcon aria-hidden className="mt-0.5 shrink-0 text-base" />{t('auth.sharedComputer')}</p>
-          <p className="mt-1 pl-6">{t('auth.mobileHint')}</p>
+          <p className="mt-1 pl-6">{t('auth.newHere')} <Link to={`/sign-up${next}`} className="font-semibold text-lagoon-deep underline underline-offset-4">{t('auth.createAccount')}</Link></p>
         </div>
       </main>
     </div>

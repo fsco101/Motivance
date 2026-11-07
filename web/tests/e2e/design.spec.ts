@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 
 /** Runs against the design gallery, which uses the same components and views as the app. */
 const SCREENS = [
-  '/design/patient/notifications', '/design/scheduler/schedule', '/design/scheduler/requests', '/design/scheduler/calendar', '/design/scheduler/calendar?tab=holidays', '/design/scheduler/calendar?tab=closures', '/design/scheduler/calendar?tab=timeoff', '/design/scheduler/calendar?outside', '/design/therapist/schedule', '/design/patient/schedule', '/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
+  '/design/patient/notifications', '/design/patient/bookings/move', '/design/scheduler', '/design/scheduler/schedule', '/design/scheduler/schedule?series', '/design/scheduler/requests', '/design/scheduler/calendar', '/design/scheduler/calendar?tab=holidays', '/design/scheduler/calendar?tab=closures', '/design/scheduler/calendar?tab=timeoff', '/design/scheduler/calendar?outside', '/design/therapist/schedule', '/design/patient/schedule', '/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/sign-up', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
   '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
 ]
 
@@ -35,7 +35,7 @@ for (const width of [768, 1024, 1440, 1920]) {
 test('nothing on a patient page runs past a phone\'s edge', async ({ page }) => {
   test.setTimeout(60_000)
   await page.setViewportSize({ width: 360, height: 760 })
-  for (const path of ['/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile']) {
+  for (const path of ['/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/bookings/move', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile']) {
     await page.goto(path)
     await page.waitForLoadState('networkidle')
     const cut = await page.evaluate(() => [...document.querySelectorAll('main *')].filter((element) => {
@@ -111,6 +111,12 @@ test('with reduced motion the figure goes straight to its position', async ({ pa
   await page.getByLabel('Email').fill('dana@example.test')
   await page.getByLabel('Password', { exact: true }).fill('a-password')
   await expect(page.locator('aside svg g[transform^="rotate"]').nth(2)).toHaveAttribute('transform', 'rotate(-116)')
+})
+
+test('with reduced motion a figure shows its value at once, on screen as well as to a screen reader', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/design/scheduler')
+  await expect(page.locator('.text-stat').first()).toHaveText('6')
 })
 
 test('a swipe that starts on the movement demo still scrolls the page', async ({ page }) => {
@@ -322,7 +328,7 @@ test('an account opens by keyboard alone', async ({ page }) => {
 test.describe('public pages', () => {
   test('the landing page and sign-in fit a phone', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 })
-    for (const path of ['/design/landing', '/design/sign-in']) {
+    for (const path of ['/design/landing', '/design/sign-in', '/design/sign-up']) {
       await page.goto(path)
       await page.waitForLoadState('networkidle')
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)

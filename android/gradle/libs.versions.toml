@@ -36,3 +36,5 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.16.0" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }

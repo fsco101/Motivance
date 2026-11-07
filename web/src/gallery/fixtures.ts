@@ -2,7 +2,7 @@ import type { Availability, Booking, WaitlistEntry } from '@/data/booking'
 import type { AffectedBooking, CenterCalendar } from '@/data/calendar'
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
-import type { RequestDetail, RequestRow, TherapistChoice } from '@/data/scheduler'
+import type { RequestDetail, RequestRow, SchedulerSummary, SeriesDate, TherapistChoice } from '@/data/scheduler'
 import type { HistoricalSession } from '@/data/history'
 import type { Inbox } from '@/data/notifications'
 import type { MyExercise } from '@/data/patient'
@@ -90,9 +90,9 @@ export const waitlist: WaitlistEntry[] = [
   { id: 'w2', startsAt: '2026-12-10T06:00:00Z', endsAt: '2026-12-10T07:00:00Z', open: false },
 ]
 export const myBookings: Booking[] = [
-  { id: 'k1', reference: 'BK-2026-000142', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', previousStartsAt: null, therapist: 'Dana Reyes', location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-06T01:00:00Z', canCancel: true },
-  { id: 'k2', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-13T02:00:00Z', canCancel: true },
-  { id: 'k3', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: null, canCancel: false },
+  { id: 'k1', reference: 'BK-2026-000142', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', previousStartsAt: null, therapist: 'Dana Reyes', location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-06T01:00:00Z', canCancel: true, rescheduleUntil: '2026-12-06T01:00:00Z', canReschedule: true, reschedulesLeft: 2 },
+  { id: 'k2', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-13T02:00:00Z', canCancel: true, rescheduleUntil: '2026-12-13T02:00:00Z', canReschedule: true, reschedulesLeft: 2 },
+  { id: 'k3', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', previousStartsAt: null, therapist: null, location: '12 Mabini Street, Quezon City', cancelUntil: null, canCancel: false, rescheduleUntil: null, canReschedule: false, reschedulesLeft: 0 },
 ]
 export const patientHome: PatientHome = {
   name: 'Ana Dela Cruz', next: myExercises[0]!, exerciseCount: 2,
@@ -103,15 +103,20 @@ export const patientHome: PatientHome = {
 export const privacy: PrivacyState = { consent: 'granted', requests: [{ id: 'd1', kind: 'export', status: 'requested', createdAt: '2026-11-04T01:30:00Z' }, { id: 'd2', kind: 'delete', status: 'declined', createdAt: '2026-10-20T01:30:00Z' }] }
 
 export const requests: RequestRow[] = [
-  { id: 'q1', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, createdAt: '2026-11-05T02:00:00Z' },
-  { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', patientId: 'p2', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes', attendance: null, createdAt: '2026-11-04T02:00:00Z' },
-  { id: 'q3', reference: 'BK-2026-000149', status: 'rescheduled', reason: 'Therapist training', startsAt: '2026-12-09T05:00:00Z', endsAt: '2026-12-09T06:00:00Z', patientId: 'p3', patient: 'Liza Mendoza', therapistId: 't2', therapist: 'Omar Lim', attendance: null, createdAt: '2026-11-02T02:00:00Z' },
-  { id: 'q4', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, createdAt: '2026-10-12T02:00:00Z' },
+  { id: 'q1', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, started: false, seriesId: null, createdAt: '2026-11-05T02:00:00Z' },
+  { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', reason: null, startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', patientId: 'p2', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes', attendance: 'attended', started: true, seriesId: 's1', createdAt: '2026-11-04T02:00:00Z' },
+  { id: 'q3', reference: 'BK-2026-000149', status: 'rescheduled', reason: 'Therapist training', startsAt: '2026-12-09T05:00:00Z', endsAt: '2026-12-09T06:00:00Z', patientId: 'p3', patient: 'Liza Mendoza', therapistId: 't2', therapist: 'Omar Lim', attendance: null, started: true, seriesId: null, createdAt: '2026-11-02T02:00:00Z' },
+  { id: 'q4', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', patientId: 'p1', patient: 'Ana Dela Cruz', therapistId: null, therapist: null, attendance: null, started: false, seriesId: null, createdAt: '2026-10-12T02:00:00Z' },
 ]
 export const requestDetail: RequestDetail = {
-  id: 'q1',
-  events: [{ id: 1, action: 'requested', actorRole: 'patient', actor: 'Ana Dela Cruz', fromStatus: null, toStatus: 'pending', toStartsAt: '2026-12-14T02:00:00Z', reason: null, recordedAt: '2026-11-05T02:00:00Z' }],
+  id: 'q1', seriesId: null, seriesRemaining: 0,
+  events: [{ id: 1, action: 'requested', actorRole: 'patient', actor: 'Ana Dela Cruz', fromStatus: null, toStatus: 'pending', toStartsAt: '2026-12-14T02:00:00Z', toAttendance: null, reason: null, recordedAt: '2026-11-05T02:00:00Z' }],
 }
+export const schedulerSummary: SchedulerSummary = { pending: 6, today: 9, booked: 57, places: 120, utilization: 48, date: '2026-12-07', weekFrom: '2026-12-07', weekTo: '2026-12-13' }
+export const seriesDates: SeriesDate[] = [
+  { startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', problem: null }, { startsAt: '2026-12-14T01:00:00Z', endsAt: '2026-12-14T02:00:00Z', problem: 'therapist_busy' },
+  { startsAt: '2026-12-21T01:00:00Z', endsAt: '2026-12-21T02:00:00Z', problem: null }, { startsAt: '2026-12-28T01:00:00Z', endsAt: '2026-12-28T02:00:00Z', problem: 'holiday' },
+]
 export const therapistChoices: TherapistChoice[] = [
   { id: 't1', name: 'Dana Reyes', linked: true, busy: false, onLeave: false }, { id: 't2', name: 'Omar Lim', linked: false, busy: true, onLeave: false }, { id: 't3', name: 'Grace Tan', linked: false, busy: false, onLeave: true },
   { id: 't4', name: 'Rico Santos', linked: false, busy: false, onLeave: false },
@@ -124,7 +129,7 @@ const dayOf = (date: string, sessions: Record<number, Partial<ScheduleSession>>,
   const session = sessions[hour]
   return {
     startsAt: at(hour), endsAt: at(hour + 1), onLeave: !session && leave.includes(hour),
-    session: session ? { id: `s${date}${hour}`, reference: 'BK-2026-000158', status: 'confirmed', startsAt: at(hour), endsAt: at(hour + 1), location: 'Motivance Center, Quezon City', therapist: null, patientId: null, patient: null, linked: false, ...session } : null,
+    session: session ? { id: `s${date}${hour}`, reference: 'BK-2026-000158', status: 'confirmed', startsAt: at(hour), endsAt: at(hour + 1), location: 'Motivance Center, Quezon City', therapist: null, patientId: null, patient: null, linked: false, attendance: null, started: false, ...session } : null,
   }
 })
 export const schedule: Schedule = {
@@ -141,7 +146,7 @@ export const therapistSchedule: Schedule = {
     { date: '2026-12-12', status: 'closed', holiday: null, onLeave: false, rows: [] },
     {
       date: '2026-12-14', status: 'open', holiday: null, onLeave: true, rows: dayOf('2026-12-14', {
-        10: { patient: 'Ana Dela Cruz', patientId: 'p1', linked: true }, 13: { patient: 'Ramon Bautista', patientId: 'p2', linked: false, reference: 'BK-2026-000157', status: 'rescheduled' },
+        10: { patient: 'Ana Dela Cruz', patientId: 'p1', linked: true, started: true, attendance: 'attended' }, 13: { patient: 'Ramon Bautista', patientId: 'p2', linked: false, reference: 'BK-2026-000157', status: 'rescheduled' },
       }, [15, 16]),
     },
     { date: '2026-12-25', status: 'holiday', holiday: 'Christmas Day', onLeave: false, rows: [] },
@@ -172,7 +177,7 @@ export const affected: AffectedBooking[] = [
   { id: 'q2', reference: 'BK-2026-000157', status: 'confirmed', startsAt: '2026-12-14T03:00:00Z', endsAt: '2026-12-14T04:00:00Z', patient: 'Ramon Bautista', therapistId: 't1', therapist: 'Dana Reyes' },
 ]
 
-const noteFacts = { reference: 'BK-2026-000158', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, patient: 'Ana Dela Cruz', therapist: 'Dana Reyes', reason: null, readAt: null }
+const noteFacts = { sessions: 0, lastStartsAt: null, reference: 'BK-2026-000158', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, patient: 'Ana Dela Cruz', therapist: 'Dana Reyes', reason: null, readAt: null }
 export const inbox: Inbox = {
   unread: 2,
   rows: [

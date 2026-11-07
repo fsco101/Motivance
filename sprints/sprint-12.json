@@ -4,7 +4,7 @@
   "title": "S12 - Front door, push and handover",
   "description": "Weeks 23-24. Exit: the public page sells booking and accepts sign-ups, FCM push is ready for credentials, and the full feature passes final regression with its changes and settings written down.",
   "goal": "Open the front door to patients and finish the feature.",
-  "status": "planned",
+  "status": "completed",
   "weeks": {
     "start": 23,
     "end": 24
@@ -18,12 +18,23 @@
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/BOOKING-REGRESSION.md",
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "deferral_authority": "Owner decision, 2026-11-06, recorded in MOT-69: build the setup last, credentials follow later. No Firebase project exists yet.",
+      "disposition": "All three issues are implemented and closed with local evidence. MOT-69-AC6, a real push to a real phone, waits for the owner's Firebase credentials; not a development blocker."
     },
     {
       "description": "Create an account from the landing page, book a session, and walk through the final regression and handover summary.",
-      "passed": false,
-      "evidence": []
+      "passed": true,
+      "evidence": [
+        "web/tests/e2e/signup.spec.ts",
+        "docs/validation/BOOKING-REGRESSION.md"
+      ]
     }
   ],
   "demo": "Create an account from the landing page, book a session, and walk through the final regression and handover summary.",
@@ -38,9 +49,14 @@
   },
   "total_estimate_points": 16,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-07T06:34:39.893545+00:00",
+    "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+    "acceptance_basis": "engineering-implementation",
+    "evidence": [
+      "docs/validation/BOOKING-REGRESSION.md",
+      "docs/validation/BOOKING-IMPLEMENTATION.md",
+      "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+    ]
   },
   "issues": [
     {
@@ -48,7 +64,7 @@
       "github_issue": 85,
       "title": "Add web sign-up and redesign the landing page",
       "description": "Turn the public page into the way in for patients, now that every role uses the web app.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Product designer",
       "estimate_points": 8,
@@ -85,48 +101,99 @@
         {
           "id": "MOT-68-AC1",
           "description": "The page has a clear value proposition, how booking works in 3 steps, a Book a Session action, sign-in and sign-up, and a mobile app section.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC2",
           "description": "Web sign-up applies the same rules and consent as Android and finishes with the emailed code.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC3",
           "description": "After sign-in, each role reaches its own dashboard: Admin, Scheduler, Therapist or Patient.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC4",
           "description": "The page is responsive and passes WCAG AA contrast and keyboard checks with axe.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         },
         {
           "id": "MOT-68-AC5",
           "description": "Every claim is something the product does today, in English and Filipino.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "web/src/auth/SignUpPage.tsx",
+            "web/src/landing/LandingPage.tsx",
+            "web/tests/e2e/signup.spec.ts",
+            "web/tests/e2e/landing.spec.ts",
+            "web/tests/contract/signup.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T05:27:53.831027+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "web/src/auth/SignUpPage.tsx",
+          "web/src/landing/LandingPage.tsx",
+          "web/tests/e2e/signup.spec.ts",
+          "web/tests/e2e/landing.spec.ts",
+          "web/tests/contract/signup.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "web/src/auth/SignUpPage.tsx",
+        "web/src/landing/LandingPage.tsx",
+        "web/tests/e2e/signup.spec.ts",
+        "web/tests/e2e/landing.spec.ts",
+        "web/tests/contract/signup.test.ts"
+      ]
     },
     {
       "id": "MOT-69",
       "github_issue": 86,
       "title": "Set up FCM push, ready for credentials",
       "description": "Build everything FCM needs, so that push starts working when the owner adds the credentials.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Android + Backend",
       "estimate_points": 5,
@@ -164,54 +231,142 @@
         {
           "id": "MOT-69-AC1",
           "description": "The app builds and runs normally with no Firebase values, and does nothing push-related until they are set.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC2",
           "description": "With values set, the app asks for notification permission, registers its token through register_device, and shows received notifications.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC3",
           "description": "notification-dispatch sends push through FCM HTTP v1 when FCM_SERVICE_ACCOUNT is set, and marks push deliveries skipped otherwise.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC4",
           "description": "A stub FCM endpoint proves the request format, retries and removal of dead tokens.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC5",
           "description": "docs/operations/NOTIFICATIONS.md lists the exact steps and values the owner needs to supply.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ]
         },
         {
           "id": "MOT-69-AC6",
           "description": "A real push reaches a real phone with the owner's Firebase credentials.",
           "passed": false,
-          "evidence": []
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/push-test-results.json",
+            "docs/operations/NOTIFICATIONS.md",
+            "supabase/migrations/202611060020_push.sql",
+            "supabase/functions/notification-dispatch/index.ts",
+            "scripts/test_push.py",
+            "web/tests/contract/push.test.ts",
+            "android/app/src/main/java/com/motivance/data/push/Push.kt",
+            "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+          ],
+          "non_blocking": true,
+          "deferral_authority": "Owner decision, 2026-11-06, recorded in the issue: build the setup last, credentials follow later. No Firebase project exists yet.",
+          "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "disposition": "Everything FCM needs is built and proved against a stub server and on an emulator. A real push through Google to a real phone needs the owner's Firebase credentials; not a development blocker."
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T05:55:01.007941+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/push-test-results.json",
+          "docs/operations/NOTIFICATIONS.md",
+          "supabase/migrations/202611060020_push.sql",
+          "supabase/functions/notification-dispatch/index.ts",
+          "scripts/test_push.py",
+          "web/tests/contract/push.test.ts",
+          "android/app/src/main/java/com/motivance/data/push/Push.kt",
+          "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+        ],
+        "acceptance_basis": "engineering-implementation"
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/push-test-results.json",
+        "docs/operations/NOTIFICATIONS.md",
+        "supabase/migrations/202611060020_push.sql",
+        "supabase/functions/notification-dispatch/index.ts",
+        "scripts/test_push.py",
+        "web/tests/contract/push.test.ts",
+        "android/app/src/main/java/com/motivance/data/push/Push.kt",
+        "android/app/src/test/java/com/motivance/data/push/PushRegistrarTest.kt"
+      ]
     },
     {
       "id": "MOT-70",
       "github_issue": 87,
       "title": "Run the final regression and write the handover summary",
       "description": "Prove the whole feature works together, and write down what changed.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "QA",
       "estimate_points": 3,
@@ -252,35 +407,103 @@
         {
           "id": "MOT-70-AC1",
           "description": "Permissions, conflict prevention including concurrent requests, holiday and closure blocking, and notifications all have passing tests, run together on a freshly reset local stack.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         },
         {
           "id": "MOT-70-AC2",
           "description": "A summary lists the changed files and every new environment variable.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         },
         {
           "id": "MOT-70-AC3",
           "description": "PLAN.md, DATABASE.md, ENVIRONMENT.md and DATA-LIFECYCLE.md describe the feature as built.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         },
         {
           "id": "MOT-70-AC4",
           "description": "POST-IMPLEMENTATION-CHECKLIST.md lists every deferred check, none claimed as passed.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T06:34:39.889616+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-REGRESSION.md",
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/booking-test-results.json",
+          "docs/validation/email-test-results.json",
+          "docs/validation/push-test-results.json",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "docs/PLAN.md",
+          "docs/architecture/DATABASE.md",
+          "docs/operations/ENVIRONMENT.md",
+          "docs/operations/DATA-LIFECYCLE.md"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-REGRESSION.md",
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/email-test-results.json",
+        "docs/validation/push-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "docs/PLAN.md",
+        "docs/architecture/DATABASE.md",
+        "docs/operations/ENVIRONMENT.md",
+        "docs/operations/DATA-LIFECYCLE.md"
+      ]
     }
   ],
   "plan_reference": "docs/architecture/BOOKING.md"

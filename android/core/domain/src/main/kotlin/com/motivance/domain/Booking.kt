@@ -33,6 +33,7 @@ enum class BookingStatus { PENDING, CONFIRMED, REJECTED, CANCELLED, RESCHEDULED;
 data class Booking(
     val id:String,val reference:String,val status:BookingStatus,val reason:String?,val startsAt:String,val endsAt:String,val previousStartsAt:String?,
     val therapist:String?,val location:String="",val cancelUntil:String?=null,val canCancel:Boolean=false,
+    val rescheduleUntil:String?=null,val canReschedule:Boolean=false,val reschedulesLeft:Int=0,
 ) {
     fun upcoming(now:Instant)=status.active && bookingInstant(endsAt).isAfter(now)
 }
@@ -41,6 +42,7 @@ data class Booking(
 data class ScheduleSession(
     val id:String,val reference:String,val status:BookingStatus,val startsAt:String,val endsAt:String,val location:String="",
     val therapist:String?=null,val patientId:String?=null,val patient:String?=null,val linked:Boolean=false,
+    val attendance:String?=null,val started:Boolean=false,
 )
 data class ScheduleRow(val startsAt:String,val endsAt:String,val session:ScheduleSession?=null,val onLeave:Boolean=false)
 data class ScheduleDay(val date:String,val status:BookingDayStatus,val holiday:String?=null,val rows:List<ScheduleRow> = emptyList(),val onLeave:Boolean=false) {
@@ -77,6 +79,8 @@ interface BookingRepository {
     suspend fun requestBooking(requestId:String,startsAt:String):Booking
     suspend fun loadMyBookings():List<Booking>
     suspend fun cancelBooking(id:String)
+    suspend fun rescheduleBooking(id:String,startsAt:String)
+    suspend fun markAttendance(id:String,attendance:String)
     suspend fun loadWaitlist():List<WaitlistEntry>
     suspend fun joinWaitlist(startsAt:String)
     suspend fun leaveWaitlist(startsAt:String)

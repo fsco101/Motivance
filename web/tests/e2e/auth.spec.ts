@@ -95,10 +95,12 @@ test('a wrong password says so and stays on the page', async ({ page }) => {
   await expect(page).toHaveURL(/sign-in/)
 })
 
-test('the page offers no sign-up', async ({ page }) => {
+test('sign-in leads someone new to sign-up', async ({ page }) => {
   await page.goto('/sign-in')
   await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible()
-  await expect(page.getByText(/create .*account|sign up/i)).toHaveCount(0)
+  await page.getByRole('link', { name: 'Create an account' }).click()
+  await expect(page).toHaveURL(/\/sign-up$/)
+  await expect(page.getByRole('heading', { name: 'Sign-in details' })).toBeVisible()
 })
 
 test('a disabled account cannot enter', async ({ page }) => {
@@ -248,11 +250,23 @@ test('returning to a tab on a bad connection leaves the workspace in place', asy
 
 test('a visitor gets the landing page and can reach sign-in', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'See how far every patient moves.' })).toBeVisible()
-  await page.getByRole('link', { name: 'Sign in as staff' }).click()
+  await expect(page.getByRole('heading', { name: 'Book your therapy session, and keep moving between visits.' })).toBeVisible()
+  await page.getByRole('link', { name: 'Sign in' }).first().click()
   await expect(page).toHaveURL(/sign-in/)
   await page.getByRole('link', { name: 'Back to home' }).click()
   await expect(page).toHaveURL(/\/$/)
+})
+
+test('after sign-in each role reaches its own dashboard', async ({ page }) => {
+  test.setTimeout(60_000)
+  const homes: ReadonlyArray<readonly [readonly Role[], RegExp, string]> = [
+    [['patient', 'admin'], /\/admin$/, 'Overview'], [['patient', 'scheduler'], /\/scheduler$/, 'Scheduling'], [['therapist'], /\/therapist$/, 'Clinical overview'], [['patient'], /\/patient$/, 'Your recovery journey'],
+  ]
+  for (const [roles, home] of homes) {
+    await signIn(page, await account(roles))
+    await expect(page).toHaveURL(home)
+    await signOut(page)
+  }
 })
 
 test('a signed-in account skips the landing page', async ({ page }) => {

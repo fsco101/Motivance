@@ -78,6 +78,7 @@ internal fun AuditKind.label()=when(this) {
     AuditKind.BOOKING_RETURNED -> R.string.admin_event_booking_returned
     AuditKind.BOOKING_THERAPIST -> R.string.admin_event_booking_therapist
     AuditKind.BOOKING_ATTENDANCE -> R.string.admin_event_booking_attendance
+    AuditKind.BOOKING_SERIES -> R.string.admin_event_booking_series
     AuditKind.BOOKING_EXPORTED -> R.string.admin_event_booking_exported
     AuditKind.OTHER -> R.string.admin_event_other
 }

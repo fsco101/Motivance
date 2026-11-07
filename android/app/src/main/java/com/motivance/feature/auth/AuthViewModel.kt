@@ -5,6 +5,7 @@ import com.motivance.R
 import com.motivance.designsystem.Toaster
 import com.motivance.designsystem.ToastTone
 import com.motivance.domain.AuthRepository
+import com.motivance.domain.PushDevices
 import com.motivance.domain.UserSession
 import com.motivance.domain.WorkspaceOverview
 import com.motivance.domain.RemoteFailure
@@ -27,7 +28,7 @@ private fun AuthAction.doneToast()=when(this) {
     AuthAction.REFRESH -> R.string.toast_session_refreshed to ToastTone.SUCCESS
     AuthAction.SIGN_OUT -> R.string.toast_signed_out to ToastTone.SUCCESS
 }
-@HiltViewModel class AuthViewModel @Inject constructor(private val auth: AuthRepository,private val toasts:Toaster=Toaster()) : ViewModel() {
+@HiltViewModel class AuthViewModel @Inject constructor(private val auth: AuthRepository,private val toasts:Toaster=Toaster(),private val devices:PushDevices=PushDevices.None) : ViewModel() {
     private val mutable = MutableStateFlow(AuthState(restoring=true))
     val state = mutable.asStateFlow()
     private val overviewMutable=MutableStateFlow(OverviewState())
@@ -55,6 +56,7 @@ private fun AuthAction.doneToast()=when(this) {
             catch(e: Exception) { if(mutable.value.session?.userId==user) overviewMutable.value=OverviewState(failed=true) }
         }
     }
+    fun registerPush() {viewModelScope.launch {devices.register()}}
     fun clearNotice() { if (!mutable.value.busy) mutable.value=mutable.value.copy(notice=null) }
     fun registerProfile(email:String,password:String,profile:com.motivance.domain.PatientProfile) {
         if(mutable.value.busy) return
@@ -89,7 +91,7 @@ private fun AuthAction.doneToast()=when(this) {
                     AuthAction.REQUEST_RECOVERY -> { auth.requestRecovery(email.trim()); mutable.value=AuthState(notice=AuthNotice.RECOVERY_SENT) }
                     AuthAction.RECOVER -> mutable.value=AuthState(session=auth.recover(email.trim(),otp.trim(),password))
                     AuthAction.REFRESH -> mutable.value=AuthState(session=auth.refresh())
-                    AuthAction.SIGN_OUT -> { overviewMutable.value=OverviewState(); mutable.value=AuthState(busy=true,activeAction=AuthAction.SIGN_OUT); auth.signOut() }
+                    AuthAction.SIGN_OUT -> { overviewMutable.value=OverviewState(); mutable.value=AuthState(busy=true,activeAction=AuthAction.SIGN_OUT); devices.unregister(); auth.signOut() }
                 }
                 report(action)
             } catch(e: CancellationException) { throw e }

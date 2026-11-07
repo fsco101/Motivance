@@ -380,3 +380,156 @@ Two older tests pinned the rule this changes, that a full slot cannot be chosen.
 The whole live suite also caught a fault in a new check: raising the capacity told one patient about two slots whenever that patient had lost an earlier race, which is correct, so the check now looks at one slot. It had passed alone only when that patient won.
 
 A physical phone is still to be tried, and is on the checklist.
+
+## MOT-64: Patient self-service reschedule
+
+A patient can move their own pending, confirmed or rescheduled session to another specific slot, on the web and on Android. A move is a new request for a new time: it obeys every rule a request does, plus the reschedule cut-off and the maximum number of moves, and a Scheduler confirms it again, so a confirmed session returns to Pending. The therapist stays only if they are free then, which includes not being on leave.
+
+Schedulers and the therapist are told. A therapist who stays hears it as a move that needs confirming, with no calendar link, because the new time is not theirs to plan around yet. A therapist who cannot stay hears the session is no longer theirs. Moving to the time a session already has changes nothing and uses no move, so a retry after a lost response is safe. The place left behind opens for anyone on the waitlist.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: each rule, the therapist staying or going, the limit and cut-off, who hears, a race for the last place, the waitlist | `python scripts/test_booking.py self_reschedule` | 36 checks passed |
+| All sections | `python scripts/test_booking.py` | 625 checks passed |
+| Email wording, and no calendar link on a move that needs confirming | `npm run test:contract` | 119 passed, three runs in a row |
+| Browser tests with axe: the card, the move page, a time taken while choosing, no moves left, an old link | `npx playwright test reschedule booking waitlist design patient notifications --workers=1` | All passed, over two runs on the same code. `booking` and `design` finished in a first run the system then stopped for low memory, with no assertion failing. The four files it cut off were rerun with one worker: 28 passed |
+| Real sends to Mailpit | `python scripts/test_email.py` | 60 checks passed |
+| Web unit tests | `npm test` | 244 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 237 passed |
+| The app on a throwaway emulator, against the local backend | Driven through its UI, checking the screen and the server at each step | 8 checks passed: moving a confirmed session as a patient, then reading the news as the therapist |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The contract suite failed once more while this was tested, this time because a count was compared across two reads while another file was adding accounts. That was the third failure caused by test files sharing one database at the same moment, after the notification race and the set-up time limit in MOT-62, so `npm run test:contract` now runs its files one at a time. It takes 50 seconds rather than 15, and CI uses the same script.
+
+A physical phone is still to be tried, and is on the checklist.
+
+## MOT-65: Attendance
+
+The assigned therapist or a Scheduler can mark a session attended or no-show once it has started, and marking again corrects it. Nobody else can: `mark_attendance` refuses other therapists, patients and administrators with a 403, and clients have no direct write. The same mark twice changes nothing, so a double tap records one event.
+
+Therapists mark from My Schedule on the web and Android. Schedulers mark from the confirmed schedule, which gains an attendance column, a filter and an attendance column in both exports. "Not marked" means a session that has started, because one still to come needs nothing yet. The server says when a session has started, so the apps cannot disagree with it about the moment marking opens.
+
+Every change is recorded with what it was, in the booking's history and the audit log. A mark describes the time a session had, so moving a session clears it.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: who can mark, correcting, the history, refusals, the filters, moving a session | `python scripts/test_booking.py attendance` | 26 checks passed |
+| All sections | `python scripts/test_booking.py` | 651 checks passed |
+| Contract tests | `npm run test:contract` | 124 passed |
+| Browser tests with axe: marking and correcting, a patient seeing no marks, the column, filters and an opened export, the history | `npx playwright test attendance schedule confirmed-schedule scheduler design admin --workers=1` | 126 passed. 83 opt-in tests did not run, as designed |
+| Web unit tests | `npm test` | 244 passed |
+| Android unit tests | `gradlew :core:domain:test :app:testDebugUnitTest` | 242 passed |
+| Android lint | `gradlew :app:lintDebug` | Passed |
+| The app on a throwaway emulator, against the local backend | Driven through its UI, checking the server at each step | 5 checks passed: both marks offered, marking, correcting, the history, and no marks on a session still to come |
+| Database tests | `npx supabase test db` | 69 passed |
+| Administrator parity | `python scripts/check_admin_parity.py` | Passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The Schedule table was also looked at by eye at 1024 and 1440 pixels. The two marks stack at the narrower width and nothing scrolls sideways.
+
+A physical phone is still to be tried, and is on the checklist.
+
+## MOT-66: Weekly repeat bookings
+
+A Scheduler chooses a patient, therapist, first session and number of weeks from the Schedule page, and sees every date with what would stop it before anything is saved. Saving confirms the dates that pass and leaves out the rest, so one holiday does not cost a patient the whole course. Every date goes through the same checks as any booking a Scheduler makes, again at the save, because a preview can go out of date. Saving twice with the same request returns the same course.
+
+The patient and therapist get one notification and one email for the course, with the number of sessions, and each session still gets its own reminders. Cancelling works the same way: the remaining sessions go together, with a reason, from any session in the course. Sessions that have started stay, and each therapist hears about the sessions that were theirs. The places that open reach the waitlist.
+
+A date of a course is recorded as booked, not requested, so nobody is asked to decide it. Administrators read it in Activity, and that label shipped to the web and Android together.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: one course meeting a closure, a holiday, leave, a busy therapist, an overlap and a full slot, a stale preview, a retry, two Schedulers racing for the last place, cancelling, who hears what | `python scripts/test_booking.py series` | 43 checks passed |
+| All sections, with the 403 guard covering the new functions | `python scripts/test_booking.py` | 706 checks passed |
+| Real sends to Mailpit: one email each, in each reader's language, and one for cancelling | `python scripts/test_email.py` | 64 checks passed |
+| Contract tests, including every new email in both languages | `npm run test:contract` | 132 passed |
+| Browser tests with axe: the dialog, the dates, going back, saving, cancelling | `npx playwright test series scheduler confirmed-schedule notifications design --workers=1` | 101 passed. 83 opt-in tests did not run, as designed |
+| Web unit tests | `npm test` | 246 passed |
+| Android unit tests, including reading a course's notification and its audit label | `gradlew :core:domain:test :app:testDebugUnitTest` | 243 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Administrator parity | `python scripts/check_admin_parity.py` | Passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The Scheduler workspace is web only, so the only Android change is reading the four new notifications and the audit label. Those are covered by unit tests, not yet seen on an emulator screen.
+
+## MOT-67: Scheduler dashboard
+
+The Scheduler workspace now opens on three figures from `scheduler_summary`: pending requests, today's sessions and utilization this week. Each opens the page it counted, already filtered, so following a figure never contradicts it, and the live test proves that for the first two by comparing them with what those pages list.
+
+Utilization is booked sessions as a share of the places in open slots, and the page says so. It counts the whole week, Monday to Sunday, so the figure does not shrink as the week passes. Booked means confirmed or rescheduled, because a pending request is not yet a session. With no open slots there is no share, so the card shows a dash rather than a zero.
+
+Looking at the page by eye found a fault no test had caught. With reduced motion on, every stat card in the app showed 0 on screen, while a screen reader was told the right number, because a spring told to jump does not reach the text it drives. This reached the administrator overview too. Reduced motion now writes the number directly, and a browser test that failed with "60" before the fix passes with it.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: the figures against a slot-by-slot recount from the tables, what counts as booked, the week's edges, closures, capacity, no open slots, access | `python scripts/test_booking.py summary` | 17 checks passed |
+| All sections | `python scripts/test_booking.py` | 735 checks passed |
+| Contract tests | `npm run test:contract` | 135 passed |
+| Browser tests with axe: the figures, where each leads, reduced motion, and every page that uses a stat card | `npx playwright test dashboard scheduler auth confirmed-schedule admin therapist design --workers=1` | 168 passed. 83 opt-in tests did not run, as designed |
+| Web unit tests | `npm test` | 246 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+## S11 outcome
+
+All five issues are implemented and closed, with no criterion deferred. The sprint demo ran for real, in one sitting, through the same API the apps call, in `python scripts/test_booking.py s11_demo` (8 checks): a patient joined a waitlist and heard when the place opened, moved a session, a therapist marked a no-show, a Scheduler booked a weekly course with one conflicting date, and read the dashboard. Physical phones are still to be tried, and are on the checklist.
+
+## MOT-68: Web sign-up and the landing page
+
+The public page now speaks to patients first: what Motivance does for them, how booking works in three steps, Book a Session, sign-in, sign-up and the Android app, then the care team and the privacy facts. The skeleton the owner reviewed stays as the page's one bold element. Each step shows the product's real pieces at rest, and every claim was checked against what the product does today. With no app address set, the page says the app is not in a store yet rather than offering a dead link.
+
+Web sign-up has Android's four steps and rules, reuses the checks already in `data/profile.ts` and sends the same `patient_profile` details, so the same database trigger makes the account. It ends with the emailed code, and Book a Session carries through sign-up and sign-in to the booking page. Staff following the same link still reach their own workspace.
+
+**Local Auth sends through a real Gmail account.** The first draft of the browser test would have sent real mail to a made-up address, and this was caught before it ran, so nothing was sent. The test now holds back only the send: what the browser posts makes the account through Auth and the same trigger, and the code it enters is the real one the email would have carried. A contract test proves the real refusals, which fail in the database before any email. A real inbox is on the checklist.
+
+The public pages' text moved into its own file, which loads with them, so the first download fell from 297 KB to 296 KB even with a new page.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Sign-up rules, and the same details under the same names as Android | `npm test` | 253 passed |
+| Real refusals, a patient and only a patient, no sign-in before the code | `npm run test:contract` | 139 passed |
+| Sign-up in the browser with axe: every step, editing, the agreement, a username in use, a wrong code, the code, reaching booking | `npx playwright test signup --workers=1` | 6 passed |
+| The landing page: what it offers, Filipino, axe and no sideways scroll at 360, 768, 1024 and 1440, keyboard with visible focus | `npx playwright test landing --workers=1` | 8 passed |
+| Each role reaching its own dashboard, and everything these pages touch | `npx playwright test landing signup auth design patient --workers=1` | 120 passed, over two runs on the same code. 83 opt-in tests did not run, as designed |
+| All live API sections | `python scripts/test_booking.py` | 735 checks passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 296 KB of 300 KB |
+
+The second browser run was needed because an older test, "the page offers no sign-up", pinned the rule this issue changes. It now proves that sign-in leads someone new to sign-up. The 14 tests behind it in that serial file did not run the first time, and all 22 in the file passed the second.
+
+Reviewing the pages by eye found two things the tests had not: the header crowded the logo on a phone, so Create account now sits in the page's main button and the footer there, and the step samples floated away from the text below them.
+
+## MOT-69: FCM push, ready for credentials
+
+Everything FCM needs is built, and push starts working when the owner adds the credentials. `docs/operations/NOTIFICATIONS.md` lists the exact steps and values.
+
+The Firebase values come from `android/.env` and Firebase starts by hand, with its automatic start removed from the manifest, so a build without them has no Firebase running and asks for nothing. With them, the app asks for permission after sign-in, registers its token and shows what arrives. Signing out removes the token, so nobody on a shared phone hears about the last person's sessions.
+
+`notification-dispatch` sends through FCM HTTP v1 with a signed service account token, and marks each push skipped until `FCM_SERVICE_ACCOUNT` is set. A message carries data only, so the app builds the notification and a lock screen shows that there is news, not a patient's name. The words are the email's, in the reader's language. A token FCM reports dead is removed. A temporary failure waits and tries again as email does, and stops as failed after 5 attempts.
+
+**What has not been proved.** No real Firebase project exists yet, so no real token has been issued and no real push has reached a phone. The stub proves what the server sends, and the emulator proves what the app does with a message, but the join between them through Google is deferred to the owner's credentials, and is on the checklist.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Against a stub FCM server: skipping with no credentials, the request format, the signed token verified with the account's key, language, several phones, dead tokens, retries, stopping as failed, a refused account, no phone, a disabled account | `python scripts/test_push.py` | 30 checks passed |
+| Live API: which phone belongs to whom, and the dispatcher's functions being closed to everyone else | `python scripts/test_booking.py devices` | 14 checks passed |
+| All sections | `python scripts/test_booking.py` | 749 checks passed |
+| Real sends to Mailpit, with a push row now beside each email | `python scripts/test_email.py` | 64 checks passed |
+| Contract tests, including the message, FCM's answers and the service account signature | `npm run test:contract` | 159 passed |
+| Android unit tests, including the rules for asking, registering and signing out | `gradlew :core:domain:test :app:testDebugUnitTest` | 253 passed |
+| Android lint, resources and module boundaries | `gradlew :app:lintDebug`, `check_resources.py`, `check_module_boundaries.py` | Passed |
+| A build with no Firebase values, on a throwaway emulator against the local backend | Driven through its UI | 5 checks passed: no prompt, the permission untouched, no phone registered, nothing of Firebase in the app's log, and no crash. A weekly course's notification was also read on screen, which MOT-66 had left open |
+| A build with placeholder Firebase values, on the same emulator | Driven through its UI | 7 checks passed: the prompt after sign-in, the answer kept, no crash when no token can be issued, and a tap opening Notifications with the app running and from cold |
+| A real notification on a real Android system | `am instrument -e class com.motivance.data.push.PushNotifierTest` | 5 passed, including the private version a lock screen shows |
+| Browser tests with axe | `npx playwright test notifications booking --workers=1` | 19 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+
+The first check that a tap opens Notifications passed falsely, because it matched the bell's label on Home, and a screenshot showed Home. That launch also lacked the flags a real notification carries, so the app was right and the check was wrong. The check now looks for the Notifications page itself, with the real flags.
+
+## MOT-70: Final regression and handover
+
+Every suite ran together on a freshly reset local stack and passed, with the results, the changed files and every new setting in [the final regression](BOOKING-REGRESSION.md). `PLAN.md`, `DATABASE.md`, `ENVIRONMENT.md` and `DATA-LIFECYCLE.md` now describe the feature as built, and the checklist lists every deferred check.
+
+## S12 outcome
+
+All three issues are implemented and closed. The exit criterion stays recorded as not passed, under a deferral the owner approved, because MOT-69 needs a real push with the owner's Firebase credentials. The sprint demo ran for real in the browser. That finishes in-center booking: MOT-49 to MOT-70 are all closed.

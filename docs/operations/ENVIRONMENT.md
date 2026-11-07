@@ -23,6 +23,29 @@ Gradle resolves process environment before `android/local.properties`, then `and
 
 Cloudinary profile-photo credentials are backend configuration, not Android configuration. Keep them in ignored `supabase/.env` and store them in Supabase Vault with `scripts/configure_cloudinary.py` (see [CLOUDINARY.md](CLOUDINARY.md)). The APK needs no Cloudinary value.
 
+## Optional values
+
+The app builds and runs with all of these empty.
+
+| Variable | Where | Value and source |
+|---|---|---|
+| `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`, `FIREBASE_API_KEY`, `FIREBASE_SENDER_ID` | `android/.env` | Public Firebase client values for push. All four are needed, and until then the app does nothing push-related. [NOTIFICATIONS.md](NOTIFICATIONS.md) lists where each one is |
+| `VITE_ANDROID_APP_URL` | `web/.env` | The app's store address, which must use `https://`. Until it is set, the landing page and the suggestion to use the phone say so rather than offering a link |
+
+## Backend values for booking
+
+These are Edge Function secrets or Vault entries, never Android or browser values. [NOTIFICATIONS.md](NOTIFICATIONS.md) has the steps.
+
+| Variable | Where | For |
+|---|---|---|
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_EMAIL`, `SMTP_SENDER_NAME` | Edge secrets | The Gmail sender for booking email |
+| `NOTIFICATION_SMTP_PORT` | Edge secrets | 465 on a hosted project |
+| `NOTIFICATION_DISPATCH_SECRET` | Edge secrets, and Vault as `notification_dispatch_secret` | Lets the scheduled job call `notification-dispatch` |
+| `notification_dispatch_url` | Vault | The function's address, for the scheduled job |
+| `PUBLIC_SITE_URL`, `PUBLIC_FUNCTIONS_URL` | Edge secrets | Links in emails, and where calendar links point |
+| `FCM_SERVICE_ACCOUNT` | Edge secrets | The Firebase service account's JSON file, added by the owner. A secret. Until it is set, pushes are marked skipped |
+| `FCM_API_URL` | Edge secrets, tests only | Points the dispatcher at a stub. Leave it unset everywhere real |
+
 ## Local setup
 
 From `C:\Motivance` with Docker running:
@@ -52,4 +75,4 @@ Repeat the reverse command after reconnecting/restarting the phone. Docker and t
 - **Signing passwords/keystore:** separate protected release tooling, never an app BuildConfig value.
 - **Access/refresh tokens:** managed at runtime in an Android Keystore-encrypted, backup-excluded session file; the user does not add these to `.env`.
 
-Sprints 2 and 3 need no cloud GPU, pose API key, Firebase credentials, Redis password, or additional upload-service key. Inference remains on the device; authenticated uploads use the same Supabase project and public client configuration.
+Sprints 2 and 3 need no cloud GPU, pose API key, Redis password, or additional upload-service key. Inference remains on the device; authenticated uploads use the same Supabase project and public client configuration.

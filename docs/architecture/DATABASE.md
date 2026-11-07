@@ -2,6 +2,12 @@
 
 ## In-center booking
 
+Twenty migrations, `202611060001` to `202611060020`, add the feature, and `supabase db reset` applies them all from nothing. Clients have no direct writes on any booking table: every change is a `security definer` function that re-checks the caller, and a failed role check is an HTTP 403. Refusals raise a stable `booking_*` message, which each app turns into its own words.
+
+Three things hold the rules together. One transaction lock, `pg_advisory_xact_lock(724020)`, covers every booking change, so a capacity count cannot race, and it also covers closures and settings. Two exclusion constraints stop overlaps for one patient and for one therapist, even from a direct insert. A trigger writes `booking_events` for every change, and everything downstream hangs from that table: the audit feed, notifications and the waitlist, so a new way of changing a booking cannot skip them.
+
+`notification_deliveries` is the queue for email and push. A notification adds one row for each. `claim_notification_deliveries` takes rows with `for update skip locked`, so two runs cannot send one twice, and `finish_notification_delivery` retries with growing waits and stops as failed after 5 attempts. A push with nobody to reach ends as `skipped`, which is not a failure. `booking_series` groups the sessions of a weekly course, and `device_tokens` holds each phone's FCM token, owned by whoever signed in last.
+
 The tables, functions and rules for booking are in [BOOKING.md](BOOKING.md). `center_problem` holds the rules that bind everyone, and `slot_problem` adds the ones that bind only patients: notice, horizon and the slot grid. Schedulers skip those, so they can book at short notice.
 
 ## Sprint 4 history reads

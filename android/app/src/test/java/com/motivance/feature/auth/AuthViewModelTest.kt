@@ -19,6 +19,15 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelTest {
+    @Test fun signingOutRemovesThePhoneWhileTheSessionStillWorks()=runTest(dispatcher) {
+        val order=mutableListOf<String>()
+        val devices=object:com.motivance.domain.PushDevices {override suspend fun unregister() {order+="unregister"}}
+        val repository=object:AuthRepository by FakeAuth() {override suspend fun signOut() {order+="signOut"}}
+        val vm=AuthViewModel(repository,com.motivance.designsystem.Toaster(),devices)
+        vm.act(AuthAction.SIGN_OUT);advanceUntilIdle()
+        assertEquals(listOf("unregister","signOut"),order)
+    }
+
     private val dispatcher=StandardTestDispatcher()
     private val repository=FakeAuth()
     @Before fun setup() { Dispatchers.setMain(dispatcher) }

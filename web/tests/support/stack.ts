@@ -47,6 +47,18 @@ export async function recoveryCode(email: string) {
   return String(link.email_otp)
 }
 
+/**
+ * Local Auth sends through a real mail account, so a test must never let it send. This makes the same unconfirmed account through the same
+ * trigger, sends nothing, and hands back the code the email would have carried. A refusal keeps its status, as the app would see it.
+ */
+export async function signupLink(email: string, password: string, data: Record<string, unknown>) {
+  const { API_URL, SERVICE_ROLE_KEY } = stack()
+  const response = await fetch(`${API_URL}/auth/v1/admin/generate_link`, {
+    method: 'POST', headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json', 'X-Supabase-Api-Version': '2024-01-01' }, body: JSON.stringify({ type: 'signup', email, password, data }),
+  })
+  return { status: response.status, body: await response.json() as Record<string, unknown> }
+}
+
 export async function signedIn(user: TestUser) {
   const db = client()
   const { error } = await db.auth.signInWithPassword({ email: user.email, password: user.password })
@@ -105,6 +117,8 @@ delete from public.notifications where user_id in (${ids}) or booking_id in (sel
 delete from public.audit_events where target_type='bookings' and target_id in (select id::text from public.bookings where patient_id in (${ids}) or therapist_id in (${ids}));
 delete from public.booking_events where booking_id in (select id from public.bookings where patient_id in (${ids}) or therapist_id in (${ids}));
 delete from public.bookings where patient_id in (${ids}) or therapist_id in (${ids});
+delete from public.booking_series where patient_id in (${ids}) or therapist_id in (${ids});
+delete from public.device_tokens where user_id in (${ids});
 delete from public.booking_waitlist where patient_id in (${ids});
 delete from public.session_measurements where session_id in (select id from public.sessions where patient_id in (${ids}));
 delete from public.sessions where patient_id in (${ids}); delete from public.consents where patient_id in (${ids});

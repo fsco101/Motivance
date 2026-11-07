@@ -5,6 +5,7 @@ import type { Closure, Holiday, TimeOff } from '@/data/calendar'
 import type { ScheduleAudience } from '@/data/schedule'
 import { NO_FILTERS as NO_REQUEST_FILTERS, NO_SCHEDULE_FILTERS, type RequestRow } from '@/data/scheduler'
 import { SignInPage } from '@/auth/SignInPage'
+import { SignUpPage } from '@/auth/SignUpPage'
 import type { Workspace } from '@/auth/roles'
 import { toast } from '@/components/Toast'
 import { AccountsView } from '@/features/admin/AccountsView'
@@ -14,6 +15,7 @@ import { CatalogueView } from '@/features/admin/CatalogueView'
 import { LinksView } from '@/features/admin/LinksView'
 import { BookSessionView } from '@/features/patient/BookSessionView'
 import { MyBookingsView } from '@/features/patient/MyBookingsView'
+import { RescheduleView } from '@/features/patient/RescheduleView'
 import { ConnectPanel, PrivacyPanel } from '@/features/patient/PatientCareView'
 import { PatientExercisesView } from '@/features/patient/PatientExercisesView'
 import { PatientHomeView } from '@/features/patient/PatientHomeView'
@@ -33,6 +35,8 @@ import { ConfirmedScheduleView } from '@/features/scheduler/ConfirmedScheduleVie
 import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
 import { RequestsView } from '@/features/scheduler/RequestsView'
+import { SchedulerDashboardView } from '@/features/scheduler/SchedulerDashboardView'
+import { WeeklySeriesDialog, type SeriesActions } from '@/features/scheduler/WeeklySeriesDialog'
 import { TherapistHomeView } from '@/features/therapist/TherapistHomeView'
 import { LandingPage } from '@/landing/LandingPage'
 import '@/locales/booking'
@@ -90,6 +94,12 @@ function PatientBook() {
   return <BookSessionView load={useDemo(data.availability, { ...data.availability, days: [] })} month={data.availability.days[0]!.date.slice(0, 7)} onMonth={said('Changed month')} canGoBack={false} canGoForward today={data.availability.days[0]!.date}
     date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onRequest={said('Requested')} onJoin={said('Joined the waitlist')} onLeave={said('Left the waitlist')} busy={false} />
 }
+function PatientMove() {
+  const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
+  const [chosen, setChosen] = useState<Slot | null>(null)
+  return <RescheduleView booking={data.myBookings[0]!} load={useDemo(data.availability, { ...data.availability, days: [] })} month={data.availability.days[0]!.date.slice(0, 7)} onMonth={said('Changed month')} canGoBack={false} canGoForward today={data.availability.days[0]!.date}
+    date={date} onDate={setDate} chosen={chosen} onChoose={setChosen} onMove={said('Moved')} busy={false} />
+}
 const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.myBookings, [])} waitlist={data.waitlist} onCancel={said('Cancelled')} onBook={said('Requested')} onLeave={said('Left the waitlist')} />
 function PatientProgress() {
   const [filters, setFilters] = useState(NO_FILTERS)
@@ -109,7 +119,10 @@ function PatientProfile() {
 }
 const requestActions: RequestActions = {
   therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),
-  reject: async () => toast.show('Rejected'), cancel: async () => toast.show('Cancelled'), reschedule: async () => toast.show('Rescheduled'), bulkReject: async () => toast.show('Rejected'),
+  reject: async () => toast.show('Rejected'), cancel: async () => toast.show('Cancelled'), reschedule: async () => toast.show('Rescheduled'), bulkReject: async () => toast.show('Rejected'), cancelSeries: async () => toast.show('Cancelled'),
+}
+const seriesActions: SeriesActions = {
+  patients: async () => [{ id: 'p1', name: 'Ana Dela Cruz' }, { id: 'p2', name: 'Ramon Bautista' }], availability: async () => data.availability, preview: async () => data.seriesDates, create: async () => toast.show('Booked'),
 }
 const Notifications = () => <NotificationsView load={useDemo(data.inbox, { unread: 0, rows: [] })} onOpen={said('Opened')} onMarkAll={said('Marked read')} />
 
@@ -123,10 +136,17 @@ const calendarActions: CalendarActions = {
   impact: async () => data.affected, availability: async () => data.availability, therapists: async () => data.therapistChoices, saveHoliday: async () => toast.show('Saved'), saveClosure: async () => toast.show('Saved'), saveTimeOff: async () => toast.show('Saved'),
 }
 function SchedulerSchedule() {
+  const [params] = useSearchParams()
   const [filters, setFilters] = useState(NO_SCHEDULE_FILTERS)
+  const [series, setSeries] = useState(params.has('series'))
   const rows = data.requests.filter((row) => row.status === 'confirmed' || row.status === 'rescheduled')
-  return <ConfirmedScheduleView load={useDemo({ rows, total: rows.length }, { rows: [], total: 0 })} therapists={data.therapistChoices} patients={[{ id: 'p1', name: 'Ana Dela Cruz' }]} filters={filters} onFilters={setFilters}
-    sort={{ key: 'starts_at', direction: 'asc' }} onSort={said('Sorted')} page={0} onPage={said('Paged')} exporting={null} onExport={said('Exported')} />
+  return (
+    <>
+      <ConfirmedScheduleView load={useDemo({ rows, total: rows.length }, { rows: [], total: 0 })} therapists={data.therapistChoices} patients={[{ id: 'p1', name: 'Ana Dela Cruz' }]} filters={filters} onFilters={setFilters}
+        sort={{ key: 'starts_at', direction: 'asc' }} onSort={said('Sorted')} page={0} onPage={said('Paged')} exporting={null} onExport={said('Exported')} onMark={said('Marked')} marking={false} onSeries={() => setSeries(true)} />
+      {series && <WeeklySeriesDialog therapists={data.therapistChoices} actions={seriesActions} onClose={() => setSeries(false)} />}
+    </>
+  )
 }
 
 function SchedulerCalendar() {
@@ -176,7 +196,7 @@ const profileActions: ProfileActions = {
 const Profile = () => <ProfileView load={useDemo(data.profile, { ...data.profile, complete: false, consent: false, username: '', photo: null })} actions={profileActions} />
 
 const SCREENS = [
-  ['Landing', '/design/landing'], ['Sign-in', '/design/sign-in'], ['Components', '/design/components'],
+  ['Landing', '/design/landing'], ['Sign-in', '/design/sign-in'], ['Sign-up', '/design/sign-up'], ['Components', '/design/components'],
   ['Therapist home', THERAPIST], ['Patients', `${THERAPIST}/patients`], ['Patient record', `${THERAPIST}/patients/p1`], ['Assignment editor', `${THERAPIST}/patients/p1/assign`], ['Exercises', `${THERAPIST}/exercises`], ['Progress', `${THERAPIST}/progress`],
   ['Admin overview', ADMIN], ['Accounts', `${ADMIN}/accounts`], ['Links', `${ADMIN}/links`], ['Catalogue', `${ADMIN}/catalogue`], ['Activity', `${ADMIN}/activity`], ['Profile', `${ADMIN}/profile`],
 ] as const
@@ -197,6 +217,7 @@ export const galleryRoutes: RouteObject[] = [{
     { index: true, element: <Index /> },
     { path: 'components', element: <ComponentGallery /> },
     { path: 'sign-in', element: <SignInPage /> },
+    { path: 'sign-up', element: <SignUpPage /> },
     { path: 'landing', element: <LandingPage /> },
     {
       path: 'therapist', element: <Frame workspace="therapist" />, handle: { crumb: 'nav.home' },
@@ -224,6 +245,7 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'notifications', element: <Notifications />, handle: { crumb: 'nav.notifications' } },
         { path: 'book', element: <PatientBook />, handle: { crumb: 'nav.book' } },
         { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
+        { path: 'bookings/move', element: <PatientMove />, handle: { crumb: 'nav.moveSession' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
         { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },
@@ -231,7 +253,7 @@ export const galleryRoutes: RouteObject[] = [{
     },
     {
       path: 'scheduler', element: <Frame workspace="scheduler" />, handle: { crumb: 'nav.home' },
-      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'schedule', element: <SchedulerSchedule />, handle: { crumb: 'nav.scheduleShort' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
+      children: [{ index: true, element: <SchedulerDashboardView load={ready(data.schedulerSummary)} base={SCHEDULER} /> }, { path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'schedule', element: <SchedulerSchedule />, handle: { crumb: 'nav.scheduleShort' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
     },
     {
       path: 'admin', element: <Frame workspace="admin" />, handle: { crumb: 'nav.overview' },

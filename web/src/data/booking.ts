@@ -59,17 +59,18 @@ export const ACTIVE: readonly BookingStatus[] = ['pending', 'confirmed', 'resche
 
 export type Booking = {
   id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; previousStartsAt: string | null
-  therapist: string | null; location: string; cancelUntil: string | null; canCancel: boolean
+  therapist: string | null; location: string; cancelUntil: string | null; canCancel: boolean; rescheduleUntil: string | null; canReschedule: boolean; reschedulesLeft: number
 }
 
 export type RawBooking = {
   id: string; reference_no: string; status: BookingStatus; status_reason: string | null; starts_at: string; ends_at: string; previous_starts_at: string | null
-  therapist_name: string | null; location?: string; cancel_until?: string | null; can_cancel?: boolean
+  therapist_name: string | null; location?: string; cancel_until?: string | null; can_cancel?: boolean; reschedule_until?: string | null; can_reschedule?: boolean; reschedules_left?: number
 }
 
 export const decodeBooking = (row: RawBooking): Booking => ({
   id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, startsAt: row.starts_at, endsAt: row.ends_at, previousStartsAt: row.previous_starts_at,
   therapist: row.therapist_name, location: row.location ?? '', cancelUntil: row.cancel_until ?? null, canCancel: row.can_cancel ?? false,
+  rescheduleUntil: row.reschedule_until ?? null, canReschedule: row.can_reschedule ?? false, reschedulesLeft: row.reschedules_left ?? 0,
 })
 
 export async function loadMyBookings(db: Db) {
@@ -79,6 +80,10 @@ export async function loadMyBookings(db: Db) {
 /** `request` is chosen once per attempt, so retrying after a lost response returns the same booking. */
 export async function requestBooking(db: Db, request: string, startsAt: string) {
   return decodeBooking(must(await db.rpc('request_booking', { p_request: request, p_starts: startsAt })) as unknown as RawBooking)
+}
+
+export async function rescheduleMyBooking(db: Db, booking: string, startsAt: string) {
+  must(await db.rpc('reschedule_my_booking', { p_booking: booking, p_starts: startsAt }))
 }
 
 export async function cancelMyBooking(db: Db, booking: string) {
@@ -93,6 +98,12 @@ const startTime = (booking: Booking) => new Date(booking.startsAt).getTime()
 export const upcomingBookings = (bookings: readonly Booking[], now = Date.now()) => bookings.filter((booking) => isUpcoming(booking, now)).sort((a, b) => startTime(a) - startTime(b))
 
 export const nextBooking = (bookings: readonly Booking[], now = Date.now()) => upcomingBookings(bookings, now)[0] ?? null
+
+export type Attendance = 'attended' | 'no_show'
+
+export async function markAttendance(db: Db, booking: string, attendance: Attendance) {
+  must(await db.rpc('mark_attendance', { p_booking: booking, p_attendance: attendance }))
+}
 
 /** A place in the line for a full time. Open means a place is free now, and the first to book gets it. */
 export type WaitlistEntry = { id: string; startsAt: string; endsAt: string; open: boolean }

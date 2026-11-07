@@ -11,6 +11,8 @@ fun config(name: String): String {
 android {
     namespace = "com.motivance"; compileSdk = 35
     defaultConfig { applicationId = "com.motivance"; minSdk = 26; targetSdk = 35; versionCode = 3; versionName = "0.3.0"; buildConfigField("String", "SUPABASE_URL", config("SUPABASE_URL")); buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", config("SUPABASE_PUBLISHABLE_KEY")) }
+    // Optional. All four come from android/.env, and until they are set the app does nothing push-related.
+    listOf("FIREBASE_PROJECT_ID", "FIREBASE_APP_ID", "FIREBASE_API_KEY", "FIREBASE_SENDER_ID").forEach { defaultConfig.buildConfigField("String", it, config(it)) }
     defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     // MediaPipe 0.10.21 has ARM32/ARM64 JNI, but no x86_64 JNI. Avoid a
@@ -34,6 +36,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     implementation(libs.room.runtime); implementation(libs.room.ktx); ksp(libs.room.compiler)
     implementation(libs.work.runtime)
+    implementation(platform(libs.firebase.bom)); implementation(libs.firebase.messaging)
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:core:1.6.1")

@@ -59,7 +59,7 @@ fun AuditEvent.category()=when(targetType) {
 enum class AuditKind { ACCOUNT_ENABLED, ACCOUNT_DISABLED, PHOTO_UPDATED, PHOTO_REMOVED, PROFILE_UPDATED, ROLE_GRANTED, ROLE_REMOVED, ROLE_CHANGED, LINK_CREATED, LINK_UPDATED,
     INVITATION_CREATED, EXERCISE_ACTIVATED, EXERCISE_DEACTIVATED, VERSION_PUBLISHED, PRESCRIPTION_PUBLISHED, SESSION_RECORDED,
     CONSENT_RECORDED, REQUEST_CREATED, REQUEST_UPDATED, BOOKING_REQUESTED, BOOKING_CONFIRMED, BOOKING_REJECTED, BOOKING_CANCELLED,
-    BOOKING_RESCHEDULED, BOOKING_RETURNED, BOOKING_THERAPIST, BOOKING_ATTENDANCE, BOOKING_EXPORTED, OTHER }
+    BOOKING_RESCHEDULED, BOOKING_RETURNED, BOOKING_THERAPIST, BOOKING_ATTENDANCE, BOOKING_SERIES, BOOKING_EXPORTED, OTHER }
 fun AuditEvent.kind()=when(targetType to action) {
     "profiles" to "enable" -> AuditKind.ACCOUNT_ENABLED
     "profiles" to "disable" -> AuditKind.ACCOUNT_DISABLED
@@ -88,6 +88,7 @@ fun AuditEvent.kind()=when(targetType to action) {
     "bookings" to "returned_to_pending" -> AuditKind.BOOKING_RETURNED
     "bookings" to "therapist_changed" -> AuditKind.BOOKING_THERAPIST
     "bookings" to "attendance_marked" -> AuditKind.BOOKING_ATTENDANCE
+    "bookings" to "series_booked" -> AuditKind.BOOKING_SERIES
     "bookings" to "export" -> AuditKind.BOOKING_EXPORTED
     else -> AuditKind.OTHER
 }

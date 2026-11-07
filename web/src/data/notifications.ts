@@ -6,23 +6,27 @@ type Db = SupabaseClient<Database>
 export type NotificationKind =
   | 'confirmed' | 'rejected' | 'cancelled' | 'rescheduled' | 'therapist_changed' | 'returned_to_pending'
   | 'session_assigned' | 'session_moved' | 'session_cancelled' | 'session_removed'
-  | 'request_received' | 'patient_cancelled' | 'needs_therapist' | 'reminder' | 'session_reminder' | 'place_open'
+  | 'request_received' | 'patient_cancelled' | 'needs_therapist' | 'reminder' | 'session_reminder' | 'place_open' | 'patient_rescheduled'
+  | 'series_booked' | 'series_assigned' | 'series_cancelled' | 'session_series_cancelled'
 
 /** Facts rather than sentences: the text is written here, so it follows the reader's language. */
 export type AppNotification = {
   id: string; kind: NotificationKind; reference: string; startsAt: string; endsAt: string; previousStartsAt: string | null
   patient: string | null; therapist: string | null; reason: string | null; readAt: string | null; createdAt: string
+  /** A weekly course is one notification, so it says how many sessions and when the last one is. */
+  sessions: number; lastStartsAt: string | null
 }
 export type Inbox = { unread: number; rows: AppNotification[] }
 
 type RawNotification = {
   id: string; kind: NotificationKind; read_at: string | null; created_at: string
-  data: { reference_no?: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null }
+  data: { reference_no?: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null; sessions?: number; last_starts_at?: string | null }
 }
 
 export const decodeNotification = (row: RawNotification): AppNotification => ({
   id: row.id, kind: row.kind, reference: row.data.reference_no ?? '', startsAt: row.data.starts_at, endsAt: row.data.ends_at, previousStartsAt: row.data.previous_starts_at ?? null,
   patient: row.data.patient_name ?? null, therapist: row.data.therapist_name ?? null, reason: row.data.reason ?? null, readAt: row.read_at, createdAt: row.created_at,
+  sessions: row.data.sessions ?? 0, lastStartsAt: row.data.last_starts_at ?? null,
 })
 
 // The bell is on every page, so this file is in the first download. It checks errors itself because the shared helper lives

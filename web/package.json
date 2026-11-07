@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run --project unit",
-    "test:contract": "vitest run --project contract",
+    "test:contract": "vitest run --project contract --no-file-parallelism",
     "e2e": "playwright test",
     "types:db": "npx --yes supabase@2.20.12 gen types typescript --local --schema public > src/data/database.types.ts"
   },

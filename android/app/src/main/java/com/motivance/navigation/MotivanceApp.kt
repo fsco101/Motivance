@@ -60,6 +60,15 @@ import com.motivance.feature.notifications.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.rehabilitation.*
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.motivance.data.push.PushPrompt
+import com.motivance.data.push.PushSetup
+import com.motivance.data.push.notificationsAllowed
+import com.motivance.data.push.pushPrompt
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -73,17 +82,17 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
 private const val NOTIFICATION_CHECK_MS=60_000L
 
 /** The toast host wraps the whole app because several screens below return early and draw without the scaffold. */
-@Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster) {
+@Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster,openInbox:Boolean=false,inboxOpened:()->Unit={}) {
     CompositionLocalProvider(LocalToaster provides toaster) {
         Box(Modifier.fillMaxSize()) {
-            AppContent(vm)
+            AppContent(vm,openInbox,inboxOpened)
             ToastHost(toaster,Modifier.align(Alignment.TopCenter))
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun AppContent(vm: AuthViewModel) {
+@Composable private fun AppContent(vm: AuthViewModel,openInbox:Boolean,inboxOpened:()->Unit) {
     val auth by vm.state.collectAsStateWithLifecycle()
     val overview by vm.overview.collectAsStateWithLifecycle()
     val exercise:ExerciseSessionViewModel=viewModel()
@@ -122,6 +131,20 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         if(auth.session!=null) { route="HOME"; vm.loadOverview() }
         else if(route !in setOf("LANDING","AUTH","SETUP","CAMERA","CHECK_COMPLETE")) route="AUTH"
     }
+    // With no Firebase values this never asks and never registers, so the app behaves as if push did not exist.
+    val context=LocalContext.current
+    val askForPush=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted) vm.registerPush()}
+    LaunchedEffect(auth.session?.userId) {
+        when(pushPrompt(PushSetup.enabled,auth.session!=null,Build.VERSION.SDK_INT,notificationsAllowed(context))) {
+            PushPrompt.ASK -> askForPush.launch(Manifest.permission.POST_NOTIFICATIONS)
+            PushPrompt.REGISTER -> vm.registerPush()
+            PushPrompt.NOTHING -> Unit
+        }
+    }
+    // After the sign-in above has set its route, so a tap on a notification is what the person sees.
+    LaunchedEffect(openInbox,auth.session?.userId) {
+        if(openInbox && auth.session!=null) {route="NOTIFICATIONS";inboxOpened()}
+    }
     if(auth.restoring) { AuthLoadingScreen(); return }
     fun goBack() { route=parentRoute(route,auth.session!=null,auth.session?.workspace(role)==UserRole.THERAPIST) }
     BackHandler(enabled=route!="LANDING" && route!="HOME") { goBack() }
@@ -142,9 +165,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
             while(true) {rehabilitation.syncAssignments(); delay(ASSIGNMENT_CHECK_MS)}
         }
     }
-    val bookingPage=route.takeIf {patientAccount!=null && it in setOf("HOME","BOOKINGS","BOOK")}
+    val bookingPage=route.takeIf {patientAccount!=null && it in setOf("HOME","BOOKINGS","BOOK","MOVE")}
     LaunchedEffect(bookingPage,patientAccount) {
-        when(bookingPage) {"HOME","BOOKINGS" -> booking.refresh();"BOOK" -> booking.openBooking()}
+        when(bookingPage) {"HOME","BOOKINGS" -> booking.refresh();"BOOK" -> booking.openBooking();"MOVE" -> booking.showMonth(bookingState.month)}
     }
     // A therapist has room for a schedule tab. A patient's five are full, so theirs opens from My bookings.
     val therapistRole=actualRole==UserRole.THERAPIST
@@ -169,7 +192,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     val activeTab=when(route) {
         "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
         "LOCAL_HISTORY" -> "PROFILE"
-        "BOOK" -> "BOOKINGS"
+        "BOOK","MOVE" -> "BOOKINGS"
         "SCHEDULE" -> if(therapistRole) "SCHEDULE" else "BOOKINGS"
         "NOTIFICATIONS" -> "HOME"
         else -> route
@@ -327,7 +350,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "BOOKINGS" -> {
                     PageHeader(R.string.booking_my_title,R.string.booking_my_detail)
-                    MyBookings(bookingState,booking,{route="SCHEDULE"}) {route="BOOK"}
+                    MyBookings(bookingState,booking,{route="SCHEDULE"},{booking.startMove(it);route="MOVE"}) {route="BOOK"}
                 }
                 "NOTIFICATIONS" -> {
                     PageHeader(R.string.nav_notifications,R.string.notifications_detail)
@@ -343,6 +366,10 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "BOOK" -> {
                     PageHeader(R.string.booking_title,R.string.booking_detail)
                     BookSession(bookingState,booking) {route="BOOKINGS"}
+                }
+                "MOVE" -> {
+                    PageHeader(R.string.booking_reschedule_title,R.string.booking_reschedule_detail)
+                    MoveSession(bookingState,booking) {route="BOOKINGS"}
                 }
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
@@ -400,7 +427,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
 private fun depth(route:String,therapist:Boolean)=when(route) {
     "ASSIGN" -> 2
-    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","NOTIFICATIONS" -> 1
+    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","MOVE","NOTIFICATIONS" -> 1
     "SCHEDULE" -> if(therapist) 0 else 1
     else -> 0
 }
@@ -410,7 +437,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
     "CAMERA" -> "SETUP"
     "ASSIGN" -> "PATIENT_DETAIL"
     "PATIENT_DETAIL" -> "PATIENTS"
-    "BOOK" -> "BOOKINGS"
+    "BOOK","MOVE" -> "BOOKINGS"
     "SCHEDULE" -> if(therapist) "HOME" else "BOOKINGS"
     "LOCAL_HISTORY" -> if(signedIn) "PROFILE" else "CHECK_COMPLETE"
     "SETUP" -> if(signedIn) "HOME" else "LANDING"

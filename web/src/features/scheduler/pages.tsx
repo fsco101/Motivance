@@ -1,17 +1,16 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ButtonLink } from '@/components/Button'
+import { useSearchParams } from 'react-router'
 import { ConfirmDialog } from '@/components/Dialog'
-import { PageHeader, Panel } from '@/components/Display'
 import { toast } from '@/components/Toast'
-import { addDays, bookingFailureKey, CENTER_ZONE, isStale, todayAt } from '@/data/booking'
+import { addDays, bookingFailureKey, CENTER_ZONE, isStale, markAttendance, todayAt, type Attendance } from '@/data/booking'
 import { useCenterFormat } from '@/features/booking/format'
 import { deleteClosure, deleteHoliday, deleteTimeOff, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, saveTimeOff, type CenterDay, type CenterSettings, type Closure, type Holiday, type TimeOff } from '@/data/calendar'
 import { supabase } from '@/data/client'
 import {
-  assignTherapist, bulkReject, cancelBooking, confirmBooking, loadAllConfirmed, loadCenterName, loadConfirmed, loadDetail, loadPatientChoices, loadRequests, loadStaffAvailability, loadTherapists, logExport,
-  NO_FILTERS, NO_SCHEDULE_FILTERS, PAGE_SIZE, rejectBooking, rescheduleBooking, type RequestFilters, type RequestRow, type RequestSort, type ScheduleFilters,
+  assignTherapist, bulkReject, cancelBooking, cancelSeries, confirmBooking, createSeries, loadAllConfirmed, loadCenterName, loadConfirmed, loadDetail, loadPatientChoices, loadRequests, loadStaffAvailability, loadSummary, loadTherapists, logExport,
+  NO_FILTERS, NO_SCHEDULE_FILTERS, PAGE_SIZE, previewSeries, rejectBooking, rescheduleBooking, searchPatients, type RequestFilters, type RequestRow, type RequestSort, type ScheduleFilters,
 } from '@/data/scheduler'
 import { asLoad } from '@/features/shared'
 import '@/locales/booking'
@@ -20,16 +19,13 @@ import { CalendarView, type CalendarTab } from './CalendarView'
 import { ConfirmedScheduleView, type ExportFormat } from './ConfirmedScheduleView'
 import { BulkRejectDialog, RequestDialog, type RequestActionKind, type RequestActions } from './RequestDialogs'
 import { RequestsView } from './RequestsView'
+import { SchedulerDashboardView } from './SchedulerDashboardView'
+import { WeeklySeriesDialog, type SeriesActions } from './WeeklySeriesDialog'
 
-/** Where a Scheduler lands. The dashboard takes this place once there are counts to show. */
+/** Where a Scheduler lands. A change anywhere in the workspace invalidates ['scheduler'], so this follows it. */
 export function SchedulerHomePage() {
-  const { t } = useTranslation()
-  return (
-    <>
-      <PageHeader title={t('scheduler.title')} description={t('scheduler.scope')} />
-      <Panel><div className="flex flex-wrap gap-2"><ButtonLink to="/scheduler/requests">{t('scheduler.requestsTitle')}</ButtonLink><ButtonLink variant="secondary" to="/scheduler/calendar">{t('calendar.title')}</ButtonLink></div></Panel>
-    </>
-  )
+  const summary = useQuery({ queryKey: ['scheduler', 'summary'], queryFn: () => loadSummary(supabase()) })
+  return <SchedulerDashboardView load={asLoad(summary)} base="/scheduler" />
 }
 
 /** Whatever happens, what is on screen reloads, so a Scheduler never acts on what another person has already changed. */
@@ -55,7 +51,9 @@ function useSchedulerAction(onStale: () => void = () => undefined) {
 export function SchedulerRequestsPage() {
   const { t } = useTranslation()
   const [today] = useState(() => todayAt(CENTER_ZONE))
-  const [filters, setFilters] = useState(NO_FILTERS)
+  const [params] = useSearchParams()
+  // A figure on the dashboard opens this page already showing what it counted.
+  const [filters, setFilters] = useState<RequestFilters>(() => ({ ...NO_FILTERS, status: params.get('status') === 'pending' ? 'pending' : 'all' }))
   const [sort, setSort] = useState<RequestSort>({ key: 'created_at', direction: 'desc' })
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -90,6 +88,7 @@ export function SchedulerRequestsPage() {
     cancel: (row, reason) => actAndForget(() => cancelBooking(supabase(), row.id, reason), t('booking.cancelled')),
     reschedule: (row, startsAt, therapist) => actAndForget(() => rescheduleBooking(supabase(), row.id, startsAt, therapist), t('scheduler.rescheduled')),
     bulkReject: (reason) => actAndForget(async () => { const count = await bulkReject(supabase(), selection, reason); setChecked([]); return count }, (count) => t('scheduler.bulkDone', { count })),
+    cancelSeries: (row, reason) => actAndForget(() => cancelSeries(supabase(), row.seriesId!, reason), (count) => t('scheduler.seriesCancelled', { count })),
   }
   return (
     <>
@@ -97,7 +96,7 @@ export function SchedulerRequestsPage() {
         page={page} onPage={(next) => { setPage(next); setChecked([]) }} selected={selected} onSelect={(row) => setSelectedId(row?.id ?? null)} detail={selectedId ? asLoad(detail) : null}
         checked={selection} onChecked={setChecked} onAct={(kind, row) => setAction({ kind, row })} onBulk={() => setBulk(true)}
         onOutdated={() => changeFilters({ ...NO_FILTERS, search: filters.search, status: 'pending', to: addDays(today, -1) })} />
-      {action && <RequestDialog kind={action.kind} row={action.row} actions={actions} onClose={() => setAction(null)} />}
+      {action && <RequestDialog kind={action.kind} row={action.row} remaining={detail.data?.seriesRemaining} actions={actions} onClose={() => setAction(null)} />}
       {bulk && <BulkRejectDialog count={selection.length} actions={actions} onClose={() => setBulk(false)} />}
     </>
   )
@@ -107,10 +106,16 @@ export function SchedulerSchedulePage() {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const [today] = useState(() => todayAt(CENTER_ZONE))
-  const [filters, setFilters] = useState(NO_SCHEDULE_FILTERS)
+  const [params] = useSearchParams()
+  const day = (name: string) => { const value = params.get(name) ?? ''; return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '' }
+  // A figure on the dashboard opens this page already showing what it counted.
+  const [filters, setFilters] = useState<ScheduleFilters>(() => ({ ...NO_SCHEDULE_FILTERS, from: day('from'), to: day('to') }))
   const [sort, setSort] = useState<RequestSort>({ key: 'starts_at', direction: 'asc' })
   const [page, setPage] = useState(0)
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
+  const [marking, setMarking] = useState(false)
+  const [series, setSeries] = useState(false)
+  const act = useSchedulerAction()
   const sessions = useQuery({ queryKey: ['scheduler', 'schedule', filters, sort, page], queryFn: () => loadConfirmed(supabase(), filters, sort, page), placeholderData: keepPreviousData })
   const therapists = useQuery({ queryKey: ['scheduler', 'therapists'], queryFn: () => loadTherapists(supabase()) })
   const patients = useQuery({ queryKey: ['scheduler', 'patients'], queryFn: () => loadPatientChoices(supabase()) })
@@ -121,6 +126,12 @@ export function SchedulerSchedulePage() {
     if (filters.from) return t('scheduler.exportFrom', { from: date(filters.from) })
     if (filters.to) return t('scheduler.exportUntil', { to: date(filters.to) })
     return t('scheduler.exportAllDates')
+  }
+  const mark = async (row: RequestRow, attendance: Attendance) => {
+    setMarking(true)
+    // A refusal has already been shown, and the table has been read again.
+    await act(() => markAttendance(supabase(), row.id, attendance), t('booking.attendanceSaved')).catch(() => undefined)
+    setMarking(false)
   }
   const save = async (kind: ExportFormat) => {
     setExporting(kind)
@@ -134,8 +145,8 @@ export function SchedulerSchedulePage() {
       const plain = (value: string) => value.replace(/\s+/g, ' ')
       const document = {
         center, title: t('scheduler.scheduleTitle'), range: range(), generated: t('scheduler.exportGenerated', { when: plain(`${format.day(now)}, ${format.time(now)}`) }), fileName: `motivance-schedule-${today}`,
-        columns: { date: t('scheduler.exportDate'), time: t('scheduler.exportTime'), patient: t('scheduler.patient'), therapist: t('booking.therapist'), status: t('scheduler.status'), reference: t('booking.reference') },
-        lines: rows.map((row) => ({ date: format.day(row.startsAt), time: plain(format.range(row.startsAt, row.endsAt)), patient: row.patient, therapist: row.therapist ?? '', status: t(`booking.status.${row.status}`), reference: row.reference })),
+        columns: { date: t('scheduler.exportDate'), time: t('scheduler.exportTime'), patient: t('scheduler.patient'), therapist: t('booking.therapist'), status: t('scheduler.status'), attendance: t('booking.attendanceTitle'), reference: t('booking.reference') },
+        lines: rows.map((row) => ({ date: format.day(row.startsAt), time: plain(format.range(row.startsAt, row.endsAt)), patient: row.patient, therapist: row.therapist ?? '', status: t(`booking.status.${row.status}`), attendance: row.attendance ? t(`booking.attendance.${row.attendance}`) : '', reference: row.reference })),
       }
       await (kind === 'xlsx' ? saveXlsx(document) : savePdf(document))
       toast.show(t('scheduler.exported', { count: rows.length }))
@@ -145,11 +156,27 @@ export function SchedulerSchedulePage() {
       setExporting(null)
     }
   }
+  const seriesActions: SeriesActions = {
+    patients: (search) => searchPatients(supabase(), search),
+    availability: (month) => loadStaffAvailability(supabase(), month),
+    preview: async (draft) => {
+      try {
+        return await previewSeries(supabase(), draft)
+      } catch (failure) {
+        toast.show(t(bookingFailureKey(failure)), 'error')
+        throw failure
+      }
+    },
+    create: async (request, draft) => { await act(() => createSeries(supabase(), request, draft), (made) => t('scheduler.seriesBooked', { booked: made.booked, weeks: made.weeks })) },
+  }
   const lastPage = Math.max(Math.ceil((sessions.data?.total ?? 0) / PAGE_SIZE) - 1, 0)
   if (sessions.data && page > lastPage) setPage(lastPage)
   return (
+    <>
     <ConfirmedScheduleView load={asLoad(sessions)} therapists={therapists.data ?? []} patients={patients.data ?? []} filters={filters} onFilters={(next: ScheduleFilters) => { setFilters(next); setPage(0) }}
-      sort={sort} onSort={(next) => { setSort(next); setPage(0) }} page={page} onPage={setPage} exporting={exporting} onExport={(kind) => void save(kind)} />
+      sort={sort} onSort={(next) => { setSort(next); setPage(0) }} page={page} onPage={setPage} exporting={exporting} onExport={(kind) => void save(kind)} onMark={(row, attendance) => void mark(row, attendance)} marking={marking} onSeries={() => setSeries(true)} />
+    {series && <WeeklySeriesDialog therapists={therapists.data ?? []} actions={seriesActions} onClose={() => setSeries(false)} />}
+    </>
   )
 }
 

@@ -106,7 +106,7 @@ internal fun BookingStatus.tone()=when(this) {
     else -> stringResource(R.string.booking_day_closed)
 }
 
-@Composable private fun SlotRow(slot:BookingSlot,chosen:Boolean,select:()->Unit) {
+@Composable private fun SlotRow(slot:BookingSlot,chosen:Boolean,waitlist:Boolean,select:()->Unit) {
     val format=rememberSessionFormat()
     val scheme=MaterialTheme.colorScheme
     val note=when {
@@ -115,12 +115,35 @@ internal fun BookingStatus.tone()=when(this) {
         slot.remaining==0 -> stringResource(R.string.booking_full)
         else -> stringResource(R.string.booking_places_left,slot.remaining)
     }
-    Surface(select,Modifier.fillMaxWidth().semantics {selected=chosen},enabled=slot.bookable || slot.joinable,shape=MaterialTheme.shapes.medium,
+    Surface(select,Modifier.fillMaxWidth().semantics {selected=chosen},enabled=slot.bookable || (waitlist && slot.joinable),shape=MaterialTheme.shapes.medium,
         color=if(chosen) scheme.primary else scheme.surface,contentColor=if(chosen) scheme.onPrimary else scheme.onSurface,
         border=BorderStroke(1.dp,if(chosen) scheme.primary else scheme.outlineVariant)) {
         Row(Modifier.heightIn(min=56.dp).padding(horizontal=16.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             Text(format.range(slot.startsAt,slot.endsAt),Modifier.weight(1f),style=MaterialTheme.typography.titleSmall,color=if(slot.bookable || chosen) LocalContentColor.current else scheme.onSurfaceVariant)
             Text(note,style=MaterialTheme.typography.bodySmall,textAlign=TextAlign.End,color=if(chosen) scheme.onPrimary else scheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** The calendar and the times on a date, shared by booking a session and moving one. */
+@Composable private fun ColumnScope.SlotChooser(state:BookingState,vm:BookingViewModel,waitlist:Boolean) {
+    val format=rememberSessionFormat()
+    val today=remember {centerToday()}
+    val first=remember(today) {YearMonth.from(today)}
+    val open=stringResource(R.string.booking_day_open);val closed=stringResource(R.string.booking_day_closed_short)
+    MonthCalendar(state.month,state.date,today,state.month>first,state.month<first.plusMonths(MONTHS_AHEAD),{vm.showMonth(it)},
+        enabled={state.availability.day(it.toString())?.status==BookingDayStatus.OPEN},
+        marked={state.availability.day(it.toString())?.hasPlaces==true},
+        note={date -> state.availability.day(date.toString())?.let {if(it.status==BookingDayStatus.OPEN) open else closed}}) {vm.selectDate(it.toString())}
+    if(BookingAction.MONTH in state.loading) LoadingNotice(R.string.booking_loading)
+    if(state.failed && state.availability.days.isEmpty()) FeedbackNotice(R.string.booking_load_failed,error=true) {vm.showMonth(state.month)}
+    val day=state.date?.let {state.availability.day(it)}
+    when {
+        day==null -> Text(stringResource(R.string.booking_no_date),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        day.status!=BookingDayStatus.OPEN -> Text(dayMessage(day),style=MaterialTheme.typography.bodyMedium)
+        else -> {
+            Text(format.calendarDay(LocalDate.parse(day.date)),style=MaterialTheme.typography.titleMedium,modifier=Modifier.semantics {heading()})
+            day.slots.forEach {slot -> key(slot.startsAt) {SlotRow(slot,state.slot?.startsAt==slot.startsAt,waitlist) {vm.selectSlot(slot)}}}
         }
     }
 }
@@ -131,24 +154,7 @@ internal fun BookingStatus.tone()=when(this) {
     // The times can fill the screen, so choosing one brings the next step into view rather than leaving it below the fold.
     val choice=remember {BringIntoViewRequester()}
     LaunchedEffect(state.slot) {if(state.slot!=null) choice.bringIntoView()}
-    val today=remember {centerToday()}
-    val first=remember(today) {YearMonth.from(today)}
-    val open=stringResource(R.string.booking_day_open);val closed=stringResource(R.string.booking_day_closed_short)
-    MonthCalendar(state.month,state.date,today,state.month>first,state.month<first.plusMonths(MONTHS_AHEAD),{vm.showMonth(it)},
-        enabled={state.availability.day(it.toString())?.status==BookingDayStatus.OPEN},
-        marked={state.availability.day(it.toString())?.hasPlaces==true},
-        note={date -> state.availability.day(date.toString())?.let {if(it.status==BookingDayStatus.OPEN) open else closed}}) {vm.selectDate(it.toString())}
-    if(BookingAction.MONTH in state.loading) LoadingNotice(R.string.booking_loading)
-    if(state.failed && state.availability.days.isEmpty()) FeedbackNotice(R.string.booking_load_failed,error=true) {vm.openBooking()}
-    val day=state.date?.let {state.availability.day(it)}
-    when {
-        day==null -> Text(stringResource(R.string.booking_no_date),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
-        day.status!=BookingDayStatus.OPEN -> Text(dayMessage(day),style=MaterialTheme.typography.bodyMedium)
-        else -> {
-            Text(format.calendarDay(LocalDate.parse(day.date)),style=MaterialTheme.typography.titleMedium,modifier=Modifier.semantics {heading()})
-            day.slots.forEach {slot -> key(slot.startsAt) {SlotRow(slot,state.slot?.startsAt==slot.startsAt) {vm.selectSlot(slot)}}}
-        }
-    }
+    SlotChooser(state,vm,waitlist=true)
     state.slot?.let {slot ->
         ClinicalCard(Modifier.bringIntoViewRequester(choice),accent=MaterialTheme.colorScheme.primary) {
             DetailRow(stringResource(if(slot.bookable) R.string.booking_your_choice else R.string.booking_full_choice),format.whenAt(slot.startsAt,slot.endsAt))
@@ -168,7 +174,24 @@ internal fun BookingStatus.tone()=when(this) {
     }
 }
 
-@Composable private fun BookingCard(booking:Booking,enabled:Boolean,now:Instant,cancel:()->Unit) {
+@OptIn(ExperimentalFoundationApi::class)
+@Composable fun ColumnScope.MoveSession(state:BookingState,vm:BookingViewModel,done:()->Unit) {
+    val format=rememberSessionFormat()
+    val choice=remember {BringIntoViewRequester()}
+    LaunchedEffect(state.slot) {if(state.slot!=null) choice.bringIntoView()}
+    LaunchedEffect(state.moving) {if(state.moving==null) done()}
+    val booking=state.moving ?: return
+    ClinicalCard {DetailRow(stringResource(R.string.booking_current_time),format.whenAt(booking.startsAt,booking.endsAt))}
+    SlotChooser(state,vm,waitlist=false)
+    state.slot?.let {slot ->
+        ClinicalCard(Modifier.bringIntoViewRequester(choice),accent=MaterialTheme.colorScheme.primary) {
+            DetailRow(stringResource(R.string.booking_new_time),format.whenAt(slot.startsAt,slot.endsAt))
+            ActionButton(R.string.booking_move_here,{vm.move(done)},busy=state.activeAction==BookingAction.MOVE,busyLabel=R.string.booking_moving)
+        }
+    }
+}
+
+@Composable private fun BookingCard(booking:Booking,enabled:Boolean,now:Instant,move:()->Unit,cancel:()->Unit) {
     val format=rememberSessionFormat()
     ClinicalCard {
         Row(verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -184,6 +207,10 @@ internal fun BookingStatus.tone()=when(this) {
         booking.previousStartsAt?.let {Text(stringResource(R.string.booking_moved_from,format.day(it)),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
         booking.reason?.let {DetailRow(stringResource(R.string.booking_reason),bookingReasonText(it))}
         if(booking.upcoming(now)) {
+            if(booking.canReschedule) {
+                ActionButton(R.string.booking_reschedule,move,outlined=true,enabled=enabled)
+                booking.rescheduleUntil?.let {Text(stringResource(R.string.booking_reschedule_left,booking.reschedulesLeft,"${format.day(it)}, ${format.time(it)}"),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
+            } else Text(stringResource(R.string.booking_reschedule_closed),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
             if(booking.canCancel) {
                 ActionButton(R.string.booking_cancel,cancel,outlined=true,enabled=enabled)
                 booking.cancelUntil?.let {Text(stringResource(R.string.booking_cancel_until,"${format.day(it)}, ${format.time(it)}"),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
@@ -208,7 +235,7 @@ internal fun BookingStatus.tone()=when(this) {
     }
 }
 
-@Composable fun ColumnScope.MyBookings(state:BookingState,vm:BookingViewModel,schedule:()->Unit,book:()->Unit) {
+@Composable fun ColumnScope.MyBookings(state:BookingState,vm:BookingViewModel,schedule:()->Unit,move:(Booking)->Unit,book:()->Unit) {
     val format=rememberSessionFormat()
     val now=remember(state.bookings) {Instant.now()}
     var confirming by remember {mutableStateOf<Booking?>(null)}
@@ -219,11 +246,11 @@ internal fun BookingStatus.tone()=when(this) {
     if(state.loaded && state.bookings.isEmpty() && state.waitlist.isEmpty()) EmptyState(R.string.booking_empty_title,R.string.booking_empty_detail)
     val (upcoming,earlier)=state.bookings.partition {it.upcoming(now)}
     if(upcoming.isNotEmpty()) SectionHeading(R.string.booking_upcoming)
-    upcoming.sortedBy {bookingInstant(it.startsAt)}.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now) {confirming=booking}}}
+    upcoming.sortedBy {bookingInstant(it.startsAt)}.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)}) {confirming=booking}}}
     if(state.waitlist.isNotEmpty()) SectionHeading(R.string.booking_waitlist)
     state.waitlist.forEach {entry -> key(entry.id) {WaitlistCard(entry,!state.busy,{vm.book(entry)},{vm.leaveWaitlist(entry.startsAt)})}}
     if(earlier.isNotEmpty()) SectionHeading(R.string.booking_earlier)
-    earlier.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now) {confirming=booking}}}
+    earlier.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)}) {confirming=booking}}}
     confirming?.let {booking ->
         AlertDialog({confirming=null},title={Text(stringResource(R.string.booking_cancel))},text={Text(stringResource(R.string.booking_cancel_message,format.whenAt(booking.startsAt,booking.endsAt)))},
             confirmButton={TextButton({confirming=null;vm.cancel(booking)},colors=ButtonDefaults.textButtonColors(contentColor=MaterialTheme.colorScheme.error)) {Text(stringResource(R.string.booking_cancel))}},
