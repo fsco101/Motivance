@@ -34,6 +34,7 @@ import { ConfirmedScheduleView } from '@/features/scheduler/ConfirmedScheduleVie
 import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
 import { RequestsView } from '@/features/scheduler/RequestsView'
+import { SchedulerDashboardView } from '@/features/scheduler/SchedulerDashboardView'
 import { WeeklySeriesDialog, type SeriesActions } from '@/features/scheduler/WeeklySeriesDialog'
 import { TherapistHomeView } from '@/features/therapist/TherapistHomeView'
 import { LandingPage } from '@/landing/LandingPage'
@@ -250,7 +251,7 @@ export const galleryRoutes: RouteObject[] = [{
     },
     {
       path: 'scheduler', element: <Frame workspace="scheduler" />, handle: { crumb: 'nav.home' },
-      children: [{ path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'schedule', element: <SchedulerSchedule />, handle: { crumb: 'nav.scheduleShort' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
+      children: [{ index: true, element: <SchedulerDashboardView load={ready(data.schedulerSummary)} base={SCHEDULER} /> }, { path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'schedule', element: <SchedulerSchedule />, handle: { crumb: 'nav.scheduleShort' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
     },
     {
       path: 'admin', element: <Frame workspace="admin" />, handle: { crumb: 'nav.overview' },

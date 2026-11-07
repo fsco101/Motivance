@@ -99,6 +99,8 @@ The bell sits in the header for patients, therapists and Schedulers, and opens a
 
 ## Scheduler workspace
 
+The workspace opens on three figures: pending requests, today's sessions and this week's utilization. Each opens the page it counted, already filtered, and the page says what utilization means. A share of nothing shows a dash rather than a zero.
+
 A Scheduler works through a queue, so Requests is one dense table: filters above, the chosen booking and its history beside it, and every decision in a dialog that names the patient and the time. Search, filters, sorting and paging run on the server, because the table has to stay correct however many bookings exist.
 
 The list can change under a Scheduler, so it never trusts what is on screen. A refused action always reloads the list. If the booking itself has changed, the dialog closes to show what happened. If only the choice is wrong, such as a therapist who has just become busy, it stays open with the updated choices. A selection counts only rows still pending, so the number in a bulk confirmation is the number that will change.

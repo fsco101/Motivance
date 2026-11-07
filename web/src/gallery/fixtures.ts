@@ -2,7 +2,7 @@ import type { Availability, Booking, WaitlistEntry } from '@/data/booking'
 import type { AffectedBooking, CenterCalendar } from '@/data/calendar'
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
-import type { RequestDetail, RequestRow, SeriesDate, TherapistChoice } from '@/data/scheduler'
+import type { RequestDetail, RequestRow, SchedulerSummary, SeriesDate, TherapistChoice } from '@/data/scheduler'
 import type { HistoricalSession } from '@/data/history'
 import type { Inbox } from '@/data/notifications'
 import type { MyExercise } from '@/data/patient'
@@ -112,6 +112,7 @@ export const requestDetail: RequestDetail = {
   id: 'q1', seriesId: null, seriesRemaining: 0,
   events: [{ id: 1, action: 'requested', actorRole: 'patient', actor: 'Ana Dela Cruz', fromStatus: null, toStatus: 'pending', toStartsAt: '2026-12-14T02:00:00Z', toAttendance: null, reason: null, recordedAt: '2026-11-05T02:00:00Z' }],
 }
+export const schedulerSummary: SchedulerSummary = { pending: 6, today: 9, booked: 57, places: 120, utilization: 48, date: '2026-12-07', weekFrom: '2026-12-07', weekTo: '2026-12-13' }
 export const seriesDates: SeriesDate[] = [
   { startsAt: '2026-12-07T01:00:00Z', endsAt: '2026-12-07T02:00:00Z', problem: null }, { startsAt: '2026-12-14T01:00:00Z', endsAt: '2026-12-14T02:00:00Z', problem: 'therapist_busy' },
   { startsAt: '2026-12-21T01:00:00Z', endsAt: '2026-12-21T02:00:00Z', problem: null }, { startsAt: '2026-12-28T01:00:00Z', endsAt: '2026-12-28T02:00:00Z', problem: 'holiday' },

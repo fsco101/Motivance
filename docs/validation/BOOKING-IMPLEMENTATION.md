@@ -451,3 +451,25 @@ A date of a course is recorded as booked, not requested, so nobody is asked to d
 | Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
 
 The Scheduler workspace is web only, so the only Android change is reading the four new notifications and the audit label. Those are covered by unit tests, not yet seen on an emulator screen.
+
+## MOT-67: Scheduler dashboard
+
+The Scheduler workspace now opens on three figures from `scheduler_summary`: pending requests, today's sessions and utilization this week. Each opens the page it counted, already filtered, so following a figure never contradicts it, and the live test proves that for the first two by comparing them with what those pages list.
+
+Utilization is booked sessions as a share of the places in open slots, and the page says so. It counts the whole week, Monday to Sunday, so the figure does not shrink as the week passes. Booked means confirmed or rescheduled, because a pending request is not yet a session. With no open slots there is no share, so the card shows a dash rather than a zero.
+
+Looking at the page by eye found a fault no test had caught. With reduced motion on, every stat card in the app showed 0 on screen, while a screen reader was told the right number, because a spring told to jump does not reach the text it drives. This reached the administrator overview too. Reduced motion now writes the number directly, and a browser test that failed with "60" before the fix passes with it.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: the figures against a slot-by-slot recount from the tables, what counts as booked, the week's edges, closures, capacity, no open slots, access | `python scripts/test_booking.py summary` | 17 checks passed |
+| All sections | `python scripts/test_booking.py` | 735 checks passed |
+| Contract tests | `npm run test:contract` | 135 passed |
+| Browser tests with axe: the figures, where each leads, reduced motion, and every page that uses a stat card | `npx playwright test dashboard scheduler auth confirmed-schedule admin therapist design --workers=1` | 168 passed. 83 opt-in tests did not run, as designed |
+| Web unit tests | `npm test` | 246 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+## S11 outcome
+
+All five issues are implemented and closed, with no criterion deferred. The sprint demo ran for real, in one sitting, through the same API the apps call, in `python scripts/test_booking.py s11_demo` (8 checks): a patient joined a waitlist and heard when the place opened, moved a session, a therapist marked a no-show, a Scheduler booked a weekly course with one conflicting date, and read the dashboard. Physical phones are still to be tried, and are on the checklist.

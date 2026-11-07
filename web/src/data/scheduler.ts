@@ -110,6 +110,14 @@ export const rescheduleBooking = async (db: Db, booking: string, startsAt: strin
 export const assignTherapist = async (db: Db, booking: string, therapist: string) => { must(await db.rpc('scheduler_assign_therapist', { p_booking: booking, p_therapist: therapist })) }
 export const cancelBooking = async (db: Db, booking: string, reason: string) => { must(await db.rpc('scheduler_cancel', { p_booking: booking, p_reason: reason })) }
 
+/** Utilization is null with no open slots this week, because a share of nothing is not zero. */
+export type SchedulerSummary = { pending: number; today: number; booked: number; places: number; utilization: number | null; date: string; weekFrom: string; weekTo: string }
+
+export async function loadSummary(db: Db): Promise<SchedulerSummary> {
+  const row = must(await db.rpc('scheduler_summary')) as unknown as Omit<SchedulerSummary, 'weekFrom' | 'weekTo'> & { week_from: string; week_to: string }
+  return { pending: row.pending, today: row.today, booked: row.booked, places: row.places, utilization: row.utilization, date: row.date, weekFrom: row.week_from, weekTo: row.week_to }
+}
+
 /** The same weekly time for one patient and therapist. A date that fails names its problem, and is left out when the series is saved. */
 export type SeriesDraft = { patient: string; therapist: string; startsAt: string; weeks: number }
 export type SeriesDate = { startsAt: string; endsAt: string; problem: string | null }

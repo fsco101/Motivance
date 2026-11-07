@@ -1874,7 +1874,169 @@ insert into public.therapist_time_off(therapist_id,starts_at,ends_at,reason,crea
     stack.check(stack.sql(f"select count(*) from public.notifications where user_id='{ben}' and kind='place_open';") == '1', 'Cancelling a course opens its places to the waitlist')
 
 
-SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist, 'self_reschedule': self_reschedule, 'attendance': attendance, 'series': series}
+def summary(stack):
+    """MOT-67: the Scheduler's figures, worked out again here from the calendar itself."""
+    capacity = stack.sql('select slot_capacity from public.center_settings;')
+    hours = stack.sql("select weekday||','||is_open from public.center_hours order by weekday;")
+    try:
+        summary_checks(stack)
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test summary';")
+        stack.sql(f'update public.center_settings set slot_capacity={capacity} where id;')
+        for row in hours.split('\n'):
+            weekday, is_open = row.split(',')
+            stack.sql(f"update public.center_hours set is_open={is_open} where weekday={weekday};")
+
+
+def summary_checks(stack):
+    sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Summary')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Summary')
+    ana, ta = stack.user('patient', name='Booking Ana Summary')
+    _, tadmin = stack.user('patient', 'admin', name='Booking Admin Summary')
+
+    def read():
+        code, data = stack.rpc('scheduler_summary', {}, ts)
+        assert code == 200, data
+        return data
+
+    def expected_places(monday):
+        """Counts places slot by slot from the tables, without using the function under test."""
+        slot, capacity = (int(value) for value in stack.sql('select slot_minutes,slot_capacity from public.center_settings;').split('|'))
+        hours = {int(row.split('|')[0]): row.split('|')[1:] for row in stack.sql("select weekday,is_open,to_char(opens_at,'HH24:MI'),to_char(closes_at,'HH24:MI') from public.center_hours;").split('\n')}
+        total = 0
+        for offset in range(7):
+            day = monday + timedelta(days=offset)
+            is_open, opens, closes = hours[day.isoweekday()]
+            if is_open != 't' or stack.sql(f"select exists(select 1 from public.center_holidays where '{day}' between starts_on and ends_on);") == 't':
+                continue
+            start = int(opens[:2]) * 60 + int(opens[3:])
+            end = int(closes[:2]) * 60 + int(closes[3:])
+            while start + slot <= end:
+                begins = f'{day}T{start // 60:02d}:{start % 60:02d}:00+08:00'
+                closed = stack.sql(f"select exists(select 1 from public.center_closures where starts_at<'{begins}'::timestamptz+make_interval(mins=>{slot}) and ends_at>'{begins}'::timestamptz);")
+                total += 0 if closed == 't' else capacity
+                start += slot
+        return total
+
+    def insert(day, hour, status='confirmed'):
+        booking = str(uuid.uuid4())
+        person = f"'{tess}'" if status != 'pending' else 'null'
+        stack.sql(f"""insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values('{booking}','BK-SUM-{booking[:8]}','{ana}',{person},'{manila(day, hour)}','{manila(day, hour + 1)}','{status}');""")
+        return booking
+
+    base = read()
+    today = date.fromisoformat(base['date'])
+    monday = date.fromisoformat(base['week_from'])
+    stack.check(today == manila_today(stack) and monday.isoweekday() == 1 and date.fromisoformat(base['week_to']) == monday + timedelta(days=6) and monday <= today, 'The week runs Monday to Sunday around today, at the center')
+    stack.check(base['places'] == expected_places(monday), 'Places are every open slot this week, times its capacity')
+    open_days = [monday + timedelta(days=offset) for offset in range(7) if stack.sql(f"select public.center_problem('{manila(monday + timedelta(days=offset), 9)}','{manila(monday + timedelta(days=offset), 10)}') is null;") == 't']
+    assert open_days, 'This week has no open day to test with'
+    day = open_days[0]
+
+    insert(day, 9)
+    insert(day, 10, 'rescheduled')
+    now = read()
+    stack.check(now['booked'] == base['booked'] + 2, 'Confirmed and rescheduled sessions count as booked')
+    stack.check(now['utilization'] == round(100 * now['booked'] / now['places']), 'Utilization is booked as a share of places')
+    insert(day, 11, 'pending')
+    insert(day, 12, 'cancelled')
+    after = read()
+    stack.check(after['pending'] == now['pending'] + 1 and after['booked'] == now['booked'], 'A pending request is pending, not booked, and a cancelled session is neither')
+    insert(monday - timedelta(days=3), 9)
+    insert(monday + timedelta(days=9), 9)
+    stack.check(read()['booked'] == after['booked'], 'Sessions outside this week do not count')
+    insert(day, 7)
+    stack.check(read()['booked'] == after['booked'], 'Nor does a session outside the hours, which is in no open slot')
+
+    # The figure matches the page it opens.
+    current = read()
+    stack.check(stack.rpc('scheduler_bookings', {'p_statuses': ['pending'], 'p_limit': 1}, ts)[1]['total'] == current['pending'], 'Pending counts what the Requests filter lists')
+    before = current['today']
+    insert(today, 13)
+    current = read()
+    stack.check(current['today'] == before + 1, "Today's sessions counts a session today")
+    listed = stack.rpc('scheduler_bookings', {'p_statuses': ['confirmed', 'rescheduled'], 'p_from': str(today), 'p_to': str(today), 'p_limit': 1}, ts)[1]['total']
+    stack.check(listed == current['today'], "Today's sessions counts what the schedule lists for today")
+
+    # The calendar moves the figure.
+    closing = read()
+    stack.sql(f"insert into public.center_closures(starts_at,ends_at,reason,created_by) values('{manila(day, 9)}','{manila(day, 11)}','Booking test summary','{sol}');")
+    closed = read()
+    capacity = int(stack.sql('select slot_capacity from public.center_settings;'))
+    stack.check(closed['places'] == closing['places'] - 2 * capacity and closed['places'] == expected_places(monday), 'A closure takes its slots out of the places')
+    stack.check(closed['booked'] == closing['booked'] - 2, 'And its sessions out of the booked count')
+    stack.sql(f'update public.center_settings set slot_capacity={capacity + 1} where id;')
+    raised = read()
+    stack.check(raised['places'] == expected_places(monday) and raised['places'] > closed['places'], 'Capacity changes the places')
+    stack.sql('update public.center_hours set is_open=false;')
+    shut = read()
+    stack.check(shut['places'] == 0 and shut['utilization'] is None, 'With no open slots there is no share to show, rather than zero')
+
+    for token, who in ((ta, 'a patient'), (tt, 'a therapist'), (tadmin, 'an administrator')):
+        stack.check(stack.rpc('scheduler_summary', {}, token)[0] == 403, f'The figures are refused to {who}')
+
+
+def s11_demo(stack):
+    """The S11 demo in one sitting, through the same API the apps call."""
+    capacity = stack.sql('select slot_capacity from public.center_settings;')
+    stack.sql('update public.center_settings set slot_capacity=1 where id;')
+    try:
+        s11_demo_steps(stack)
+    finally:
+        stack.sql("delete from public.center_closures where reason='Booking test demo';")
+        stack.sql(f'update public.center_settings set slot_capacity={capacity} where id;')
+
+
+def s11_demo_steps(stack):
+    sol, ts = stack.user('patient', 'scheduler', name='Booking Sol Demo')
+    tess, tt = stack.user('patient', 'therapist', name='Booking Tess Demo')
+    ana, ta = stack.user('patient', name='Booking Ana Demo')
+    ben, tb = stack.user('patient', name='Booking Ben Demo')
+    day = next(working_days(stack, 13))
+
+    def request(token, start):
+        code, data = stack.rpc('request_booking', {'p_request': str(uuid.uuid4()), 'p_starts': start}, token)
+        assert code == 200, data
+        return data
+
+    # Join a waitlist and get told when the place opens.
+    held = request(tb, manila(day, 9))
+    stack.check(stack.rpc('join_waitlist', {'p_starts': manila(day, 9)}, ta)[0] == 200, 'Demo: a patient joins the waitlist for a full time')
+    assert stack.rpc('cancel_my_booking', {'p_booking': held['id']}, tb)[0] == 200
+    stack.check(stack.sql(f"select count(*) from public.notifications where user_id='{ana}' and kind='place_open';") == '1', 'Demo: they are told when the place opens')
+
+    # Reschedule a session as a patient.
+    booking = request(ta, manila(day, 9))
+    assert stack.rpc('scheduler_confirm', {'p_booking': booking['id'], 'p_therapist': tess}, ts)[0] == 200
+    code, moved = stack.rpc('reschedule_my_booking', {'p_booking': booking['id'], 'p_starts': manila(day, 11)}, ta)
+    stack.check(code == 200 and moved['status'] == 'pending' and manila_hour(moved['starts_at']) == 11, 'Demo: they move the session, and it waits to be confirmed again')
+    assert stack.rpc('scheduler_confirm', {'p_booking': booking['id']}, ts)[0] == 200
+
+    # Mark a no-show.
+    past = str(uuid.uuid4())
+    stack.sql(f"""insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values('{past}','BK-DEMO-{past[:8]}','{ben}','{tess}',now()-interval '3 hours',now()-interval '2 hours','confirmed');""")
+    stack.check(stack.rpc('mark_attendance', {'p_booking': past, 'p_attendance': 'no_show'}, tt)[0] == 200, 'Demo: a therapist marks a no-show')
+    found = stack.rpc('scheduler_bookings', {'p_attendance': 'no_show', 'p_therapist': tess}, ts)[1]
+    stack.check([row['id'] for row in found['rows']] == [past], 'Demo: the Scheduler can see it')
+
+    # Book a weekly course with one conflicting date.
+    first = stack.sql("""select d::date from generate_series(current_date+80,current_date+140,interval '1 day') d where extract(isodow from d)<6
+ and not exists(select 1 from public.center_holidays h,generate_series(0,3) n where (d+make_interval(weeks=>n))::date between h.starts_on and h.ends_on) order by d limit 1;""")
+    start = date.fromisoformat(first)
+    second = start + timedelta(weeks=1)
+    stack.sql(f"insert into public.center_closures(starts_at,ends_at,reason,created_by) values('{manila(second, 8)}','{manila(second, 18)}','Booking test demo','{sol}');")
+    course = {'p_patient': ben, 'p_therapist': tess, 'p_starts': manila(start, 10), 'p_weeks': 4}
+    dates = stack.rpc('scheduler_series_preview', course, ts)[1]['dates']
+    stack.check([item['problem'] for item in dates] == [None, 'closure', None, None], 'Demo: a weekly course shows its one conflicting date before saving')
+    code, made = stack.rpc('scheduler_series_create', {'p_request': str(uuid.uuid4()), **course}, ts)
+    stack.check(code == 200 and made['booked'] == 3, 'Demo: saving books the three that pass')
+
+    # Read the dashboard.
+    code, figures = stack.rpc('scheduler_summary', {}, ts)
+    stack.check(code == 200 and figures['pending'] >= 0 and figures['today'] >= 0 and figures['places'] >= 0, 'Demo: the dashboard reads the figures from the server')
+
+
+SECTIONS = {'roles': roles, 'availability': availability, 'bookings': bookings, 'my_bookings': my_bookings, 'requests': requests, 'schedule': schedule, 'calendar': calendar, 'time_off': time_off, 'notifications': notifications, 'reminders': reminders, 'exports': exports, 'waitlist': waitlist, 'self_reschedule': self_reschedule, 'attendance': attendance, 'series': series, 'summary': summary, 's11_demo': s11_demo}
 
 
 def main():

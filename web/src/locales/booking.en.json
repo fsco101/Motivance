@@ -124,7 +124,14 @@
       "therapist_on_leave": "Therapist on leave",
       "therapist_unavailable": "Therapist unavailable",
       "overlap": "Patient already booked"
-    }
+    },
+    "pendingRequests": "Pending requests",
+    "pendingDetail": "Waiting for a decision",
+    "todaySessions": "Today's sessions",
+    "utilization": "Utilization this week",
+    "utilizationCount": "{{booked}} of {{places}} places",
+    "noOpenSlots": "No open slots this week",
+    "utilizationMeaning": "Utilization is booked sessions as a share of available places in open slots, from {{from}} to {{to}}. Booked means confirmed or rescheduled."
   },
   "patient": {
     "greeting": "Hello, {{name}}",

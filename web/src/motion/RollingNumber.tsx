@@ -9,9 +9,10 @@ export function RollingNumber({ value, className }: { value: number; className?:
   const current = useSpring(0, stiff)
   const text = useTransform(current, (latest) => Math.round(latest).toLocaleString())
   useEffect(() => {
-    if (reduced) current.jump(value)
-    else current.set(value)
+    if (!reduced) current.set(value)
   }, [value, reduced, current])
+  // Written directly: a spring told to jump does not reach the text it drives, so the digits would stay at zero.
+  if (reduced) return <span className={className}>{value.toLocaleString()}</span>
   return (
     <span className={className}>
       <span className="sr-only">{value.toLocaleString()}</span>

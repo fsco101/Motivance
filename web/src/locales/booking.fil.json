@@ -124,7 +124,14 @@
       "therapist_on_leave": "Naka-leave ang therapist",
       "therapist_unavailable": "Hindi available ang therapist",
       "overlap": "May booking na ang pasyente"
-    }
+    },
+    "pendingRequests": "Mga nakabinbing kahilingan",
+    "pendingDetail": "Naghihintay ng desisyon",
+    "todaySessions": "Mga session ngayon",
+    "utilization": "Paggamit ngayong linggo",
+    "utilizationCount": "{{booked}} sa {{places}} na puwesto",
+    "noOpenSlots": "Walang bukas na oras ngayong linggo",
+    "utilizationMeaning": "Ang paggamit ay ang bahagi ng mga naka-book na session sa mga puwesto sa mga bukas na oras, mula {{from}} hanggang {{to}}. Ang naka-book ay kumpirmado o inilipat ng oras."
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",

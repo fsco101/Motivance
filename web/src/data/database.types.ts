@@ -1774,6 +1774,10 @@ export type Database = {
         }
         Returns: Json
       }
+      scheduler_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       scheduler_therapists: {
         Args: { p_booking?: string; p_starts?: string }
         Returns: Json

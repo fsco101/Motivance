@@ -1,16 +1,15 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ButtonLink } from '@/components/Button'
+import { useSearchParams } from 'react-router'
 import { ConfirmDialog } from '@/components/Dialog'
-import { PageHeader, Panel } from '@/components/Display'
 import { toast } from '@/components/Toast'
 import { addDays, bookingFailureKey, CENTER_ZONE, isStale, markAttendance, todayAt, type Attendance } from '@/data/booking'
 import { useCenterFormat } from '@/features/booking/format'
 import { deleteClosure, deleteHoliday, deleteTimeOff, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, saveTimeOff, type CenterDay, type CenterSettings, type Closure, type Holiday, type TimeOff } from '@/data/calendar'
 import { supabase } from '@/data/client'
 import {
-  assignTherapist, bulkReject, cancelBooking, cancelSeries, confirmBooking, createSeries, loadAllConfirmed, loadCenterName, loadConfirmed, loadDetail, loadPatientChoices, loadRequests, loadStaffAvailability, loadTherapists, logExport,
+  assignTherapist, bulkReject, cancelBooking, cancelSeries, confirmBooking, createSeries, loadAllConfirmed, loadCenterName, loadConfirmed, loadDetail, loadPatientChoices, loadRequests, loadStaffAvailability, loadSummary, loadTherapists, logExport,
   NO_FILTERS, NO_SCHEDULE_FILTERS, PAGE_SIZE, previewSeries, rejectBooking, rescheduleBooking, searchPatients, type RequestFilters, type RequestRow, type RequestSort, type ScheduleFilters,
 } from '@/data/scheduler'
 import { asLoad } from '@/features/shared'
@@ -20,17 +19,13 @@ import { CalendarView, type CalendarTab } from './CalendarView'
 import { ConfirmedScheduleView, type ExportFormat } from './ConfirmedScheduleView'
 import { BulkRejectDialog, RequestDialog, type RequestActionKind, type RequestActions } from './RequestDialogs'
 import { RequestsView } from './RequestsView'
+import { SchedulerDashboardView } from './SchedulerDashboardView'
 import { WeeklySeriesDialog, type SeriesActions } from './WeeklySeriesDialog'
 
-/** Where a Scheduler lands. The dashboard takes this place once there are counts to show. */
+/** Where a Scheduler lands. A change anywhere in the workspace invalidates ['scheduler'], so this follows it. */
 export function SchedulerHomePage() {
-  const { t } = useTranslation()
-  return (
-    <>
-      <PageHeader title={t('scheduler.title')} description={t('scheduler.scope')} />
-      <Panel><div className="flex flex-wrap gap-2"><ButtonLink to="/scheduler/requests">{t('scheduler.requestsTitle')}</ButtonLink><ButtonLink variant="secondary" to="/scheduler/calendar">{t('calendar.title')}</ButtonLink></div></Panel>
-    </>
-  )
+  const summary = useQuery({ queryKey: ['scheduler', 'summary'], queryFn: () => loadSummary(supabase()) })
+  return <SchedulerDashboardView load={asLoad(summary)} base="/scheduler" />
 }
 
 /** Whatever happens, what is on screen reloads, so a Scheduler never acts on what another person has already changed. */
@@ -56,7 +51,9 @@ function useSchedulerAction(onStale: () => void = () => undefined) {
 export function SchedulerRequestsPage() {
   const { t } = useTranslation()
   const [today] = useState(() => todayAt(CENTER_ZONE))
-  const [filters, setFilters] = useState(NO_FILTERS)
+  const [params] = useSearchParams()
+  // A figure on the dashboard opens this page already showing what it counted.
+  const [filters, setFilters] = useState<RequestFilters>(() => ({ ...NO_FILTERS, status: params.get('status') === 'pending' ? 'pending' : 'all' }))
   const [sort, setSort] = useState<RequestSort>({ key: 'created_at', direction: 'desc' })
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -109,7 +106,10 @@ export function SchedulerSchedulePage() {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const [today] = useState(() => todayAt(CENTER_ZONE))
-  const [filters, setFilters] = useState(NO_SCHEDULE_FILTERS)
+  const [params] = useSearchParams()
+  const day = (name: string) => { const value = params.get(name) ?? ''; return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '' }
+  // A figure on the dashboard opens this page already showing what it counted.
+  const [filters, setFilters] = useState<ScheduleFilters>(() => ({ ...NO_SCHEDULE_FILTERS, from: day('from'), to: day('to') }))
   const [sort, setSort] = useState<RequestSort>({ key: 'starts_at', direction: 'asc' })
   const [page, setPage] = useState(0)
   const [exporting, setExporting] = useState<ExportFormat | null>(null)

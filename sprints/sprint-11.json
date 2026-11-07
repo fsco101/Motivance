@@ -4,7 +4,7 @@
   "title": "S11 - Self-service and scheduling tools",
   "description": "Weeks 21-22. Exit: patients can wait for a full slot and move their own sessions, attendance is tracked, Schedulers can book a weekly course, and a dashboard shows the state of the center.",
   "goal": "Reduce manual scheduling work for patients and staff.",
-  "status": "in-progress",
+  "status": "completed",
   "weeks": {
     "start": 21,
     "end": 22
@@ -17,13 +17,20 @@
   "exit_criteria": [
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
-      "passed": false,
-      "evidence": []
+      "passed": true,
+      "evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ]
     },
     {
       "description": "Join a waitlist and get told when the place opens, reschedule a session as a patient, mark a no-show, book a weekly course with one conflicting date, and read the dashboard.",
-      "passed": false,
-      "evidence": []
+      "passed": true,
+      "evidence": [
+        "docs/validation/booking-test-results.json",
+        "scripts/test_booking.py"
+      ]
     }
   ],
   "demo": "Join a waitlist and get told when the place opens, reschedule a session as a patient, mark a no-show, book a weekly course with one conflicting date, and read the dashboard.",
@@ -38,9 +45,13 @@
   },
   "total_estimate_points": 21,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-07T05:06:07.430073+00:00",
+    "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+    "evidence": [
+      "docs/validation/BOOKING-IMPLEMENTATION.md",
+      "docs/validation/booking-test-results.json",
+      "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+    ]
   },
   "issues": [
     {
@@ -504,7 +515,7 @@
       "github_issue": 84,
       "title": "Build the Scheduler dashboard",
       "description": "Open the Scheduler workspace on the numbers that need attention.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "Web + Backend",
       "estimate_points": 3,
@@ -533,29 +544,61 @@
         {
           "id": "MOT-67-AC1",
           "description": "The dashboard shows pending requests, today's sessions and utilization this week, all from the server.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060019_scheduler_summary.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/dashboard.spec.ts",
+            "web/tests/contract/summary.test.ts"
+          ]
         },
         {
           "id": "MOT-67-AC2",
           "description": "Utilization is booked sessions as a share of available places in open slots this week, and the page says so.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060019_scheduler_summary.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/dashboard.spec.ts",
+            "web/tests/contract/summary.test.ts"
+          ]
         },
         {
           "id": "MOT-67-AC3",
           "description": "Each figure opens the page that explains it.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "supabase/migrations/202611060019_scheduler_summary.sql",
+            "scripts/test_booking.py",
+            "web/tests/e2e/dashboard.spec.ts",
+            "web/tests/contract/summary.test.ts"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T05:06:07.425882+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "supabase/migrations/202611060019_scheduler_summary.sql",
+          "scripts/test_booking.py",
+          "web/tests/e2e/dashboard.spec.ts",
+          "web/tests/contract/summary.test.ts"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "supabase/migrations/202611060019_scheduler_summary.sql",
+        "scripts/test_booking.py",
+        "web/tests/e2e/dashboard.spec.ts",
+        "web/tests/contract/summary.test.ts"
+      ]
     }
   ],
   "plan_reference": "docs/architecture/BOOKING.md"
