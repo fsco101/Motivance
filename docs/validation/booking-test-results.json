@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-07T05:54:33.458884+00:00",
+  "generated_at": "2026-11-07T06:00:24.749515+00:00",
   "checks_passed": 749,
   "checks": [
     "A patient cannot grant the Scheduler role",

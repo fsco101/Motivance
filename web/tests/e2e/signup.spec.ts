@@ -156,6 +156,22 @@ test('a wrong code is refused, and the emailed one signs the patient in as a pat
     .toBe(`patient,${username},Ana,Dela Cruz,female,true`)
 })
 
+test('the new patient can book a session straight away', async () => {
+  const day = sql(`select d::date from generate_series(current_date+3,current_date+40,interval '1 day') d
+ where extract(isodow from d)<6 and not exists(select 1 from public.center_holidays h where d::date between h.starts_on and h.ends_on) order by d limit 1`)
+  await page.goto('/patient/book')
+  await expect(page.getByRole('heading', { name: 'Book a session', level: 1 })).toBeVisible()
+  const [year, month] = sql(`select to_char(now() at time zone 'Asia/Manila','YYYY-MM')`).split('-').map(Number)
+  const [toYear, toMonth] = day.split('-').map(Number)
+  for (let turn = 0; turn < (toYear! - year!) * 12 + toMonth! - month!; turn += 1) await page.getByRole('button', { name: 'Next month' }).click()
+  await page.locator(`[data-date="${day}"]`).click()
+  await page.getByRole('region', { name: 'Choose a time' }).getByRole('button', { name: /^10:00/ }).click()
+  await page.getByRole('button', { name: 'Request this time' }).click()
+  await expect(page).toHaveURL(/\/patient\/bookings$/)
+  await expect(page.getByRole('region', { name: 'Upcoming' }).getByRole('listitem')).toContainText('Pending')
+  expect(sql(`select b.status from public.bookings b join auth.users u on u.id=b.patient_id where u.email='${email}'`)).toBe('pending')
+})
+
 test('someone who came to book, and already has an account, goes straight there', async ({ browser }) => {
   const person = await createUser(['patient'], `Book ${tag}`)
   users.push(person)

@@ -21,10 +21,18 @@ class PushNotifierTest {
     @Before fun allow() {
         InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS").close()
         manager.cancelAll()
+        shown(0)
     }
     @After fun clear() {manager.cancelAll()}
 
-    private fun shown()=manager.activeNotifications.map {it.notification}
+    /** Posting is asynchronous, so the system is given a moment to show what was asked for. */
+    private fun shown(count:Int=1):List<Notification> {
+        repeat(50) {
+            if(manager.activeNotifications.size==count) return manager.activeNotifications.map {it.notification}
+            Thread.sleep(100)
+        }
+        return manager.activeNotifications.map {it.notification}
+    }
 
     @Test fun aReceivedMessageBecomesANotification() {
         PushNotifier.show(context,mapOf("title" to "Your session is confirmed","body" to "Your session on Monday is confirmed with Dana.","kind" to "confirmed","booking_id" to "b1"))
@@ -50,12 +58,13 @@ class PushNotifierTest {
     @Test fun aMessageWithNothingToSayShowsNothing() {
         PushNotifier.show(context,mapOf("title" to "","body" to ""))
         PushNotifier.show(context,emptyMap())
-        assertTrue(shown().isEmpty())
+        Thread.sleep(1_000)
+        assertTrue(shown(0).isEmpty())
     }
 
     @Test fun twoMessagesAreTwoNotifications() {
         PushNotifier.show(context,mapOf("title" to "One","body" to "First","kind" to "confirmed","booking_id" to "b1"))
         PushNotifier.show(context,mapOf("title" to "Two","body" to "Second","kind" to "reminder","booking_id" to "b1"))
-        assertEquals(2,shown().size)
+        assertEquals(2,shown(2).size)
     }
 }

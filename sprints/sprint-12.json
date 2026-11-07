@@ -4,7 +4,7 @@
   "title": "S12 - Front door, push and handover",
   "description": "Weeks 23-24. Exit: the public page sells booking and accepts sign-ups, FCM push is ready for credentials, and the full feature passes final regression with its changes and settings written down.",
   "goal": "Open the front door to patients and finish the feature.",
-  "status": "in-progress",
+  "status": "completed",
   "weeks": {
     "start": 23,
     "end": 24
@@ -18,12 +18,23 @@
     {
       "description": "All sprint issues meet their acceptance criteria and completion evidence requirements.",
       "passed": false,
-      "evidence": []
+      "evidence": [
+        "docs/validation/BOOKING-REGRESSION.md",
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+      ],
+      "non_blocking": true,
+      "deferred_to": "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+      "deferral_authority": "Owner decision, 2026-11-06, recorded in MOT-69: build the setup last, credentials follow later. No Firebase project exists yet.",
+      "disposition": "All three issues are implemented and closed with local evidence. MOT-69-AC6, a real push to a real phone, waits for the owner's Firebase credentials; not a development blocker."
     },
     {
       "description": "Create an account from the landing page, book a session, and walk through the final regression and handover summary.",
-      "passed": false,
-      "evidence": []
+      "passed": true,
+      "evidence": [
+        "web/tests/e2e/signup.spec.ts",
+        "docs/validation/BOOKING-REGRESSION.md"
+      ]
     }
   ],
   "demo": "Create an account from the landing page, book a session, and walk through the final regression and handover summary.",
@@ -38,9 +49,14 @@
   },
   "total_estimate_points": 16,
   "completion": {
-    "completed_at": null,
-    "reviewed_by": null,
-    "evidence": []
+    "completed_at": "2026-11-07T06:34:39.893545+00:00",
+    "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+    "acceptance_basis": "engineering-implementation",
+    "evidence": [
+      "docs/validation/BOOKING-REGRESSION.md",
+      "docs/validation/BOOKING-IMPLEMENTATION.md",
+      "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md"
+    ]
   },
   "issues": [
     {
@@ -350,7 +366,7 @@
       "github_issue": 87,
       "title": "Run the final regression and write the handover summary",
       "description": "Prove the whole feature works together, and write down what changed.",
-      "status": "planned",
+      "status": "done",
       "owner": null,
       "suggested_owner_role": "QA",
       "estimate_points": 3,
@@ -391,35 +407,103 @@
         {
           "id": "MOT-70-AC1",
           "description": "Permissions, conflict prevention including concurrent requests, holiday and closure blocking, and notifications all have passing tests, run together on a freshly reset local stack.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         },
         {
           "id": "MOT-70-AC2",
           "description": "A summary lists the changed files and every new environment variable.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         },
         {
           "id": "MOT-70-AC3",
           "description": "PLAN.md, DATABASE.md, ENVIRONMENT.md and DATA-LIFECYCLE.md describe the feature as built.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         },
         {
           "id": "MOT-70-AC4",
           "description": "POST-IMPLEMENTATION-CHECKLIST.md lists every deferred check, none claimed as passed.",
-          "passed": false,
-          "evidence": []
+          "passed": true,
+          "evidence": [
+            "docs/validation/BOOKING-REGRESSION.md",
+            "docs/validation/BOOKING-IMPLEMENTATION.md",
+            "docs/validation/booking-test-results.json",
+            "docs/validation/email-test-results.json",
+            "docs/validation/push-test-results.json",
+            "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+            "docs/PLAN.md",
+            "docs/architecture/DATABASE.md",
+            "docs/operations/ENVIRONMENT.md",
+            "docs/operations/DATA-LIFECYCLE.md"
+          ]
         }
       ],
       "completion": {
-        "completed_at": null,
-        "reviewed_by": null,
-        "evidence": []
+        "completed_at": "2026-11-07T06:34:39.889616+00:00",
+        "reviewed_by": "Claude engineering evidence review (not clinical approval)",
+        "evidence": [
+          "docs/validation/BOOKING-REGRESSION.md",
+          "docs/validation/BOOKING-IMPLEMENTATION.md",
+          "docs/validation/booking-test-results.json",
+          "docs/validation/email-test-results.json",
+          "docs/validation/push-test-results.json",
+          "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+          "docs/PLAN.md",
+          "docs/architecture/DATABASE.md",
+          "docs/operations/ENVIRONMENT.md",
+          "docs/operations/DATA-LIFECYCLE.md"
+        ]
       },
       "plan_reference": "docs/architecture/BOOKING.md",
-      "blockers": []
+      "blockers": [],
+      "implementation_status": "implemented",
+      "implementation_evidence": [
+        "docs/validation/BOOKING-REGRESSION.md",
+        "docs/validation/BOOKING-IMPLEMENTATION.md",
+        "docs/validation/booking-test-results.json",
+        "docs/validation/email-test-results.json",
+        "docs/validation/push-test-results.json",
+        "docs/validation/POST-IMPLEMENTATION-CHECKLIST.md",
+        "docs/PLAN.md",
+        "docs/architecture/DATABASE.md",
+        "docs/operations/ENVIRONMENT.md",
+        "docs/operations/DATA-LIFECYCLE.md"
+      ]
     }
   ],
   "plan_reference": "docs/architecture/BOOKING.md"

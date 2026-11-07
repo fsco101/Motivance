@@ -1,6 +1,6 @@
 # Booking and scheduling
 
-This is the design for in-center therapy sessions, approved by the owner on 2026-11-06 before any code was written. Patients request a session on the web or Android, and a Scheduler confirms requests and runs the center's calendar. Sprints S9 to S12 track the work.
+This is the design for in-center therapy sessions, approved by the owner on 2026-11-06 before any code was written, and kept up to date as it was built. Patients request a session on the web or Android, and a Scheduler confirms requests and runs the center's calendar. Sprints S9 to S12 tracked the work. [The final regression](../validation/BOOKING-REGRESSION.md) lists what ran, what changed and every setting.
 
 Supabase remains the only backend, so "endpoints" here are database functions called over HTTP with the signed-in token.
 
@@ -74,11 +74,11 @@ All times are `timestamptz` in UTC and are shown in the center's zone (Asia/Mani
 | `center_closures` | Starts at, ends at, all day, required reason, created by | Full day or a time range |
 | `therapist_time_off` | Therapist, starts at, ends at, reason, created by | References `profiles`. The reason is visible to scheduling only |
 | `booking_series` | Patient, therapist, weeks (2 to 26), client request ID, created by, cancelled at and reason | Groups weekly repeats |
-| `bookings` | Reference no., patient, therapist (optional until confirmed), series, starts at, ends at, status, status reason, previous start, attendance, marked by and at, self-reschedule count, client request ID, calendar token | Two exclusion constraints stop overlaps for one patient and for one therapist among active bookings |
+| `bookings` | Reference no., patient, therapist (optional until confirmed), series (null unless part of a weekly course), starts at, ends at, status, status reason, previous start, attendance, marked by and at, self-reschedule count, client request ID, calendar token | Two exclusion constraints stop overlaps for one patient and for one therapist among active bookings |
 | `booking_events` | Booking, actor, actor role, action, from and to status, time and therapist, reason, recorded at | Immutable, written by a trigger so it cannot be skipped. Also mirrored to `audit_events` for the admin feed |
 | `booking_waitlist` | Patient, starts at, ends at, status, notified at | One open entry per patient per slot |
 | `notifications` | User, kind, booking, data, read at, dedupe key | The owner reads their own. Clients render the text, so it follows their language |
-| `notification_deliveries` | Notification, channel (email, push), status, attempts, next attempt, last error, sent at | The queue. Retries back off, then stop as failed |
+| `notification_deliveries` | Notification, channel (email, push), status, attempts, next attempt, last error, sent at | The queue. Retries back off, then stop as failed. A push with nobody to reach is skipped |
 | `device_tokens` | User, token, platform, updated at | For FCM |
 
 **Conflict prevention.** Exclusion constraints guard patients and therapists in the database itself. Capacity uses a transaction lock, then a count of overlapping active bookings, so two simultaneous requests for the last place cannot both pass. That single lock also covers closures and settings changes. Every confirmation re-checks hours, holidays, closures, capacity, therapist leave and therapist conflicts. A repeated request with the same client ID returns the original booking, so retries are safe.
@@ -91,7 +91,7 @@ All are `security definer` functions that re-check the caller. A failed role che
 
 | Who | Functions |
 | --- | --- |
-| Any active account | `booking_availability(from, to)`, `my_notifications(limit)`, `mark_notifications_read(ids)`, `set_my_language(language)`, `register_device(token, platform)` |
+| Any active account | `booking_availability(from, to)`, `my_notifications(limit)`, `mark_notifications_read(ids)`, `set_my_language(language)`, `register_device(token, platform)`, `unregister_device(token)` |
 | Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist`, `my_waitlist` |
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
 | Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_schedule_patients`, `scheduler_log_export` |
@@ -108,11 +108,11 @@ Edge Functions in `supabase/functions/`, the first in this repository:
 
 | App | Screens |
 | --- | --- |
-| Web, Scheduler | Dashboard, Requests (table, detail panel, bulk reject), Schedule (filters, XLSX and PDF export), Calendar (hours and settings, holidays, closures, therapist time off), weekly repeat dialog, 403 page for anyone else |
+| Web, Scheduler | Dashboard, Requests (table, detail panel, bulk reject, cancelling the rest of a weekly course), Schedule (filters including attendance, XLSX and PDF export, marking attendance, booking a weekly course), Calendar (hours and settings, holidays, closures, therapist time off), 403 page for anyone else |
 | Web, Patient | Home (next session, next exercise, this week, recent sessions), My Schedule (month calendar of confirmed sessions; choosing a date shows that day by time, with start and end time, therapist and location), Book a session, My bookings, Exercises (assigned list with targets and instructions), Progress (history, filters, charts), Notifications, Profile (details, photo, password, language, consent and data requests, joining a therapist by code). Starting an exercise or the camera check suggests the phone, with links or a QR code. Works at phone width, unlike the staff workspaces |
 | Web, Therapist | My Schedule (month calendar; choosing a date shows that day by time, with the patient booked at each time and attendance marking), notification bell |
 | Web, Admin | Grant or revoke Scheduler, Schedulers filter and count, booking events in Activity |
-| Web, public | Redesigned landing page, sign-up (four steps and an email code, same rules as Android) |
+| Web, public | Landing page for patients first, sign-up (four steps and an email code, same rules as Android) |
 | Android, Patient | My Schedule (each date laid out by time), Bookings tab (status list, cancel, reschedule), Book a session, waitlist, notifications with a bell in the header |
 | Android, Therapist | My Schedule (each date laid out by time, with the patient at each time and attendance marking), notifications |
 | Android, Admin | The same Scheduler role, filter, count and activity changes, in the same commit as the web, per the parity rule |

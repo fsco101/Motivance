@@ -525,3 +525,11 @@ The Firebase values come from `android/.env` and Firebase starts by hand, with i
 | Database tests | `npx supabase test db` | 69 passed |
 
 The first check that a tap opens Notifications passed falsely, because it matched the bell's label on Home, and a screenshot showed Home. That launch also lacked the flags a real notification carries, so the app was right and the check was wrong. The check now looks for the Notifications page itself, with the real flags.
+
+## MOT-70: Final regression and handover
+
+Every suite ran together on a freshly reset local stack and passed, with the results, the changed files and every new setting in [the final regression](BOOKING-REGRESSION.md). `PLAN.md`, `DATABASE.md`, `ENVIRONMENT.md` and `DATA-LIFECYCLE.md` now describe the feature as built, and the checklist lists every deferred check.
+
+## S12 outcome
+
+All three issues are implemented and closed. The exit criterion stays recorded as not passed, under a deferral the owner approved, because MOT-69 needs a real push with the owner's Firebase credentials. The sprint demo ran for real in the browser. That finishes in-center booking: MOT-49 to MOT-70 are all closed.

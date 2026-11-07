@@ -51,7 +51,7 @@ At each sprint kickoff, assign owners and confirm prerequisites. During week one
 
 Critical path: exercise protocol and camera feasibility -> measurement engine -> guided local session -> versioned assignment integration -> retry-safe upload -> therapist review -> final validation -> defect gate -> deployment. Schema/auth work proceeds alongside the camera spike. Start external distribution verification in Sprint 1 and finish configuration in Sprint 4; store approval timing is external.
 
-In-center booking (S9-S12) is designed in [BOOKING.md](architecture/BOOKING.md), which owns its data model, endpoints, screens and decisions.
+In-center booking (S9-S12) is built, and [BOOKING.md](architecture/BOOKING.md) owns its data model, endpoints, screens and decisions. Patients request a specific slot on the web or Android, wait for a full one, and move or cancel their own sessions within the rules. A Scheduler confirms requests, runs the center's calendar, books weekly courses, and exports the schedule from the web. My Schedule shows each person's confirmed sessions by time, and therapists and Schedulers mark attendance. Changes reach people in the app and by queued email, and by push once the owner adds Firebase credentials. What ran is in [the final regression](validation/BOOKING-REGRESSION.md).
 
 ## Programming languages and toolchain
 
@@ -92,6 +92,7 @@ The implemented subset is pinned in `android/gradle/libs.versions.toml`, with a 
 | Unit tests | `junit:junit`, `org.jetbrains.kotlinx:kotlinx-coroutines-test` | Deterministic measurement traces, state machines and repository behavior |
 | Android tests | `androidx.test.ext:junit`, `androidx.test:runner`, `androidx.compose.ui:ui-test-junit4` | Instrumented UI/permission/lifecycle flows |
 | Persistence tests | `androidx.room:room-testing`, `androidx.work:work-testing` | Schema upgrades, atomic saves and background upload behavior |
+| Push | `com.google.firebase:firebase-bom`, `firebase-messaging` | FCM tokens and messages. Started by hand from values in `android/.env`, so an app built without them runs no Firebase |
 
 Add `androidx.hilt:hilt-work` and its matching compiler only if workers use Hilt integration. Add Supabase `functions-kt` only if privileged functions are implemented. `storage-kt` is optional for approved media assets; `realtime-kt` is unnecessary for the initial metrics workflow. Use Compose Canvas for the skeleton and simple trend charts initially. OpenCV, Python ML servers, cloud GPUs and a second inference runtime are not required for the baseline.
 
@@ -188,7 +189,7 @@ Use **PostgreSQL through Supabase** for shared, relational records and **SQLite 
 |---|---|---|
 | `auth.users` | Supabase-managed identity | Do not duplicate credentials in public tables |
 | `profiles` | `id` references auth user; display name, locale, active flag | User reads own profile; protected fields changed only through trusted operations |
-| `user_roles` | user ID plus patient/therapist/admin role | Server-controlled membership; users cannot self-promote |
+| `user_roles` | user ID plus patient/therapist/scheduler/admin role | Server-controlled membership; users cannot self-promote |
 | `patients` | patient UUID, unique user ID, minimal therapist-approved profile | Minimize collected clinical fields; patient-scoped RLS |
 | `therapist_patients` | therapist ID, patient ID, active interval, assigned by | Trusted link management; one active link per pair |
 | `exercises` | stable code, joint definitions, camera setup, supported sides, active flag | Catalogue identity; deactivate instead of deleting referenced definitions |
@@ -199,6 +200,7 @@ Use **PostgreSQL through Supabase** for shared, relational records and **SQLite 
 | `session_measurements` | session ID, metric key, joint/side, min/max/ROM degrees, completed/incomplete counts, quality summary | Unique metric per session; child policy follows authorized parent |
 | `consents` | patient ID, consent type/version, granted/withdrawn timestamps | Append history; camera permission does not equal data consent |
 | `audit_events` | actor, action, target type/ID, timestamp, minimal change metadata | Trusted append; no patient/client edits or token/raw-video logging |
+| Booking tables | `center_settings`, `center_hours`, `center_holidays`, `center_closures`, `therapist_time_off`, `booking_series`, `bookings`, `booking_events`, `booking_waitlist`, `notifications`, `notification_deliveries`, `device_tokens` | Fields and rules are in [BOOKING.md](architecture/BOOKING.md). Clients reach them through functions, which re-check the caller |
 
 Allow measurements for multiple tracked joints without duplicating session identity. Prefer explicit typed columns for primary metrics and targets. Reserve JSONB for versioned exercise-specific configuration and quality summaries validated against a known schema. Optional repetition detail can be added after a demonstrated review need; per-frame pose storage is excluded by default.
 
@@ -259,6 +261,7 @@ Motivance/
         designsystem/             # Accessible reusable Compose UI
         data/
           local/                  # Room entities, DAOs and mapping
+          push/                   # Firebase start-up, device registration and notifications
           remote/                 # Supabase DTOs and calls
           repository/             # Domain repository implementations
           sync/                   # WorkManager and outbox coordination
@@ -267,6 +270,8 @@ Motivance/
           pose/                   # MediaPipe adapter and landmark quality
         feature/
           auth/
+          booking/                # Booking, My bookings, moving a session and My Schedule
+          notifications/          # The bell and the list
           patient/
           exercise/               # Setup, overlay and live guidance
           rehabilitation/         # Connected assignments, history filters and charts
@@ -288,16 +293,17 @@ Motivance/
       design/                     # Tokens and theme
       components/                 # Shared accessible components
       motion/                     # Motion tokens and animated primitives
-      auth/                       # Sign-in, role routing, idle sign-out
+      auth/                       # Sign-in, sign-up, role routing, idle sign-out
       data/                       # Typed Supabase access and generated types
       layout/                     # Rail, top bar and breadcrumbs
       features/                   # Presentational views and pages, by workspace
+      landing/                    # The public page
       gallery/                    # Development-only design review, not bundled
       locales/                    # English and Filipino
     tests/                        # Contract, browser and accessibility tests
   supabase/
     migrations/                   # Tables, policies, functions and indexes
-    functions/                    # Privileged operations only when needed
+    functions/                    # notification-dispatch and booking-calendar, with their shared email and push code
     tests/                        # SQL/RLS/transaction checks
     seed.sql                      # Created in S1 with synthetic data
     config.toml                   # Created in S1 by Supabase CLI
@@ -313,7 +319,7 @@ Motivance/
     sprint-02.json
     sprint-03.json
     sprint-04.json
-    sprint-05.json through sprint-08.json
+    sprint-05.json through sprint-12.json
   scripts/sync_sprints.py
   .github/workflows/sprint-sync.yml
 ```

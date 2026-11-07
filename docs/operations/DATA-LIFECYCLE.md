@@ -20,6 +20,25 @@ Before pilot data collection, the deployment owner must set actual live/local re
 
 Profile photos are optional and are stored with Cloudinary, a third-party image host, as 512 px JPEGs with on-device metadata removed. Delivery URLs are unguessable but not access-controlled: anyone holding a URL can open the image. Replaced, removed and moderated photos leave the profile immediately and are deleted from Cloudinary, with CDN invalidation, by `scripts/cleanup_profile_photos.py`. Run that script regularly and as part of any deletion request. See [CLOUDINARY.md](CLOUDINARY.md).
 
+## Booking data
+
+Booking adds personal data of a different kind: when someone comes to the center, whether they came, and how to reach their phone. Schedulers read names, reference numbers and times through their own functions, and `can_read_patient` is not widened, so a booking opens no clinical record. No booking record holds a clinical measurement.
+
+| Data | Where | How long it stays |
+| --- | --- | --- |
+| Bookings, attendance and the reason for a decision | `bookings` | Kept with the patient's record, including cancelled and rejected ones. Under the same `development-v1` policy as other records: no automatic deletion |
+| The history of each booking | `booking_events`, `audit_events` | Immutable, as other audit records are. A trigger refuses changes even from the database owner |
+| In-app notifications | `notifications` | Kept. Each holds the facts it needs, including names and times, and can hold a Scheduler's reason |
+| Email and push queue | `notification_deliveries` | Kept, with the last error. A delivery holds no message text |
+| Phone tokens | `device_tokens` | Removed at sign-out and when FCM reports a token dead. A token moves to whoever signs in next. A token left by a phone that never signs out stays until FCM reports it |
+| Waitlist places | `booking_waitlist` | Kept, with what became of each place |
+| Therapist leave reasons | `therapist_time_off` | Read by Schedulers only. A patient reads only that their therapist is away |
+| Calendar links | `bookings.calendar_token` | A long random token that works for as long as the booking exists. The file it opens names no patient |
+
+Exported schedules are built in the browser and saved on the Scheduler's own computer. They hold patient and therapist names, and the system cannot recall them, so each export is recorded before the file exists and treating those files properly is the center's responsibility. Email leaves through Gmail, and push through Google once it is turned on, so both are outside this system once sent. A push carries data only and a lock screen hides its text, but it does pass through Google, which is a point for the deployment owner's privacy review.
+
+A deletion request has to consider these tables too. Do not delete `bookings` or `booking_events` rows to answer one without the same review as other historical records, because the audit trigger exists to prevent exactly that. Retention for all of this awaits the owner's approval, like the rest, and the follow-up is in `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md`.
+
 ## Export or deletion request workflow
 
 1. The signed-in patient submits `request_patient_data` with a stable request UUID and `export` or `delete`. RLS exposes only the patient's own requests and trusted administrators' permitted view. Repeating an identical UUID is idempotent.

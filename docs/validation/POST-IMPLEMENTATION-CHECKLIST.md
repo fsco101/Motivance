@@ -177,6 +177,11 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] Sign up on the web with a real inbox, on a hosted project, and confirm the code arrives and works. Browser tests hold back the send, because local Auth sends through a real mail account.
 - [ ] Have a Filipino speaker review `web/src/locales/landing.fil.json`.
 - [ ] With the owner's Firebase project and credentials, follow `docs/operations/NOTIFICATIONS.md`, and confirm a real push reaches a real phone, that tapping it opens Notifications, and that a lock screen hides its text. Tests so far use a stub FCM server, and no real token has ever been issued.
+- [ ] On a hosted project, apply migrations `202611060001` to `202611060020`, deploy `notification-dispatch` and `booking-calendar`, set the secrets in `docs/operations/NOTIFICATIONS.md`, and confirm the three scheduled jobs run. Everything so far ran on the local stack.
+- [ ] Before opening booking to patients, enter the center's real name, address and capacity in the Calendar settings, because the seeded values are placeholders.
+- [ ] Have the deployment owner approve retention for booking data and review what passes through Gmail and Google. `docs/operations/DATA-LIFECYCLE.md` lists it.
+- [ ] Have a Scheduler run a real week on a large screen: decide requests, resolve a closure, book a weekly course and export the schedule. Nobody who does this work has used it yet.
+- [ ] With local Auth pointed at a mail catcher rather than real SMTP, run `python scripts/test_local_auth.py`. It refuses to run against real SMTP, which is how the local stack is set up, so the final regression did not run it.
 
 ## Recording results
 
