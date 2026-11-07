@@ -10,8 +10,8 @@ import { useCenterFormat } from '@/features/booking/format'
 import { deleteClosure, deleteHoliday, deleteTimeOff, loadCalendar, loadImpact, saveClosure, saveHoliday, saveHours, saveSettings, saveTimeOff, type CenterDay, type CenterSettings, type Closure, type Holiday, type TimeOff } from '@/data/calendar'
 import { supabase } from '@/data/client'
 import {
-  assignTherapist, bulkReject, cancelBooking, confirmBooking, loadAllConfirmed, loadCenterName, loadConfirmed, loadDetail, loadPatientChoices, loadRequests, loadStaffAvailability, loadTherapists, logExport,
-  NO_FILTERS, NO_SCHEDULE_FILTERS, PAGE_SIZE, rejectBooking, rescheduleBooking, type RequestFilters, type RequestRow, type RequestSort, type ScheduleFilters,
+  assignTherapist, bulkReject, cancelBooking, cancelSeries, confirmBooking, createSeries, loadAllConfirmed, loadCenterName, loadConfirmed, loadDetail, loadPatientChoices, loadRequests, loadStaffAvailability, loadTherapists, logExport,
+  NO_FILTERS, NO_SCHEDULE_FILTERS, PAGE_SIZE, previewSeries, rejectBooking, rescheduleBooking, searchPatients, type RequestFilters, type RequestRow, type RequestSort, type ScheduleFilters,
 } from '@/data/scheduler'
 import { asLoad } from '@/features/shared'
 import '@/locales/booking'
@@ -20,6 +20,7 @@ import { CalendarView, type CalendarTab } from './CalendarView'
 import { ConfirmedScheduleView, type ExportFormat } from './ConfirmedScheduleView'
 import { BulkRejectDialog, RequestDialog, type RequestActionKind, type RequestActions } from './RequestDialogs'
 import { RequestsView } from './RequestsView'
+import { WeeklySeriesDialog, type SeriesActions } from './WeeklySeriesDialog'
 
 /** Where a Scheduler lands. The dashboard takes this place once there are counts to show. */
 export function SchedulerHomePage() {
@@ -90,6 +91,7 @@ export function SchedulerRequestsPage() {
     cancel: (row, reason) => actAndForget(() => cancelBooking(supabase(), row.id, reason), t('booking.cancelled')),
     reschedule: (row, startsAt, therapist) => actAndForget(() => rescheduleBooking(supabase(), row.id, startsAt, therapist), t('scheduler.rescheduled')),
     bulkReject: (reason) => actAndForget(async () => { const count = await bulkReject(supabase(), selection, reason); setChecked([]); return count }, (count) => t('scheduler.bulkDone', { count })),
+    cancelSeries: (row, reason) => actAndForget(() => cancelSeries(supabase(), row.seriesId!, reason), (count) => t('scheduler.seriesCancelled', { count })),
   }
   return (
     <>
@@ -97,7 +99,7 @@ export function SchedulerRequestsPage() {
         page={page} onPage={(next) => { setPage(next); setChecked([]) }} selected={selected} onSelect={(row) => setSelectedId(row?.id ?? null)} detail={selectedId ? asLoad(detail) : null}
         checked={selection} onChecked={setChecked} onAct={(kind, row) => setAction({ kind, row })} onBulk={() => setBulk(true)}
         onOutdated={() => changeFilters({ ...NO_FILTERS, search: filters.search, status: 'pending', to: addDays(today, -1) })} />
-      {action && <RequestDialog kind={action.kind} row={action.row} actions={actions} onClose={() => setAction(null)} />}
+      {action && <RequestDialog kind={action.kind} row={action.row} remaining={detail.data?.seriesRemaining} actions={actions} onClose={() => setAction(null)} />}
       {bulk && <BulkRejectDialog count={selection.length} actions={actions} onClose={() => setBulk(false)} />}
     </>
   )
@@ -112,6 +114,7 @@ export function SchedulerSchedulePage() {
   const [page, setPage] = useState(0)
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
   const [marking, setMarking] = useState(false)
+  const [series, setSeries] = useState(false)
   const act = useSchedulerAction()
   const sessions = useQuery({ queryKey: ['scheduler', 'schedule', filters, sort, page], queryFn: () => loadConfirmed(supabase(), filters, sort, page), placeholderData: keepPreviousData })
   const therapists = useQuery({ queryKey: ['scheduler', 'therapists'], queryFn: () => loadTherapists(supabase()) })
@@ -153,11 +156,27 @@ export function SchedulerSchedulePage() {
       setExporting(null)
     }
   }
+  const seriesActions: SeriesActions = {
+    patients: (search) => searchPatients(supabase(), search),
+    availability: (month) => loadStaffAvailability(supabase(), month),
+    preview: async (draft) => {
+      try {
+        return await previewSeries(supabase(), draft)
+      } catch (failure) {
+        toast.show(t(bookingFailureKey(failure)), 'error')
+        throw failure
+      }
+    },
+    create: async (request, draft) => { await act(() => createSeries(supabase(), request, draft), (made) => t('scheduler.seriesBooked', { booked: made.booked, weeks: made.weeks })) },
+  }
   const lastPage = Math.max(Math.ceil((sessions.data?.total ?? 0) / PAGE_SIZE) - 1, 0)
   if (sessions.data && page > lastPage) setPage(lastPage)
   return (
+    <>
     <ConfirmedScheduleView load={asLoad(sessions)} therapists={therapists.data ?? []} patients={patients.data ?? []} filters={filters} onFilters={(next: ScheduleFilters) => { setFilters(next); setPage(0) }}
-      sort={sort} onSort={(next) => { setSort(next); setPage(0) }} page={page} onPage={setPage} exporting={exporting} onExport={(kind) => void save(kind)} onMark={(row, attendance) => void mark(row, attendance)} marking={marking} />
+      sort={sort} onSort={(next) => { setSort(next); setPage(0) }} page={page} onPage={setPage} exporting={exporting} onExport={(kind) => void save(kind)} onMark={(row, attendance) => void mark(row, attendance)} marking={marking} onSeries={() => setSeries(true)} />
+    {series && <WeeklySeriesDialog therapists={therapists.data ?? []} actions={seriesActions} onClose={() => setSeries(false)} />}
+    </>
   )
 }
 

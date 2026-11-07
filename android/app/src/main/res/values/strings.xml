@@ -906,4 +906,9 @@
     <string name="booking_no_show">No-show</string>
     <string name="booking_attendance_saved">Attendance saved.</string>
     <string name="booking_error_not_started">This session has not started yet.</string>
+    <string name="admin_event_booking_series">Weekly session booked</string>
+    <string name="notification_series_booked">Weekly sessions booked with %1$s, from %2$s to %3$s. Sessions: %4$d.</string>
+    <string name="notification_series_assigned">%1$s is booked with you weekly, from %2$s to %3$s. Sessions: %4$d.</string>
+    <string name="notification_series_cancelled">Your weekly sessions from %1$s were cancelled. Sessions: %2$d.</string>
+    <string name="notification_session_series_cancelled">Your weekly sessions with %1$s from %2$s were cancelled. Sessions: %3$d.</string>
 </resources>

@@ -428,3 +428,26 @@ Every change is recorded with what it was, in the booking's history and the audi
 The Schedule table was also looked at by eye at 1024 and 1440 pixels. The two marks stack at the narrower width and nothing scrolls sideways.
 
 A physical phone is still to be tried, and is on the checklist.
+
+## MOT-66: Weekly repeat bookings
+
+A Scheduler chooses a patient, therapist, first session and number of weeks from the Schedule page, and sees every date with what would stop it before anything is saved. Saving confirms the dates that pass and leaves out the rest, so one holiday does not cost a patient the whole course. Every date goes through the same checks as any booking a Scheduler makes, again at the save, because a preview can go out of date. Saving twice with the same request returns the same course.
+
+The patient and therapist get one notification and one email for the course, with the number of sessions, and each session still gets its own reminders. Cancelling works the same way: the remaining sessions go together, with a reason, from any session in the course. Sessions that have started stay, and each therapist hears about the sessions that were theirs. The places that open reach the waitlist.
+
+A date of a course is recorded as booked, not requested, so nobody is asked to decide it. Administrators read it in Activity, and that label shipped to the web and Android together.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Live API: one course meeting a closure, a holiday, leave, a busy therapist, an overlap and a full slot, a stale preview, a retry, two Schedulers racing for the last place, cancelling, who hears what | `python scripts/test_booking.py series` | 43 checks passed |
+| All sections, with the 403 guard covering the new functions | `python scripts/test_booking.py` | 706 checks passed |
+| Real sends to Mailpit: one email each, in each reader's language, and one for cancelling | `python scripts/test_email.py` | 64 checks passed |
+| Contract tests, including every new email in both languages | `npm run test:contract` | 132 passed |
+| Browser tests with axe: the dialog, the dates, going back, saving, cancelling | `npx playwright test series scheduler confirmed-schedule notifications design --workers=1` | 101 passed. 83 opt-in tests did not run, as designed |
+| Web unit tests | `npm test` | 246 passed |
+| Android unit tests, including reading a course's notification and its audit label | `gradlew :core:domain:test :app:testDebugUnitTest` | 243 passed |
+| Database tests | `npx supabase test db` | 69 passed |
+| Administrator parity | `python scripts/check_admin_parity.py` | Passed |
+| Bundle | `python scripts/check_web_bundle.py` | 297 KB of 300 KB |
+
+The Scheduler workspace is web only, so the only Android change is reading the four new notifications and the audit label. Those are covered by unit tests, not yet seen on an emulator screen.

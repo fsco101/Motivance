@@ -18,10 +18,10 @@ export type ExportFormat = 'xlsx' | 'pdf'
 type Props = {
   load: Load<RequestsData>; therapists: readonly TherapistChoice[]; patients: readonly PatientChoice[]; filters: ScheduleFilters; onFilters: (filters: ScheduleFilters) => void
   sort: RequestSort; onSort: (sort: RequestSort) => void; page: number; onPage: (page: number) => void; exporting: ExportFormat | null; onExport: (format: ExportFormat) => void
-  onMark: (row: RequestRow, attendance: Attendance) => void; marking: boolean
+  onMark: (row: RequestRow, attendance: Attendance) => void; marking: boolean; onSeries: () => void
 }
 
-export function ConfirmedScheduleView({ load, therapists, patients, filters, onFilters, sort, onSort, page, onPage, exporting, onExport, onMark, marking }: Props) {
+export function ConfirmedScheduleView({ load, therapists, patients, filters, onFilters, sort, onSort, page, onPage, exporting, onExport, onMark, marking, onSeries }: Props) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const [search, setSearch] = useState(filters.search)
@@ -31,7 +31,7 @@ export function ConfirmedScheduleView({ load, therapists, patients, filters, onF
     { key: 'starts_at', header: t('scheduler.when'), sortable: true, cell: (row) => <><span className="block whitespace-nowrap font-semibold">{format.day(row.startsAt)}</span><span className="whitespace-nowrap text-slate">{format.range(row.startsAt, row.endsAt)}</span></> },
     { key: 'patient', header: t('scheduler.patient'), sortable: true, cell: (row) => <span className="font-semibold">{row.patient}</span> },
     { key: 'therapist', header: t('booking.therapist'), sortable: true, cell: (row) => row.therapist },
-    { key: 'status', header: t('scheduler.status'), sortable: true, cell: (row) => <StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill> },
+    { key: 'status', header: t('scheduler.status'), sortable: true, cell: (row) => <span className="flex flex-wrap gap-1"><StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill>{row.seriesId && <StatusPill>{t('scheduler.seriesLabel')}</StatusPill>}</span> },
     {
       key: 'attendance', header: t('booking.attendanceTitle'), sortable: true,
       cell: (row) => (row.started ? <AttendanceControl value={row.attendance} label={t('booking.attendanceFor', { patient: row.patient })} disabled={marking} onMark={(value) => onMark(row, value)} />
@@ -49,7 +49,7 @@ export function ConfirmedScheduleView({ load, therapists, patients, filters, onF
   )
   return (
     <>
-      <PageHeader title={t('scheduler.scheduleTitle')} description={t('scheduler.scheduleDetail')} actions={<>{exportButton('xlsx', t('scheduler.exportXlsx'))}{exportButton('pdf', t('scheduler.exportPdf'))}</>} />
+      <PageHeader title={t('scheduler.scheduleTitle')} description={t('scheduler.scheduleDetail')} actions={<><Button onClick={onSeries}>{t('scheduler.seriesTitle')}</Button>{exportButton('xlsx', t('scheduler.exportXlsx'))}{exportButton('pdf', t('scheduler.exportPdf'))}</>} />
       <Panel flush
         toolbar={(
           <form onSubmit={submit} className="grid w-full items-end gap-3 tablet:grid-cols-2 wide:grid-cols-[minmax(0,2fr)_repeat(6,minmax(0,1fr))_auto]">

@@ -57,7 +57,8 @@
       "returned_to_pending": "Returned to pending",
       "therapist_changed": "Therapist changed",
       "attendance_marked": "Attendance recorded",
-      "reminder_sent": "Reminder sent"
+      "reminder_sent": "Reminder sent",
+      "series_booked": "Booked as a weekly session"
     },
     "bulkDetail_one": "Reject {{count}} pending request. Only a request still pending will change.",
     "bulkDetail_other": "Reject {{count}} pending requests. Only requests still pending will change.",
@@ -85,7 +86,45 @@
     "noneScheduledDetail": "Sessions appear here once a Scheduler confirms them.",
     "anyAttendance": "Any attendance",
     "unmarked": "Not marked",
-    "notStarted": "Not started"
+    "notStarted": "Not started",
+    "seriesTitle": "Book weekly sessions",
+    "seriesDetail": "The same time each week for one patient and therapist. You will see every date before anything is saved.",
+    "seriesPatientSearch": "Find a patient",
+    "seriesNoPatients": "No patients match.",
+    "seriesChooseTherapist": "Choose a therapist",
+    "seriesFirst": "First session",
+    "seriesWeeks": "Number of weeks",
+    "seriesWeeksHint": "From 2 to 26.",
+    "seriesCheck": "Check dates",
+    "seriesReviewTitle": "Check the dates",
+    "seriesFor": "{{patient}} with {{therapist}}",
+    "seriesFree": "Free",
+    "seriesSomeBlocked": "Dates with a problem are left out. The rest are confirmed.",
+    "seriesNoneFree": "None of these dates can be booked. Go back and choose another time.",
+    "seriesBook_one": "Book {{count}} session",
+    "seriesBook_other": "Book {{count}} sessions",
+    "seriesBack": "Change the details",
+    "seriesBooked": "{{booked}} of {{weeks}} weekly sessions booked.",
+    "seriesLabel": "Weekly",
+    "seriesRemaining": "Weekly sessions still to come",
+    "seriesCancel": "Cancel remaining sessions",
+    "seriesCancelDetail_one": "This cancels {{count}} session for {{patient}}. Sessions that have started stay.",
+    "seriesCancelDetail_other": "This cancels {{count}} sessions for {{patient}}. Sessions that have started stay.",
+    "seriesCancelled_one": "{{count}} session cancelled.",
+    "seriesCancelled_other": "{{count}} sessions cancelled.",
+    "seriesProblem": {
+      "full": "Full",
+      "holiday": "Holiday",
+      "closure": "Center closed",
+      "closed_day": "Center closed that day",
+      "outside_hours": "Outside opening hours",
+      "off_grid": "Not a session time",
+      "past": "Already past",
+      "therapist_busy": "Therapist busy",
+      "therapist_on_leave": "Therapist on leave",
+      "therapist_unavailable": "Therapist unavailable",
+      "overlap": "Patient already booked"
+    }
   },
   "patient": {
     "greeting": "Hello, {{name}}",
@@ -225,7 +264,9 @@
       "not_full": "This time has places again, so you can book it.",
       "reschedule_late": "It is too late to move this session online. Contact the center.",
       "reschedule_limit": "This session cannot be moved again online. Contact the center.",
-      "not_started": "This session has not started yet."
+      "not_started": "This session has not started yet.",
+      "series_empty": "None of those dates can be booked now. Check them again.",
+      "patient_unavailable": "That patient cannot be booked."
     },
     "keep": "Keep booking",
     "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
@@ -394,6 +435,10 @@
     "reminder": "Reminder: your session is on {{when}} with {{therapist}}.",
     "session_reminder": "Reminder: {{patient}} is booked with you on {{when}}.",
     "place_open": "A place has opened on {{when}}. The first to book gets it.",
-    "patient_rescheduled": "{{patient}} moved their session to {{when}}. It needs confirming."
+    "patient_rescheduled": "{{patient}} moved their session to {{when}}. It needs confirming.",
+    "series_booked": "Weekly sessions booked with {{therapist}}, from {{when}} to {{last}}. Sessions: {{sessions}}.",
+    "series_assigned": "{{patient}} is booked with you weekly, from {{when}} to {{last}}. Sessions: {{sessions}}.",
+    "series_cancelled": "Your weekly sessions from {{when}} were cancelled. Sessions: {{sessions}}.",
+    "session_series_cancelled": "Your weekly sessions with {{patient}} from {{when}} were cancelled. Sessions: {{sessions}}."
   }
 }

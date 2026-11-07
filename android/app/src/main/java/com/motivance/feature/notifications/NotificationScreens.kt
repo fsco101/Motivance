@@ -25,6 +25,7 @@ import com.motivance.feature.booking.rememberSessionFormat
     val was=(note.previousStartsAt ?: note.startsAt).let {"${format.day(it)}, ${format.time(it)}"}
     val patient=note.patient.orEmpty()
     val therapist=note.therapist ?: stringResource(R.string.booking_no_therapist)
+    val last=note.lastStartsAt?.let {format.day(it)}.orEmpty()
     return when(note.kind) {
         NotificationKind.CONFIRMED -> stringResource(R.string.notification_confirmed,at,therapist)
         NotificationKind.REJECTED -> stringResource(R.string.notification_rejected,at)
@@ -43,6 +44,10 @@ import com.motivance.feature.booking.rememberSessionFormat
         NotificationKind.SESSION_REMINDER -> stringResource(R.string.notification_session_reminder,patient,at)
         NotificationKind.PLACE_OPEN -> stringResource(R.string.notification_place_open,at)
         NotificationKind.PATIENT_RESCHEDULED -> stringResource(R.string.notification_patient_rescheduled,patient,at)
+        NotificationKind.SERIES_BOOKED -> stringResource(R.string.notification_series_booked,therapist,at,last,note.sessions)
+        NotificationKind.SERIES_ASSIGNED -> stringResource(R.string.notification_series_assigned,patient,at,last,note.sessions)
+        NotificationKind.SERIES_CANCELLED -> stringResource(R.string.notification_series_cancelled,at,note.sessions)
+        NotificationKind.SESSION_SERIES_CANCELLED -> stringResource(R.string.notification_session_series_cancelled,patient,at,note.sessions)
     }
 }
 

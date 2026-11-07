@@ -35,7 +35,7 @@ describe('audit events use the same wording as Android', () => {
 
   it.each([
     ['requested', 'bookingRequested'], ['confirmed', 'bookingConfirmed'], ['rejected', 'bookingRejected'], ['cancelled', 'bookingCancelled'], ['rescheduled', 'bookingRescheduled'],
-    ['returned_to_pending', 'bookingReturned'], ['therapist_changed', 'bookingTherapist'], ['attendance_marked', 'bookingAttendance'],
+    ['returned_to_pending', 'bookingReturned'], ['therapist_changed', 'bookingTherapist'], ['attendance_marked', 'bookingAttendance'], ['series_booked', 'bookingSeries'],
   ])('names a booking that was %s as %s', (action, kind) => {
     expect(auditKind('bookings', action)).toBe(kind)
     expect(auditCategory('bookings')).toBe('bookings')

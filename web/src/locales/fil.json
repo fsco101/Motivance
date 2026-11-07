@@ -157,6 +157,7 @@
       "bookingReturned": "Ibinalik sa nakabinbin ang booking",
       "bookingTherapist": "Pinalitan ang therapist ng booking",
       "bookingAttendance": "Naitala ang pagdalo",
+      "bookingSeries": "Na-book ang lingguhang session",
       "bookingExported": "Na-export ang iskedyul"
     },
     "schedulers": "Mga scheduler",

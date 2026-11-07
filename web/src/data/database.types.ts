@@ -113,6 +113,64 @@ export type Database = {
           },
         ]
       }
+      booking_series: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          client_request_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          patient_id: string
+          therapist_id: string
+          weeks: number
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          client_request_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          patient_id: string
+          therapist_id: string
+          weeks: number
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          client_request_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          patient_id?: string
+          therapist_id?: string
+          weeks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_series_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_series_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_series_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_waitlist: {
         Row: {
           created_at: string
@@ -168,6 +226,7 @@ export type Database = {
           previous_starts_at: string | null
           reference_no: string
           self_reschedules: number
+          series_id: string | null
           starts_at: string
           status: string
           status_reason: string | null
@@ -187,6 +246,7 @@ export type Database = {
           previous_starts_at?: string | null
           reference_no: string
           self_reschedules?: number
+          series_id?: string | null
           starts_at: string
           status?: string
           status_reason?: string | null
@@ -206,6 +266,7 @@ export type Database = {
           previous_starts_at?: string | null
           reference_no?: string
           self_reschedules?: number
+          series_id?: string | null
           starts_at?: string
           status?: string
           status_reason?: string | null
@@ -225,6 +286,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "booking_series"
             referencedColumns: ["id"]
           },
           {
@@ -1307,6 +1375,7 @@ export type Database = {
           previous_starts_at: string | null
           reference_no: string
           self_reschedules: number
+          series_id: string | null
           starts_at: string
           status: string
           status_reason: string | null
@@ -1682,12 +1751,61 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      scheduler_series_cancel: {
+        Args: { p_series: string; p_reason: string }
+        Returns: number
+      }
+      scheduler_series_create: {
+        Args: {
+          p_request: string
+          p_patient: string
+          p_therapist: string
+          p_starts: string
+          p_weeks: number
+        }
+        Returns: Json
+      }
+      scheduler_series_preview: {
+        Args: {
+          p_patient: string
+          p_therapist: string
+          p_starts: string
+          p_weeks: number
+        }
+        Returns: Json
+      }
       scheduler_therapists: {
         Args: { p_booking?: string; p_starts?: string }
         Returns: Json
       }
       scheduler_time_off: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      series_check: {
+        Args: {
+          p_patient: string
+          p_therapist: string
+          p_starts: string
+          p_weeks: number
+        }
+        Returns: undefined
+      }
+      series_dates: {
+        Args: { p_starts: string; p_weeks: number }
+        Returns: string[]
+      }
+      series_problem: {
+        Args: {
+          p_patient: string
+          p_therapist: string
+          p_starts: string
+          p_ends: string
+        }
+        Returns: string
+      }
+      series_view: {
+        Args: { p_series: string }
         Returns: Json
       }
       set_my_language: {

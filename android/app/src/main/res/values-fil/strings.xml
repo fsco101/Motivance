@@ -906,4 +906,9 @@
     <string name="booking_no_show">Hindi dumating</string>
     <string name="booking_attendance_saved">Nai-save ang pagdalo.</string>
     <string name="booking_error_not_started">Hindi pa nagsisimula ang session na ito.</string>
+    <string name="admin_event_booking_series">Na-book ang lingguhang session</string>
+    <string name="notification_series_booked">Naka-book ang iyong lingguhang session kasama si %1$s, mula %2$s hanggang %3$s. Mga session: %4$d.</string>
+    <string name="notification_series_assigned">Naka-book sa iyo si %1$s linggu-linggo, mula %2$s hanggang %3$s. Mga session: %4$d.</string>
+    <string name="notification_series_cancelled">Kinansela ang iyong lingguhang session mula %1$s. Mga session: %2$d.</string>
+    <string name="notification_session_series_cancelled">Kinansela ang lingguhang session mo kasama si %1$s mula %2$s. Mga session: %3$d.</string>
 </resources>

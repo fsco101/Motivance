@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T20:20:07.024414+00:00",
-  "checks_passed": 60,
+  "generated_at": "2026-11-07T04:26:08.853250+00:00",
+  "checks_passed": 64,
   "checks": [
     "A booking does not wait for email",
     "It leaves a row in the queue",
@@ -61,7 +61,11 @@
     "Demo: and the email with its calendar link",
     "Demo: the calendar file has the new time",
     "Waitlist: a place opening reaches the inbox",
-    "Waitlist: it points straight to the place, with no session details"
+    "Waitlist: it points straight to the place, with no session details",
+    "Series: the patient gets one email for the course, in Filipino",
+    "Series: the therapist gets one too",
+    "Series: it offers no calendar link, because one link cannot hold a course",
+    "Series: cancelling it is one email"
   ],
   "environment": "real local Auth, PostgREST, Edge Functions and Mailpit with disposable synthetic accounts"
 }

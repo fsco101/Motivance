@@ -34,6 +34,7 @@ import { ConfirmedScheduleView } from '@/features/scheduler/ConfirmedScheduleVie
 import { CalendarView, type CalendarTab } from '@/features/scheduler/CalendarView'
 import { RequestDialog, type RequestActionKind, type RequestActions } from '@/features/scheduler/RequestDialogs'
 import { RequestsView } from '@/features/scheduler/RequestsView'
+import { WeeklySeriesDialog, type SeriesActions } from '@/features/scheduler/WeeklySeriesDialog'
 import { TherapistHomeView } from '@/features/therapist/TherapistHomeView'
 import { LandingPage } from '@/landing/LandingPage'
 import '@/locales/booking'
@@ -116,7 +117,10 @@ function PatientProfile() {
 }
 const requestActions: RequestActions = {
   therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),
-  reject: async () => toast.show('Rejected'), cancel: async () => toast.show('Cancelled'), reschedule: async () => toast.show('Rescheduled'), bulkReject: async () => toast.show('Rejected'),
+  reject: async () => toast.show('Rejected'), cancel: async () => toast.show('Cancelled'), reschedule: async () => toast.show('Rescheduled'), bulkReject: async () => toast.show('Rejected'), cancelSeries: async () => toast.show('Cancelled'),
+}
+const seriesActions: SeriesActions = {
+  patients: async () => [{ id: 'p1', name: 'Ana Dela Cruz' }, { id: 'p2', name: 'Ramon Bautista' }], availability: async () => data.availability, preview: async () => data.seriesDates, create: async () => toast.show('Booked'),
 }
 const Notifications = () => <NotificationsView load={useDemo(data.inbox, { unread: 0, rows: [] })} onOpen={said('Opened')} onMarkAll={said('Marked read')} />
 
@@ -130,10 +134,17 @@ const calendarActions: CalendarActions = {
   impact: async () => data.affected, availability: async () => data.availability, therapists: async () => data.therapistChoices, saveHoliday: async () => toast.show('Saved'), saveClosure: async () => toast.show('Saved'), saveTimeOff: async () => toast.show('Saved'),
 }
 function SchedulerSchedule() {
+  const [params] = useSearchParams()
   const [filters, setFilters] = useState(NO_SCHEDULE_FILTERS)
+  const [series, setSeries] = useState(params.has('series'))
   const rows = data.requests.filter((row) => row.status === 'confirmed' || row.status === 'rescheduled')
-  return <ConfirmedScheduleView load={useDemo({ rows, total: rows.length }, { rows: [], total: 0 })} therapists={data.therapistChoices} patients={[{ id: 'p1', name: 'Ana Dela Cruz' }]} filters={filters} onFilters={setFilters}
-    sort={{ key: 'starts_at', direction: 'asc' }} onSort={said('Sorted')} page={0} onPage={said('Paged')} exporting={null} onExport={said('Exported')} onMark={said('Marked')} marking={false} />
+  return (
+    <>
+      <ConfirmedScheduleView load={useDemo({ rows, total: rows.length }, { rows: [], total: 0 })} therapists={data.therapistChoices} patients={[{ id: 'p1', name: 'Ana Dela Cruz' }]} filters={filters} onFilters={setFilters}
+        sort={{ key: 'starts_at', direction: 'asc' }} onSort={said('Sorted')} page={0} onPage={said('Paged')} exporting={null} onExport={said('Exported')} onMark={said('Marked')} marking={false} onSeries={() => setSeries(true)} />
+      {series && <WeeklySeriesDialog therapists={data.therapistChoices} actions={seriesActions} onClose={() => setSeries(false)} />}
+    </>
+  )
 }
 
 function SchedulerCalendar() {

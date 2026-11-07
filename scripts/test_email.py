@@ -348,6 +348,35 @@ def waitlist_mail(stack):
         stack.sql(f'update public.center_settings set slot_capacity={capacity} where id;')
 
 
+def series_mail(stack):
+    """MOT-66: a weekly course is one email each, however many sessions it has, in each reader's language."""
+    _, ts = stack.user('patient', 'scheduler', name='Email Sol Series')
+    tess, tt = stack.user('patient', 'therapist', name='Email Tess Series')
+    ana, ta = stack.user('patient', name='Email Ana Series')
+    assert stack.rpc('set_my_language', {'p_language': 'fil'}, ta)[0] == 204
+    first = stack.sql("""select d::date from generate_series(current_date+200,current_date+260,interval '1 day') d where extract(isodow from d)<6
+ and not exists(select 1 from public.center_holidays h,generate_series(0,3) n where (d+make_interval(weeks=>n))::date between h.starts_on and h.ends_on) order by d limit 1;""")
+    addresses = {person: stack.sql(f"select email from auth.users where id='{person}';") for person in (ana, tess)}
+    clear_mail()
+    code, made = stack.rpc('scheduler_series_create', {'p_request': str(uuid.uuid4()), 'p_patient': ana, 'p_therapist': tess, 'p_starts': manila(date.fromisoformat(first), 13), 'p_weeks': 4}, ts)
+    assert code == 200, made
+
+    def drain():
+        for _ in range(12):
+            if dispatch()[1]['claimed'] == 0:
+                return
+
+    drain()
+    patient, therapist = only(addresses[ana]), only(addresses[tess])
+    stack.check(patient['Subject'] == 'Naka-book ang iyong lingguhang session' and 'Mga session: 4.' in patient['Text'], 'Series: the patient gets one email for the course, in Filipino')
+    stack.check(therapist['Subject'] == 'Weekly sessions: Email Ana Series' and 'Sessions: 4.' in therapist['Text'], 'Series: the therapist gets one too')
+    stack.check('booking-calendar' not in patient['Text'], 'Series: it offers no calendar link, because one link cannot hold a course')
+    clear_mail()
+    assert stack.rpc('scheduler_series_cancel', {'p_series': made['id'], 'p_reason': 'Course finished early'}, ts)[0] == 200
+    drain()
+    stack.check(only(addresses[ana])['Subject'] == 'Kinansela ang iyong lingguhang session', 'Series: cancelling it is one email')
+
+
 def main():
     stack = Stack()
     try:
@@ -355,6 +384,7 @@ def main():
             checks(stack)
             sprint_demo(stack)
             waitlist_mail(stack)
+            series_mail(stack)
         REPORT.write_text(json.dumps({'generated_at': datetime.now(timezone.utc).isoformat(), 'checks_passed': len(stack.checks), 'checks': stack.checks,
                                       'environment': 'real local Auth, PostgREST, Edge Functions and Mailpit with disposable synthetic accounts'}, indent=2) + '\n', encoding='utf-8')
         print(f'{len(stack.checks)} checks passed.')

@@ -157,6 +157,7 @@
       "bookingReturned": "Booking returned to pending",
       "bookingTherapist": "Booking therapist changed",
       "bookingAttendance": "Attendance recorded",
+      "bookingSeries": "Weekly session booked",
       "bookingExported": "Schedule exported"
     },
     "schedulers": "Schedulers",

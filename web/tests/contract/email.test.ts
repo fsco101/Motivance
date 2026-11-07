@@ -119,6 +119,19 @@ describe('a booking email', () => {
     expect(renderEmail(delivery({ kind: 'patient_rescheduled' }), links).text).toContain('It needs confirming.')
   })
 
+  it('writes a weekly course as one email, with the count and the last date, and no calendar link', () => {
+    const data = { ...delivery().data, sessions: 7, last_starts_at: '2027-01-25T01:00:00Z' }
+    for (const kind of ['series_booked', 'series_assigned', 'series_cancelled', 'session_series_cancelled']) {
+      for (const language of ['en', 'fil'] as const) {
+        const { subject, text } = renderEmail(delivery({ kind, language, data }), links)
+        expect(subject).toBeTruthy()
+        expect(text).toContain(': 7.')
+        expect(text).not.toContain('booking-calendar')
+      }
+    }
+    expect(renderEmail(delivery({ kind: 'series_booked', data }), links).text).toContain('January 25, 2027')
+  })
+
   it('refuses a kind it has no words for, rather than sending a blank email', () => {
     expect(() => renderEmail(delivery({ kind: 'unknown' }), links)).toThrow('Unknown notification kind')
   })

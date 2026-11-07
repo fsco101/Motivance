@@ -27,7 +27,7 @@ object BookingJson {
         NotificationKind.of(row.getString("kind"))?.let {kind ->
             val data=row.getJSONObject("data")
             AppNotification(row.getString("id"),kind,data.text("reference_no").orEmpty(),data.getString("starts_at"),data.getString("ends_at"),data.text("previous_starts_at"),
-                data.text("patient_name"),data.text("therapist_name"),data.text("reason"),row.text("read_at"),row.getString("created_at"))
+                data.text("patient_name"),data.text("therapist_name"),data.text("reason"),row.text("read_at"),row.getString("created_at"),data.optInt("sessions"),data.text("last_starts_at"))
         }
     })
 

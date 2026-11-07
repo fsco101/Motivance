@@ -12,7 +12,7 @@ import { SlotPicker } from '@/features/booking/SlotPicker'
 import { asLoad, Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
 
-export type RequestActionKind = 'confirm' | 'assign' | 'reject' | 'cancel' | 'reschedule'
+export type RequestActionKind = 'confirm' | 'assign' | 'reject' | 'cancel' | 'reschedule' | 'series'
 
 /** Every action reports its own success and failure, so a dialog only has to wait for it and close. */
 export type RequestActions = {
@@ -24,6 +24,7 @@ export type RequestActions = {
   cancel: (row: RequestRow, reason: string) => Promise<void>
   reschedule: (row: RequestRow, startsAt: string, therapist: string) => Promise<void>
   bulkReject: (reason: string) => Promise<void>
+  cancelSeries: (row: RequestRow, reason: string) => Promise<void>
 }
 
 const validReason = (reason: string) => reason.trim().length >= 3
@@ -150,7 +151,22 @@ export function BulkRejectDialog({ count, actions, onClose }: { count: number; a
   )
 }
 
-export function RequestDialog({ kind, row, actions, onClose }: { kind: RequestActionKind; row: RequestRow; actions: RequestActions; onClose: () => void }) {
+function SeriesCancelDialog({ row, remaining, actions, onClose }: { row: RequestRow; remaining: number; actions: Pick<RequestActions, 'cancelSeries'>; onClose: () => void }) {
+  const { t } = useTranslation()
+  const [reason, setReason] = useState('')
+  const { busy, run } = useSubmit(onClose)
+  return (
+    <Dialog open onOpenChange={onClose} title={t('scheduler.seriesCancel')} description={t('scheduler.seriesCancelDetail', { count: remaining, patient: row.patient })}>
+      <TextArea label={t('booking.reason')} hint={t('scheduler.reasonHint')} value={reason} onChange={(event) => setReason(event.target.value)} maxLength={300} />
+      <Actions onClose={onClose} keep={t('booking.keep')}>
+        <Button variant="danger" busy={busy} busyLabel={t('common.working')} disabled={!validReason(reason)} onClick={() => run(() => actions.cancelSeries(row, reason.trim()))}>{t('scheduler.seriesCancel')}</Button>
+      </Actions>
+    </Dialog>
+  )
+}
+
+export function RequestDialog({ kind, row, remaining = 0, actions, onClose }: { kind: RequestActionKind; row: RequestRow; remaining?: number; actions: RequestActions; onClose: () => void }) {
+  if (kind === 'series') return <SeriesCancelDialog row={row} remaining={remaining} actions={actions} onClose={onClose} />
   if (kind === 'reschedule') return <RescheduleDialog row={row} actions={actions} onClose={onClose} />
   if (kind === 'reject' || kind === 'cancel') return <ReasonDialog kind={kind} row={row} actions={actions} onClose={onClose} />
   return <TherapistDialog kind={kind} row={row} actions={actions} onClose={onClose} />

@@ -57,7 +57,8 @@
       "returned_to_pending": "Ibinalik sa nakabinbin",
       "therapist_changed": "Pinalitan ang therapist",
       "attendance_marked": "Naitala ang pagdalo",
-      "reminder_sent": "Naipadala ang paalala"
+      "reminder_sent": "Naipadala ang paalala",
+      "series_booked": "Na-book bilang lingguhang session"
     },
     "bulkDetail_one": "Tanggihan ang {{count}} nakabinbing kahilingan. Ang nakabinbin pa lang ang magbabago.",
     "bulkDetail_other": "Tanggihan ang {{count}} nakabinbing kahilingan. Ang mga nakabinbin pa lang ang magbabago.",
@@ -85,7 +86,45 @@
     "noneScheduledDetail": "Lalabas dito ang mga session kapag nakumpirma na ng Scheduler.",
     "anyAttendance": "Anumang pagdalo",
     "unmarked": "Hindi pa namarkahan",
-    "notStarted": "Hindi pa nagsisimula"
+    "notStarted": "Hindi pa nagsisimula",
+    "seriesTitle": "Mag-book ng lingguhang session",
+    "seriesDetail": "Parehong oras bawat linggo para sa isang pasyente at therapist. Makikita mo ang bawat petsa bago may ma-save.",
+    "seriesPatientSearch": "Maghanap ng pasyente",
+    "seriesNoPatients": "Walang tugmang pasyente.",
+    "seriesChooseTherapist": "Pumili ng therapist",
+    "seriesFirst": "Unang session",
+    "seriesWeeks": "Bilang ng linggo",
+    "seriesWeeksHint": "Mula 2 hanggang 26.",
+    "seriesCheck": "Suriin ang mga petsa",
+    "seriesReviewTitle": "Suriin ang mga petsa",
+    "seriesFor": "{{patient}} kasama si {{therapist}}",
+    "seriesFree": "Bakante",
+    "seriesSomeBlocked": "Hindi isasama ang mga petsang may problema. Kukumpirmahin ang iba.",
+    "seriesNoneFree": "Wala sa mga petsang ito ang maaaring i-book. Bumalik at pumili ng ibang oras.",
+    "seriesBook_one": "I-book ang {{count}} session",
+    "seriesBook_other": "I-book ang {{count}} session",
+    "seriesBack": "Baguhin ang mga detalye",
+    "seriesBooked": "Na-book ang {{booked}} sa {{weeks}} lingguhang session.",
+    "seriesLabel": "Lingguhan",
+    "seriesRemaining": "Mga lingguhang session na darating pa",
+    "seriesCancel": "Kanselahin ang natitirang session",
+    "seriesCancelDetail_one": "Kakanselahin nito ang {{count}} session ni {{patient}}. Mananatili ang mga nagsimula na.",
+    "seriesCancelDetail_other": "Kakanselahin nito ang {{count}} session ni {{patient}}. Mananatili ang mga nagsimula na.",
+    "seriesCancelled_one": "Nakansela ang {{count}} session.",
+    "seriesCancelled_other": "Nakansela ang {{count}} session.",
+    "seriesProblem": {
+      "full": "Puno na",
+      "holiday": "Holiday",
+      "closure": "Sarado ang center",
+      "closed_day": "Sarado ang center sa araw na iyon",
+      "outside_hours": "Labas sa oras ng center",
+      "off_grid": "Hindi oras ng session",
+      "past": "Lumipas na",
+      "therapist_busy": "Abala ang therapist",
+      "therapist_on_leave": "Naka-leave ang therapist",
+      "therapist_unavailable": "Hindi available ang therapist",
+      "overlap": "May booking na ang pasyente"
+    }
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
@@ -225,7 +264,9 @@
       "not_full": "May bakante na ulit sa oras na ito, kaya maaari mo itong i-book.",
       "reschedule_late": "Huli na para ilipat ang session na ito online. Makipag-ugnayan sa center.",
       "reschedule_limit": "Hindi na muling maililipat online ang session na ito. Makipag-ugnayan sa center.",
-      "not_started": "Hindi pa nagsisimula ang session na ito."
+      "not_started": "Hindi pa nagsisimula ang session na ito.",
+      "series_empty": "Wala sa mga petsang iyon ang maaaring i-book ngayon. Suriin muli ang mga ito.",
+      "patient_unavailable": "Hindi maaaring i-book ang pasyenteng iyon."
     },
     "keep": "Panatilihin ang booking",
     "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
@@ -394,6 +435,10 @@
     "reminder": "Paalala: ang iyong session ay sa {{when}} kasama si {{therapist}}.",
     "session_reminder": "Paalala: naka-book sa iyo si {{patient}} sa {{when}}.",
     "place_open": "May bakante na sa {{when}}. Makukuha ito ng unang mag-book.",
-    "patient_rescheduled": "Inilipat ni {{patient}} ang session sa {{when}}. Kailangan itong kumpirmahin."
+    "patient_rescheduled": "Inilipat ni {{patient}} ang session sa {{when}}. Kailangan itong kumpirmahin.",
+    "series_booked": "Naka-book ang iyong lingguhang session kasama si {{therapist}}, mula {{when}} hanggang {{last}}. Mga session: {{sessions}}.",
+    "series_assigned": "Naka-book sa iyo si {{patient}} linggu-linggo, mula {{when}} hanggang {{last}}. Mga session: {{sessions}}.",
+    "series_cancelled": "Kinansela ang iyong lingguhang session mula {{when}}. Mga session: {{sessions}}.",
+    "session_series_cancelled": "Kinansela ang lingguhang session mo kasama si {{patient}} mula {{when}}. Mga session: {{sessions}}."
   }
 }

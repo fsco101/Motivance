@@ -42,6 +42,9 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 - **Attendance belongs to the people who were there.** The assigned therapist or a Scheduler can mark it once a session has started, and marking again corrects it. Every change is recorded with what it was. A mark describes the time a session had, so moving the session clears it. "Not marked" means a session that has started, because one still to come needs nothing yet.
 - **A patient's move is a new request.** It obeys every rule a request does, plus the cut-off and the move limit, and a Scheduler confirms it again, so a confirmed session returns to Pending. The therapist stays only if they are free then. Moving to the time a session already has changes nothing and uses no move, so a retry after a lost response is safe.
 - **A move that needs confirming carries no calendar link.** A therapist hears about it, but the new time is not theirs to plan around until a Scheduler confirms it.
+- **A weekly course leaves out what cannot happen.** The dates that pass are confirmed and the rest are left out, so one holiday does not cost a patient the whole course. Every date passes the same checks as any booking made by a Scheduler, again at the save, because the preview may be out of date by then. The cap on active bookings is for what a patient asks for, so a course can pass it. Sessions in a course still count towards it, so a patient on one books further sessions through the center.
+- **A course is one message.** The patient and therapist hear once when a course is booked and once when it is cancelled, each with the number of sessions, and each session still gets its own reminders. Its email has no calendar link, because one link cannot hold a course.
+- **Cancelling a course cancels what is still to come.** Sessions that have started are history and stay. A session the patient moved still belongs to the course, so it goes with the rest.
 - **Waiting holds nothing.** A place on the waitlist reserves no capacity, so anyone can book a place that opens, whether they were waiting or not. A time that can no longer be booked, because it is closed or inside the notice period, drops off the list rather than leaving someone waiting for nothing.
 - **One opening is one message.** A burst of cancellations tells each person once. If the slot fills again, the next place is news.
 - **A notification never costs anyone their booking.** It runs inside the change it reports, so `notify` skips a recipient who disappeared part-way through rather than failing the whole change.
@@ -64,7 +67,7 @@ All times are `timestamptz` in UTC and are shown in the center's zone (Asia/Mani
 | `center_holidays` | Name, kind (regular, special, seasonal), starts on, ends on, source | Seeded for 2026 and 2027. Date ranges allow seasonal breaks |
 | `center_closures` | Starts at, ends at, all day, required reason, created by | Full day or a time range |
 | `therapist_time_off` | Therapist, starts at, ends at, reason, created by | References `profiles`. The reason is visible to scheduling only |
-| `booking_series` | Patient, therapist, weeks, created by, cancelled at | Groups weekly repeats |
+| `booking_series` | Patient, therapist, weeks (2 to 26), client request ID, created by, cancelled at and reason | Groups weekly repeats |
 | `bookings` | Reference no., patient, therapist (optional until confirmed), series, starts at, ends at, status, status reason, previous start, attendance, marked by and at, self-reschedule count, client request ID, calendar token | Two exclusion constraints stop overlaps for one patient and for one therapist among active bookings |
 | `booking_events` | Booking, actor, actor role, action, from and to status, time and therapist, reason, recorded at | Immutable, written by a trigger so it cannot be skipped. Also mirrored to `audit_events` for the admin feed |
 | `booking_waitlist` | Patient, starts at, ends at, status, notified at | One open entry per patient per slot |
@@ -87,7 +90,7 @@ All are `security definer` functions that re-check the caller. A failed role che
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
 | Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_schedule_patients`, `scheduler_log_export` |
 | Scheduler: calendar | `scheduler_save_settings`, `scheduler_save_hours`, `scheduler_save_holiday`, `scheduler_delete_holiday`, `scheduler_calendar_impact`, `scheduler_save_closure` (takes the resolution for each affected booking, in one transaction), `scheduler_delete_closure`, `scheduler_time_off`, `scheduler_save_time_off`, `scheduler_delete_time_off` |
-| Scheduler: series and dashboard | `scheduler_series_preview`, `scheduler_series_create`, `scheduler_series_cancel`, `scheduler_summary` |
+| Scheduler: series and dashboard | `scheduler_series_preview` (each date with what would stop it), `scheduler_series_create`, `scheduler_series_cancel`, `scheduler_summary` |
 | Scheduled jobs (`pg_cron`) | `enqueue_booking_reminders`, `expire_stale_bookings`, and a call to `notification-dispatch` |
 
 Edge Functions in `supabase/functions/`, the first in this repository:

@@ -137,6 +137,13 @@ class BookingRepositoryTest {
         assertEquals(1,moved.reschedulesLeft)
         assertFalse("An older server says nothing, and nothing moves",BookingJson.booking(JSONObject(booking)).canReschedule)
     }
+    @Test fun aWeeklyCourseIsReadAsOneNotification() {
+        val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n9","kind":"series_booked","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
+            "data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-07T02:00:00+00:00","ends_at":"2026-12-07T03:00:00+00:00","last_starts_at":"2027-01-25T02:00:00+00:00","sessions":7,"therapist_name":"Dana"}}]}""")).items.single()
+        assertEquals(NotificationKind.SERIES_BOOKED,note.kind)
+        assertEquals(7,note.sessions)
+        assertEquals("2027-01-25T02:00:00+00:00",note.lastStartsAt)
+    }
     @Test fun aPatientsMoveIsRead() {
         val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n8","kind":"patient_rescheduled","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
             "data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-09T02:00:00+00:00","ends_at":"2026-12-09T03:00:00+00:00","patient_name":"Ana"}}]}""")).items.single()

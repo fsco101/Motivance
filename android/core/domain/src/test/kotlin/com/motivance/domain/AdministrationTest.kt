@@ -65,6 +65,7 @@ class AdministrationTest {
             ("bookings" to "returned_to_pending") to (AuditKind.BOOKING_RETURNED to AuditCategory.BOOKINGS),
             ("bookings" to "therapist_changed") to (AuditKind.BOOKING_THERAPIST to AuditCategory.BOOKINGS),
             ("bookings" to "attendance_marked") to (AuditKind.BOOKING_ATTENDANCE to AuditCategory.BOOKINGS),
+            ("bookings" to "series_booked") to (AuditKind.BOOKING_SERIES to AuditCategory.BOOKINGS),
         )
         cases.forEach {(input,expected) ->
             val e=event(input.first,input.second)
