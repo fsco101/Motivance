@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
 import com.motivance.R
+import com.motivance.designsystem.durationText
 import com.motivance.domain.*
 
 /** Camera preview and explicit consent/start are separate; visible landmarks alone never record. */
@@ -54,9 +55,12 @@ import com.motivance.domain.*
                 metrics.quality!=TrackingQuality.READY -> stringResource(R.string.measurement_tracking_wait)
                 metrics.phase==MovementPhase.SEEKING_START || metrics.phase==MovementPhase.AT_TARGET ->
                     stringResource(R.string.measurement_return,state.rules.lowDegrees.toInt())
-                else -> stringResource(R.string.measurement_reach,state.rules.highDegrees.toInt(),state.rules.peakHoldMs)
+                state.rules.peakHoldMs>0 -> stringResource(R.string.measurement_reach,state.rules.highDegrees.toInt(),durationText(state.rules.peakHoldMs))
+                else -> stringResource(R.string.measurement_reach_no_hold,state.rules.highDegrees.toInt())
             }
             Text(guidance,style=MaterialTheme.typography.bodyLarge,color=MaterialTheme.colorScheme.onSurface)
+            if(state.startRefused && !metrics.running && !state.saved) Text(stringResource(R.string.measurement_start_refused),
+                style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.error,modifier=Modifier.semantics {liveRegion=LiveRegionMode.Assertive})
             if(!state.saved && !paused && metrics.quality!=TrackingQuality.READY && qualityLabel!=null) {
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.Warning,null,Modifier.size(18.dp),tint=MaterialTheme.colorScheme.tertiary)

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.motivance.BuildConfig
 import com.motivance.R
 import com.motivance.assessment.MovementAssessment
+import com.motivance.assessment.RepOutcome
 import com.motivance.data.local.*
 import com.motivance.designsystem.Toaster
 import com.motivance.designsystem.ToastTone
@@ -17,19 +18,33 @@ import com.motivance.data.sync.SyncScheduler
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/** One repetition result. [sequence] grows with every result, so two alike still read as two. */
+data class RepResult(val outcome:RepOutcome,val sequence:Int)
 data class ExerciseSessionState(
     val rules:ExerciseRules=ExerciseRules(), val metrics:AssessmentSnapshot=AssessmentSnapshot(),
     val id:String?=null,val saving:Boolean=false,val saved:Boolean=false,val error:Boolean=false,
-    val recoverable:LocalSession?=null,val history:List<LocalSession> = emptyList(),val cached:List<CachedPrescription> = emptyList()
+    val recoverable:LocalSession?=null,val history:List<LocalSession> = emptyList(),val cached:List<CachedPrescription> = emptyList(),
+    /** The latest result of active measurement; the engine's own feedback lasts a single frame. */
+    val result:RepResult?=null,
+    /** Start was pressed but tracking was lost before measurement could begin. */
+    val startRefused:Boolean=false,
 )
 @HiltViewModel class ExerciseSessionViewModel @Inject constructor(private val store:SessionStore,@ApplicationContext private val context:Context,private val toasts:Toaster=Toaster()):ViewModel() {
     private val mutable=MutableStateFlow(ExerciseSessionState())
     val state=mutable.asStateFlow()
+    // One event per result for the voice. Nothing is replayed to a new listener, so a rotation never repeats a phrase,
+    // and a slow listener hears the latest result rather than a backlog.
+    private val announcements=MutableSharedFlow<RepOutcome>(extraBufferCapacity=1,onBufferOverflow=BufferOverflow.DROP_OLDEST)
+    val results:SharedFlow<RepOutcome> = announcements.asSharedFlow()
     private var engine=MovementAssessment(ExerciseRules())
     private var owner=""
     private var startedAt=0L
@@ -37,6 +52,7 @@ data class ExerciseSessionState(
     private var observeJob:Job?=null
     private var cacheJob:Job?=null
     private var lifecycleRevision=0L
+    private var resultSequence=0
     private val writes=Mutex()
     fun configure(account:String) {
         if(owner==account) return
@@ -84,8 +100,11 @@ data class ExerciseSessionState(
     }
     fun frame(people:List<List<Landmark>>,width:Int,height:Int,time:Long) {
         if(owner.isBlank() || mutable.value.saving || mutable.value.saved) return
+        val before=engine.snapshot
         val metrics=engine.process(people,width,height,time)
-        mutable.value=mutable.value.copy(metrics=metrics)
+        val outcome=RepOutcome.between(before,metrics)
+        mutable.value=mutable.value.copy(metrics=metrics,result=outcome?.let {RepResult(it,++resultSequence)} ?: mutable.value.result)
+        outcome?.let(announcements::tryEmit)
         if(metrics.running && time-lastCheckpoint>=500) { lastCheckpoint=time; persist("DRAFT") }
     }
     fun start(consent:Boolean) {
@@ -102,9 +121,10 @@ data class ExerciseSessionState(
                     store.dao.latestConsent(account)?.takeIf {it.event=="granted" && it.id==row?.consentId} ?: error("Consent changed; begin a new session")
                 }
                 if(owner!=account || mutable.value.id!=current.id || revision!=lifecycleRevision) return@launch
-                if(!engine.start(SystemClock.uptimeMillis())) return@launch
+                // Tracking can drop while consent is saved; say so instead of leaving Start looking pressed.
+                if(!engine.start(SystemClock.uptimeMillis())) {mutable.value=mutable.value.copy(startRefused=true); return@launch}
                 if(current.id==null) {startedAt=maxOf(System.currentTimeMillis(),grant?.occurredAt ?: 0); mutable.value=mutable.value.copy(id=UUID.randomUUID().toString())}
-                mutable.value=mutable.value.copy(metrics=engine.snapshot)
+                mutable.value=mutable.value.copy(metrics=engine.snapshot,startRefused=false)
                 persist("DRAFT")
                 toasts.show(R.string.toast_session_started)
             } catch(e:CancellationException) {throw e}
@@ -167,6 +187,6 @@ data class ExerciseSessionState(
         val current=mutable.value
         val rules=assigned(current.cached,current.rules.prescriptionVersionId) ?: ExerciseRules()
         engine=MovementAssessment(rules)
-        mutable.value=current.copy(id=null,rules=rules,metrics=engine.snapshot,saved=false,error=false)
+        mutable.value=current.copy(id=null,rules=rules,metrics=engine.snapshot,saved=false,error=false,result=null,startRefused=false)
     }
 }

@@ -116,7 +116,8 @@ data class RepetitionGuide(val step:RepStep?, val targetProgress:Double?, val ho
             val step=when(snapshot.phase) {
                 MovementPhase.SEEKING_START -> RepStep.START
                 MovementPhase.REST -> RepStep.REACH
-                MovementPhase.MOVING -> if(snapshot.holdElapsedMs>0) RepStep.HOLD else RepStep.REACH
+                // Holding starts on the first frame at the target, before any hold time has passed.
+                MovementPhase.MOVING -> if(angle>=rules.highDegrees) RepStep.HOLD else RepStep.REACH
                 MovementPhase.AT_TARGET -> RepStep.RETURN
             }
             val hold=when {

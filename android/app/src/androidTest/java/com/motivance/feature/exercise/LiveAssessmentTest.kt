@@ -17,6 +17,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.motivance.R
+import com.motivance.assessment.RepOutcome
 import com.motivance.data.local.*
 import com.motivance.designsystem.MotivanceTheme
 import com.motivance.domain.*
@@ -55,6 +56,7 @@ class LiveAssessmentTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {vm.configure(owner)}
         compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
             val state by vm.state.collectAsState();var consent by remember {mutableStateOf(false)}
+            RepCoach(state,false)
             MeasurementControls(state,consent,false,true,{consent=it},{vm.start(consent || state.id!=null)},{vm.interrupt()})
             Text(stringResource(R.string.completed_reps,state.metrics.completed,state.rules.targetRepetitions))
         }}}}
@@ -66,8 +68,12 @@ class LiveAssessmentTest {
     }
     private fun verifyFlow(prescribed:Boolean) {
         display(prescribed)
+        // Issue #96: the voice hears only results of active measurement, never preview or pause.
+        val heard=java.util.Collections.synchronizedList(mutableListOf<RepOutcome>())
+        val listening=vm.viewModelScope.launch {vm.results.collect {heard.add(it)}}
         cycle() // A visible, moving preview must not silently collect/count.
         assertEquals(0,vm.state.value.metrics.completed)
+        assertTrue(heard.isEmpty())
         compose.onNodeWithText(text(R.string.measurement_preview)).assertExists()
         val label=text(if(prescribed) R.string.sync_metrics_consent else R.string.local_metrics_consent)
         compose.onNodeWithContentDescription(label).performClick()
@@ -77,10 +83,19 @@ class LiveAssessmentTest {
         compose.onNodeWithText(text(R.string.measurement_recording)).assertExists()
         cycle()
         compose.onNodeWithText(context.getString(R.string.completed_reps,1,5)).assertExists()
+        // Issue #95: the engine clears its feedback a frame later; the result itself stays for the screen and the voice.
+        val counted=vm.state.value.result!!
+        assertEquals(RepOutcome.Counted(1),counted.outcome)
+        repeat(3) {Thread.sleep(110);frame(10.0)}
+        assertEquals(counted,vm.state.value.result)
+        compose.waitUntil(2000) {heard.isNotEmpty()}
+        assertEquals(listOf<RepOutcome>(RepOutcome.Counted(1)),heard.toList())
         compose.onNodeWithText(text(R.string.pause_measurement)).performClick()
         assertFalse(vm.state.value.metrics.running)
         cycle();assertEquals(1,vm.state.value.metrics.completed)
         compose.onNodeWithText(text(R.string.measurement_paused)).assertExists()
+        assertEquals(listOf<RepOutcome>(RepOutcome.Counted(1)),heard.toList())
+        listening.cancel()
         compose.runOnIdle {vm.finish()}
         compose.waitUntil(5000) {vm.state.value.saved}
         runBlocking {
@@ -91,6 +106,20 @@ class LiveAssessmentTest {
     }
     @Test fun debugDemoCountsAfterConsentAndStartAndStaysLocal() {verifyFlow(false)}
     @Test fun prescribedExerciseUsesTheSameCounterAndQueuesAResult() {verifyFlow(true)}
+    @Test fun aStartThatCannotBeginSaysWhyAndClearsOnceItStarts() {
+        // Issue #95: tracking lost while consent was saved left Start doing nothing, with no message.
+        display(false)
+        compose.onNodeWithContentDescription(text(R.string.local_metrics_consent)).performClick()
+        compose.runOnIdle {vm.frame(emptyList(),1000,1000,SystemClock.uptimeMillis())}
+        compose.runOnIdle {vm.start(true)}
+        compose.waitUntil(5000) {!vm.state.value.saving}
+        assertFalse(vm.state.value.metrics.running)
+        compose.onNodeWithText(text(R.string.measurement_start_refused)).assertExists()
+        repeat(6) {Thread.sleep(30);frame(10.0)}
+        compose.onNodeWithText(text(R.string.start_measurement)).performClick()
+        compose.waitUntil(5000) {vm.state.value.metrics.running && !vm.state.value.saving}
+        compose.onNodeWithText(text(R.string.measurement_start_refused)).assertDoesNotExist()
+    }
     @Test fun releaseDemoRestrictionHasAnExplanation() {
         compose.setContent {MotivanceTheme {MeasurementControls(ExerciseSessionState(metrics=AssessmentSnapshot(quality=TrackingQuality.READY)),true,false,false,{}, {}, {})}}
         compose.onNodeWithText(text(R.string.measurement_demo_unavailable)).assertExists()

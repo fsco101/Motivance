@@ -10,6 +10,16 @@ class PerformancePolicyTest {
         assertTrue(PerformancePolicy.shouldPause(3))
         assertTrue(PerformancePolicy.shouldPause(6))
     }
+    @Test fun aLateFrameIsDroppedInsteadOfStoppingMeasurement() {
+        // Issue #95: a frame more than a second old used to pause measurement until the patient tapped Resume.
+        assertEquals(FrameAction.DROP,PerformancePolicy.frameAction(thermalStatus=0,ageMs=1001))
+        assertEquals(FrameAction.PROCESS,PerformancePolicy.frameAction(thermalStatus=0,ageMs=1000))
+        assertEquals(FrameAction.PROCESS,PerformancePolicy.frameAction(thermalStatus=-1,ageMs=40))
+    }
+    @Test fun severeHeatStillPausesWhateverTheFrameAge() {
+        assertEquals(FrameAction.PAUSE,PerformancePolicy.frameAction(thermalStatus=3,ageMs=40))
+        assertEquals(FrameAction.PAUSE,PerformancePolicy.frameAction(thermalStatus=3,ageMs=1500))
+    }
     @Test fun diagnosticsAreBoundedOverThirtyMinutesOfSyntheticFrames() {
         val meter=CameraDiagnostics()
         var result=CameraDiagnostics.Snapshot(0,0.0,0)

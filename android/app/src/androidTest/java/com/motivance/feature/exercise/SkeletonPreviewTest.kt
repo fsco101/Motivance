@@ -72,6 +72,29 @@ class SkeletonPreviewTest {
         compose.onNodeWithText(localized.getString(R.string.measured_joint_angle,localized.getString(R.string.skeleton_shoulder))).performScrollTo().assertIsDisplayed()
         capture("shoulder-large-fil")
     }
+    @Test fun coachStaysAboveTheImageWithLargeFilipinoText() {
+        // Issues #95 and #97: the step and the hold time stay readable in Filipino at twice the font size.
+        val config=Configuration(base.resources.configuration).apply {setLocale(Locale.forLanguageTag("fil"));fontScale=2f}
+        val localized=base.createConfigurationContext(config)
+        val frame=image()
+        val state=ExerciseSessionState(id="synthetic-session",rules=ExerciseRules(peakHoldMs=1500),
+            metrics=AssessmentSnapshot(quality=TrackingQuality.READY,running=true,angleDegrees=95.0,phase=MovementPhase.MOVING,holdElapsedMs=600))
+        compose.setContent {
+            CompositionLocalProvider(LocalContext provides localized,LocalConfiguration provides config,LocalDensity provides Density(base.resources.displayMetrics.density,2f)) {
+                MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+                    SkeletonPreview(frame,points,false,state.rules,state.metrics,localized.getString(R.string.quality_ready),details=false,coach={RepCoach(state,false)})
+                    MeasurementControls(state,true,false,true,{},{},{})
+                    RepSoundToggle(true) {}
+                }}}
+            }
+        }
+        val hold=localized.getString(R.string.coach_hold,localized.getString(R.string.duration_seconds,"1.5"))
+        compose.onNodeWithText(hold).assertIsDisplayed()
+        compose.onNodeWithText(localized.getString(R.string.coach_step,3)).assertIsDisplayed()
+        capture("coach-large-fil")
+        compose.onNodeWithText(localized.getString(R.string.rep_sound_on)).performScrollTo().assertIsDisplayed()
+        capture("coach-large-fil-panel")
+    }
     @Test fun assignedKneeFocusIsDisplayedSeparatelyFromElbowMeasurement() {
         val frame=image()
         compose.setContent {MotivanceTheme {Surface {Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
@@ -94,8 +117,11 @@ class SkeletonPreviewTest {
         compose.onNodeWithText(base.getString(R.string.calc_progress,100)).assertExists()
         compose.onNodeWithText("70.0°").assertExists()
         compose.onNodeWithText("2 / 8").assertExists()
-        compose.onNodeWithText("400 ms").assertExists()
-        compose.onNodeWithText(base.getString(R.string.calc_rule_summary,base.getString(R.string.skeleton_elbow),25,75,400,"0.6","30")).performScrollTo().assertIsDisplayed()
+        // Issue #97: the hold and the repetition time read in seconds, and nothing a patient reads is in milliseconds.
+        val seconds={value:String -> base.getString(R.string.duration_seconds,value)}
+        compose.onNodeWithText(seconds("0.4")).assertExists()
+        compose.onNodeWithText(base.getString(R.string.calc_rule_summary,base.getString(R.string.skeleton_elbow),25,75,seconds("0.4"),seconds("0.6"),seconds("30"))).performScrollTo().assertIsDisplayed()
+        compose.onAllNodes(hasText(" ms",substring=true)).assertCountEquals(0)
         compose.onNodeWithText(base.getString(R.string.calc_source_prescribed,"v3")).assertExists()
         capture("calculation-overlay")
     }

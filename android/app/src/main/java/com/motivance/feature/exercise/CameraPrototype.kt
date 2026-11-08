@@ -19,8 +19,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
@@ -32,6 +30,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -48,6 +47,7 @@ import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.motivance.R
 import com.motivance.designsystem.*
 import com.motivance.assessment.CameraDiagnostics
+import com.motivance.assessment.FrameAction
 import com.motivance.assessment.PerformancePolicy
 import com.motivance.data.local.ExerciseJson
 import androidx.compose.ui.semantics.*
@@ -123,11 +123,15 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
                                 try {
                                     if(!disposed.get() && active && !paused) {
                                         thermalStatus=if(Build.VERSION.SDK_INT>=29) context.getSystemService(PowerManager::class.java).currentThermalStatus else -1
-                                        if(PerformancePolicy.shouldPause(thermalStatus)) {
-                                            session.interrupt(); paused=true; display=null; error=R.string.camera_thermal_pause
-                                            upright.recycle()
-                                        } else if(SystemClock.uptimeMillis()-start>1000) {session.interrupt();upright.recycle()}
-                                        else {display=frame;diagnostics=snapshot;error=null;session.frame(people,upright.width,upright.height,start)}
+                                        when(PerformancePolicy.frameAction(thermalStatus,SystemClock.uptimeMillis()-start)) {
+                                            FrameAction.PAUSE -> {
+                                                session.interrupt(); paused=true; display=null; error=R.string.camera_thermal_pause
+                                                upright.recycle()
+                                            }
+                                            // A late frame is skipped, never a reason to stop recording (issue #95).
+                                            FrameAction.DROP -> upright.recycle()
+                                            FrameAction.PROCESS -> {display=frame;diagnostics=snapshot;error=null;session.frame(people,upright.width,upright.height,start)}
+                                        }
                                     } else upright.recycle()
                                 } finally {awaitingUi.set(false)}
                             }
@@ -155,6 +159,15 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         lastCount=exercise.metrics.completed
     }
     LaunchedEffect(exercise.metrics.feedback) {if(exercise.metrics.feedback==RepFeedback.TARGET_REACHED) haptics.tick()}
+    // Spoken feedback after each result while the patient's voice setting is on (issue #96).
+    val voiceSetting=remember {RepSoundSetting(context)}
+    var voice by remember {mutableStateOf(voiceSetting.enabled)}
+    val language=LocalConfiguration.current.locales[0].language.let {if(it=="fil" || it=="tl") "fil" else "en"}
+    if(voice) {
+        val player=remember(language) {RepCuePlayer(context,language)}
+        DisposableEffect(player) {onDispose {player.release()}}
+        LaunchedEffect(player) {session.results.collect {player.play(it)}}
+    }
     val exerciseName=exercise.rules.displayName()
     DarkStage()
     SessionTheme {
@@ -195,21 +208,14 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         }
         error?.let { FeedbackNotice(it,error=true) }
         val shown=display
-        SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()),details=false)
-        AnimatedVisibility(exercise.metrics.feedback!=RepFeedback.NONE,enter=fadeIn()+expandVertically(),exit=fadeOut()+shrinkVertically()) {
-            val positive=exercise.metrics.feedback==RepFeedback.TARGET_REACHED || exercise.metrics.feedback==RepFeedback.COMPLETE
-            Surface(shape=MaterialTheme.shapes.medium,color=if(positive) MaterialTheme.colorScheme.secondaryContainer else Color(0xFF4A3410)) {
-                Row(Modifier.fillMaxWidth().padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Icon(if(positive) Icons.Default.CheckCircle else Icons.Default.Info,null,tint=if(positive) Motion.SproutBright else Motion.NightCaution)
-                    Text(stringResource(exercise.metrics.feedback.label()),style=MaterialTheme.typography.titleSmall,color=Color.White,
-                        modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
-                }
-            }
-        }
+        // The coach replaces a result banner that the engine cleared on the very next frame (issue #95).
+        SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()),details=false,
+            coach={RepCoach(exercise,paused)})
         // A reminder of the movement before starting. Once running, the patient follows their own measured movement instead.
         if(!exercise.metrics.running) GuideStage(guideMotion(exercise.rules),exerciseName,Modifier.height(220.dp),dark=true)
         MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
             {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
+        RepSoundToggle(voice) {haptics.tick(); voice=it; voiceSetting.enabled=it}
         SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
         exercise.cached.firstOrNull { it.versionId==exercise.rules.prescriptionVersionId }?.let {
             Text(it.instructions,style=MaterialTheme.typography.bodyMedium,color=Color.White)
@@ -258,12 +264,4 @@ private fun TrackingQuality.label()=when(this) {
     TrackingQuality.TRUNK_LEAN -> R.string.quality_lean
     TrackingQuality.READY -> R.string.quality_ready
     TrackingQuality.PAUSED -> R.string.camera_paused
-}
-private fun RepFeedback.label()=when(this) {
-    RepFeedback.TARGET_REACHED -> R.string.feedback_target
-    RepFeedback.COMPLETE -> R.string.feedback_complete
-    RepFeedback.INCOMPLETE_RANGE -> R.string.feedback_incomplete
-    RepFeedback.TOO_FAST -> R.string.feedback_fast
-    RepFeedback.TIMED_OUT -> R.string.feedback_timeout
-    RepFeedback.NONE -> R.string.quality_ready
 }
