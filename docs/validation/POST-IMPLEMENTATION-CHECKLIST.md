@@ -202,6 +202,15 @@ Evidence scope: [repetition coach and timing](REPETITION-COACH-AND-TIMING.md) an
 - [ ] #97: Have a therapist review the timing wording in the Android and web assignment editors and on the patient's camera screen.
 - [ ] #97: At the largest font size on a small phone, check the timing panel, its field help and the coach wrap without clipping.
 
+## Verified sign-up and email logo (2026-11-08)
+
+Engineering evidence is in [VERIFIED-SIGNUP.md](VERIFIED-SIGNUP.md). None of these checks has been run.
+
+- [ ] With an inbox you own, sign up on the hosted project from Android and from the web. Before entering the code, confirm the account is not in the admin directory. After entering it, confirm the patient appears with their details.
+- [ ] Wait more than ten minutes without entering the code. Confirm the old code is refused with the "sign up again" message, and that signing up again with the same email and username works.
+- [ ] In Gmail on the web, in the Gmail Android app and in one other mail app, check the logo shows beside the name in both emails, in light and dark mode. With images turned off, check the header still reads Motivance.
+- [ ] Have a Filipino speaker review the new sign-up wording in `supabase/templates/confirmation.html`, `auth_confirm_description` and `auth_signup_code_expired` in `values-fil/strings.xml`, and `codeDetail` and `codeExpired` in `web/src/locales/landing.fil.json`.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

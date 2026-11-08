@@ -1,4 +1,5 @@
 import { supabase } from '@/data/client'
+import { failureKey } from '@/data/errors'
 import { GENDERS, usernameBlocked, validAddress, validBirthdate, validContact, validName, validUsername } from '@/data/profile'
 
 export const STEPS = ['account', 'personal', 'contact', 'review'] as const
@@ -39,7 +40,7 @@ export function signupProblems(step: SignupStep, form: Signup): Problems {
 
 export const stepReady = (step: SignupStep, form: Signup) => Object.keys(signupProblems(step, form)).length === 0
 
-/** The same details Android sends, under the same name, so the account is created by the same trigger with the same checks. */
+/** The same details Android sends, under the same name, so sign-up checks them with the same rules and saves them once the code is entered. */
 export const profileOf = (form: Signup) => ({
   username: form.username.trim(), first_name: form.firstName.trim(), last_name: form.lastName.trim(), gender: form.gender, birthdate: form.birthdate,
   address: form.address.trim(), contact: form.contact.trim(), consent: form.consent,
@@ -59,6 +60,15 @@ export async function confirmSignup(email: string, code: string) {
 export async function resendSignup(email: string) {
   const { error } = await supabase().auth.resend({ type: 'signup', email: email.trim() })
   if (error) throw error
+}
+
+/**
+ * A sign-up is deleted once its code expires, and a new code cannot bring it back, so a wrong or expired code asks the person
+ * to sign up again. Password reset keeps the general wording, since a new reset code does work. Mirrors AuthViewModel on Android.
+ */
+export const codeFailureKey = (failure: unknown) => {
+  const key = failureKey(failure)
+  return key === 'errors.invalidCode' ? 'signup.codeExpired' : key
 }
 
 /** A username already in use fails inside the database's sign-up trigger, which Auth reports only as a database error. Everything else was checked here first. */

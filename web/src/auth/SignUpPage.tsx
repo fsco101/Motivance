@@ -11,7 +11,7 @@ import { LanguageSwitch } from '@/layout/LanguageSwitch'
 import '@/locales/landing'
 import { cn } from '@/lib/cn'
 import { FormFigure } from './FormFigure'
-import { BLANK_SIGNUP, confirmSignup, resendSignup, signupProblems, STEPS, stepReady, submitSignup, usernameRefused, type Signup, type SignupStep } from './signup'
+import { BLANK_SIGNUP, codeFailureKey, confirmSignup, resendSignup, signupProblems, STEPS, stepReady, submitSignup, usernameRefused, type Signup, type SignupStep } from './signup'
 
 const BAND: readonly [number, number] = [20, 120]
 type Stage = SignupStep | 'code'
@@ -79,7 +79,7 @@ export function SignUpPage() {
       if (usernameRefused(failure)) {
         go('contact')
         setError(t('signup.usernameRefused'))
-      } else setError(t(failureKey(failure)))
+      } else setError(t(stage === 'code' ? codeFailureKey(failure) : failureKey(failure)))
     } finally {
       setBusy(false)
     }

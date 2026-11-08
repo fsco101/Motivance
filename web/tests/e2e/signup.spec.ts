@@ -139,7 +139,7 @@ test('a username already in use sends the person back to change it, with nothing
   await expect(page.getByRole('checkbox', { name: /consent to the use of my data/ })).toBeChecked()
 })
 
-test('a wrong code is refused, and the emailed one signs the patient in as a patient', async () => {
+test('a wrong code is refused and saves nothing, and the emailed one signs the patient in as a patient', async () => {
   await page.getByRole('button', { name: 'Create account' }).click()
   await stepTitle('Check your email')
   await noViolations()
@@ -148,7 +148,8 @@ test('a wrong code is refused, and the emailed one signs the patient in as a pat
   await page.getByRole('button', { name: 'Send a new code' }).click()
   await page.getByLabel('Email code').fill(code === '000000' ? '111111' : '000000')
   await page.getByRole('button', { name: 'Verify email' }).click()
-  await expect(page.getByText('The code is invalid or expired.')).toBeVisible()
+  await expect(page.getByText('This code is wrong or has expired.', { exact: false })).toBeVisible()
+  expect(sql(`select count(*) from public.profiles p join auth.users u on u.id=p.id where u.email='${email}'`)).toBe('0')
   await page.getByLabel('Email code').fill(code)
   await page.getByRole('button', { name: 'Verify email' }).click()
   await expect(page).toHaveURL(/\/patient$/)

@@ -4,6 +4,10 @@ Registration uses Supabase email/password authentication. Gmail and other email 
 
 After signup, enter the six-digit confirmation code in the app. Unconfirmed sign-in opens the confirmation form; **Send a new code** requests another signup email. **Forgot password** requests a recovery code; enter it with a new password to finish resetting. Recovery verifies the code before submitting the password change. Invalid/expired codes, rate limits and password-policy failures have English and Filipino messages. Request a fresh code if a password update failed after consuming a recovery code.
 
+Sign-up saves nothing to Motivance's own tables until the code is entered. Supabase Auth keeps a pending record (email, password hash, code and the entered details) so it can check the code. When the code is entered, the database creates the profile, the patient role and the details. Sign-up still refuses invalid details, and refuses a username used by an account or by a sign-up still waiting for its code. A job runs every minute and deletes a pending record once its latest code has expired, ten minutes after it was sent. A new code requested within that time keeps the record for another ten minutes. Once the record is deleted, Auth still answers a resend request with success but sends nothing, so the sign-up screens ask the person to sign up again. Unconfirmed accounts created before 2026-11-08 already had records; at the owner's request they are left as they are. The ten minutes are set in three places, which must agree: `otp_expiry` in `supabase/config.toml`, `mailer_otp_exp` in the setup script and `signup_code_lifetime()` in the migration. `scripts/test_configure_auth_email.py` checks that they do.
+
+Both emails show the logo from `https://motivance.vercel.app/logo-96.png`, which is `web/public/logo-96.png` on the deployed site. Gmail blocks embedded images, so the logo has to be a public HTTPS file. It disappears from emails if the site stops serving that file. Its alt text is empty because the name is written beside it.
+
 ## Current environment
 
 The checked-in local configuration requires confirmation, uses six-digit codes valid for ten minutes, and captures email at `http://127.0.0.1:54324`. It does **not** deliver to Gmail. The one-second local send interval is for isolated capture tests; the real SMTP profile uses 60 seconds. Provider quotas and Supabase email rate limits apply separately.
@@ -50,6 +54,8 @@ Local setup stops/starts the stack without resetting its database. It temporaril
 ## Hosted project state
 
 On 2026-11-08 the setup was applied to the hosted project, for issue #94. Before that, the project still had Supabase's defaults: link templates without `{{ .Token }}`, 8-digit codes valid for an hour and no custom SMTP. Sign-up therefore emailed a link while both apps waited for a code. The read-back after applying shows both templates with the code, 6-digit codes valid for 10 minutes, Gmail SMTP on port 587 and Site URL `https://motivance.vercel.app`. No message was sent, so inbox delivery is still untested.
+
+Later on 2026-11-08 the templates with the logo were applied the same way and read back, and migration `202611080001_verified_signup.sql` was pushed, so the hosted project also creates accounts only after the code. See [VERIFIED-SIGNUP.md](../validation/VERIFIED-SIGNUP.md).
 
 The hosted email rate limit, `rate_limit_email_sent`, is still Supabase's default of 2 per hour for the whole project. The script does not change it. Raise it under Auth rate limits before more than a couple of people sign up or reset a password in the same hour, within what the sender allows.
 

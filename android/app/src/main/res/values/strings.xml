@@ -248,7 +248,7 @@
     <string name="auth_signup_heading">Your next step starts here.</string>
     <string name="auth_signup_description">Create your patient account to connect with your therapist.</string>
     <string name="auth_confirm_heading">Check your inbox.</string>
-    <string name="auth_confirm_description">Enter the code from your email to confirm your account.</string>
+    <string name="auth_confirm_description">Enter the code from your email. We create your account only after you enter it, so if the code expires, sign up again.</string>
     <string name="auth_recovery_heading">Let’s get you back in.</string>
     <string name="auth_recovery_description">Enter your email to request a password reset code.</string>
     <string name="auth_new_password_description">Enter your email code and choose a new password.</string>
@@ -483,6 +483,7 @@
     <string name="auth_delivery_help">Check your email inbox and Spam/Junk folder. Enter the newest code from Motivance. Gmail and other email addresses are supported.</string>
     <string name="auth_unconfirmed">Confirm your email before signing in. Enter your email code or request a new one.</string>
     <string name="auth_invalid_code">The code is invalid or expired. Request a new code and use the latest email.</string>
+    <string name="auth_signup_code_expired">This code is wrong or has expired. Check the newest email from Motivance. If 10 minutes have passed since it was sent, sign up again.</string>
     <string name="auth_rate_limited">Too many requests. Wait a moment before requesting another code or trying again.</string>
     <string name="auth_password_policy">Choose a different password that meets the account password requirements.</string>
 

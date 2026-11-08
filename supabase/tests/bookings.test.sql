@@ -1,7 +1,8 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(15);
-insert into auth.users(id) values('60000000-0000-0000-0000-000000000001'),('60000000-0000-0000-0000-000000000002'),('60000000-0000-0000-0000-000000000003');
+-- Confirmed accounts: Motivance makes an account only once its email is confirmed.
+insert into auth.users(id,email_confirmed_at) values('60000000-0000-0000-0000-000000000001',now()),('60000000-0000-0000-0000-000000000002',now()),('60000000-0000-0000-0000-000000000003',now());
 insert into public.user_roles values('60000000-0000-0000-0000-000000000003','therapist');
 insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values
  ('61000000-0000-0000-0000-000000000001','BK-A','60000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000003','2026-12-07 09:00+08','2026-12-07 10:00+08','confirmed');

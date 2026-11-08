@@ -248,7 +248,7 @@
     <string name="auth_signup_heading">Dito magsisimula ang susunod mong hakbang.</string>
     <string name="auth_signup_description">Gumawa ng patient account para makakonekta sa iyong therapist.</string>
     <string name="auth_confirm_heading">Tingnan ang iyong inbox.</string>
-    <string name="auth_confirm_description">Ilagay ang code mula sa email para kumpirmahin ang iyong account.</string>
+    <string name="auth_confirm_description">Ilagay ang code mula sa email. Gagawin lamang namin ang iyong account kapag nailagay mo na ito, kaya kung mag-expire ang code, mag-sign up muli.</string>
     <string name="auth_recovery_heading">Bumalik sa iyong account.</string>
     <string name="auth_recovery_description">Ilagay ang email para humiling ng code sa pag-reset ng password.</string>
     <string name="auth_new_password_description">Ilagay ang code mula sa email at pumili ng bagong password.</string>
@@ -483,6 +483,7 @@
     <string name="auth_delivery_help">Tingnan ang inbox at Spam/Junk folder. Ilagay ang pinakabagong code mula sa Motivance. Sinusuportahan ang Gmail at iba pang email address.</string>
     <string name="auth_unconfirmed">Kumpirmahin ang email bago mag-sign in. Ilagay ang code mula sa email o humiling ng bago.</string>
     <string name="auth_invalid_code">Hindi wasto o paso na ang code. Humiling ng bago at gamitin ang pinakabagong email.</string>
+    <string name="auth_signup_code_expired">Mali o expired na ang code. Tingnan ang pinakabagong email mula sa Motivance. Kung lumipas na ang 10 minuto mula nang ipadala ito, mag-sign up muli.</string>
     <string name="auth_rate_limited">Masyadong maraming kahilingan. Maghintay muna bago humiling ng bagong code o muling subukan.</string>
     <string name="auth_password_policy">Pumili ng ibang password na tumutugon sa mga kinakailangan ng account.</string>
 

@@ -323,6 +323,7 @@ internal fun AuthNotice.label() = when (this) {
     AuthNotice.SESSION_EXPIRED -> R.string.session_expired
     AuthNotice.EMAIL_UNCONFIRMED -> R.string.auth_unconfirmed
     AuthNotice.INVALID_CODE -> R.string.auth_invalid_code
+    AuthNotice.SIGNUP_CODE_EXPIRED -> R.string.auth_signup_code_expired
     AuthNotice.RATE_LIMITED -> R.string.auth_rate_limited
     AuthNotice.PASSWORD_POLICY -> R.string.auth_password_policy
 }

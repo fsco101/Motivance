@@ -211,6 +211,16 @@ class AuthViewModelTest {
         }
     }
 
+    @Test fun aSignUpCodeThatFailsSaysToSignUpAgainButARecoveryCodeDoesNot()=runTest(dispatcher) {
+        // An expired sign-up is deleted, so a new code cannot help it; a password reset can still ask for one.
+        val vm=AuthViewModel(repository)
+        repository.codeFailure=RemoteFailure(403,"otp_expired")
+        vm.act(AuthAction.CONFIRM,"a@example.test",otp="123456"); advanceUntilIdle()
+        assertEquals(AuthNotice.SIGNUP_CODE_EXPIRED,vm.state.value.notice)
+        vm.act(AuthAction.RECOVER,"a@example.test","new-password-1",otp="123456"); advanceUntilIdle()
+        assertEquals(AuthNotice.INVALID_CODE,vm.state.value.notice)
+    }
+
     private class FakeAuth : AuthRepository {
         val session=UserSession("fixture",setOf(UserRole.PATIENT))
         var calls=0
@@ -232,9 +242,10 @@ class AuthViewModelTest {
         }
         override suspend fun register(email:String,password:String) { calls++ }
         override suspend fun resendConfirmation(email:String) {calls++;resentEmail=email}
-        override suspend fun confirmRegistration(email:String,token:String):UserSession { calls++; return session }
+        var codeFailure:Exception?=null
+        override suspend fun confirmRegistration(email:String,token:String):UserSession { calls++; codeFailure?.let {throw it}; return session }
         override suspend fun requestRecovery(email:String) { calls++ }
-        override suspend fun recover(email:String,token:String,newPassword:String):UserSession { calls++; return session }
+        override suspend fun recover(email:String,token:String,newPassword:String):UserSession { calls++; codeFailure?.let {throw it}; return session }
         override suspend fun refresh():UserSession { calls++; if(failRefresh) error("expired token"); return session }
         override suspend fun signOut() { calls++; signOutGate?.await() }
         override suspend fun loadOverview()=overviewGate?.await() ?: WorkspaceOverview()

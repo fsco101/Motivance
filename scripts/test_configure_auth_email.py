@@ -1,6 +1,7 @@
 """Isolated configuration, secret-redaction and rollback checks; no external mail."""
 import contextlib
 import io
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -49,6 +50,25 @@ class AuthEmailConfigurationTest(unittest.TestCase):
         self.assertEqual(600,payload['mailer_otp_exp'])
         for kind in ('confirmation','recovery'):
             self.assertIn('{{ .Token }}',payload['mailer_templates_'+kind+'_content'])
+
+    def test_both_emails_show_the_logo_from_the_deployed_site(self):
+        # Gmail drops embedded images, so the logo is the web app's own public file, fetched over HTTPS. The name sits
+        # beside it, so its alt text is empty rather than reading Motivance twice.
+        logo='<img src="https://motivance.vercel.app/logo-96.png" width="48" height="48" alt=""'
+        self.assertTrue((email.ROOT/'web/public/logo-96.png').is_file())
+        for kind,content in email.templates().items():
+            self.assertIn(logo,content,kind)
+            self.assertNotIn('data:image',content,kind)
+
+    def test_a_pending_sign_up_lasts_exactly_as_long_as_its_code(self):
+        # The database deletes a never-confirmed sign-up when its code expires, so all three settings must agree.
+        migration=(email.ROOT/'supabase/migrations/202611080001_verified_signup.sql').read_text(encoding='utf-8')
+        lifetime=re.search(r"signup_code_lifetime\(\).*?interval '(\d+) minutes'",migration,re.S)
+        config=re.search(r'^otp_expiry = (\d+)$',(email.ROOT/'supabase/config.toml').read_text(encoding='utf-8'),re.M)
+        self.assertIsNotNone(lifetime);self.assertIsNotNone(config)
+        seconds=int(lifetime.group(1))*60
+        self.assertEqual(seconds,email.hosted_payload(self.settings())['mailer_otp_exp'])
+        self.assertEqual(seconds,int(config.group(1)))
 
     def test_hosted_points_auth_at_the_deployed_site(self):
         # The default Site URL is http://localhost:3000, which is where hosted Auth sent people (issue #94).

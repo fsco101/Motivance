@@ -1,9 +1,10 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(18);
-insert into auth.users(id) values
- ('20000000-0000-0000-0000-000000000001'),('20000000-0000-0000-0000-000000000002'),
- ('20000000-0000-0000-0000-000000000003'),('20000000-0000-0000-0000-000000000004'),('20000000-0000-0000-0000-000000000005');
+-- Confirmed accounts: Motivance makes an account only once its email is confirmed.
+insert into auth.users(id,email_confirmed_at) values
+ ('20000000-0000-0000-0000-000000000001',now()),('20000000-0000-0000-0000-000000000002',now()),
+ ('20000000-0000-0000-0000-000000000003',now()),('20000000-0000-0000-0000-000000000004',now()),('20000000-0000-0000-0000-000000000005',now());
 insert into public.user_roles values ('20000000-0000-0000-0000-000000000003','therapist'),('20000000-0000-0000-0000-000000000004','therapist'),('20000000-0000-0000-0000-000000000005','admin');
 insert into public.therapist_patients(therapist_id,patient_id) values ('20000000-0000-0000-0000-000000000003','20000000-0000-0000-0000-000000000001');
 insert into public.exercises(id,code,active) values('30000000-0000-0000-0000-000000000001','test-only',true);
