@@ -40,6 +40,7 @@ import com.motivance.R
 import com.motivance.assessment.*
 import com.motivance.domain.*
 import com.motivance.designsystem.Motion
+import com.motivance.designsystem.durationText
 import com.motivance.designsystem.label
 
 private val PreviewNavy=Motion.Night
@@ -61,6 +62,8 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
 @Composable internal fun SkeletonPreview(
     bitmap:Bitmap?, points:List<Landmark>, mirrored:Boolean, rules:ExerciseRules,
     metrics:AssessmentSnapshot, qualityLabel:String, modifier:Modifier=Modifier, details:Boolean=true,
+    /** Shown between the header and the image, so it stays in view while the patient watches themselves. */
+    coach:(@Composable () -> Unit)?=null,
 ) {
     val ready=metrics.quality==TrackingQuality.READY
     val caution=metrics.quality==TrackingQuality.TRUNK_LEAN
@@ -99,6 +102,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
             Text(focusLabel,color=Color.White,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
             if(rules.focusJoint!=rules.measuredJoint) Text(stringResource(R.string.focus_measurement,measurementJoint),color=BodyInk,style=MaterialTheme.typography.bodySmall)
             if(showBody && !focusVisible) Text(stringResource(R.string.focus_not_visible),color=CautionAmber,style=MaterialTheme.typography.bodySmall)
+            coach?.invoke()
         }
         Box(Modifier.fillMaxWidth().heightIn(max=440.dp).aspectRatio(4f/5f).onSizeChanged {viewport=it}
             .semantics {contentDescription=description},contentAlignment=Alignment.Center) {
@@ -203,7 +207,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
         MetricTile(stringResource(R.string.calc_not_counted),metrics.incomplete.toString(),Modifier.weight(1f))
     }
     Text(stringResource(R.string.calc_rule_summary,measurementJoint,rules.lowDegrees.toInt(),rules.highDegrees.toInt(),
-        rules.peakHoldMs.toInt(),"%.1f".format(rules.minimumCycleMs/1000.0),"%.0f".format(rules.maximumCycleMs/1000.0)),
+        durationText(rules.peakHoldMs),durationText(rules.minimumCycleMs),durationText(rules.maximumCycleMs)),
         color=Color.White,style=MaterialTheme.typography.bodySmall)
     Text(if(rules.demo) stringResource(R.string.calc_source_demo) else stringResource(R.string.calc_source_prescribed,rules.version),
         color=if(rules.demo) CautionAmber else FocusMint,style=MaterialTheme.typography.labelSmall)
@@ -283,7 +287,7 @@ private fun DrawScope.drawProtractor(p:Protractor,mapping:PreviewMapping,rules:E
     val steps=listOf(
         Triple(RepStep.START,R.string.calc_step_start,"≤ ${rules.lowDegrees.toInt()}°"),
         Triple(RepStep.REACH,R.string.calc_step_reach,"≥ ${rules.highDegrees.toInt()}°"),
-        Triple(RepStep.HOLD,R.string.calc_step_hold,"${rules.peakHoldMs} ms"),
+        Triple(RepStep.HOLD,R.string.calc_step_hold,durationText(rules.peakHoldMs)),
         Triple(RepStep.RETURN,R.string.calc_step_return,"≤ ${rules.lowDegrees.toInt()}°"),
     )
     val activeLabel=guide.step?.let {active -> stringResource(steps.first {it.first==active}.second)}

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { readTiming, validDraft, validRange, validRepetitions } from './therapist'
+import { readTiming, secondsText, validDraft, validRange, validRepetitions } from './therapist'
 
-const timing = { minimum: '600', maximum: '30000', hold: '100', lean: '20' }
+// Issue #97: therapists type seconds; the server still stores whole milliseconds.
+const timing = { minimum: '0.6', maximum: '30', hold: '0.1', lean: '20' }
 
 describe('prescription limits match publish_prescription', () => {
   it('needs a range inside 0 to 180, with high more than 10 above low', () => {
@@ -17,21 +18,31 @@ describe('prescription limits match publish_prescription', () => {
     expect([0, 1001, 2.5].some(validRepetitions)).toBe(false)
   })
 
+  it('reads seconds and keeps the stored milliseconds', () => {
+    expect(readTiming(timing)).toEqual({ minimumCycleMs: 600, maximumCycleMs: 30000, peakHoldMs: 100, maxTrunkLean: 20 })
+    expect(readTiming({ ...timing, minimum: '0,6', hold: '1.25' })).toEqual({ minimumCycleMs: 600, maximumCycleMs: 30000, peakHoldMs: 1250, maxTrunkLean: 20 })
+  })
+
   it('accepts timing at every limit', () => {
-    expect(readTiming({ minimum: '100', maximum: '300000', hold: '5000', lean: '90' })).toEqual({ minimumCycleMs: 100, maximumCycleMs: 300000, peakHoldMs: 5000, maxTrunkLean: 90 })
-    expect(readTiming({ minimum: '30000', maximum: '30001', hold: '0', lean: '0' })).toEqual({ minimumCycleMs: 30000, maximumCycleMs: 30001, peakHoldMs: 0, maxTrunkLean: 0 })
+    expect(readTiming({ minimum: '0.1', maximum: '300', hold: '5', lean: '90' })).toEqual({ minimumCycleMs: 100, maximumCycleMs: 300000, peakHoldMs: 5000, maxTrunkLean: 90 })
+    expect(readTiming({ minimum: '30', maximum: '30.001', hold: '0', lean: '0' })).toEqual({ minimumCycleMs: 30000, maximumCycleMs: 30001, peakHoldMs: 0, maxTrunkLean: 0 })
+  })
+
+  it.each([[600, '0.6'], [1000, '1'], [1250, '1.25'], [30000, '30'], [100, '0.1'], [0, '0']])('shows %i ms as %s seconds', (ms, text) => {
+    expect(secondsText(ms)).toBe(text)
   })
 
   it.each([
-    ['minimum below 100', { minimum: '99' }], ['minimum above 30000', { minimum: '30001', maximum: '40000' }], ['maximum not above minimum', { maximum: '600' }],
-    ['maximum above 300000', { maximum: '300001' }], ['hold above 5000', { hold: '5001' }], ['lean above 90', { lean: '90.5' }], ['negative lean', { lean: '-1' }],
+    ['minimum below 0.1 s', { minimum: '0.099' }], ['minimum above 30 s', { minimum: '30.001', maximum: '40' }], ['maximum not above minimum', { maximum: '0.6' }],
+    ['maximum above 300 s', { maximum: '300.001' }], ['hold above 5 s', { hold: '5.001' }], ['negative hold', { hold: '-1' }], ['lean above 90', { lean: '90.5' }], ['negative lean', { lean: '-1' }],
+    ['milliseconds typed as seconds', { minimum: '600', maximum: '30000' }], ['an exponent', { hold: '1e-1' }],
   ])('refuses %s', (_, change) => {
     expect(readTiming({ ...timing, ...change })).toBeNull()
   })
 
   it('refuses part of a millisecond, which the server cannot store', () => {
-    expect(readTiming({ ...timing, minimum: '600.5' })).toBeNull()
-    expect(readTiming({ ...timing, hold: '1.5' })).toBeNull()
+    expect(readTiming({ ...timing, minimum: '0.6005' })).toBeNull()
+    expect(readTiming({ ...timing, hold: '0.0001' })).toBeNull()
   })
 
   it('allows part of a degree of lean, as Android does', () => {

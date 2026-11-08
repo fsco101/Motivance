@@ -289,9 +289,10 @@ internal fun RehabAction.loadingLabel()=when(this) {
     var reps by rememberSaveable {mutableStateOf(existing?.repetitions?.toString() ?: "5")}
     val parameters=remember(existing) {org.json.JSONObject(existing?.parameters ?: "{}")}
     var focusJoint by rememberSaveable {mutableStateOf(parameters.optString("focus_joint",""))}
-    var minimum by rememberSaveable {mutableStateOf(parameters.optLong("minimum_cycle_ms",600).toString())}
-    var maximum by rememberSaveable {mutableStateOf(parameters.optLong("maximum_cycle_ms",30000).toString())}
-    var hold by rememberSaveable {mutableStateOf(parameters.optLong("peak_hold_ms",100).toString())}
+    // Timing is typed and shown in seconds; the prescription still stores milliseconds (issue #97).
+    var minimum by rememberSaveable {mutableStateOf(Seconds.text(parameters.optLong("minimum_cycle_ms",600)))}
+    var maximum by rememberSaveable {mutableStateOf(Seconds.text(parameters.optLong("maximum_cycle_ms",30000)))}
+    var hold by rememberSaveable {mutableStateOf(Seconds.text(parameters.optLong("peak_hold_ms",100)))}
     var lean by rememberSaveable {mutableStateOf(parameters.optDouble("max_trunk_lean_degrees",20.0).let(::degrees))}
     var requestId by rememberSaveable {mutableStateOf(UUID.randomUUID().toString())}
     val assignmentId=rememberSaveable {existing?.assignmentId ?: UUID.randomUUID().toString()}
@@ -304,7 +305,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
     val chosenPatient=patients.firstOrNull {it.id==patient}
     val chosenExercise=state.workspace.catalogue.firstOrNull {it.id==exercise}
 
-    val l=low.toDoubleOrNull(); val h=high.toDoubleOrNull(); val r=reps.toIntOrNull(); val min=minimum.toLongOrNull(); val max=maximum.toLongOrNull(); val peak=hold.toLongOrNull(); val trunk=lean.toDoubleOrNull()
+    val l=low.toDoubleOrNull(); val h=high.toDoubleOrNull(); val r=reps.toIntOrNull(); val min=Seconds.parseMs(minimum); val max=Seconds.parseMs(maximum); val peak=Seconds.parseMs(hold); val trunk=lean.toDoubleOrNull()
     val rangeValid=l!=null && h!=null && l.isFinite() && h.isFinite() && l>=0 && h<=180 && h>l+10
     val repsValid=r!=null && r in 1..1000
     val timingValid=min!=null && max!=null && peak!=null && trunk!=null && min in 100..30000 && max>min && max<=300000 && peak in 0..5000 && trunk.isFinite() && trunk in 0.0..90.0
@@ -399,16 +400,17 @@ internal fun RehabAction.loadingLabel()=when(this) {
             IconBadge(Icons.Default.Settings,MaterialTheme.colorScheme.primary,40)
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.ui_timing_title),style=MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.ui_timing_summary,minimum.ifBlank {"--"},maximum.ifBlank {"--"},hold.ifBlank {"--"},lean.ifBlank {"--"}),
+                Text(stringResource(R.string.ui_timing_summary,min?.let(Seconds::text) ?: "--",max?.let(Seconds::text) ?: "--",peak?.let {durationText(it)} ?: "--",lean.ifBlank {"--"}),
                     style=MaterialTheme.typography.bodySmall,color=if(timingValid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
             }
             Icon(Icons.Default.KeyboardArrowDown,null,Modifier.rotate(turn),tint=MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Collapsible(advanced) {
-            NumberField(R.string.minimum_cycle_ms,minimum,"ms",min==null || min !in 100..30000,enabled,Modifier.fillMaxWidth(),KeyboardType.Number) {minimum=it; changed()}
-            NumberField(R.string.maximum_cycle_ms,maximum,"ms",max==null || min==null || max<=min || max>300000,enabled,Modifier.fillMaxWidth(),KeyboardType.Number) {maximum=it; changed()}
-            NumberField(R.string.peak_hold_ms,hold,"ms",peak==null || peak !in 0..5000,enabled,Modifier.fillMaxWidth(),KeyboardType.Number) {hold=it; changed()}
-            NumberField(R.string.maximum_trunk_lean,lean,"°",trunk==null || trunk !in 0.0..90.0,enabled,Modifier.fillMaxWidth()) {lean=it; changed()}
+            val seconds=stringResource(R.string.unit_seconds)
+            NumberField(R.string.minimum_cycle_ms,minimum,seconds,min==null || min !in 100..30000,enabled,Modifier.fillMaxWidth(),help=R.string.timing_minimum_help) {minimum=it; changed()}
+            NumberField(R.string.maximum_cycle_ms,maximum,seconds,max==null || min==null || max<=min || max>300000,enabled,Modifier.fillMaxWidth(),help=R.string.timing_maximum_help) {maximum=it; changed()}
+            NumberField(R.string.peak_hold_ms,hold,seconds,peak==null || peak !in 0..5000,enabled,Modifier.fillMaxWidth(),help=R.string.timing_hold_help) {hold=it; changed()}
+            NumberField(R.string.maximum_trunk_lean,lean,"°",trunk==null || trunk !in 0.0..90.0,enabled,Modifier.fillMaxWidth(),help=R.string.timing_lean_help) {lean=it; changed()}
         }
         if(!timingValid) Text(stringResource(R.string.ui_timing_error),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
     }
@@ -452,11 +454,12 @@ internal fun RehabAction.loadingLabel()=when(this) {
     }
 }
 
+/** [help] explains the value in everyday words, with an example. Some keyboards offer only a comma for the decimal mark. */
 @Composable private fun NumberField(label:Int,value:String,suffix:String,error:Boolean,enabled:Boolean,modifier:Modifier,
-    type:KeyboardType=KeyboardType.Decimal,set:(String)->Unit) {
-    OutlinedTextField(value,{set(it.filter {c -> c.isDigit() || c=='.'})},modifier,enabled=enabled,label={Text(stringResource(label))},
+    type:KeyboardType=KeyboardType.Decimal,help:Int?=null,set:(String)->Unit) {
+    OutlinedTextField(value,{set(it.replace(',','.').filter {c -> c.isDigit() || c=='.'})},modifier,enabled=enabled,label={Text(stringResource(label))},
         suffix={Text(suffix)},isError=error,singleLine=true,shape=MaterialTheme.shapes.small,
-        keyboardOptions=KeyboardOptions(keyboardType=type))
+        supportingText=help?.let {{Text(stringResource(it))}},keyboardOptions=KeyboardOptions(keyboardType=type))
 }
 
 @Composable private fun RepetitionStepper(reps:String,valid:Boolean,enabled:Boolean,set:(String)->Unit) {

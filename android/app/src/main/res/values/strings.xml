@@ -127,7 +127,7 @@
     <string name="measured_angle">Angle: %1$s degrees</string>
     <string name="completed_reps">Repetitions: %1$d / %2$d</string>
     <string name="session_metrics">ROM: %1$s degrees | Incomplete: %2$d | Active: %3$d s</string>
-    <string name="session_targets">Cycle targets: return to %1$d degrees, reach %2$d degrees</string>
+    <string name="session_targets">Start at %1$d° or less, move to %2$d° or more, then come back.</string>
     <string name="local_metrics_consent">Save movement summaries on this phone. No video or landmarks are stored.</string>
     <string name="recover_interrupted">Recover interrupted session</string>
     <string name="session_saved_local">Session saved on this phone. Prescribed results upload when connected and signed in; demo results stay local.</string>
@@ -144,13 +144,8 @@
     <string name="quality_geometry">Joint geometry is unreliable. Adjust the camera view.</string>
     <string name="quality_outlier">Sudden measurement change. Reacquiring tracking.</string>
     <string name="quality_positioning">Hold your position while tracking stabilizes.</string>
-    <string name="quality_lean">Keep your trunk upright in the camera plane.</string>
+    <string name="quality_lean">Keep your upper body straight. Leaning too far stops the repetition from counting.</string>
     <string name="quality_ready">Tracking ready. Use a controlled movement.</string>
-    <string name="feedback_target">Target reached. Return to the starting position.</string>
-    <string name="feedback_complete">Complete repetition</string>
-    <string name="feedback_incomplete">Incomplete range. The target was not reached.</string>
-    <string name="feedback_fast">Movement was too brief to count.</string>
-    <string name="feedback_timeout">Movement timed out. Return to the start position.</string>
     <string name="local_history">On-device sessions</string>
     <string name="local_history_detail">Account-isolated local records. Pending uploads are not discarded at logout.</string>
     <string name="connected_failed">Request failed. Check your connection, invitation details and account permissions, then retry.</string>
@@ -181,10 +176,10 @@
     <string name="result_limited">Tracking quality: limited</string>
     <string name="result_invalid">Tracking quality: invalid; no reliable ROM available</string>
     <string name="prescription_version_help">Supported development measurements. Publishing stores an immutable version; editing does not alter earlier session targets.</string>
-    <string name="minimum_cycle_ms">Minimum cycle duration (milliseconds)</string>
-    <string name="maximum_cycle_ms">Maximum cycle duration (milliseconds)</string>
-    <string name="peak_hold_ms">Target hold (milliseconds)</string>
-    <string name="maximum_trunk_lean">Maximum visible trunk lean (degrees)</string>
+    <string name="minimum_cycle_ms">Shortest time for one repetition (seconds)</string>
+    <string name="maximum_cycle_ms">Longest time for one repetition (seconds)</string>
+    <string name="peak_hold_ms">Hold at the target (seconds)</string>
+    <string name="maximum_trunk_lean">Upper body lean limit (degrees)</string>
     <string name="publish_prescription">Publish prescription version</string>
     <string name="edit_prescription">Edit as new version</string>
     <string name="synchronization">Session synchronization</string>
@@ -480,8 +475,8 @@
     <string name="measurement_start_help">Allow saving below, wait for tracking ready, then tap Start measurement. A visible skeleton alone does not start a session.</string>
     <string name="measurement_demo_unavailable">Demo recording is available in debug builds. For this build, open an assigned exercise to record repetitions.</string>
     <string name="measurement_tracking_wait">Tracking is not ready. Reposition as directed; unreliable movement is not counted.</string>
-    <string name="measurement_return">Return to %1$d degrees or below. A repetition counts after reaching the target and returning here.</string>
-    <string name="measurement_reach">Reach %1$d degrees or above and hold for at least %2$d ms, then return to the starting position.</string>
+    <string name="measurement_return">Now go back to %1$d° or less. The repetition counts when you get back there.</string>
+    <string name="measurement_reach">Move to %1$d° or more and hold it for %2$s. Then go back to the start.</string>
     <string name="pause_measurement">Pause measurement</string>
     <string name="measurement_resume_help">Wait for tracking ready, then tap Resume measurement. Return to the starting position before beginning a new repetition.</string>
     <string name="auth_resend_code">Send a new code</string>
@@ -608,7 +603,7 @@
     <string name="calc_step_return">Return</string>
     <string name="calc_session_rom">Session ROM</string>
     <string name="calc_not_counted">Not counted</string>
-    <string name="calc_rule_summary">A repetition counts when the %1$s angle starts at %2$d° or less, reaches %3$d° or more, stays there for %4$d ms, and returns to %2$d° or less within %5$s–%6$s s.</string>
+    <string name="calc_rule_summary">A repetition counts when the %1$s angle starts at %2$d° or less, reaches %3$d° or more, stays there for %4$s, then comes back to %2$d° or less. One repetition must take between %5$s and %6$s.</string>
     <string name="calc_source_prescribed">Thresholds from therapist prescription %1$s</string>
     <string name="calc_source_demo">Demo thresholds · not a therapist prescription</string>
     <string name="calc_legend">Dashed line: 0° reference · Arc: measured angle · Grey band: start zone · Green band: target zone</string>
@@ -671,8 +666,8 @@
     <string name="ui_decrease">Decrease repetitions</string>
     <string name="ui_increase">Increase repetitions</string>
     <string name="ui_timing_title">Timing and movement limits</string>
-    <string name="ui_timing_summary">Cycle %1$s–%2$s ms · hold %3$s ms · trunk lean up to %4$s°</string>
-    <string name="ui_timing_error">Check timing: minimum cycle 100–30000 ms, maximum above the minimum and up to 300000 ms, hold up to 5000 ms, trunk lean 0–90°.</string>
+    <string name="ui_timing_summary">Each repetition takes %1$s to %2$s seconds · hold %3$s · upper body lean up to %4$s°</string>
+    <string name="ui_timing_error">Check the timing: shortest time 0.1 to 30 seconds, longest time more than the shortest and up to 300 seconds, hold 0 to 5 seconds, upper body lean 0 to 90°.</string>
     <string name="ui_review_title">Review before publishing</string>
     <string name="ui_review_patient">Patient</string>
     <string name="ui_review_exercise">Exercise</string>
@@ -913,4 +908,39 @@
     <string name="notification_session_series_cancelled">Your weekly sessions with %1$s from %2$s were cancelled. Sessions: %3$d.</string>
     <string name="push_channel">Booking updates</string>
     <string name="push_public_title">You have a booking update</string>
+    <!-- Issues #95 to #97: the repetition coach, spoken feedback and plain timing words. -->
+    <string name="measurement_reach_no_hold">Move to %1$d° or more, then go back to the start.</string>
+    <string name="measurement_start_refused">Measurement did not start because tracking was lost. Stay in view until tracking is ready, then tap Start again.</string>
+    <string name="duration_one_second">1 second</string>
+    <string name="duration_seconds">%1$s seconds</string>
+    <string name="unit_seconds">s</string>
+    <string name="timing_minimum_help">0.1 to 30. A faster repetition is not counted. Example: 0.6</string>
+    <string name="timing_maximum_help">More than the shortest time, up to 300. A slower repetition is not counted and starts again. Example: 30</string>
+    <string name="timing_hold_help">0 to 5. How long the patient stays at the target. Example: 1 means hold for 1 second</string>
+    <string name="timing_lean_help">0 to 90. How far the upper body may tilt from upright. Leaning further stops the repetition from counting. Example: 15</string>
+    <string name="coach_not_recording">Not counting yet. Tap Start measurement below.</string>
+    <string name="coach_paused">Paused. Repetitions are not counting.</string>
+    <string name="coach_tracking">Waiting for tracking. Stay in view of the camera.</string>
+    <string name="coach_step">Step %1$d of 4</string>
+    <string name="coach_start">Go to the start: %1$d° or less</string>
+    <string name="coach_reach">Move to %1$d° or more</string>
+    <string name="coach_hold">Hold it there for %1$s</string>
+    <string name="coach_return">Now go back to %1$d° or less to count it</string>
+    <string name="coach_counted">Counted! %1$d of %2$d</string>
+    <string name="coach_missed_range">Not counted. Reach the target and hold it before coming back.</string>
+    <string name="coach_missed_fast">Not counted. Move a little slower.</string>
+    <string name="coach_missed_slow">Not counted. That took too long, so start again.</string>
+    <string name="rep_sound_on">Voice on</string>
+    <string name="rep_sound_off">Voice off</string>
+    <string name="rep_sound_description">Spoken feedback after each repetition</string>
+    <string name="cue_missed_range">Try again. Reach the target and hold it.</string>
+    <string name="cue_missed_fast">Try again, a little slower.</string>
+    <string name="cue_missed_slow">Try again from the start.</string>
+    <string-array name="cue_counted">
+        <item>Great!</item>
+        <item>Excellent!</item>
+        <item>Nice!</item>
+        <item>Well done!</item>
+        <item>Good job!</item>
+    </string-array>
 </resources>

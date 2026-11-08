@@ -47,12 +47,23 @@ export type Timing = Pick<PrescriptionDraft, 'minimumCycleMs' | 'maximumCycleMs'
 export const validRange = (low: number, high: number) => low >= 0 && high <= 180 && high > low + 10
 export const validRepetitions = (count: number) => Number.isInteger(count) && count >= 1 && count <= 1000
 
-const whole = (text: string) => (/^\d+$/.test(text.trim()) ? Number(text) : Number.NaN)
 const decimal = (text: string) => (text.trim() ? Number(text) : Number.NaN)
 
-/** The server's limits, as on Android. Null until every field is right: a blank is a mistake, never zero, and it casts milliseconds to whole numbers. */
+/** Typed seconds as whole milliseconds, as Seconds.kt does on Android: "0.6" or "0,6" is 600. NaN for anything finer than a millisecond. */
+function secondsToMs(text: string) {
+  const plain = text.trim().replace(',', '.')
+  if (!/^\d*\.?\d*$/.test(plain) || !/\d/.test(plain)) return Number.NaN
+  const [whole, fraction = ''] = plain.split('.')
+  if (fraction.replace(/0+$/, '').length > 3) return Number.NaN
+  return Number(whole || '0') * 1000 + Number(fraction.padEnd(3, '0').slice(0, 3))
+}
+
+/** Stored milliseconds as the seconds a person reads and types: 600 is "0.6". */
+export const secondsText = (ms: number) => String(ms / 1000)
+
+/** The server's limits, as on Android. Null until every field is right: a blank is a mistake, never zero. Timing is typed in seconds and stored in milliseconds. */
 export function readTiming(text: { minimum: string; maximum: string; hold: string; lean: string }): Timing | null {
-  const timing = { minimumCycleMs: whole(text.minimum), maximumCycleMs: whole(text.maximum), peakHoldMs: whole(text.hold), maxTrunkLean: decimal(text.lean) }
+  const timing = { minimumCycleMs: secondsToMs(text.minimum), maximumCycleMs: secondsToMs(text.maximum), peakHoldMs: secondsToMs(text.hold), maxTrunkLean: decimal(text.lean) }
   const valid = timing.minimumCycleMs >= 100 && timing.minimumCycleMs <= 30000 && timing.maximumCycleMs > timing.minimumCycleMs && timing.maximumCycleMs <= 300000
     && timing.peakHoldMs >= 0 && timing.peakHoldMs <= 5000 && timing.maxTrunkLean >= 0 && timing.maxTrunkLean <= 90
   return valid ? timing : null

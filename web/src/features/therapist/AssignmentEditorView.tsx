@@ -8,7 +8,7 @@ import { Avatar, Notice, PageHeader, StatusPill } from '@/components/Display'
 import { TextField } from '@/components/Field'
 import type { CatalogueExercise, Joint } from '@/data/catalogue'
 import { JOINTS } from '@/data/catalogue'
-import { readTiming, validRange, validRepetitions, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
+import { readTiming, secondsText, validRange, validRepetitions, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
 import type { PlanSummary } from '@/data/workspace'
 import { Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
@@ -60,9 +60,10 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
   const [high, setHigh] = useState(existing?.high ?? 90)
   const [repetitions, setRepetitions] = useState(existing?.repetitions ?? 5)
   const [timing, setTiming] = useState(false)
-  const [minimum, setMinimum] = useState(String(number(parameters.minimum_cycle_ms, 600)))
-  const [maximum, setMaximum] = useState(String(number(parameters.maximum_cycle_ms, 30000)))
-  const [hold, setHold] = useState(String(number(parameters.peak_hold_ms, 100)))
+  // Typed and shown in seconds; the plan still stores milliseconds.
+  const [minimum, setMinimum] = useState(secondsText(number(parameters.minimum_cycle_ms, 600)))
+  const [maximum, setMaximum] = useState(secondsText(number(parameters.maximum_cycle_ms, 30000)))
+  const [hold, setHold] = useState(secondsText(number(parameters.peak_hold_ms, 100)))
   const [lean, setLean] = useState(String(number(parameters.max_trunk_lean_degrees, 20)))
   const [adding, setAdding] = useState(false)
 
@@ -130,9 +131,9 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                     {timing && (
                       <motion.div className="overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: duration.slow, ease: ease.out }}>
                         <div className="grid gap-4 pt-4 tablet:grid-cols-2">
-                          <TextField label={t('assign.minimumCycle')} hint={t('assign.minimumCycleHint')} type="number" value={minimum} onChange={(event) => setMinimum(event.target.value)} />
-                          <TextField label={t('assign.maximumCycle')} hint={t('assign.maximumCycleHint')} type="number" value={maximum} onChange={(event) => setMaximum(event.target.value)} />
-                          <TextField label={t('assign.hold')} hint={t('assign.holdHint')} type="number" value={hold} onChange={(event) => setHold(event.target.value)} />
+                          <TextField label={t('assign.minimumCycle')} hint={t('assign.minimumCycleHint')} inputMode="decimal" value={minimum} onChange={(event) => setMinimum(event.target.value)} />
+                          <TextField label={t('assign.maximumCycle')} hint={t('assign.maximumCycleHint')} inputMode="decimal" value={maximum} onChange={(event) => setMaximum(event.target.value)} />
+                          <TextField label={t('assign.hold')} hint={t('assign.holdHint')} inputMode="decimal" value={hold} onChange={(event) => setHold(event.target.value)} />
                           <TextField label={t('assign.lean')} hint={t('assign.leanHint')} type="number" value={lean} onChange={(event) => setLean(event.target.value)} error={timingError} />
                         </div>
                       </motion.div>

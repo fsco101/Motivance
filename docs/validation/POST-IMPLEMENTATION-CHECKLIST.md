@@ -183,6 +183,25 @@ Evidence scope: [booking implementation](BOOKING-IMPLEMENTATION.md).
 - [ ] Have a Scheduler run a real week on a large screen: decide requests, resolve a closure, book a weekly course and export the schedule. Nobody who does this work has used it yet.
 - [ ] With local Auth pointed at a mail catcher rather than real SMTP, run `python scripts/test_local_auth.py`. It refuses to run against real SMTP, which is how the local stack is set up, so the final regression did not run it.
 
+## Sign-up email, repetition coach, voice and timing words (2026-11-08)
+
+Evidence scope: [repetition coach and timing](REPETITION-COACH-AND-TIMING.md) and the hosted section of [Auth email](AUTH-EMAIL-IMPLEMENTATION.md). Issues #94 to #97. Use an inbox you own, and never run the synthetic email suites against the hosted project.
+
+- [ ] #94: On https://motivance.vercel.app, sign up with an inbox you own. Confirm the email shows a 6-digit code and no link, check Spam, enter the code, and confirm you land in the app instead of staying on the code screen.
+- [ ] #94: Repeat the sign-up on Android with `android/.env` pointing at the hosted project.
+- [ ] #94: Reset a password on the web and on Android. Confirm the code arrives and works, the old password fails and the new one signs in.
+- [ ] #94: On both apps, send a new code, enter a wrong code, and enter a code more than 10 minutes old. Confirm each message is clear.
+- [ ] #94: Decide the hosted email rate limit before wider sign-up. It is still 2 emails per hour for the whole project.
+- [ ] #95: On the reporter's phone, repeat the session that did not count. Record the build, device, exercise and side, target angle, the coach's step, and any Not counted reason. Confirm a full start, reach, hold and return cycle increases the count.
+- [ ] #95: From the exercise position, check the coach can be read at a distance, at the largest font size and with TalkBack.
+- [ ] #95: Have a therapist review whether the default thresholds suit the intended patients, for example the 20° start for elbow flexion. No threshold was changed.
+- [ ] #96: On physical phones, check the voice in English and in Filipino. On a phone without a Filipino voice, confirm the English phrase plays. On a phone without any voice, confirm a tone plays.
+- [ ] #96: Confirm media volume controls the voice, phrases never overlap when repetitions come quickly, camera FPS in the debug diagnostics does not drop while it speaks, and Voice off is still off after restarting the app.
+- [ ] #96: With TalkBack on, check the voice and the coach's announcements can still be followed.
+- [ ] #96 and #97: Have a Filipino speaker review the spoken phrases (`cue_*`), the coach (`coach_*`) and the timing text in `values-fil/strings.xml` and `web/src/locales/fil.json`.
+- [ ] #97: Have a therapist review the timing wording in the Android and web assignment editors and on the patient's camera screen.
+- [ ] #97: At the largest font size on a small phone, check the timing panel, its field help and the coach wrap without clipping.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

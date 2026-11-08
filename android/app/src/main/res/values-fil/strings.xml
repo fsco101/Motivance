@@ -127,7 +127,7 @@
     <string name="measured_angle">Anggulo: %1$s degrees</string>
     <string name="completed_reps">Pag-ulit: %1$d / %2$d</string>
     <string name="session_metrics">ROM: %1$s degrees | Hindi kumpleto: %2$d | Aktibo: %3$d s</string>
-    <string name="session_targets">Mga target: bumalik sa %1$d degrees, abutin ang %2$d degrees</string>
+    <string name="session_targets">Magsimula sa %1$d° o mas mababa, abutin ang %2$d° o higit pa, pagkatapos ay bumalik.</string>
     <string name="local_metrics_consent">I-save ang buod ng paggalaw sa telepono. Walang sine-save na video o mga landmark.</string>
     <string name="recover_interrupted">Ibalik ang naantalang session</string>
     <string name="session_saved_local">Nai-save ang sesyon sa telepono. Ina-upload ang resultang may reseta kapag online at naka-sign in; lokal lamang ang demo.</string>
@@ -144,13 +144,8 @@
     <string name="quality_geometry">Hindi maaasahan ang posisyon ng mga kasukasuan. Ayusin ang camera.</string>
     <string name="quality_outlier">Biglang nagbago ang sukat. Muling sinusubaybayan.</string>
     <string name="quality_positioning">Panatilihin ang posisyon habang pinatatatag ang pagsubaybay.</string>
-    <string name="quality_lean">Panatilihing tuwid ang katawan sa harap ng camera.</string>
+    <string name="quality_lean">Panatilihing tuwid ang itaas na katawan. Hindi mabibilang ang ulit kapag masyadong nakakiling.</string>
     <string name="quality_ready">Handa na ang pagsubaybay. Dahan-dahan ang paggalaw.</string>
-    <string name="feedback_target">Naabot ang target. Bumalik sa panimulang posisyon.</string>
-    <string name="feedback_complete">Kumpletong pag-ulit</string>
-    <string name="feedback_incomplete">Hindi kumpletong saklaw. Hindi naabot ang target.</string>
-    <string name="feedback_fast">Masyadong mabilis ang paggalaw para mabilang.</string>
-    <string name="feedback_timeout">Nag-time out ang paggalaw. Bumalik sa simula.</string>
     <string name="local_history">Mga session sa telepono</string>
     <string name="local_history_detail">Mga lokal na rekord para lamang sa account. Hindi binubura sa logout ang mga hindi pa na-upload.</string>
     <string name="connected_failed">Hindi natuloy ang request. Suriin ang koneksyon, invitation at pahintulot ng account, saka subukang muli.</string>
@@ -181,10 +176,10 @@
     <string name="result_limited">Kalidad ng tracking: limitado</string>
     <string name="result_invalid">Hindi valid ang tracking; walang maaasahang ROM</string>
     <string name="prescription_version_help">Mga development measurement na suportado. Hindi nababago ng bagong bersyon ang targets ng mga naunang session.</string>
-    <string name="minimum_cycle_ms">Pinakamaikling cycle (milliseconds)</string>
-    <string name="maximum_cycle_ms">Pinakamahabang cycle (milliseconds)</string>
-    <string name="peak_hold_ms">Tagal ng target hold (milliseconds)</string>
-    <string name="maximum_trunk_lean">Pinakamalaking nakikitang pagkahilig ng katawan (degrees)</string>
+    <string name="minimum_cycle_ms">Pinakamaikling oras ng isang ulit (segundo)</string>
+    <string name="maximum_cycle_ms">Pinakamahabang oras ng isang ulit (segundo)</string>
+    <string name="peak_hold_ms">Tagal ng paghawak sa target (segundo)</string>
+    <string name="maximum_trunk_lean">Limitasyon ng pagkiling ng itaas na katawan (degrees)</string>
     <string name="publish_prescription">I-publish ang prescription version</string>
     <string name="edit_prescription">I-edit bilang bagong bersyon</string>
     <string name="synchronization">Pag-sync ng session</string>
@@ -480,8 +475,8 @@
     <string name="measurement_start_help">Payagan ang pag-save sa ibaba, hintaying maging handa ang pagsubaybay, at pindutin ang Simulan ang pagsukat. Hindi awtomatikong nagsisimula ang sesyon kapag may balangkas.</string>
     <string name="measurement_demo_unavailable">Available ang demo recording sa debug build. Sa build na ito, buksan ang nakatalagang ehersisyo upang magbilang ng pag-ulit.</string>
     <string name="measurement_tracking_wait">Hindi pa handa ang pagsubaybay. Ayusin ang posisyon ayon sa gabay; hindi binibilang ang hindi maaasahang paggalaw.</string>
-    <string name="measurement_return">Bumalik sa %1$d degrees o mas mababa. Binibilang ang pag-ulit matapos maabot ang target at makabalik dito.</string>
-    <string name="measurement_reach">Abutin ang %1$d degrees o mas mataas at panatilihin nang hindi bababa sa %2$d ms, pagkatapos ay bumalik sa panimulang posisyon.</string>
+    <string name="measurement_return">Ngayon, bumalik sa %1$d° o mas mababa. Mabibilang ang ulit pagbalik mo roon.</string>
+    <string name="measurement_reach">Abutin ang %1$d° o higit pa at hawakan nang %2$s. Pagkatapos, bumalik sa simula.</string>
     <string name="pause_measurement">I-pause ang pagsukat</string>
     <string name="measurement_resume_help">Hintaying maging handa ang pagsubaybay, at pindutin ang Ipagpatuloy ang pagsukat. Bumalik muna sa panimulang posisyon bago magsimula ng bagong pag-ulit.</string>
     <string name="auth_resend_code">Magpadala ng bagong code</string>
@@ -608,7 +603,7 @@
     <string name="calc_step_return">Bumalik</string>
     <string name="calc_session_rom">ROM sa sesyon</string>
     <string name="calc_not_counted">Hindi nabilang</string>
-    <string name="calc_rule_summary">Nabibilang ang isang pag-ulit kapag ang anggulo ng %1$s ay nagsimula sa %2$d° o mas mababa, umabot sa %3$d° o mas mataas, nanatili roon nang %4$d ms, at bumalik sa %2$d° o mas mababa sa loob ng %5$s–%6$s s.</string>
+    <string name="calc_rule_summary">Nabibilang ang isang ulit kapag ang anggulo ng %1$s ay nagsimula sa %2$d° o mas mababa, umabot sa %3$d° o higit pa, nanatili roon nang %4$s, at bumalik sa %2$d° o mas mababa. Ang isang ulit ay dapat tumagal nang %5$s hanggang %6$s.</string>
     <string name="calc_source_prescribed">Mga limitasyon mula sa reseta ng therapist %1$s</string>
     <string name="calc_source_demo">Mga demo na limitasyon · hindi reseta ng therapist</string>
     <string name="calc_legend">Putol-putol na linya: 0° na batayan · Arko: sinukat na anggulo · Abong guhit: panimulang sona · Berdeng guhit: target na sona</string>
@@ -671,8 +666,8 @@
     <string name="ui_decrease">Bawasan ang ulit</string>
     <string name="ui_increase">Dagdagan ang ulit</string>
     <string name="ui_timing_title">Timing at limitasyon ng galaw</string>
-    <string name="ui_timing_summary">Siklo %1$s–%2$s ms · hawak %3$s ms · hilig ng katawan hanggang %4$s°</string>
-    <string name="ui_timing_error">Suriin ang timing: minimum na siklo 100–30000 ms, maximum na mas mataas sa minimum at hanggang 300000 ms, hawak hanggang 5000 ms, hilig ng katawan 0–90°.</string>
+    <string name="ui_timing_summary">Tumatagal ang bawat ulit nang %1$s hanggang %2$s segundo · hawak nang %3$s · pagkiling ng itaas na katawan hanggang %4$s°</string>
+    <string name="ui_timing_error">Suriin ang oras: pinakamaikling oras 0.1 hanggang 30 segundo, pinakamahabang oras na higit sa pinakamaikli at hanggang 300 segundo, paghawak 0 hanggang 5 segundo, pagkiling ng itaas na katawan 0 hanggang 90°.</string>
     <string name="ui_review_title">Suriin bago ilathala</string>
     <string name="ui_review_patient">Pasyente</string>
     <string name="ui_review_exercise">Ehersisyo</string>
@@ -913,4 +908,39 @@
     <string name="notification_session_series_cancelled">Kinansela ang lingguhang session mo kasama si %1$s mula %2$s. Mga session: %3$d.</string>
     <string name="push_channel">Mga update sa booking</string>
     <string name="push_public_title">May update sa iyong booking</string>
+    <!-- Issues #95 to #97: the repetition coach, spoken feedback and plain timing words. -->
+    <string name="measurement_reach_no_hold">Abutin ang %1$d° o higit pa, pagkatapos ay bumalik sa simula.</string>
+    <string name="measurement_start_refused">Hindi nagsimula ang pagsukat dahil nawala ang tracking. Manatili sa harap ng camera hanggang handa ang tracking, saka i-tap muli ang Simulan.</string>
+    <string name="duration_one_second">1 segundo</string>
+    <string name="duration_seconds">%1$s segundo</string>
+    <string name="unit_seconds">seg</string>
+    <string name="timing_minimum_help">0.1 hanggang 30. Hindi bibilangin ang mas mabilis na ulit. Halimbawa: 0.6</string>
+    <string name="timing_maximum_help">Higit sa pinakamaikling oras, hanggang 300. Hindi bibilangin ang mas matagal na ulit at magsisimula itong muli. Halimbawa: 30</string>
+    <string name="timing_hold_help">0 hanggang 5. Gaano katagal mananatili ang pasyente sa target. Halimbawa: ang 1 ay paghawak nang 1 segundo</string>
+    <string name="timing_lean_help">0 hanggang 90. Gaano kalayo maaaring tumagilid ang itaas na katawan mula sa pagkakatuwid. Hindi bibilangin ang ulit kapag mas kumiling pa. Halimbawa: 15</string>
+    <string name="coach_not_recording">Hindi pa nagbibilang. I-tap ang Simulan ang pagsukat sa ibaba.</string>
+    <string name="coach_paused">Naka-pause. Hindi nagbibilang ng ulit.</string>
+    <string name="coach_tracking">Hinihintay ang tracking. Manatili sa harap ng camera.</string>
+    <string name="coach_step">Hakbang %1$d sa 4</string>
+    <string name="coach_start">Pumunta sa simula: %1$d° o mas mababa</string>
+    <string name="coach_reach">Abutin ang %1$d° o higit pa</string>
+    <string name="coach_hold">Hawakan diyan nang %1$s</string>
+    <string name="coach_return">Ngayon, bumalik sa %1$d° o mas mababa para mabilang</string>
+    <string name="coach_counted">Nabilang! %1$d sa %2$d</string>
+    <string name="coach_missed_range">Hindi nabilang. Abutin ang target at hawakan bago bumalik.</string>
+    <string name="coach_missed_fast">Hindi nabilang. Bagalan nang kaunti ang galaw.</string>
+    <string name="coach_missed_slow">Hindi nabilang. Masyadong natagalan, kaya magsimula muli.</string>
+    <string name="rep_sound_on">Naka-on ang boses</string>
+    <string name="rep_sound_off">Naka-off ang boses</string>
+    <string name="rep_sound_description">Pasalitang feedback pagkatapos ng bawat ulit</string>
+    <string name="cue_missed_range">Subukan ulit. Abutin ang target at hawakan.</string>
+    <string name="cue_missed_fast">Subukan ulit, mas mabagal nang kaunti.</string>
+    <string name="cue_missed_slow">Subukan ulit mula sa simula.</string>
+    <string-array name="cue_counted">
+        <item>Magaling!</item>
+        <item>Napakahusay!</item>
+        <item>Ayos!</item>
+        <item>Mahusay!</item>
+        <item>Galing mo!</item>
+    </string-array>
 </resources>

@@ -105,6 +105,14 @@ class MeasurementGeometryTest {
         assertEquals(0L,engine.snapshot.holdElapsedMs)
         assertEquals(MovementPhase.MOVING,engine.snapshot.phase)
     }
+    @Test fun guideAsksToHoldFromTheFirstFrameAtTheTarget() {
+        // Issue #95: on reaching the target the guide still said "Reach", so the patient was not told to hold.
+        val atTarget=AssessmentSnapshot(quality=TrackingQuality.READY,angleDegrees=95.0,phase=MovementPhase.MOVING,running=true,holdElapsedMs=0)
+        val guide=RepetitionGuide.of(ExerciseRules(peakHoldMs=1000),atTarget)
+        assertEquals(RepStep.HOLD,guide.step)
+        assertEquals(0.0,guide.holdProgress,0.0)
+        assertEquals(RepStep.REACH,RepetitionGuide.of(ExerciseRules(peakHoldMs=1000),atTarget.copy(angleDegrees=85.0)).step)
+    }
     @Test fun guideIsEmptyWithoutReliableTracking() {
         val guide=RepetitionGuide.of(ExerciseRules(),AssessmentSnapshot(quality=TrackingQuality.MULTIPLE_PEOPLE,angleDegrees=80.0))
         assertNull(guide.step); assertNull(guide.targetProgress)
