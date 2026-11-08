@@ -1,7 +1,8 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(25);
-insert into auth.users(id) values('50000000-0000-0000-0000-000000000001'),('50000000-0000-0000-0000-000000000002');
+-- Confirmed accounts: Motivance makes an account only once its email is confirmed.
+insert into auth.users(id,email_confirmed_at) values('50000000-0000-0000-0000-000000000001',now()),('50000000-0000-0000-0000-000000000002',now());
 insert into public.user_roles values('50000000-0000-0000-0000-000000000002','scheduler');
 
 -- Seeds.

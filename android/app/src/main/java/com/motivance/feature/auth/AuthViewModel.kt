@@ -16,7 +16,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 enum class AuthAction { SIGN_IN, REGISTER, CONFIRM, RESEND_CONFIRMATION, REQUEST_RECOVERY, RECOVER, REFRESH, SIGN_OUT }
-enum class AuthNotice { INVALID_EMAIL, PASSWORD_REQUIRED, CODE_REQUIRED, CONFIRM_EMAIL, RECOVERY_SENT, REQUEST_FAILED, SESSION_EXPIRED, EMAIL_UNCONFIRMED, INVALID_CODE, RATE_LIMITED, PASSWORD_POLICY }
+enum class AuthNotice { INVALID_EMAIL, PASSWORD_REQUIRED, CODE_REQUIRED, CONFIRM_EMAIL, RECOVERY_SENT, REQUEST_FAILED, SESSION_EXPIRED, EMAIL_UNCONFIRMED, INVALID_CODE, SIGNUP_CODE_EXPIRED, RATE_LIMITED, PASSWORD_POLICY }
 data class AuthState(val session: UserSession? = null, val busy: Boolean = false, val notice: AuthNotice? = null, val restoring: Boolean = false, val activeAction: AuthAction? = null)
 data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean = false, val failed: Boolean = false)
 private fun AuthAction.doneToast()=when(this) {
@@ -101,6 +101,8 @@ private fun AuthAction.doneToast()=when(this) {
                     action==AuthAction.REFRESH -> AuthNotice.SESSION_EXPIRED
                     e is RemoteFailure && (e.status==429 || e.code=="over_email_send_rate_limit") -> AuthNotice.RATE_LIMITED
                     e is RemoteFailure && e.code=="email_not_confirmed" -> AuthNotice.EMAIL_UNCONFIRMED
+                    // An expired sign-up is deleted, so only signing up again helps; a password reset can ask for a new code.
+                    e is RemoteFailure && e.code=="otp_expired" && action==AuthAction.CONFIRM -> AuthNotice.SIGNUP_CODE_EXPIRED
                     e is RemoteFailure && e.code=="otp_expired" -> AuthNotice.INVALID_CODE
                     e is RemoteFailure && e.code in setOf("weak_password","same_password") -> AuthNotice.PASSWORD_POLICY
                     else -> AuthNotice.REQUEST_FAILED

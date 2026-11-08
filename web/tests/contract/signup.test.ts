@@ -5,7 +5,8 @@ import { client, createUser, removeUsers, signedIn, signupLink, sql, type TestUs
 
 /**
  * Local Auth sends through a real mail account, so these never reach a send. The refusals fail in the database before any email,
- * and a successful account is made through the admin link, which writes through the same trigger and sends nothing.
+ * and a successful sign-up is made through the admin link, which goes through the same triggers and sends nothing. Motivance
+ * makes the account only when the code is entered, so these check the database both before and after the code.
  */
 describe('web sign-up on the local backend', () => {
   const tag = randomUUID().slice(0, 8)
@@ -37,14 +38,29 @@ describe('web sign-up on the local backend', () => {
     expect(error).not.toBeNull()
   })
 
-  it('makes a patient, and only a patient, with the agreement on record', async () => {
+  it('keeps no Motivance account until the code is entered, then makes a patient, and only a patient', async () => {
     const email = `motivance-web-signup-${randomUUID()}@example.test`
     const result = await signupLink(email, form('x').password, { patient_profile: { ...profileOf(form(`made_${tag}`)), role: 'admin' }, role: 'admin' })
     expect(result.status).toBe(200)
     const id = String(result.body.id)
     users.push({ id, email, password: form('x').password })
+    const records = () => sql(`select (select count(*) from public.profiles where id='${id}')||','||(select count(*) from public.user_roles where user_id='${id}')||','||(select count(*) from public.patients where id='${id}')||','||(select count(*) from public.patient_profiles where user_id='${id}')`)
+    expect(records()).toBe('0,0,0,0')
+    const { error } = await client().auth.verifyOtp({ email, token: String(result.body.email_otp), type: 'signup' })
+    expect(error).toBeNull()
+    expect(records()).toBe('1,1,1,1')
     expect(sql(`select string_agg(role,',') from public.user_roles where user_id='${id}'`)).toBe('patient')
     expect(sql(`select username||','||(consented_at is not null) from public.patient_profiles where user_id='${id}'`)).toBe(`made_${tag},true`)
+  })
+
+  it('refuses a username that a sign-up waiting for its code is holding', async () => {
+    const email = `motivance-web-signup-${randomUUID()}@example.test`
+    const result = await signupLink(email, form('x').password, { patient_profile: profileOf(form(`held_${tag}`)) })
+    expect(result.status).toBe(200)
+    users.push({ id: String(result.body.id), email, password: form('x').password })
+    const { error } = await attempt(`HELD_${tag}`)
+    expect(error).not.toBeNull()
+    expect(usernameRefused(error)).toBe(true)
   })
 
   it('cannot sign in until the code is entered, and then can', async () => {

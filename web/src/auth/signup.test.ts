@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { BLANK_SIGNUP, profileOf, signupProblems, stepReady, usernameRefused, type Signup } from './signup'
+import { BLANK_SIGNUP, codeFailureKey, profileOf, signupProblems, stepReady, usernameRefused, type Signup } from './signup'
 
 vi.mock('@/data/client', () => ({ supabase: vi.fn(), recoveryClient: vi.fn() }))
 
@@ -48,5 +48,11 @@ describe('patient sign-up follows SignupFlow.kt', () => {
     expect(usernameRefused({ status: 500, message: 'Something else' })).toBe(false)
     expect(usernameRefused({ status: 429, message: 'Database error' })).toBe(false)
     expect(usernameRefused(null)).toBe(false)
+  })
+
+  it('tells a person whose code is wrong or expired to sign up again, since an expired sign-up is deleted', () => {
+    expect(codeFailureKey({ status: 403, code: 'otp_expired' })).toBe('signup.codeExpired')
+    expect(codeFailureKey({ status: 429 })).toBe('errors.rateLimited')
+    expect(codeFailureKey(new TypeError('Failed to fetch'))).toBe('errors.offline')
   })
 })
