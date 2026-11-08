@@ -25,3 +25,13 @@ After the sender credentials were supplied locally, they were moved from `androi
 No real recipient was contacted. Hosted configuration application/read-back, real Gmail inbox delivery, actual code-expiry timing, real-provider throttling and physical-device transport remain unexecuted. Unit tests cover expiry/rate-limit feedback without claiming those provider checks passed. The earlier 31 backend checks used local capture before the real SMTP profile was applied; do not rerun synthetic email suites while real SMTP is active.
 
 Use [the SMTP setup procedure](../operations/AUTH-EMAIL.md) when reapplying the local profile or separately configuring a hosted project. Real inbox and physical-device acceptance remain unchecked in [POST-IMPLEMENTATION-CHECKLIST.md](POST-IMPLEMENTATION-CHECKLIST.md). S5 deployment work remains open. Changes remain local for the user's commit/push workflow.
+
+## Hosted application for issue #94 (2026-11-08)
+
+Hosted sign-up emailed a confirmation link while both apps asked for a code. A read-only check on the project before any change confirmed the issue's cause: link templates without `{{ .Token }}`, 8-digit codes valid for an hour, and no custom SMTP. The Site URL had already been changed to `https://motivance.vercel.app`.
+
+`configure_auth_email.py` now also sets the Site URL, from `PUBLIC_SITE_URL`, and refuses a missing or non-HTTPS value. Three new unit tests cover this, and all 10 script tests pass. `--target hosted --check-smtp --apply` then ran against the hosted project with the owner's approval. Gmail TLS authentication passed with no message sent, and the script's own read-back matched every submitted setting. A separate read-only check of non-secret fields showed both templates with the code and no link, 6-digit codes valid for 600 seconds, Gmail SMTP on port 587 with the Motivance sender, and the deployed Site URL.
+
+The apps needed no change. Both verify an entered code of any length with `verifyOtp`.
+
+Not executed: delivery to a real inbox, sign-up and recovery on the deployed web app and on Android, resend, and wrong or expired codes on the hosted project. These are in the follow-up checklist. The hosted email rate limit is still 2 per hour, which the setup does not change.

@@ -30,7 +30,7 @@ def load_settings(path):
             value=value.strip()
             if len(value)>=2 and value[0]==value[-1] and value[0] in ('"',"'"): value=value[1:-1]
             settings[key.strip()]=value
-    for key in ('SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASS','SMTP_FROM_EMAIL','SMTP_SENDER_NAME','SUPABASE_PROJECT_REF','SUPABASE_ACCESS_TOKEN'):
+    for key in ('SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASS','SMTP_FROM_EMAIL','SMTP_SENDER_NAME','SUPABASE_PROJECT_REF','SUPABASE_ACCESS_TOKEN','PUBLIC_SITE_URL'):
         if key in os.environ: settings[key]=os.environ[key]
     return settings
 
@@ -41,6 +41,8 @@ def validate(settings,target,secrets=False):
     missing=[k for k in ('SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_FROM_EMAIL') if not settings.get(k)]
     if target=='hosted' and not re.fullmatch('[a-z0-9]{20}',settings.get('SUPABASE_PROJECT_REF','')):
         missing.append('SUPABASE_PROJECT_REF (20-character project reference)')
+    if target=='hosted' and not re.fullmatch(r'https://[A-Za-z0-9.-]+(:\d+)?(/[^\s]*)?',settings.get('PUBLIC_SITE_URL','')):
+        missing.append('PUBLIC_SITE_URL (the deployed HTTPS web address)')
     if secrets:
         missing += [k for k in ('SMTP_PASS',) if not settings.get(k)]
         if target=='hosted' and not settings.get('SUPABASE_ACCESS_TOKEN'): missing.append('SUPABASE_ACCESS_TOKEN')
@@ -56,9 +58,13 @@ def validate(settings,target,secrets=False):
     for content in templates().values():
         if '{{ .Token }}' not in content: raise ConfigurationError('Email templates must contain the entered-code Token variable.')
 
+def site_url(settings):
+    """Auth's Site URL: the deployed web app, never the localhost default, without a trailing slash."""
+    return settings['PUBLIC_SITE_URL'].rstrip('/')
+
 def hosted_payload(settings):
     content=templates()
-    return {'external_email_enabled':True,'disable_signup':False,'mailer_autoconfirm':False,
+    return {'site_url':site_url(settings),'external_email_enabled':True,'disable_signup':False,'mailer_autoconfirm':False,
         'mailer_otp_length':6,'mailer_otp_exp':600,'smtp_max_frequency':60,
         'smtp_host':settings['SMTP_HOST'],'smtp_port':settings['SMTP_PORT'],
         'smtp_user':settings['SMTP_USER'],'smtp_pass':settings.get('SMTP_PASS',''),
@@ -83,7 +89,7 @@ def apply_hosted(settings):
     current=api(settings)
     for key in payload.keys()-{'smtp_pass'}:
         if str(current.get(key))!=str(payload[key]): raise ConfigurationError('Auth settings were submitted but read-back verification did not match: '+key)
-    print('Hosted SMTP, confirmation and password-reset templates applied and read back successfully. Inbox delivery remains to be tested.')
+    print('Hosted Site URL, SMTP, confirmation and password-reset templates applied and read back successfully. Inbox delivery remains to be tested.')
 
 def check_smtp(settings):
     context=ssl.create_default_context()

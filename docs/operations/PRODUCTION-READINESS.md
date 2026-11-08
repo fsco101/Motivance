@@ -31,7 +31,7 @@ The owner must approve actual retention, local data handling, encryption needs, 
 
 ## Hosted authentication and monitoring
 
-Use [the Auth email runbook](AUTH-EMAIL.md) for code templates and server-only SMTP setup. Gmail TLS authentication and local Docker SMTP configuration have passed; hosted configuration and inbox acceptance remain pending.
+Use [the Auth email runbook](AUTH-EMAIL.md) for code templates and server-only SMTP setup. Gmail TLS authentication and local Docker SMTP configuration have passed. Hosted configuration was applied and read back on 2026-11-08 (issue #94); inbox acceptance remains pending.
 
 Configure a custom SMTP provider, authenticated sender domain, provider-required DNS records and appropriate rate limits in hosted Supabase Auth. Configure confirmation and recovery templates to display `{{ .Token }}`; the app accepts entered codes and does not implement browser-link callbacks. Verify registration, confirmation, recovery, refresh, logout and delivery to non-team addresses on staging, then smoke-test production. Do not reuse the local mail viewer or the development `localhost` site URL as production settings. Configure a legitimate HTTPS site URL for the actual owner-controlled information site.
 

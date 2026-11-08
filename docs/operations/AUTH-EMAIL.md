@@ -15,7 +15,7 @@ The current local Docker Auth instance has been configured with the sender crede
 1. For a Gmail sender, enable Google 2-Step Verification and create an **App Password**, if permitted by the account. Use that instead of the normal account password. See [Google App Passwords](https://support.google.com/mail/answer/185833?hl=en).
 2. Copy `supabase/.env.example` to ignored `supabase/.env` if absent. Fill it locally in an editor. Keep credentials out of chat, Git, screenshots and `android/.env`.
 3. Set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER` and `SMTP_FROM_EMAIL` to the same full Gmail address, and `SMTP_PASS` to the App Password. Port 587 uses STARTTLS; port 465 uses implicit TLS. See [Google SMTP settings](https://developers.google.com/workspace/gmail/imap/imap-smtp).
-4. For hosted setup, also fill `SUPABASE_PROJECT_REF` and a personal access token in `SUPABASE_ACCESS_TOKEN`. These are operator credentials, never mobile configuration. Alternatively configure the same values and templates directly in the project's Auth settings using [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+4. For hosted setup, also fill `SUPABASE_PROJECT_REF`, a personal access token in `SUPABASE_ACCESS_TOKEN`, and `PUBLIC_SITE_URL`, the deployed HTTPS web address that becomes Auth's Site URL. The token is an operator credential, never mobile configuration. Alternatively configure the same values and templates directly in the project's Auth settings using [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
 
 The script also supports a domain email provider's TLS SMTP credentials. Choose a sender/provider appropriate for deployment volume. No subscription is purchased by setup.
 
@@ -37,7 +37,7 @@ Apply to the selected hosted project:
 python scripts/configure_auth_email.py --target hosted --check-smtp --apply
 ```
 
-Hosted setup enables email signup, requires confirmation, installs both code templates and reads back nonsecret settings. Other Auth configuration is preserved. Passwords, tokens and raw CLI/API responses are withheld from output. Read-back verifies configuration, not inbox delivery. Review the project reference before applying. The script uses the official [Auth configuration API](https://supabase.com/docs/reference/api/v1-update-auth-service-config).
+Hosted setup enables email signup, requires confirmation, installs both code templates, sets the Site URL from `PUBLIC_SITE_URL` and reads back nonsecret settings. It refuses a missing or non-HTTPS address, so the `http://localhost:3000` default can never be applied. Other Auth configuration is preserved. Passwords, tokens and raw CLI/API responses are withheld from output. Read-back verifies configuration, not inbox delivery. Review the project reference before applying. The script uses the official [Auth configuration API](https://supabase.com/docs/reference/api/v1-update-auth-service-config).
 
 For local Docker with real mail delivery:
 
@@ -46,6 +46,12 @@ python scripts/configure_auth_email.py --target local --check-smtp --apply
 ```
 
 Local setup stops/starts the stack without resetting its database. It temporarily supplies an SMTP profile through environment references, then restores `supabase/config.toml`. Running containers retain the applied settings; a subsequent ordinary start uses the tracked capture profile. Rerun setup after restarting if real local mail is needed. If startup fails, the config is restored; `npx --yes supabase@2.20.12 start` starts the capture profile. Never use `db reset` for an email configuration change.
+
+## Hosted project state
+
+On 2026-11-08 the setup was applied to the hosted project, for issue #94. Before that, the project still had Supabase's defaults: link templates without `{{ .Token }}`, 8-digit codes valid for an hour and no custom SMTP. Sign-up therefore emailed a link while both apps waited for a code. The read-back after applying shows both templates with the code, 6-digit codes valid for 10 minutes, Gmail SMTP on port 587 and Site URL `https://motivance.vercel.app`. No message was sent, so inbox delivery is still untested.
+
+The hosted email rate limit, `rate_limit_email_sent`, is still Supabase's default of 2 per hour for the whole project. The script does not change it. Raise it under Auth rate limits before more than a couple of people sign up or reset a password in the same hour, within what the sender allows.
 
 ## Delivery acceptance
 

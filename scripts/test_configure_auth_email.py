@@ -15,7 +15,8 @@ class AuthEmailConfigurationTest(unittest.TestCase):
         return dict(SMTP_HOST='smtp.gmail.com', SMTP_PORT='587',
                     SMTP_USER='fixture@gmail.com', SMTP_PASS='secret app password',
                     SMTP_FROM_EMAIL='fixture@gmail.com', SMTP_SENDER_NAME='Motivance',
-                    SUPABASE_PROJECT_REF='a' * 20, SUPABASE_ACCESS_TOKEN='private-pat')
+                    SUPABASE_PROJECT_REF='a' * 20, SUPABASE_ACCESS_TOKEN='private-pat',
+                    PUBLIC_SITE_URL='https://motivance.example/')
 
     def test_preview_does_not_authenticate_or_mutate_backend(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -48,6 +49,20 @@ class AuthEmailConfigurationTest(unittest.TestCase):
         self.assertEqual(600,payload['mailer_otp_exp'])
         for kind in ('confirmation','recovery'):
             self.assertIn('{{ .Token }}',payload['mailer_templates_'+kind+'_content'])
+
+    def test_hosted_points_auth_at_the_deployed_site(self):
+        # The default Site URL is http://localhost:3000, which is where hosted Auth sent people (issue #94).
+        payload=email.hosted_payload(self.settings())
+        self.assertEqual('https://motivance.example',payload['site_url'])
+
+    def test_hosted_refuses_a_missing_or_insecure_site_url(self):
+        for value in ('','http://localhost:3000','motivance.example','https://'):
+            settings=self.settings();settings['PUBLIC_SITE_URL']=value
+            with self.assertRaises(email.ConfigurationError,msg=value): email.validate(settings,'hosted')
+
+    def test_local_setup_does_not_need_a_site_url(self):
+        settings=self.settings();del settings['PUBLIC_SITE_URL']
+        email.validate(settings,'local',secrets=True)
 
     def test_local_restart_failure_restores_original_config_and_redacts_cli(self):
         with tempfile.TemporaryDirectory() as directory:
