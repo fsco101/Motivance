@@ -39,13 +39,25 @@ export async function revokePatientLink(db: Db, patientId: string) {
 }
 
 export type PrescriptionDraft = {
-  exerciseId: string; side: 'left' | 'right'; focus: Joint | null; low: number; high: number; repetitions: number
+  /** 'bilateral' is both sides, left then right, each recorded as its own session. */
+  exerciseId: string; side: 'left' | 'right' | 'bilateral'; focus: Joint | null; low: number; high: number; repetitions: number
   minimumCycleMs: number; maximumCycleMs: number; peakHoldMs: number; maxTrunkLean: number; confidence: number
+  /** A time for each side; measuring continues past the target until it is used up. Absent or null means no limit. */
+  sideSeconds?: number | null
 }
 export type Timing = Pick<PrescriptionDraft, 'minimumCycleMs' | 'maximumCycleMs' | 'peakHoldMs' | 'maxTrunkLean'>
 
 export const validRange = (low: number, high: number) => low >= 0 && high <= 180 && high > low + 10
 export const validRepetitions = (count: number) => Number.isInteger(count) && count >= 1 && count <= 1000
+
+/** The editor's time per side, as on Android: 15 s to 30 min in 15 s steps, starting at 1:00. */
+export const SIDE_SECONDS = { min: 15, max: 1800, step: 15, initial: 60 } as const
+
+/** No time, or whole seconds the server accepts. */
+export const validSideSeconds = (value: number | null) => value === null || (Number.isInteger(value) && value >= SIDE_SECONDS.min && value <= SIDE_SECONDS.max)
+
+/** A time per side as people read it: 90 is "1:30". */
+export const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
 const decimal = (text: string) => (text.trim() ? Number(text) : Number.NaN)
 
@@ -79,6 +91,7 @@ export async function publishPrescription(db: Db, request: PrescriptionRequest) 
     max_trunk_lean_degrees: request.maxTrunkLean, confidence: request.confidence,
   }
   if (request.focus) parameters.focus_joint = request.focus
+  if (request.sideSeconds != null) parameters.side_seconds = request.sideSeconds
   must(await db.rpc('publish_prescription', {
     p_assignment: request.assignmentId, p_version: request.requestId, p_patient: request.patientId, p_exercise: request.exerciseId, p_side: request.side,
     p_low: request.low, p_high: request.high, p_repetitions: request.repetitions, p_parameters: parameters,

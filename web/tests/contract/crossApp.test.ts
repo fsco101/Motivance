@@ -36,7 +36,7 @@ describe('what the web publishes, Android can run', () => {
       minimumCycleMs: 750, maximumCycleMs: 20000, peakHoldMs: 250, maxTrunkLean: 15, confidence: 0.7,
     })
     await publishPrescription(db, {
-      assignmentId: customAssignment, requestId: customVersion, patientId: patient.id, exerciseId: custom, side: 'left', focus: null, low: 15, high: 80, repetitions: 8,
+      assignmentId: customAssignment, requestId: customVersion, patientId: patient.id, exerciseId: custom, side: 'bilateral', sideSeconds: 90, focus: null, low: 15, high: 80, repetitions: 8,
       minimumCycleMs: 600, maximumCycleMs: 30000, peakHoldMs: 100, maxTrunkLean: 20, confidence: 0.7,
     })
 

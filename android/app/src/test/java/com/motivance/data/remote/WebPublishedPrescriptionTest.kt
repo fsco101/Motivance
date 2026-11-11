@@ -41,7 +41,10 @@ class WebPublishedPrescriptionTest {
         assertEquals("Seated knee extension",r.exerciseName)
         assertEquals(BodyJoint.KNEE,r.measuredJoint)
         assertEquals(BodyJoint.KNEE,r.focusJoint)
+        // Published by the web as both sides with a time per side: the phone starts on the left.
         assertEquals(BodySide.LEFT,r.side)
+        assertTrue(r.bilateral)
+        assertEquals(90,r.sideSeconds)
     }
 
     @Test fun bothLanguagesReachThePatient() {

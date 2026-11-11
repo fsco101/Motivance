@@ -11,7 +11,7 @@ const session = (id: string, patientId: string, startedAt: string, m = measureme
   id, patientId, startedAt, endedAt: startedAt, status: 'completed', modelVersion: 'm', algorithmVersion: 'a', measurements: [m],
   prescription: { id: 'rx', assignmentId: 'a', version: 1, exerciseVersionId: 'v', exerciseName: 'Elbow flexion', algorithm: 'elbow-flexion-v1', side: 'left', low: 20, high: 120, targetRepetitions: 5 },
 })
-const plan: PlanSummary = { assignmentId: 'a', versionId: 'pv', patientId: 'p1', therapistId: 't1', exerciseId: 'v', version: 1, side: 'left', low: 30, high: 90, repetitions: 5, parameters: {} }
+const plan: PlanSummary = { assignmentId: 'a', versionId: 'pv', patientId: 'p1', therapistId: 't1', exerciseId: 'v', version: 1, side: 'left', low: 30, high: 90, repetitions: 5, parameters: {}, sideSeconds: null }
 const catalogue: CatalogueExercise[] = [{ id: 'v', name: 'Shoulder abduction', algorithm: 'shoulder-abduction-v1', instructions: '', exerciseId: 'e', custom: false, selectable: true, retired: false, joint: null }]
 
 describe('patient cards', () => {

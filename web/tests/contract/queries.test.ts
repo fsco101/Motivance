@@ -173,6 +173,27 @@ describe('web queries on the local backend', () => {
     expect((await loadHistory(db, { patientId: patient.id, from: '2020-01-01', through: '2099-01-01' })).sessions).toHaveLength(1)
   })
 
+  it('a both-sides plan files each session under the side measured', async () => {
+    const both = await createUser(['patient'], 'Both Sides Patient')
+    users.push(both)
+    await link(therapist, both)
+    const db = await signedIn(therapist)
+    const version = randomUUID()
+    await publishPrescription(db, {
+      assignmentId: randomUUID(), requestId: version, patientId: both.id, exerciseId: ELBOW, side: 'bilateral', sideSeconds: 90, focus: null, low: 20, high: 90, repetitions: 5,
+      minimumCycleMs: 600, maximumCycleMs: 30000, peakHoldMs: 100, maxTrunkLean: 20, confidence: 0.7,
+    })
+    const rules = { kind: 'ELBOW_FLEXION', low: 20, high: 90, target: 5, focusJoint: 'ELBOW', min: 10, max: 60, completed: 5 }
+    await ingestSession(both, version, { ...rules, side: 'LEFT', extra: { bilateral: true, sideSeconds: 90 } })
+    await ingestSession(both, version, { ...rules, side: 'RIGHT', extra: { bilateral: true, sideSeconds: 90 } })
+    const left = (await loadHistory(db, { patientId: both.id, side: 'left' })).sessions
+    expect(left).toHaveLength(1)
+    expect(left[0]?.measurements.map((m) => m.side)).toEqual(['left'])
+    expect(left[0]?.prescription?.side).toBe('bilateral')
+    expect((await loadHistory(db, { patientId: both.id, side: 'right' })).sessions.map((s) => s.measurements[0]?.side)).toEqual(['right'])
+    expect((await loadHistory(db, { patientId: both.id })).sessions).toHaveLength(2)
+  })
+
   it('makes a retried publish safe: the same request stays one version', async () => {
     const db = await signedIn(therapist)
     const request = {

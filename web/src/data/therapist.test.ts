@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readTiming, secondsText, validDraft, validRange, validRepetitions } from './therapist'
+import { clock, readTiming, secondsText, validDraft, validRange, validRepetitions, validSideSeconds } from './therapist'
 
 // Issue #97: therapists type seconds; the server still stores whole milliseconds.
 const timing = { minimum: '0.6', maximum: '30', hold: '0.1', lean: '20' }
@@ -11,6 +11,15 @@ describe('prescription limits match publish_prescription', () => {
     expect(validRange(20, 30)).toBe(false)
     expect(validRange(-1, 90)).toBe(false)
     expect(validRange(20, 181)).toBe(false)
+  })
+
+  it.each([[0, '0:00'], [15, '0:15'], [90, '1:30'], [1800, '30:00']])('shows a time of %i s as %s', (seconds, text) => {
+    expect(clock(seconds)).toBe(text)
+  })
+
+  it('takes no time, or whole seconds from 15 s to 30 min, as the server does', () => {
+    expect([null, 15, 1800].every(validSideSeconds)).toBe(true)
+    expect([14, 1801, 20.5].some(validSideSeconds)).toBe(false)
   })
 
   it('needs 1 to 1000 whole repetitions', () => {

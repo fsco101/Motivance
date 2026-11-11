@@ -5,11 +5,12 @@
     "prescription_versions": [
       {
         "id": "custom-version",
-        "side": "left",
+        "side": "bilateral",
         "version": 1,
         "parameters": {
           "confidence": 0.7,
           "peak_hold_ms": 100,
+          "side_seconds": 90,
           "maximum_cycle_ms": 30000,
           "minimum_cycle_ms": 600,
           "max_trunk_lean_degrees": 20

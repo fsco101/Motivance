@@ -12,6 +12,8 @@ type Db = SupabaseClient<Database>
 export type MyExercise = {
   assignmentId: string; versionId: string; exerciseVersionId: string; name: string; instructions: string; side: string
   low: number; high: number; repetitions: number; focus: string | null; version: number
+  /** The time for each side, or null without one. */
+  sideSeconds: number | null
 }
 
 const PLAN_SELECT = 'id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))'
@@ -38,6 +40,7 @@ export function decodeExercises(rows: readonly RawPlan[], language: string): MyE
       instructions: language === 'fil' ? text(definition.instructions_fil) || english : english,
       side: latest.side, low: latest.minimum_degrees, high: latest.maximum_degrees, repetitions: latest.target_repetitions,
       focus: text(parameters.focus_joint) || null, version: latest.version,
+      sideSeconds: typeof parameters.side_seconds === 'number' ? parameters.side_seconds : null,
     }]
   })
 }
