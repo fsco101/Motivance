@@ -53,6 +53,7 @@ import com.motivance.data.local.ExerciseJson
 import androidx.compose.ui.semantics.*
 import com.motivance.domain.Landmark
 import com.motivance.domain.*
+import com.motivance.feature.rehabilitation.sideText
 import com.motivance.BuildConfig
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -195,7 +196,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             exercise.cached.filter {it.expiresAt>System.currentTimeMillis() && it.versionId!=exercise.rules.prescriptionVersionId}.forEach { cached ->
                 val rules=ExerciseJson.rules(cached.rulesJson)
                 OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) {
-                    Text(stringResource(R.string.use_cached_prescription,rules.displayName(),stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)))
+                    Text(stringResource(R.string.use_cached_prescription,rules.displayName(),rules.sideText()))
                 }
             }
         }

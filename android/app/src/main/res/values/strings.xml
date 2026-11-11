@@ -944,4 +944,15 @@
         <item>Well done!</item>
         <item>Good job!</item>
     </string-array>
+    <!-- Both sides of one exercise and a time per side -->
+    <string name="both_sides">Both sides</string>
+    <string name="ui_set_time">Set a time</string>
+    <string name="ui_time">Time</string>
+    <string name="ui_time_per_side">Time per side</string>
+    <string name="ui_time_help">Measuring continues after the target until the time is up.</string>
+    <string name="ui_time_per_side_value">%1$s per side</string>
+    <string name="ui_less_time">Less time</string>
+    <string name="ui_more_time">More time</string>
+    <string name="ui_review_time">Time</string>
+    <string name="ui_no_time_limit">No time limit</string>
 </resources>

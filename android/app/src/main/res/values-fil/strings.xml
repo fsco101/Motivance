@@ -944,4 +944,15 @@
         <item>Mahusay!</item>
         <item>Galing mo!</item>
     </string-array>
+    <!-- Magkabilang panig ng isang ehersisyo at oras bawat panig -->
+    <string name="both_sides">Magkabilang panig</string>
+    <string name="ui_set_time">Magtakda ng oras</string>
+    <string name="ui_time">Oras</string>
+    <string name="ui_time_per_side">Oras bawat panig</string>
+    <string name="ui_time_help">Tuloy ang pagsukat kahit naabot na ang target hanggang matapos ang oras.</string>
+    <string name="ui_time_per_side_value">%1$s bawat panig</string>
+    <string name="ui_less_time">Bawasan ang oras</string>
+    <string name="ui_more_time">Dagdagan ang oras</string>
+    <string name="ui_review_time">Oras</string>
+    <string name="ui_no_time_limit">Walang takdang oras</string>
 </resources>

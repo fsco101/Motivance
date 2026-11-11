@@ -6,6 +6,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -189,14 +190,14 @@ internal fun RehabAction.loadingLabel()=when(this) {
             ExerciseGlyph(exercise?.guide(side,p.low,p.high) ?: guideMotion(BodyJoint.ELBOW,side,low=p.low,high=p.high))
             Column(Modifier.weight(1f)) {
                 Text(exercise?.name ?: stringResource(R.string.history_unknown_exercise),style=MaterialTheme.typography.titleMedium)
-                Text(stringResource(if(p.side=="right") R.string.right_side else R.string.left_side),style=MaterialTheme.typography.bodySmall,
-                    color=MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(sideText(p.side),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
             }
             StatusPill(stringResource(R.string.ui_version_label,p.version),PillTone.PRIMARY)
         }
         FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
             StatusPill(stringResource(R.string.ui_range_value,degrees(p.low),degrees(p.high)),PillTone.POSITIVE)
             StatusPill(stringResource(R.string.ui_reps_value,p.repetitions),PillTone.POSITIVE)
+            sideTimeText(runCatching {org.json.JSONObject(p.parameters).optInt("side_seconds",0)}.getOrDefault(0).takeIf {it>0},p.side=="bilateral")?.let {StatusPill(it,PillTone.POSITIVE)}
             StatusPill(stringResource(R.string.ui_focus_value,stringResource(focus?.label() ?: R.string.focus_automatic)))
         }
         OutlinedButton(onEdit,enabled=enabled,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {
@@ -230,7 +231,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
     prescriptions.forEach {p ->
         val rules=ExerciseJson.rules(p.rulesJson)
         val valid=p.expiresAt>System.currentTimeMillis()
-        val side=stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)
+        val side=rules.sideText()
         var details by rememberSaveable(p.versionId) {mutableStateOf(false)}
         ClinicalCard(accent=if(valid) MaterialTheme.colorScheme.primary else null) {
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
@@ -245,6 +246,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
             FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                 StatusPill(stringResource(R.string.ui_range_value,degrees(rules.lowDegrees),degrees(rules.highDegrees)),PillTone.POSITIVE)
                 StatusPill(stringResource(R.string.ui_reps_value,rules.targetRepetitions),PillTone.POSITIVE)
+                sideTimeText(rules.sideSeconds,rules.bilateral)?.let {StatusPill(it,PillTone.POSITIVE)}
             }
             if(p.instructions.isNotBlank()) Text(p.instructions,style=MaterialTheme.typography.bodyLarge)
             Text(stringResource(R.string.assigned_focus,side,stringResource(rules.focusJoint.label())),style=MaterialTheme.typography.bodySmall)
@@ -289,6 +291,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
     var reps by rememberSaveable {mutableStateOf(existing?.repetitions?.toString() ?: "5")}
     val parameters=remember(existing) {org.json.JSONObject(existing?.parameters ?: "{}")}
     var focusJoint by rememberSaveable {mutableStateOf(parameters.optString("focus_joint",""))}
+    var timed by rememberSaveable {mutableStateOf(parameters.has("side_seconds"))}
+    var sideSeconds by rememberSaveable {mutableStateOf(parameters.optInt("side_seconds",SideSet.DEFAULT_SECONDS))}
     // Timing is typed and shown in seconds; the prescription still stores milliseconds (issue #97).
     var minimum by rememberSaveable {mutableStateOf(Seconds.text(parameters.optLong("minimum_cycle_ms",600)))}
     var maximum by rememberSaveable {mutableStateOf(Seconds.text(parameters.optLong("maximum_cycle_ms",30000)))}
@@ -310,7 +314,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
     val repsValid=r!=null && r in 1..1000
     val timingValid=min!=null && max!=null && peak!=null && trunk!=null && min in 100..30000 && max>min && max<=300000 && peak in 0..5000 && trunk.isFinite() && trunk in 0.0..90.0
     val valid=patient.isNotBlank() && exercise.isNotBlank() && rangeValid && repsValid && timingValid && runCatching {
-        ExerciseRules(lowDegrees=l!!,highDegrees=h!!,targetRepetitions=r!!,minimumCycleMs=min!!,maximumCycleMs=max!!,peakHoldMs=peak!!,maxTrunkLeanDegrees=trunk!!)
+        ExerciseRules(lowDegrees=l!!,highDegrees=h!!,targetRepetitions=r!!,minimumCycleMs=min!!,maximumCycleMs=max!!,peakHoldMs=peak!!,maxTrunkLeanDegrees=trunk!!,sideSeconds=sideSeconds.takeIf {timed})
     }.isSuccess
 
     // Who and which version this assignment applies to.
@@ -349,7 +353,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
 
     StepCard(2,R.string.ui_step_side,R.string.ui_step_side_help,complete=true) {
         Row(Modifier.fillMaxWidth().selectableGroup(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-            listOf("left" to R.string.left_side,"right" to R.string.right_side).forEach {(value,label) ->
+            listOf("left" to R.string.left_side,"right" to R.string.right_side,"bilateral" to R.string.both_sides).forEach {(value,label) ->
                 SelectionTile(side==value,{side=value; changed()},stringResource(label),Modifier.weight(1f),enabled=enabled)
             }
         }
@@ -390,6 +394,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
             color=if(rangeValid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
         RepetitionStepper(reps,repsValid,enabled) {reps=it; changed()}
         if(!repsValid) Text(stringResource(R.string.ui_reps_error),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
+        SideTimeStepper(sideSeconds,timed,side=="bilateral",enabled,{timed=it; changed()}) {sideSeconds=it; changed()}
     }
 
     ClinicalCard {
@@ -417,13 +422,14 @@ internal fun RehabAction.loadingLabel()=when(this) {
 
     ClinicalCard(accent=MaterialTheme.colorScheme.secondary) {
         Text(stringResource(R.string.ui_review_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.semantics {heading()})
-        val sideText=stringResource(if(side=="right") R.string.right_side else R.string.left_side)
+        val sideText=sideText(side)
         val focusText=stringResource(focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it).label()} ?: R.string.focus_automatic)
         DetailRow(stringResource(R.string.ui_review_patient),chosenPatient?.name?.ifBlank {null} ?: patient.take(8).ifBlank {"—"})
         DetailRow(stringResource(R.string.ui_review_exercise),chosenExercise?.name ?: "—")
         DetailRow(stringResource(R.string.ui_review_side),"$sideText · $focusText")
         DetailRow(stringResource(R.string.ui_review_targets),
             if(rangeValid && repsValid) stringResource(R.string.ui_review_targets_value,degrees(l!!),degrees(h!!),r!!) else "—")
+        DetailRow(stringResource(R.string.ui_review_time),sideTimeText(sideSeconds.takeIf {timed},side=="bilateral") ?: stringResource(R.string.ui_no_time_limit))
         Surface(color=MaterialTheme.colorScheme.surfaceContainerLow,shape=MaterialTheme.shapes.small) {
             Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Default.Info,null,Modifier.size(18.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -432,7 +438,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
             }
         }
         if(!valid) Text(stringResource(R.string.ui_review_incomplete),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
-        ActionButton(R.string.publish_prescription,{onPublish(PrescriptionDraft(assignmentId,requestId,patient,exercise,BodySide.valueOf(side.uppercase()),l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7),focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it)}))},enabled=valid && !state.busy,busy=state.activeAction==RehabAction.PRESCRIBE,busyLabel=R.string.ui_publishing_prescription)
+        ActionButton(R.string.publish_prescription,{onPublish(PrescriptionDraft(assignmentId,requestId,patient,exercise,if(side=="right") BodySide.RIGHT else BodySide.LEFT,l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7),focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it)},bilateral=side=="bilateral",sideSeconds=sideSeconds.takeIf {timed}))},enabled=valid && !state.busy,busy=state.activeAction==RehabAction.PRESCRIBE,busyLabel=R.string.ui_publishing_prescription)
         if(state.failed && !state.busy) FeedbackNotice(R.string.connected_failed,error=true)
     }
 }
@@ -460,6 +466,38 @@ internal fun RehabAction.loadingLabel()=when(this) {
     OutlinedTextField(value,{set(it.replace(',','.').filter {c -> c.isDigit() || c=='.'})},modifier,enabled=enabled,label={Text(stringResource(label))},
         suffix={Text(suffix)},isError=error,singleLine=true,shape=MaterialTheme.shapes.small,
         supportingText=help?.let {{Text(stringResource(it))}},keyboardOptions=KeyboardOptions(keyboardType=type))
+}
+
+/** "left", "right" or "bilateral", as the server stores a prescription's side. */
+@Composable internal fun sideText(side:String)=stringResource(when(side) {"right" -> R.string.right_side; "bilateral" -> R.string.both_sides; else -> R.string.left_side})
+
+/** The plan's side: a both-sides plan reads as both, whichever side is being measured. */
+@Composable internal fun ExerciseRules.sideText()=stringResource(if(bilateral) R.string.both_sides else if(side==BodySide.RIGHT) R.string.right_side else R.string.left_side)
+
+/** "2:00 per side" for both sides, "1:30" for one, or null without a time. */
+@Composable internal fun sideTimeText(seconds:Int?,both:Boolean):String?=seconds?.let {
+    val clock=Seconds.clock(it.toLong())
+    if(both) stringResource(R.string.ui_time_per_side_value,clock) else clock
+}
+
+/** An optional time for each side. Measuring continues past the target until it is used up. */
+@Composable private fun SideTimeStepper(seconds:Int,timed:Boolean,both:Boolean,enabled:Boolean,onTimed:(Boolean)->Unit,set:(Int)->Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min=52.dp).toggleable(timed,enabled=enabled,role=Role.Switch,onValueChange=onTimed),
+        verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.ui_set_time),Modifier.weight(1f),style=MaterialTheme.typography.titleSmall)
+        Switch(timed,null,enabled=enabled)
+    }
+    if(!timed) return
+    Text(stringResource(if(both) R.string.ui_time_per_side else R.string.ui_time),style=MaterialTheme.typography.labelLarge)
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+        val less=stringResource(R.string.ui_less_time)
+        FilledTonalIconButton({set((seconds-SideSet.STEP_SECONDS).coerceIn(SideSet.MIN_SECONDS,SideSet.MAX_SECONDS))},enabled=enabled && seconds>SideSet.MIN_SECONDS,
+            modifier=Modifier.size(52.dp).semantics {contentDescription=less}) {Text("−",style=MaterialTheme.typography.titleLarge)}
+        Text(Seconds.clock(seconds.toLong()),Modifier.weight(1f).semantics {liveRegion=LiveRegionMode.Polite},style=MaterialTheme.typography.headlineMedium,textAlign=TextAlign.Center)
+        FilledTonalIconButton({set((seconds+SideSet.STEP_SECONDS).coerceIn(SideSet.MIN_SECONDS,SideSet.MAX_SECONDS))},enabled=enabled && seconds<SideSet.MAX_SECONDS,
+            modifier=Modifier.size(52.dp)) {Icon(Icons.Default.Add,stringResource(R.string.ui_more_time))}
+    }
+    Text(stringResource(R.string.ui_time_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable private fun RepetitionStepper(reps:String,valid:Boolean,enabled:Boolean,set:(String)->Unit) {

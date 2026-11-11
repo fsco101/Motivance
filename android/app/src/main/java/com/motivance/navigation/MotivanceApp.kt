@@ -591,7 +591,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
 @Composable private fun TodayPlan(next:CachedPrescription,count:Int,start:()->Unit,all:()->Unit) {
     val rules=remember(next.rulesJson) {ExerciseJson.rules(next.rulesJson)}
     val name=rules.displayName()
-    val side=stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)
+    val side=rules.sideText()
     Surface(Modifier.fillMaxWidth(),shape=MaterialTheme.shapes.extraLarge,color=Motion.Ink,contentColor=Color.White) {
         Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
             Text(stringResource(R.string.today_exercise),style=MaterialTheme.typography.titleSmall,color=Motion.NightInk)
