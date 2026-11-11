@@ -59,6 +59,7 @@ import com.motivance.feature.booking.*
 import com.motivance.feature.notifications.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.ExerciseSessionViewModel
+import com.motivance.feature.exercise.SideResult
 import com.motivance.feature.rehabilitation.*
 import android.Manifest
 import android.os.Build
@@ -259,7 +260,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
             when(page) {
                 "SETUP" -> CameraSetup(local.rules) { route="CAMERA" }
                 "CHECK_COMPLETE" -> SessionComplete(local.saved,local.metrics.completed,local.rules.targetRepetitions,local.metrics.romDegrees,
-                    local.metrics.incomplete,local.metrics.durationMs,connected.outbox.firstOrNull {it.sessionId==local.id}?.state,
+                    local.metrics.incomplete,local.metrics.durationMs,connected.outbox.firstOrNull {it.sessionId==local.id}?.state,local.sides,
                     again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"})
                 "PROFILE" -> {
                     PageHeader(R.string.nav_profile,R.string.account_and_access)
@@ -544,7 +545,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
 
 /** Closing screen for a camera session: the arc fills to the share of target repetitions completed. */
 @Composable private fun SessionComplete(saved:Boolean,completed:Int,target:Int,rom:Double?,incomplete:Int,durationMs:Long,sync:String?,
-    again:()->Unit,history:()->Unit,done:()->Unit) {
+    sides:List<SideResult>,again:()->Unit,history:()->Unit,done:()->Unit) {
     val haptics=rememberHaptics()
     LaunchedEffect(saved) {if(saved) haptics.confirm()}
     PageHeader(R.string.camera_check_complete,if(saved) R.string.session_saved_local else R.string.camera_preview_only)
@@ -566,6 +567,12 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
                 StatBlock(R.string.calc_session_rom,rom?.let {"%.1f°".format(it)} ?: "—",Modifier.weight(1f))
                 StatBlock(R.string.calc_not_counted,incomplete.toString(),Modifier.weight(1f))
                 StatBlock(R.string.stat_active_time,stringResource(R.string.stat_seconds,(durationMs/1000).toInt()),Modifier.weight(1f))
+            }
+            // A set's sides each have their own result; the numbers above are the last side's.
+            if(sides.size>=2) sides.forEach {side ->
+                Text(stringResource(R.string.set_side_result,stringResource(if(side.side==BodySide.RIGHT) R.string.right_side else R.string.left_side),
+                    side.metrics.completed,side.target,side.metrics.romDegrees?.let {"%.1f°".format(it)} ?: "\u2014",stringResource(R.string.stat_seconds,(side.metrics.durationMs/1000).toInt())),
+                    style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurface,modifier=Modifier.fillMaxWidth())
             }
             sync?.let {Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center) {StatusPill(syncLabel(it),if(it=="SYNCED") PillTone.POSITIVE else PillTone.NEUTRAL)}}
         } else Text(stringResource(R.string.no_clinical_record),style=MaterialTheme.typography.bodyMedium,textAlign=TextAlign.Center,modifier=Modifier.fillMaxWidth())

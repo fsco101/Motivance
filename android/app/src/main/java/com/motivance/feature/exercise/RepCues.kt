@@ -5,9 +5,13 @@ import android.content.res.Configuration
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import com.motivance.R
 import com.motivance.assessment.RepOutcome
+import com.motivance.domain.BodySide
 import com.motivance.domain.RepFeedback
 import java.util.Locale
 import kotlin.random.Random
@@ -44,9 +48,14 @@ object CueVoice {
 internal class RepCuePlayer(context:Context,appLanguage:String) {
     private val app=context.applicationContext
     private var script:RepCueScript?=null
+    private var setLines:SetCueLines?=null
+    private val main=Handler(Looper.getMainLooper())
+    /** Called once the next-side announcement has been spoken, so the countdown never talks over it. */
+    private var announced:(()->Unit)?=null
     private var tone:ToneGenerator?=null
     private var speech:TextToSpeech?=null
     private var released=false
+    private companion object {const val SIDE_DONE="side-done"}
 
     init {
         // With no speech engine installed, Android reports the failure before the constructor returns.
@@ -62,7 +71,15 @@ internal class RepCuePlayer(context:Context,appLanguage:String) {
             return
         }
         engine.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        engine.setOnUtteranceProgressListener(object:UtteranceProgressListener() {
+            override fun onStart(id:String?) {}
+            override fun onDone(id:String?) {if(id==SIDE_DONE) main.post {announced?.invoke(); announced=null}}
+            override fun onStop(id:String?,interrupted:Boolean) {onDone(id)}
+            @Deprecated("Replaced by onError(String, Int)") override fun onError(id:String?) {onDone(id)}
+            override fun onError(id:String?,errorCode:Int) {onDone(id)}
+        })
         script=scriptIn(choice.text)
+        setLines=setLinesIn(choice.text)
     }
 
     private fun scriptIn(language:String):RepCueScript {
@@ -74,6 +91,29 @@ internal class RepCuePlayer(context:Context,appLanguage:String) {
             RepFeedback.TIMED_OUT to words.getString(R.string.cue_missed_slow)))
     }
 
+    private fun setLinesIn(language:String):SetCueLines {
+        val config=Configuration(app.resources.configuration).apply {setLocale(Locale.forLanguageTag(language))}
+        val words=app.createConfigurationContext(config).resources
+        return SetCueLines(words.getString(R.string.cue_target_keep_going),words.getString(R.string.cue_side_done),words.getString(R.string.cue_go),
+            words.getString(R.string.cue_set_complete),mapOf(BodySide.LEFT to words.getString(R.string.left_side),BodySide.RIGHT to words.getString(R.string.right_side)))
+    }
+
+    /**
+     * Speaks a set announcement after whatever is already playing, so it never cuts off the last repetition's result.
+     * [finished] runs once a next-side announcement is over; without a voice there is nothing to wait for.
+     */
+    fun announce(cue:SetCue,exerciseName:String,finished:()->Unit) {
+        val lines=setLines
+        val engine=speech
+        if(lines!=null && engine!=null) {
+            if(cue is SetCue.SideDone) announced=finished
+            engine.speak(lines.lineFor(cue,exerciseName),TextToSpeech.QUEUE_ADD,null,if(cue is SetCue.SideDone) SIDE_DONE else "set")
+        } else {
+            tone?.startTone(when(cue) {is SetCue.Count -> ToneGenerator.TONE_PROP_BEEP; SetCue.Go -> ToneGenerator.TONE_PROP_ACK; else -> ToneGenerator.TONE_PROP_BEEP2},180)
+            if(cue is SetCue.SideDone) finished()
+        }
+    }
+
     fun play(outcome:RepOutcome) {
         val words=script
         val engine=speech
@@ -83,6 +123,7 @@ internal class RepCuePlayer(context:Context,appLanguage:String) {
 
     fun release() {
         released=true
+        announced=null
         speech?.stop(); speech?.shutdown(); speech=null
         tone?.release(); tone=null
         script=null

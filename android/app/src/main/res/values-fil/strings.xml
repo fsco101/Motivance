@@ -955,4 +955,16 @@
     <string name="ui_more_time">Dagdagan ang oras</string>
     <string name="ui_review_time">Oras</string>
     <string name="ui_no_time_limit">Walang takdang oras</string>
+    <!-- Paglipat sa kabilang panig ng isang set -->
+    <string name="cue_target_keep_going">Naabot mo na ang target. Ituloy lang hanggang matapos ang oras.</string>
+    <string name="cue_side_done">Tapos na ang %1$s. Susunod: %2$s, %3$s.</string>
+    <string name="cue_go">Simulan.</string>
+    <string name="cue_set_complete">Tapos na ang ehersisyo.</string>
+    <string name="set_next_side">Susunod: %1$s</string>
+    <string name="set_starting_in">Magsisimula sa %1$d</string>
+    <string name="set_pause">I-pause</string>
+    <string name="set_start">Simulan</string>
+    <string name="set_get_in_view">Pumuwesto sa harap ng camera para simulan ang %1$s.</string>
+    <string name="set_time_left">Natitirang oras</string>
+    <string name="set_side_result">%1$s: %2$d sa %3$d ulit, %4$s saklaw, %5$s</string>
 </resources>

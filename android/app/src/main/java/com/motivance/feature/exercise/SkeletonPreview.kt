@@ -179,6 +179,8 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
                 MetricTile(stringResource(R.string.measured_joint_angle,measurementJoint),degrees(liveAngle),Modifier.weight(1f))
                 MetricTile(stringResource(R.string.skeleton_reps),"${metrics.completed} / ${rules.targetRepetitions}",Modifier.weight(1f),
                     accent=metrics.completed>0,animate=true)
+                // Rounded up, so the clock reads 0:00 only when the side has actually ended.
+                SideSet.remainingMs(rules,metrics)?.let {MetricTile(stringResource(R.string.set_time_left),Seconds.clock((it+999)/1000),Modifier.weight(1f))}
             }
             if(details) CalculationContent(rules,metrics,liveAngle,guide,measurementJoint)
         }
