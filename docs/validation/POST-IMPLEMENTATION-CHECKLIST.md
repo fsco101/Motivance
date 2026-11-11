@@ -211,6 +211,18 @@ Engineering evidence is in [VERIFIED-SIGNUP.md](VERIFIED-SIGNUP.md). None of the
 - [ ] In Gmail on the web, in the Gmail Android app and in one other mail app, check the logo shows beside the name in both emails, in light and dark mode. With images turned off, check the header still reads Motivance.
 - [ ] Have a Filipino speaker review the new sign-up wording in `supabase/templates/confirmation.html`, `auth_confirm_description` and `auth_signup_code_expired` in `values-fil/strings.xml`, and `codeDetail` and `codeExpired` in `web/src/locales/landing.fil.json`.
 
+## Both-sides sets and a time per side (2026-11-11)
+
+Engineering evidence is in [BOTH-SIDES-SETS.md](BOTH-SIDES-SETS.md). None of these checks has been run.
+
+- [ ] On a physical phone, run a both-sides plan with a short time per side in English and in Filipino. Confirm the time left counts down only while measuring, stops while paused, and the side ends when it reaches 0:00, even after the target.
+- [ ] Confirm the voice says the target was reached once, then announces the next side with the exercise name, and the countdown starts only after the announcement. With Voice off, confirm the countdown starts straight away. On a phone with no voice, confirm tones play instead.
+- [ ] During the countdown, press Pause, wait, then press Start. Confirm the right side starts only then. Leave the app during the countdown and return: confirm it is paused.
+- [ ] Check whether a patient can turn or reposition for the right side within 5 seconds, and whether the "step into view" message helps when tracking is not ready.
+- [ ] Confirm the results screen lists each side's repetitions, range and time, and that both sides reach the therapist's history and progress as separate Left and Right sessions.
+- [ ] Have a therapist review the flow, the 1:00 default and 15-second steps, the 5-second countdown, and whether right-side framing needs extra guidance.
+- [ ] Have a Filipino speaker review `both_sides`, `ui_*time*`, `cue_target_keep_going`, `cue_side_done`, `cue_go`, `cue_set_complete` and `set_*` in `values-fil/strings.xml`, and `common.bilateral`, `assign.time*` and `record.time*` in `web/src/locales/fil.json`.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
