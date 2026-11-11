@@ -944,4 +944,27 @@
         <item>Well done!</item>
         <item>Good job!</item>
     </string-array>
+    <!-- Both sides of one exercise and a time per side -->
+    <string name="both_sides">Both sides</string>
+    <string name="ui_set_time">Set a time</string>
+    <string name="ui_time">Time</string>
+    <string name="ui_time_per_side">Time per side</string>
+    <string name="ui_time_help">Measuring continues after the target until the time is up.</string>
+    <string name="ui_time_per_side_value">%1$s per side</string>
+    <string name="ui_less_time">Less time</string>
+    <string name="ui_more_time">More time</string>
+    <string name="ui_review_time">Time</string>
+    <string name="ui_no_time_limit">No time limit</string>
+    <!-- Moving between the sides of a set -->
+    <string name="cue_target_keep_going">Target reached. Keep going until the time is up.</string>
+    <string name="cue_side_done">%1$s done. Next: %2$s, %3$s.</string>
+    <string name="cue_go">Start.</string>
+    <string name="cue_set_complete">Exercise complete.</string>
+    <string name="set_next_side">Next: %1$s</string>
+    <string name="set_starting_in">Starting in %1$d</string>
+    <string name="set_pause">Pause</string>
+    <string name="set_start">Start</string>
+    <string name="set_get_in_view">Step into view to start the %1$s.</string>
+    <string name="set_time_left">Time left</string>
+    <string name="set_side_result">%1$s: %2$d of %3$d reps, %4$s range, %5$s</string>
 </resources>

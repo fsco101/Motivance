@@ -5,6 +5,7 @@ import { Button } from '@/components/Button'
 import { RangeBar } from '@/components/Charts'
 import { EmptyState, PageHeader, Panel, StatusPill } from '@/components/Display'
 import type { MyExercise } from '@/data/patient'
+import { clock } from '@/data/therapist'
 import { Loadable, SkeletonCards, type Load } from '@/features/shared'
 
 function ExerciseCard({ exercise, onStart }: { exercise: MyExercise; onStart: () => void }) {
@@ -16,6 +17,7 @@ function ExerciseCard({ exercise, onStart }: { exercise: MyExercise; onStart: ()
       <div className="mt-3 flex flex-wrap gap-2">
         <StatusPill tone="positive">{t('patient.rangeValue', { low: exercise.low, high: exercise.high })}</StatusPill>
         <StatusPill tone="positive">{t('patient.repsValue', { count: exercise.repetitions })}</StatusPill>
+        {exercise.sideSeconds !== null && <StatusPill tone="positive">{t(exercise.side === 'bilateral' ? 'record.timeEach' : 'record.time', { time: clock(exercise.sideSeconds) })}</StatusPill>}
       </div>
       {exercise.instructions && <p className="mt-4 max-w-[62ch]">{exercise.instructions}</p>}
       {exercise.focus && <p className="mt-2 text-sm text-slate">{t('patient.focus', { side, joint: t(`joints.${exercise.focus}`, exercise.focus) })}</p>}

@@ -47,6 +47,8 @@ export async function loadCatalogue(db: Db, account: string) {
 export type PlanSummary = {
   assignmentId: string; versionId: string; patientId: string; therapistId: string; exerciseId: string; version: number
   side: string; low: number; high: number; repetitions: number; parameters: Record<string, unknown>
+  /** The time for each side, or null without one. */
+  sideSeconds: number | null
 }
 
 /** Each assignment's newest version, the one patients are working to. */
@@ -56,9 +58,11 @@ export async function loadPlans(db: Db, account: string): Promise<PlanSummary[]>
     .eq('active', true).match(linkedTo(account)))
   return rows.flatMap((row) => {
     const latest = [...row.prescription_versions].sort((a, b) => b.version - a.version)[0]
+    const parameters = (latest?.parameters ?? {}) as Record<string, unknown>
     return latest ? [{
       assignmentId: row.id, versionId: latest.id, patientId: row.patient_id, therapistId: row.therapist_id, exerciseId: latest.exercise_version_id, version: latest.version, side: latest.side,
-      low: latest.minimum_degrees, high: latest.maximum_degrees, repetitions: latest.target_repetitions, parameters: (latest.parameters ?? {}) as Record<string, unknown>,
+      low: latest.minimum_degrees, high: latest.maximum_degrees, repetitions: latest.target_repetitions, parameters,
+      sideSeconds: typeof parameters.side_seconds === 'number' ? parameters.side_seconds : null,
     }] : []
   })
 }

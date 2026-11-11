@@ -69,7 +69,11 @@ export function ProgressView({ self, choices, results, filters, onFilters, onPat
   const columns: ReadonlyArray<Column<HistoricalSession>> = [
     { key: 'date', header: t('progress.date'), cell: (s) => <span className="whitespace-nowrap">{format.dateTime(s.startedAt)}</span> },
     { key: 'exercise', header: t('assign.exercise'), cell: (s) => <span className="font-semibold">{s.prescription?.exerciseName ?? t('progress.unknown')}</span> },
-    { key: 'side', header: t('record.side'), hideBelow: 'desk', cell: (s) => (s.prescription ? t(`common.${s.prescription.side}`, s.prescription.side) : '') },
+    // The side measured: each side of a both-sides plan is its own session.
+    { key: 'side', header: t('record.side'), hideBelow: 'desk', cell: (s) => {
+      const side = s.measurements[0]?.side ?? s.prescription?.side
+      return side ? t(`common.${side}`, side) : ''
+    } },
     { key: 'range', header: t('progress.targets'), hideBelow: 'wide', align: 'end', cell: (s) => (s.prescription ? <span className="numeric">{s.prescription.low}° to {s.prescription.high}°</span> : '') },
     { key: 'rom', header: t('progress.rom'), align: 'end', cell: (s) => (
       s.measurements.length === 0 ? <span className="numeric">{t('progress.notMeasured')}</span>

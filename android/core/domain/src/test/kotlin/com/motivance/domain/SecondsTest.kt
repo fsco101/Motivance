@@ -16,6 +16,9 @@ class SecondsTest {
     @Test fun unreadableOrUnstorableSecondsAreRefused() {
         listOf("","  ","-1","abc","1.2.3","0.0005","1e3","∞","NaN","1 000").forEach {assertNull("'$it'",Seconds.parseMs(it))}
     }
+    @Test fun clockShowsMinutesAndSeconds() {
+        mapOf(0L to "0:00",15L to "0:15",90L to "1:30",1800L to "30:00").forEach {(seconds,text) -> assertEquals("$seconds s",text,Seconds.clock(seconds))}
+    }
     @Test fun everyStoredValueSurvivesARoundTrip() {
         listOf(0L,1L,99L,100L,600L,1001L,29_999L,30_000L,300_000L).forEach {assertEquals(it,Seconds.parseMs(Seconds.text(it)))}
     }

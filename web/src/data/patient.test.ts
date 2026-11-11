@@ -25,6 +25,12 @@ describe('a patient\'s exercises', () => {
     expect(decodeExercises([plan(version(1, { name: 'x' }))], 'en')[0]?.focus).toBeNull()
   })
 
+  it('reads the time per side when there is one', () => {
+    expect(decodeExercises([plan(version(1, { name: 'x' }, { side_seconds: 90 }))], 'en')[0]?.sideSeconds).toBe(90)
+    expect(decodeExercises([plan(version(1, { name: 'x' }))], 'en')[0]?.sideSeconds).toBeNull()
+    expect(decodeExercises([plan(version(1, { name: 'x' }, { side_seconds: '90' }))], 'en')[0]?.sideSeconds).toBeNull()
+  })
+
   it('leaves out an assignment with nothing to show', () => {
     expect(decodeExercises([plan()], 'en')).toEqual([])
     expect(decodeExercises([plan({ ...version(1, {}), exercise_versions: null })], 'en')).toEqual([])

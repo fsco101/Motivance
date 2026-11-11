@@ -96,7 +96,7 @@ function usePlanCards(patientId: string, sessions: readonly HistoricalSession[])
       const measurement = session?.measurements.find(usable)
       const focus = plan.parameters.focus_joint
       return {
-        id: plan.assignmentId, exercise: exercise?.name ?? t('progress.unknown'), custom: exercise?.custom, version: plan.version, side: plan.side === 'right' ? 'right' : 'left',
+        id: plan.assignmentId, exercise: exercise?.name ?? t('progress.unknown'), custom: exercise?.custom, version: plan.version, side: plan.side === 'right' || plan.side === 'bilateral' ? plan.side : 'left', sideSeconds: plan.sideSeconds,
         low: plan.low, high: plan.high, repetitions: plan.repetitions, focus: typeof focus === 'string' ? t(`joints.${focus}`) : null, instructions: exercise?.instructions ?? '',
         reached: measurement ? reachedBy(measurement) : null, locked: plan.therapistId !== userId,
       }

@@ -197,7 +197,7 @@ Use **PostgreSQL through Supabase** for shared, relational records and **SQLite 
 | `exercises` | stable code, joint definitions, camera setup, supported sides, active flag | Catalogue identity; deactivate instead of deleting referenced definitions |
 | `exercise_versions` | exercise ID, version, algorithm key, measurement convention, model/rule metadata, localized instructions | Immutable published definitions; unique exercise/version |
 | `exercise_assignments` | patient ID, prescribing therapist, active state, current version reference | Patient reads; assigned therapist writes permitted prescriptions |
-| `prescription_versions` | assignment ID, exercise version ID, side, degree thresholds, target repetitions, duration/form rules, author and timestamp | Immutable; edits create a new version; validated rule schema |
+| `prescription_versions` | assignment ID, exercise version ID, side (`left`, `right` or `bilateral` for both sides, left first), degree thresholds, target repetitions, duration/form rules including an optional time per side, author and timestamp | Immutable; edits create a new version; validated rule schema |
 | `sessions` | client UUID, patient ID, prescription version ID, start/end, status, model/algorithm/app versions | Ownership must match prescription; stable idempotency key |
 | `session_measurements` | session ID, metric key, joint/side, min/max/ROM degrees, completed/incomplete counts, quality summary | Unique metric per session; child policy follows authorized parent |
 | `consents` | patient ID, consent type/version, granted/withdrawn timestamps | Append history; camera permission does not equal data consent |

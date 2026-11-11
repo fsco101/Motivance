@@ -40,9 +40,14 @@ data class ExerciseRules(
     val measuredJoint: BodyJoint = kind.measurementJoint,
     val focusJoint: BodyJoint = measuredJoint,
     /** The therapist's name for a custom exercise. Built-in exercises use their translated names. */
-    val exerciseName: String? = null
+    val exerciseName: String? = null,
+    /** This side belongs to a both-sides prescription, which runs left then right. [side] is the side being measured. */
+    val bilateral: Boolean = false,
+    /** The therapist's time for each side. Measuring continues past the target until it is used up. Null means no limit. */
+    val sideSeconds: Int? = null
 ) {
     init {
+        require(sideSeconds==null || sideSeconds in SideSet.MIN_SECONDS..SideSet.MAX_SECONDS)
         require(if(kind==ExerciseKind.CUSTOM) !exerciseName.isNullOrBlank() else measuredJoint==kind.measurementJoint && exerciseName==null)
         require(lowDegrees.isFinite() && highDegrees.isFinite() && lowDegrees>=0 && highDegrees<=180 && highDegrees>lowDegrees+10)
         require(targetRepetitions in 1..1000 && confidence in .1f..1f && stableFrames>0)

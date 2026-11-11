@@ -261,8 +261,8 @@ import java.time.OffsetDateTime
     override suspend fun acceptInvitation(code:String) {authorized {token,_ -> call("/rest/v1/rpc/accept_patient_invitation",JSONObject().put("p_code",code.trim()),token)} }
     override suspend fun revokeLink(patientId:String) {authorized {token,_ -> call("/rest/v1/rpc/revoke_patient_link",JSONObject().put("p_patient",patientId),token)} }
     override suspend fun publishPrescription(draft:PrescriptionDraft) {authorized {token,_ ->
-        val p=JSONObject().put("minimum_cycle_ms",draft.minimumCycleMs).put("maximum_cycle_ms",draft.maximumCycleMs).put("peak_hold_ms",draft.peakHoldMs).put("max_trunk_lean_degrees",draft.maxTrunkLean).put("confidence",draft.confidence).apply {draft.focusJoint?.let {put("focus_joint",it.name)}}
-        val body=JSONObject().put("p_assignment",draft.assignmentId).put("p_version",draft.requestId).put("p_patient",draft.patientId).put("p_exercise",draft.exerciseId).put("p_side",draft.side.name.lowercase()).put("p_low",draft.low).put("p_high",draft.high).put("p_repetitions",draft.repetitions).put("p_parameters",p)
+        val p=JSONObject().put("minimum_cycle_ms",draft.minimumCycleMs).put("maximum_cycle_ms",draft.maximumCycleMs).put("peak_hold_ms",draft.peakHoldMs).put("max_trunk_lean_degrees",draft.maxTrunkLean).put("confidence",draft.confidence).apply {draft.focusJoint?.let {put("focus_joint",it.name)}; draft.sideSeconds?.let {put("side_seconds",it)}}
+        val body=JSONObject().put("p_assignment",draft.assignmentId).put("p_version",draft.requestId).put("p_patient",draft.patientId).put("p_exercise",draft.exerciseId).put("p_side",if(draft.bilateral) "bilateral" else draft.side.name.lowercase()).put("p_low",draft.low).put("p_high",draft.high).put("p_repetitions",draft.repetitions).put("p_parameters",p)
         call("/rest/v1/rpc/publish_prescription",body,token)
     }}
     override suspend fun createCustomExercise(draft:CustomExerciseDraft)=authorized {token,_ ->

@@ -16,14 +16,17 @@ internal object HistoryJson {
         "session_measurements(metric_key,side,minimum_degrees,maximum_degrees,completed_repetitions," +
         "incomplete_repetitions,quality,valid_frames,invalid_frames)"
 
+    /** Filtering by side means the side measured, so a both-sides plan's sessions each file under their own side. */
+    fun select(query: HistoryQuery) = if (query.side == null) SELECT else "$SELECT,measured:session_measurements!inner(side)"
+
     fun path(query: HistoryQuery, cursor: HistoryCursor?): String {
         val url = "https://history.invalid/rest/v1/sessions".toHttpUrl().newBuilder()
-            .addQueryParameter("select", SELECT)
+            .addQueryParameter("select", select(query))
             .addQueryParameter("patient_id", "eq.${query.patientId}")
             .addQueryParameter("order", "started_at.desc,id.desc")
             .addQueryParameter("limit", (PAGE_SIZE + 1).toString())
         query.exerciseVersionId?.let { url.addQueryParameter("prescription.exercise_version_id", "eq.$it") }
-        query.side?.let { url.addQueryParameter("prescription.side", "eq.$it") }
+        query.side?.let { url.addQueryParameter("measured.side", "eq.$it") }
         query.from?.let { url.addQueryParameter("started_at", "gte.${it.atStartOfDay().toInstant(ZoneOffset.UTC)}") }
         query.through?.let { url.addQueryParameter("started_at", "lt.${it.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)}") }
         cursor?.let { url.addQueryParameter("or", "(started_at.lt.${it.startedAt},and(started_at.eq.${it.startedAt},id.lt.${it.id}))") }

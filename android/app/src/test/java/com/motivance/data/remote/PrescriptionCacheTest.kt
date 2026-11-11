@@ -47,6 +47,20 @@ class PrescriptionCacheTest {
         val cached=PrescriptionCache.decode("patient",rows,1234).single();val rules=ExerciseJson.rules(cached.rulesJson)
         assertEquals(1200L,rules.minimumCycleMs);assertEquals(500L,rules.peakHoldMs);assertEquals(15.0,rules.maxTrunkLeanDegrees,.001);assertEquals(1234L,cached.cachedAt)
     }
+    @Test fun aBothSidesPrescriptionStartsOnTheLeftWithItsTime() {
+        val rows=fixture();val version=rows.getJSONObject(0).getJSONArray("prescription_versions").getJSONObject(0)
+        version.put("side","bilateral").put("parameters",org.json.JSONObject().put("side_seconds",90))
+        val rules=ExerciseJson.rules(PrescriptionCache.decode("patient",rows,100).single().rulesJson)
+        assertEquals(BodySide.LEFT,rules.side); assertTrue(rules.bilateral); assertEquals(90,rules.sideSeconds)
+    }
+    @Test fun newSetFieldsSurviveTheRulesRoundTrip() {
+        val set=ExerciseRules(bilateral=true,sideSeconds=90)
+        assertEquals(set,ExerciseJson.rules(ExerciseJson.rules(set)))
+        // Unused keys are left out: the server rejects JSON nulls, and older payloads stay byte-for-byte the same.
+        val plain=org.json.JSONObject(ExerciseJson.rules(ExerciseRules()))
+        assertFalse(plain.has("bilateral")); assertFalse(plain.has("sideSeconds"))
+        assertEquals(ExerciseRules(),ExerciseJson.rules(plain.toString()))
+    }
     @Test fun snapshotRoundTripPreservesUnknownAnglesAndTotals() {
         val initial=AssessmentSnapshot(completed=2,incomplete=1,durationMs=1234,minimumDegrees=null,maximumDegrees=null,failureReasons=mapOf(RepFeedback.TOO_FAST to 1))
         val decoded=ExerciseJson.snapshot(ExerciseJson.snapshot(initial))

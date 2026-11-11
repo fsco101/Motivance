@@ -128,7 +128,7 @@ private fun RehabAction.doneToast()=when(this) {
     fun accept(code:String)=perform(RehabAction.ACCEPT) {require(code.trim().matches(Regex("[a-fA-F0-9]{48}"))); repository.acceptInvitation(code)}
     fun revoke(patient:String)=perform(RehabAction.REVOKE) {repository.revokeLink(patient)}
     fun prescribe(draft:PrescriptionDraft,published:()->Unit={})=perform(RehabAction.PRESCRIBE,done=published) {
-        ExerciseRules(side=draft.side,lowDegrees=draft.low,highDegrees=draft.high,targetRepetitions=draft.repetitions,minimumCycleMs=draft.minimumCycleMs,maximumCycleMs=draft.maximumCycleMs,peakHoldMs=draft.peakHoldMs,maxTrunkLeanDegrees=draft.maxTrunkLean,confidence=draft.confidence.toFloat())
+        ExerciseRules(side=draft.side,lowDegrees=draft.low,highDegrees=draft.high,targetRepetitions=draft.repetitions,minimumCycleMs=draft.minimumCycleMs,maximumCycleMs=draft.maximumCycleMs,peakHoldMs=draft.peakHoldMs,maxTrunkLeanDegrees=draft.maxTrunkLean,confidence=draft.confidence.toFloat(),bilateral=draft.bilateral,sideSeconds=draft.sideSeconds)
         repository.publishPrescription(draft)
     }
     /** [created] receives the published version, once the refreshed list contains it. */

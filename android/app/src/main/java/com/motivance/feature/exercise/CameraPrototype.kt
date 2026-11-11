@@ -53,6 +53,7 @@ import com.motivance.data.local.ExerciseJson
 import androidx.compose.ui.semantics.*
 import com.motivance.domain.Landmark
 import com.motivance.domain.*
+import com.motivance.feature.rehabilitation.sideText
 import com.motivance.BuildConfig
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -67,7 +68,8 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
     var consent by remember { mutableStateOf(false) }
     var exitRequested by remember { mutableStateOf(false) }
     LaunchedEffect(ownerId) { session.configure(ownerId) }
-    LaunchedEffect(exercise.saved) { if(exercise.saved && exitRequested) onBack() }
+    // A set that ends on its own time goes to the results too, as Finish does.
+    LaunchedEffect(exercise.saved) { if(exercise.saved && (exitRequested || exercise.sides.isNotEmpty())) onBack() }
     var permission by remember { mutableStateOf(ContextCompat.checkSelfPermission(context,Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED) }
     val launcher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { permission=it }
     var front by remember { mutableStateOf(false) }
@@ -163,12 +165,17 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
     val voiceSetting=remember {RepSoundSetting(context)}
     var voice by remember {mutableStateOf(voiceSetting.enabled)}
     val language=LocalConfiguration.current.locales[0].language.let {if(it=="fil" || it=="tl") "fil" else "en"}
+    val exerciseName=exercise.rules.displayName()
+    val spokenName by rememberUpdatedState(exerciseName)
     if(voice) {
         val player=remember(language) {RepCuePlayer(context,language)}
         DisposableEffect(player) {onDispose {player.release()}}
         LaunchedEffect(player) {session.results.collect {player.play(it)}}
+        LaunchedEffect(player) {session.cues.collect {player.announce(it,spokenName,session::announced)}}
+    } else {
+        // Nothing to wait for: the countdown to the next side starts straight away.
+        LaunchedEffect(exercise.switching?.stage) {if(exercise.switching?.stage==SwitchStage.ANNOUNCING) session.announced()}
     }
-    val exerciseName=exercise.rules.displayName()
     DarkStage()
     SessionTheme {
     Column(Modifier.fillMaxSize().background(Motion.Night).verticalScroll(rememberScrollState()).padding(horizontal=16.dp,vertical=12.dp),
@@ -182,7 +189,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             StatusPill(stringResource(if(exercise.rules.demo) R.string.calc_source_demo_short else R.string.calc_source_prescribed_short),
                 if(exercise.rules.demo) PillTone.NEUTRAL else PillTone.POSITIVE)
         }
-        if(exercise.id==null) {
+        if(exercise.id==null && exercise.switching==null) {
             if(exercise.rules.demo) {
                 Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                     FilterChip(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION,{haptics.tick();session.select(ExerciseKind.ELBOW_FLEXION,exercise.rules.side)},label={Text(stringResource(R.string.elbow_flexion))})
@@ -195,7 +202,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             exercise.cached.filter {it.expiresAt>System.currentTimeMillis() && it.versionId!=exercise.rules.prescriptionVersionId}.forEach { cached ->
                 val rules=ExerciseJson.rules(cached.rulesJson)
                 OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) {
-                    Text(stringResource(R.string.use_cached_prescription,rules.displayName(),stringResource(if(rules.side==BodySide.LEFT) R.string.left_side else R.string.right_side)))
+                    Text(stringResource(R.string.use_cached_prescription,rules.displayName(),rules.sideText()))
                 }
             }
         }
@@ -213,7 +220,9 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             coach={RepCoach(exercise,paused)})
         // A reminder of the movement before starting. Once running, the patient follows their own measured movement instead.
         if(!exercise.metrics.running) GuideStage(guideMotion(exercise.rules),exerciseName,Modifier.height(220.dp),dark=true)
-        MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
+        val switching=exercise.switching
+        if(switching!=null) SideSwitchCard(switching,{haptics.tick();session.pauseSwitch()},{haptics.confirm();session.startNextSide()})
+        else MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
             {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
         RepSoundToggle(voice) {haptics.tick(); voice=it; voiceSetting.enabled=it}
         SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
@@ -237,7 +246,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
                 Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera),textAlign=TextAlign.Center)
             }
         }
-        if(exercise.recoverable!=null && exercise.id==null) TextButton({session.restore()},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.recover_interrupted)) }
+        if(exercise.recoverable!=null && exercise.id==null && exercise.switching==null) TextButton({session.restore()},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.recover_interrupted)) }
         if(exercise.saved) {
             FeedbackNotice(R.string.session_saved_local)
             OutlinedButton({session.newSession(); consent=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
@@ -245,9 +254,11 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
         if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
         if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({session.newSession();consent=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
-        ActionButton(if(exercise.id!=null && !exercise.saved) R.string.finish_save_session else R.string.finish_camera,
-            {if(exercise.id!=null && !exercise.saved) {exitRequested=true; session.finish()} else onBack()},busy=exercise.saving,busyLabel=R.string.saving_session,
-            outlined=!(exercise.id!=null && !exercise.saved))
+        // Between sides there is a set to finish too: its first side is already saved.
+        val finishable=(exercise.id!=null || exercise.switching!=null) && !exercise.saved
+        ActionButton(if(finishable) R.string.finish_save_session else R.string.finish_camera,
+            {if(finishable) {exitRequested=true; session.finish()} else onBack()},busy=exercise.saving,busyLabel=R.string.saving_session,
+            outlined=!finishable)
         Spacer(Modifier.height(8.dp))
     }
     }

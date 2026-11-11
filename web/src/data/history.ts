@@ -123,10 +123,12 @@ export function dayStart(date: string, addDays = 0) {
 
 /** One patient per query, in keyset pages, as on Android. */
 export async function loadHistory(db: SupabaseClient<Database>, query: HistoryQuery, cursor?: HistoryCursor | null): Promise<HistoryPage> {
-  let request = db.from('sessions').select(HISTORY_SELECT).eq('patient_id', query.patientId)
+  // A side filter means the side measured, so each side of a both-sides plan files under its own side, as on Android.
+  const select = query.side ? `${HISTORY_SELECT},measured:session_measurements!inner(side)` : HISTORY_SELECT
+  let request = db.from('sessions').select(select).eq('patient_id', query.patientId)
     .order('started_at', { ascending: false }).order('id', { ascending: false }).limit(HISTORY_PAGE_SIZE + 1)
   if (query.exerciseVersionId) request = request.eq('prescription.exercise_version_id', query.exerciseVersionId)
-  if (query.side) request = request.eq('prescription.side', query.side)
+  if (query.side) request = request.eq('measured.side', query.side)
   if (query.from) request = request.gte('started_at', dayStart(query.from))
   if (query.through) request = request.lt('started_at', dayStart(query.through, 1))
   if (cursor) request = request.or(`started_at.lt."${cursor.startedAt}",and(started_at.eq."${cursor.startedAt}",id.lt.${cursor.id})`)

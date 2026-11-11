@@ -1,7 +1,7 @@
 {
   "common": {
     "close": "Isara", "cancel": "Kanselahin", "retry": "Subukan muli", "working": "Isinasagawa", "loading": "Nilo-load", "preparing": "Inihahanda ang iyong workspace",
-    "copy": "Kopyahin", "copied": "Nakopya", "search": "Maghanap", "sortBy": "Ayusin ayon sa", "language": "Wika", "left": "Kaliwang bahagi", "right": "Kanang bahagi",
+    "copy": "Kopyahin", "copied": "Nakopya", "search": "Maghanap", "sortBy": "Ayusin ayon sa", "language": "Wika", "left": "Kaliwang bahagi", "right": "Kanang bahagi", "bilateral": "Magkabilang panig",
     "showPassword": "Ipakita ang password", "hidePassword": "Itago ang password", "nothingHere": "Walang maipapakita.", "done": "Tapos na",
     "loadFailedTitle": "Hindi ma-load ang pahinang ito", "loadFailed": "Suriin ang koneksyon at subukan muli."
   },
@@ -83,7 +83,7 @@
   "record": {
     "otherTherapist": "Itinalaga ng ibang therapist, kaya siya lamang ang makakapag-edit nito.",
     "crumb": "Tala ng pasyente", "notFoundTitle": "Hindi nakaugnay sa iyo ang pasyenteng ito", "notFoundDetail": "Tingnan ang pahina ng Mga pasyente. Kung binawi ang ugnayan, imbitahan muli ang pasyente.",
-    "planLine_one": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit", "planLine_other": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit",
+    "time": "Oras: {{time}}", "timeEach": "Oras bawat panig: {{time}}", "planLine_one": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit", "planLine_other": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit",
     "version": "Bersiyon {{version}}", "custom": "Custom", "side": "Bahagi", "focus": "Pokus ng skeleton", "focusAutomatic": "Kasukasuan ng ehersisyo (awtomatiko)", "repetitions": "Mga ulit", "edit": "I-edit ang plano",
     "gender": "Kasarian", "birthdate": "Kaarawan", "contact": "Contact", "address": "Tirahan", "plans": "Plano ng ehersisyo", "assign": "Magtalaga ng ehersisyo",
     "noPlansTitle": "Wala pang nakatalagang ehersisyo", "noPlansDetail": "Magtalaga ng isa para simulang sukatin ang galaw ng pasyenteng ito.", "progress": "Pag-unlad", "allProgress": "Lahat ng pag-unlad"
@@ -105,7 +105,7 @@
     "rangeLabel": "Nireseta na saklaw {{low}} hanggang {{high}} degrees", "low": "Simulang anggulo", "high": "Target na anggulo", "fewer": "Bawasan ang ulit", "more": "Dagdagan ang ulit", "gapHint": "Sumusunod ang arko sa bawat 5° at pinapanatili ang mga dulo na hindi bababa sa {{gap}}° ang pagitan.",
     "timing": "Oras", "timingHelp": "Angkop ang mga default sa karamihan ng pasyente.", "showTiming": "Baguhin ang oras", "hideTiming": "Itago ang oras", "minimumCycle": "Pinakamaikling oras ng isang ulit (segundo)", "minimumCycleHint": "0.1 hanggang 30. Hindi bibilangin ang mas mabilis na ulit. Halimbawa: 0.6", "maximumCycle": "Pinakamahabang oras ng isang ulit (segundo)", "maximumCycleHint": "Higit sa pinakamaikling oras, hanggang 300. Hindi bibilangin ang mas matagal na ulit at magsisimula itong muli. Halimbawa: 30",
     "hold": "Tagal ng paghawak sa target (segundo)", "holdHint": "0 hanggang 5. Gaano katagal mananatili ang pasyente sa target. Halimbawa: ang 1 ay paghawak nang 1 segundo", "lean": "Limitasyon ng pagkiling ng itaas na katawan (degrees)", "leanHint": "0 hanggang 90. Gaano kalayo maaaring tumagilid ang itaas na katawan mula sa pagkakatuwid. Hindi bibilangin ang ulit kapag mas kumiling pa. Halimbawa: 15", "review": "Suriin", "reviewHelp": "Ito ang matatanggap ng pasyente.", "notChosen": "Hindi pa napipili", "range": "Saklaw", "publish": "Ilathala sa pasyente",
-    "publishHint": "Pumili ng ehersisyo para mailathala.", "rangeError": "Gumamit ng 0° hanggang 180°, at ang target ay higit sa 10° sa itaas ng simula.", "repsError": "Gumamit ng 1 hanggang 1000 ulit.", "timingError": "Suriin ang oras: pinakamaikling oras 0.1 hanggang 30 segundo, pinakamahabang oras na higit sa pinakamaikli at hanggang 300 segundo, paghawak 0 hanggang 5 segundo, pagkiling 0 hanggang 90 degrees."
+    "publishHint": "Pumili ng ehersisyo para mailathala.", "rangeError": "Gumamit ng 0° hanggang 180°, at ang target ay higit sa 10° sa itaas ng simula.", "repsError": "Gumamit ng 1 hanggang 1000 ulit.", "timeSwitch": "Magtakda ng oras", "time": "Oras", "timePerSide": "Oras bawat panig", "timeHelp": "Tuloy ang pagsukat kahit naabot na ang target hanggang matapos ang oras.", "lessTime": "Bawasan ang oras", "moreTime": "Dagdagan ang oras", "noTime": "Walang takdang oras", "timingError": "Suriin ang oras: pinakamaikling oras 0.1 hanggang 30 segundo, pinakamahabang oras na higit sa pinakamaikli at hanggang 300 segundo, paghawak 0 hanggang 5 segundo, pagkiling 0 hanggang 90 degrees."
   },
   "joints": { "SHOULDER": "Balikat", "ELBOW": "Siko", "WRIST": "Pulso", "HIP": "Balakang", "KNEE": "Tuhod", "ANKLE": "Bukung-bukong" },
   "admin": {

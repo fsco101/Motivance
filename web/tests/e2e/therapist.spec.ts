@@ -118,6 +118,38 @@ test('a plan pinned to an older exercise version can still be edited', async () 
   sql(`update public.exercise_assignments set active=false where id='${assignment}'`)
 })
 
+test('a both-sides plan with a time per side is published', async () => {
+  await page.goto(`/therapist/patients/${patient.id}/assign`)
+  await chooseExercise(ELBOW)
+  await page.getByRole('radio', { name: 'Both sides' }).click()
+  const review = page.getByRole('complementary')
+  await expect(review).toContainText('No time limit')
+  await page.getByRole('switch', { name: 'Set a time' }).click()
+  await expect(page.getByText('Time per side', { exact: true }).first()).toBeVisible()
+  for (let step = 0; step < 4; step += 1) await page.getByRole('button', { name: 'More time' }).click()
+  await expect(page.locator('output', { hasText: '2:00' })).toBeVisible()
+  await expect(review).toContainText('Both sides')
+  await expect(review).toContainText('2:00')
+  await publish()
+  expect(rows(`select side,parameters->>'side_seconds' from public.prescription_versions where patient_id='${patient.id}' and side='bilateral'`)).toEqual(['bilateral|120'])
+  await expect(page.getByText('Both sides, 20° to 90°, 5 repetitions')).toBeVisible()
+  await expect(page.getByText('Time per side: 2:00')).toBeVisible()
+})
+
+test('editing a both-sides plan keeps both sides and its time', async () => {
+  const [assignment] = rows(`select assignment_id from public.prescription_versions where patient_id='${patient.id}' and side='bilateral'`)
+  await page.goto(`/therapist/patients/${patient.id}/assign?plan=${assignment}`)
+  await expect(page.getByRole('radio', { name: 'Both sides' })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('switch', { name: 'Set a time' })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.locator('output', { hasText: '2:00' })).toBeVisible()
+  // Turning the time off publishes a version with no limit.
+  await page.getByRole('switch', { name: 'Set a time' }).click()
+  await publish()
+  expect(rows(`select version,parameters ? 'side_seconds' from public.prescription_versions where assignment_id='${assignment}' order by version`)).toEqual(['1|t', '2|f'])
+  // Keep the rest of this journey to the plans it created.
+  sql(`update public.exercise_assignments set active=false where id='${assignment}'`)
+})
+
 test('a second exercise is its own plan and never replaces the first', async () => {
   await page.getByRole('link', { name: 'Assign exercise' }).click()
   await chooseExercise('Shoulder abduction')

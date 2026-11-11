@@ -84,6 +84,8 @@ export async function acceptInvitation(patient: TestUser, code: string) {
 type SessionFixture = {
   kind: string; side: string; low: number; high: number; target: number; focusJoint: string
   min: number; max: number; completed: number; valid?: number; invalid?: number
+  /** Further recorded rules, such as a both-sides set's bilateral flag and time per side. */
+  extra?: Record<string, unknown>
 }
 
 /** Uploads a session the way the phone does, through the same database function. */
@@ -99,7 +101,7 @@ export async function ingestSession(patient: TestUser, prescription: string, ses
       schemaVersion: 2, sessionId: randomUUID(), ownerId: patient.id, consentId: grant, startedAt: now - 20_000, endedAt: now - 10_000,
       rules: {
         kind: session.kind, side: session.side, low: session.low, high: session.high, target: session.target, focusJoint: session.focusJoint, confidence: 0.7, stableFrames: 5, minimumCycleMs: 600,
-        maximumCycleMs: 30000, peakHoldMs: 100, maxTrunkLean: 20, maxSpeed: 600, version: version!.exercise_version_id, prescription, demo: false,
+        maximumCycleMs: 30000, peakHoldMs: 100, maxTrunkLean: 20, maxSpeed: 600, version: version!.exercise_version_id, prescription, demo: false, ...session.extra,
       },
       metrics: { time: 1000, angle: 10, min: session.min, max: session.max, completed: session.completed, incomplete: 0, duration: 1000, valid: session.valid ?? 40, invalid: session.invalid ?? 2, reasons: {} },
     },
