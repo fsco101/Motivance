@@ -16,7 +16,9 @@ data class ServerConsent(val id:String,val event:String,val occurredAt:Long) {
     fun withdrawsLocalGrant(localEvent:String?,localOccurredAt:Long?)=event=="withdrawn" && localEvent=="granted" && occurredAt>=(localOccurredAt ?: Long.MAX_VALUE)
 }
 data class RehabWorkspace(val patients:List<LinkedPatient> = emptyList(),val catalogue:List<CatalogueExercise> = emptyList(),val prescriptions:List<PrescriptionSummary> = emptyList(),val requests:List<PrivacyRequest> = emptyList())
-data class PrescriptionDraft(val assignmentId:String,val requestId:String,val patientId:String,val exerciseId:String,val side:BodySide,val low:Double,val high:Double,val repetitions:Int,val minimumCycleMs:Long=600,val maximumCycleMs:Long=30000,val peakHoldMs:Long=100,val maxTrunkLean:Double=20.0,val confidence:Double=.7,val focusJoint:BodyJoint?=null)
+data class PrescriptionDraft(val assignmentId:String,val requestId:String,val patientId:String,val exerciseId:String,val side:BodySide,val low:Double,val high:Double,val repetitions:Int,val minimumCycleMs:Long=600,val maximumCycleMs:Long=30000,val peakHoldMs:Long=100,val maxTrunkLean:Double=20.0,val confidence:Double=.7,val focusJoint:BodyJoint?=null,
+    /** Both sides, left first; [side] is then LEFT. */
+    val bilateral:Boolean=false,val sideSeconds:Int?=null)
 interface RehabilitationRepository {
     suspend fun loadWorkspace():RehabWorkspace
     suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?=null):HistoryPage
