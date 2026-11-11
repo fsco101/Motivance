@@ -1,7 +1,7 @@
 {
   "common": {
     "close": "Close", "cancel": "Cancel", "retry": "Try again", "working": "Working", "loading": "Loading", "preparing": "Getting your workspace ready",
-    "copy": "Copy", "copied": "Copied", "search": "Search", "sortBy": "Sort by", "language": "Language", "left": "Left side", "right": "Right side",
+    "copy": "Copy", "copied": "Copied", "search": "Search", "sortBy": "Sort by", "language": "Language", "left": "Left side", "right": "Right side", "bilateral": "Both sides",
     "showPassword": "Show password", "hidePassword": "Hide password", "nothingHere": "Nothing to show.", "done": "Done",
     "loadFailedTitle": "This page could not load", "loadFailed": "Check your connection and try again."
   },
@@ -83,7 +83,7 @@
   "record": {
     "otherTherapist": "Assigned by another therapist, so only they can edit it.",
     "crumb": "Patient record", "notFoundTitle": "This patient is not linked to you", "notFoundDetail": "Check the Patients page. If the link was revoked, invite the patient again.",
-    "planLine_one": "{{side}}, {{low}}° to {{high}}°, {{count}} repetition", "planLine_other": "{{side}}, {{low}}° to {{high}}°, {{count}} repetitions",
+    "time": "Time: {{time}}", "timeEach": "Time per side: {{time}}", "planLine_one": "{{side}}, {{low}}° to {{high}}°, {{count}} repetition", "planLine_other": "{{side}}, {{low}}° to {{high}}°, {{count}} repetitions",
     "version": "Version {{version}}", "custom": "Custom", "side": "Side", "focus": "Skeleton focus", "focusAutomatic": "Exercise joint (automatic)", "repetitions": "Repetitions", "edit": "Edit plan",
     "gender": "Gender", "birthdate": "Birthdate", "contact": "Contact", "address": "Address", "plans": "Exercise plan", "assign": "Assign exercise",
     "noPlansTitle": "No exercise assigned yet", "noPlansDetail": "Assign one to start measuring this patient’s movement.", "progress": "Progress", "allProgress": "All progress"
@@ -105,7 +105,7 @@
     "rangeLabel": "Prescribed range {{low}} to {{high}} degrees", "low": "Start angle", "high": "Target angle", "fewer": "Fewer repetitions", "more": "More repetitions", "gapHint": "The arc snaps to 5° and keeps the ends at least {{gap}}° apart.",
     "timing": "Timing", "timingHelp": "The defaults suit most patients.", "showTiming": "Adjust timing", "hideTiming": "Hide timing", "minimumCycle": "Shortest time for one repetition (seconds)", "minimumCycleHint": "0.1 to 30. A faster repetition is not counted. Example: 0.6", "maximumCycle": "Longest time for one repetition (seconds)", "maximumCycleHint": "More than the shortest time, up to 300. A slower repetition is not counted and starts again. Example: 30",
     "hold": "Hold at the target (seconds)", "holdHint": "0 to 5. How long the patient stays at the target. Example: 1 means hold for 1 second", "lean": "Upper body lean limit (degrees)", "leanHint": "0 to 90. How far the upper body may tilt from upright. Leaning further stops the repetition from counting. Example: 15", "review": "Review", "reviewHelp": "This is what the patient will receive.", "notChosen": "Not chosen yet", "range": "Range", "publish": "Publish to patient",
-    "publishHint": "Choose an exercise to publish.", "rangeError": "Use 0° to 180°, with the target more than 10° above the start.", "repsError": "Use 1 to 1000 repetitions.", "timingError": "Check the timing: shortest time 0.1 to 30 seconds, longest time more than the shortest and up to 300 seconds, hold 0 to 5 seconds, lean 0 to 90 degrees."
+    "publishHint": "Choose an exercise to publish.", "rangeError": "Use 0° to 180°, with the target more than 10° above the start.", "repsError": "Use 1 to 1000 repetitions.", "timeSwitch": "Set a time", "time": "Time", "timePerSide": "Time per side", "timeHelp": "Measuring continues after the target until the time is up.", "lessTime": "Less time", "moreTime": "More time", "noTime": "No time limit", "timingError": "Check the timing: shortest time 0.1 to 30 seconds, longest time more than the shortest and up to 300 seconds, hold 0 to 5 seconds, lean 0 to 90 degrees."
   },
   "joints": { "SHOULDER": "Shoulder", "ELBOW": "Elbow", "WRIST": "Wrist", "HIP": "Hip", "KNEE": "Knee", "ANKLE": "Ankle" },
   "admin": {

@@ -6,12 +6,15 @@ import { ButtonLink } from '@/components/Button'
 import { RangeBar } from '@/components/Charts'
 import { DataTable, type Column } from '@/components/DataTable'
 import { Avatar, EmptyState, Panel, Skeleton, StatusPill } from '@/components/Display'
+import { clock } from '@/data/therapist'
 import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { spring } from '@/motion/tokens'
 import { TrendChart, type TrendPoint } from './TrendChart'
 
 export type PlanCard = {
-  id: string; exercise: string; custom?: boolean; version: number; side: 'left' | 'right'; low: number; high: number; repetitions: number
+  id: string; exercise: string; custom?: boolean; version: number; side: 'left' | 'right' | 'bilateral'; low: number; high: number; repetitions: number
+  /** The time for each side, when the plan sets one. */
+  sideSeconds?: number | null
   focus?: string | null; instructions: string; reached?: readonly [number, number] | null
   /** Only the therapist who assigned a plan can publish to it. */
   locked?: boolean
@@ -31,6 +34,7 @@ function PlanTable({ plans, editTo }: { plans: readonly PlanCard[]; editTo: stri
       <div className="min-w-0">
         <h3 className="flex flex-wrap items-center gap-2 font-sans text-sm font-semibold">{plan.exercise}{plan.custom && <StatusPill>{t('record.custom')}</StatusPill>}</h3>
         <p className="text-slate">{t('record.planLine', { side: t(`common.${plan.side}`), low: plan.low, high: plan.high, count: plan.repetitions })}</p>
+        {plan.sideSeconds != null && <p className="text-slate">{t(plan.side === 'bilateral' ? 'record.timeEach' : 'record.time', { time: clock(plan.sideSeconds) })}</p>}
       </div>
     ) },
     { key: 'range', header: t('patients.columnRange'), hideBelow: 'wide', cell: (plan) => (

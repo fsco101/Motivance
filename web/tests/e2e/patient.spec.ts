@@ -85,6 +85,17 @@ test('exercises list the prescribed targets and instructions', async () => {
   await noViolations()
 })
 
+test('a both-sides exercise shows both sides and the time per side', async () => {
+  const assignment = randomUUID()
+  await publishPrescription(await signedIn(therapist), { ...timing, assignmentId: assignment, requestId: randomUUID(), patientId: patient.id, exerciseId: ELBOW, side: 'bilateral', sideSeconds: 120, low: 25, high: 95, repetitions: 6 })
+  await page.goto('/patient/exercises')
+  const main = page.getByRole('main')
+  await expect(main.getByText('Time per side: 2:00')).toBeVisible()
+  await expect(main.getByText('Assigned focus: Both sides, Elbow')).toBeVisible()
+  // Keep the rest of this journey to its one exercise.
+  sql(`update public.exercise_assignments set active=false where id='${assignment}'`)
+})
+
 test('starting an exercise suggests the phone, and it never runs here', async () => {
   await page.goto('/patient/exercises')
   await page.getByRole('button', { name: 'Start exercise' }).click()

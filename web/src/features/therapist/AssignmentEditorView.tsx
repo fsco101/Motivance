@@ -8,7 +8,7 @@ import { Avatar, Notice, PageHeader, StatusPill } from '@/components/Display'
 import { TextField } from '@/components/Field'
 import type { CatalogueExercise, Joint } from '@/data/catalogue'
 import { JOINTS } from '@/data/catalogue'
-import { readTiming, secondsText, validRange, validRepetitions, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
+import { clock, readTiming, secondsText, SIDE_SECONDS, validRange, validRepetitions, validSideSeconds, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
 import type { PlanSummary } from '@/data/workspace'
 import { Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
@@ -54,11 +54,16 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
   const { t } = useTranslation()
   const parameters = existing?.parameters ?? {}
   const [exercise, setExercise] = useState(existing?.exerciseId ?? '')
-  const [side, setSide] = useState<'left' | 'right'>(existing?.side === 'right' ? 'right' : 'left')
+  const [side, setSide] = useState<PrescriptionDraft['side']>(existing?.side === 'right' || existing?.side === 'bilateral' ? existing.side : 'left')
   const [focus, setFocus] = useState<Joint | ''>(typeof parameters.focus_joint === 'string' ? (parameters.focus_joint as Joint) : '')
   const [low, setLow] = useState(existing?.low ?? 20)
   const [high, setHigh] = useState(existing?.high ?? 90)
   const [repetitions, setRepetitions] = useState(existing?.repetitions ?? 5)
+  // An optional time for each side, as on Android. Measuring continues past the target until it is used up.
+  const [timed, setTimed] = useState(existing?.sideSeconds != null)
+  const [seconds, setSeconds] = useState(existing?.sideSeconds ?? SIDE_SECONDS.initial)
+  const sideSeconds = timed ? seconds : null
+  const timeLabel = t(side === 'bilateral' ? 'assign.timePerSide' : 'assign.time')
   const [timing, setTiming] = useState(false)
   // Typed and shown in seconds; the plan still stores milliseconds.
   const [minimum, setMinimum] = useState(secondsText(number(parameters.minimum_cycle_ms, 600)))
@@ -73,7 +78,7 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
   const timingError = parsed ? null : t('assign.timingError')
 
   const chosen = context.catalogue.find((item) => item.id === exercise)
-  const publishable = Boolean(chosen) && !chosen?.retired && !rangeError && !repsError && parsed !== null
+  const publishable = Boolean(chosen) && !chosen?.retired && !rangeError && !repsError && parsed !== null && validSideSeconds(sideSeconds)
   // An older version stays available to the plan already pinned to it.
   const options = context.catalogue.filter((item) => item.selectable || item.id === existing?.exerciseId)
   return (
@@ -98,7 +103,7 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                 </Step>
                 <Step number={2} title={t('assign.side')} help={t('assign.sideHelp')} done>
                   <div role="radiogroup" aria-label={t('assign.side')} className="flex flex-wrap gap-2">
-                    {(['left', 'right'] as const).map((value) => <Choice key={value} selected={side === value} onClick={() => setSide(value)}>{t(`common.${value}`)}</Choice>)}
+                    {(['left', 'right', 'bilateral'] as const).map((value) => <Choice key={value} selected={side === value} onClick={() => setSide(value)}>{t(`common.${value}`)}</Choice>)}
                   </div>
                   <h3 className="mb-2 mt-4 text-sm font-semibold">{t('assign.focus')}</h3>
                   <div role="radiogroup" aria-label={t('assign.focus')} className="flex flex-wrap gap-2">
@@ -119,6 +124,26 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                           <output aria-live="polite" className="numeric text-2xl font-bold">{repetitions}</output>
                           <IconButton label={t('assign.more')} onClick={() => setRepetitions((value) => Math.min(1000, value + 1))}><PlusIcon weight="bold" aria-hidden /></IconButton>
                         </div>
+                      </div>
+                      <div>
+                        <button type="button" role="switch" aria-checked={timed} onClick={() => setTimed((value) => !value)}
+                          className="flex min-h-9 w-full items-center justify-between gap-3 rounded-control text-left text-sm font-semibold">
+                          {t('assign.timeSwitch')}
+                          <span aria-hidden className={cn('relative h-5 w-9 shrink-0 rounded-full transition-colors transition-quick', timed ? 'bg-lagoon' : 'bg-line-strong')}>
+                            <span className={cn('absolute top-0.5 size-4 rounded-full bg-paper transition-[left] transition-quick', timed ? 'left-4.5' : 'left-0.5')} />
+                          </span>
+                        </button>
+                        {timed && (
+                          <div className="mt-2">
+                            <p className="mb-1.5 text-sm font-semibold">{timeLabel}</p>
+                            <div className="flex items-center justify-between rounded-control border border-line-strong bg-paper p-1">
+                              <IconButton label={t('assign.lessTime')} disabled={seconds <= SIDE_SECONDS.min} onClick={() => setSeconds((value) => Math.max(SIDE_SECONDS.min, value - SIDE_SECONDS.step))}><MinusIcon weight="bold" aria-hidden /></IconButton>
+                              <output aria-live="polite" className="numeric text-2xl font-bold">{clock(seconds)}</output>
+                              <IconButton label={t('assign.moreTime')} disabled={seconds >= SIDE_SECONDS.max} onClick={() => setSeconds((value) => Math.min(SIDE_SECONDS.max, value + SIDE_SECONDS.step))}><PlusIcon weight="bold" aria-hidden /></IconButton>
+                            </div>
+                            <p className="mt-1.5 text-sm text-slate">{t('assign.timeHelp')}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -150,10 +175,11 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('record.side')}</dt><dd className="font-semibold">{t(`common.${side}`)}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('assign.range')}</dt><dd className="numeric font-semibold">{low}° to {high}°</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('record.repetitions')}</dt><dd className="numeric font-semibold">{repetitions}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-night-ink">{timeLabel}</dt><dd className="numeric font-semibold">{sideSeconds === null ? t('assign.noTime') : clock(sideSeconds)}</dd></div>
                 </motion.dl>
                 {existing && <p className="mt-4 text-sm text-night-ink">{t('assign.nextVersion', { version: existing.version + 1 })}</p>}
                 <Button variant="bright" className="mt-5 w-full" disabled={!publishable} busy={busy} busyLabel={t('common.working')}
-                  onClick={() => { if (parsed) onPublish({ ...parsed, exerciseId: exercise, side, focus: focus || null, low, high, repetitions, confidence: number(parameters.confidence, 0.7) }) }}>{t('assign.publish')}</Button>
+                  onClick={() => { if (parsed) onPublish({ ...parsed, exerciseId: exercise, side, sideSeconds, focus: focus || null, low, high, repetitions, confidence: number(parameters.confidence, 0.7) }) }}>{t('assign.publish')}</Button>
                 {!exercise && <p className="mt-2 text-sm text-night-ink">{t('assign.publishHint')}</p>}
               </aside>
             </div>
