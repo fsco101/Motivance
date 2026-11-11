@@ -28,6 +28,31 @@ class ConnectedRepositoryTest {
         repo.publishPrescription(com.motivance.domain.PrescriptionDraft("assignment","version","patient","exercise",com.motivance.domain.BodySide.RIGHT,20.0,90.0,5,focusJoint=com.motivance.domain.BodyJoint.KNEE))
         assertEquals("KNEE",parameters!!.getString("focus_joint"))
     }
+    @Test fun aBothSidesPrescriptionIsPublishedAsBilateralWithItsTime()=runBlocking {
+        val sent=mutableListOf<org.json.JSONObject>()
+        val client=OkHttpClient.Builder().addInterceptor {chain ->
+            val request=chain.request();val path=request.url.encodedPath
+            val body=when {
+                path.endsWith("user_roles") -> """[{"role":"therapist"}]"""
+                path.endsWith("publish_prescription") -> {
+                    val buffer=okio.Buffer();request.body!!.writeTo(buffer)
+                    sent+=org.json.JSONObject(buffer.readUtf8());"\"version\""
+                }
+                else -> """{"access_token":"fixture-access","refresh_token":"fixture-refresh","user":{"id":"fixture-owner"}}"""
+            }
+            Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("fixture").body(body.toResponseBody("application/json".toMediaType())).build()
+        }.build()
+        val repo=SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture")
+        repo.signIn("fixture@example.test","fixture-password")
+        val both=com.motivance.domain.PrescriptionDraft("assignment","version","patient","exercise",com.motivance.domain.BodySide.LEFT,20.0,90.0,5,bilateral=true,sideSeconds=120)
+        repo.publishPrescription(both)
+        repo.publishPrescription(both.copy(requestId="untimed",sideSeconds=null))
+        assertEquals("bilateral",sent[0].getString("p_side"))
+        assertEquals(120,sent[0].getJSONObject("p_parameters").getInt("side_seconds"))
+        assertFalse(sent[1].getJSONObject("p_parameters").has("side_seconds"))
+        repo.publishPrescription(both.copy(requestId="single",bilateral=false,side=com.motivance.domain.BodySide.RIGHT,sideSeconds=null))
+        assertEquals("right",sent[2].getString("p_side"))
+    }
     @Test fun expiredUploadTokenRefreshesOnceAndRetriesTheSameSession()=runBlocking {
         val requests=mutableListOf<Request>(); var uploads=0
         val client=OkHttpClient.Builder().addInterceptor {chain ->
