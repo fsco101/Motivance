@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, IconButton } from '@/components/Button'
 import { DataTable, type Column } from '@/components/DataTable'
-import { EmptyState, Notice, PageHeader, Panel, StatusPill, Tabs } from '@/components/Display'
+import { EmptyState, Notice, PageHeader, Panel, PersonName, StatusPill, Tabs } from '@/components/Display'
 import { SelectField, TextArea, TextField } from '@/components/Field'
 import type { CenterCalendar, CenterDay, CenterSettings, Closure, Holiday, TimeOff } from '@/data/calendar'
 import { useCenterFormat } from '@/features/booking/format'
@@ -136,7 +136,7 @@ function TimeOffPanel({ entries, onEdit, onDelete }: { entries: TimeOff[]; onEdi
     return from === to ? `${from}, ${format.range(row.startsAt, row.endsAt)}` : `${from}, ${format.time(row.startsAt)} – ${to}, ${format.time(row.endsAt)}`
   }
   const columns: ReadonlyArray<Column<TimeOff>> = [
-    { key: 'therapist', header: t('booking.therapist'), cell: (row) => <span className="font-semibold">{row.therapist}</span> },
+    { key: 'therapist', header: t('booking.therapist'), cell: (row) => <PersonName name={row.therapist} photo={row.therapistPhoto} className="font-semibold" /> },
     { key: 'when', header: t('scheduler.when'), cell: (row) => when(row) },
     { key: 'reason', header: t('booking.reason'), cell: (row) => row.reason },
     { key: 'actions', header: t('calendar.actions'), align: 'end', cell: (row) => (

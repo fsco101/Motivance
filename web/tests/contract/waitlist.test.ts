@@ -49,7 +49,7 @@ describe('the waitlist on the local backend', () => {
     expect((await loadMyWaitlist(db))[0]).toMatchObject({ open: true })
     const { rows } = await loadInbox(db)
     expect(rows[0]).toMatchObject({ kind: 'place_open', reference: '' })
-    expect(new Date(rows[0]!.startsAt).getTime()).toBe(new Date(at).getTime())
+    expect(new Date(rows[0]!.startsAt!).getTime()).toBe(new Date(at).getTime())
   })
 
   it('leaves the list on booking the place', async () => {

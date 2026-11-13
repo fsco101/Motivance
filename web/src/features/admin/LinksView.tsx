@@ -45,7 +45,7 @@ export function LinksView({ load, onLink, onMore }: { load: Load<{ links: AdminL
   const therapistLabel = (link: AdminLink) => link.therapistName || link.therapist.slice(0, 8)
   const patientLabel = (link: AdminLink) => link.patientName || link.patient.slice(0, 8)
   const columns: ReadonlyArray<Column<AdminLink>> = [
-    { key: 'patient', header: t('admin.rolePatient'), cell: (link) => <span className="flex items-center gap-3 font-semibold"><Avatar name={patientLabel(link)} size={28} /><span className="truncate">{patientLabel(link)}</span></span> },
+    { key: 'patient', header: t('admin.rolePatient'), cell: (link) => <span className="flex items-center gap-3 font-semibold"><Avatar name={patientLabel(link)} photo={link.patientPhoto} size={28} /><span className="truncate">{patientLabel(link)}</span></span> },
     { key: 'status', header: t('admin.status'), cell: (link) => <StatusPill tone={link.active ? 'positive' : 'neutral'}>{t(link.active ? 'admin.linkActive' : 'admin.linkRevoked')}</StatusPill> },
     { key: 'action', header: t('patients.columnActions'), align: 'end', cell: (link) => {
       const name = therapistLabel(link)
@@ -100,7 +100,7 @@ export function LinksView({ load, onLink, onMore }: { load: Load<{ links: AdminL
                 group={(link) => {
                   const name = therapistLabel(link)
                   const count = shown.filter((item) => item.therapist === link.therapist).length
-                  return { key: link.therapist, label: name, header: <span className="flex items-center gap-2.5"><Avatar name={name} size={24} /><span className="min-w-0 flex-1 truncate">{name}</span><span className="text-xs font-normal text-slate">{t('admin.patientCount', { count })}</span></span> }
+                  return { key: link.therapist, label: name, header: <span className="flex items-center gap-2.5"><Avatar name={name} photo={link.therapistPhoto} size={24} /><span className="min-w-0 flex-1 truncate">{name}</span><span className="text-xs font-normal text-slate">{t('admin.patientCount', { count })}</span></span> }
                 }} />
             </Panel>
             {links.length >= LINK_DISPLAY_LIMIT && <Notice tone="info">{t('admin.linksLimit', { count: LINK_DISPLAY_LIMIT })}</Notice>}

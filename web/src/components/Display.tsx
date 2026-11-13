@@ -18,6 +18,16 @@ export function Avatar({ name, photo, size = 40, className }: { name: string; ph
   )
 }
 
+/** A person's face beside their name, for lists and facts. The name is the text, so the face stays out of the reading order. */
+export function PersonName({ name, photo, size = 24, className }: { name: string; photo?: string | null; size?: number; className?: string }) {
+  return (
+    <span className={cn('inline-flex min-w-0 max-w-full items-center gap-2 align-middle', className)}>
+      <Avatar name={name} photo={photo} size={size} />
+      <span className="min-w-0 truncate">{name}</span>
+    </span>
+  )
+}
+
 const tones = {
   neutral: 'bg-tide text-ink',
   positive: 'bg-sprout-soft text-sprout-deep',

@@ -8,8 +8,8 @@ type Db = SupabaseClient<Database>
 export const PAGE_SIZE = 25
 
 export type RequestRow = {
-  id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; patientId: string; patient: string
-  therapistId: string | null; therapist: string | null; attendance: Attendance | null; started: boolean; seriesId: string | null; createdAt: string
+  id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; patientId: string; patient: string; patientPhoto: string | null
+  therapistId: string | null; therapist: string | null; therapistPhoto: string | null; attendance: Attendance | null; started: boolean; seriesId: string | null; createdAt: string
 }
 
 export type RequestFilters = { search: string; status: BookingStatus | 'all'; from: string; to: string; therapist: string }
@@ -21,16 +21,17 @@ export type RequestSort = { key: SortKey; direction: 'asc' | 'desc' }
 type RawRow = {
   id: string; reference_no: string; status: BookingStatus; status_reason: string | null; starts_at: string; ends_at: string; patient_id: string; patient_name: string | null
   therapist_id: string | null; therapist_name: string | null; attendance: Attendance | null; started?: boolean; series_id?: string | null; created_at: string
+  patient_photo?: string | null; therapist_photo?: string | null
 }
 
 export const decodeRow = (row: RawRow): RequestRow => ({
   id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, startsAt: row.starts_at, endsAt: row.ends_at, patientId: row.patient_id, patient: row.patient_name ?? '',
-  therapistId: row.therapist_id, therapist: row.therapist_name, attendance: row.attendance, started: row.started ?? false, seriesId: row.series_id ?? null, createdAt: row.created_at,
+  patientPhoto: row.patient_photo ?? null, therapistId: row.therapist_id, therapist: row.therapist_name, therapistPhoto: row.therapist_photo ?? null, attendance: row.attendance, started: row.started ?? false, seriesId: row.series_id ?? null, createdAt: row.created_at,
 })
 
 export type ScheduleFilters = { search: string; status: 'all' | 'confirmed' | 'rescheduled'; from: string; to: string; therapist: string; patient: string; attendance: 'all' | Attendance | 'unmarked' }
 export const NO_SCHEDULE_FILTERS: ScheduleFilters = { search: '', status: 'all', from: '', to: '', therapist: 'all', patient: 'all', attendance: 'all' }
-export type PatientChoice = { id: string; name: string }
+export type PatientChoice = { id: string; name: string; photo?: string | null }
 
 export const queryOf = (filters: RequestFilters, sort: RequestSort, page: number) => ({
   p_search: filters.search.trim() || undefined, p_statuses: filters.status === 'all' ? undefined : [filters.status], p_from: filters.from || undefined, p_to: filters.to || undefined,
@@ -42,12 +43,12 @@ export async function loadRequests(db: Db, filters: RequestFilters, sort: Reques
   return { rows: rows.map(decodeRow), total }
 }
 
-export type BookingEvent = { id: number; action: string; actorRole: string; actor: string | null; fromStatus: string | null; toStatus: string | null; toStartsAt: string | null; reason: string | null; toAttendance: Attendance | null; recordedAt: string }
+export type BookingEvent = { id: number; action: string; actorRole: string; actor: string | null; actorPhoto: string | null; fromStatus: string | null; toStatus: string | null; toStartsAt: string | null; reason: string | null; toAttendance: Attendance | null; recordedAt: string }
 export type RequestDetail = { id: string; seriesId: string | null; seriesRemaining: number; events: BookingEvent[] }
 
 type RawDetail = {
   id: string; series_id?: string | null; series_remaining?: number
-  events: Array<{ id: number; action: string; actor_role: string; actor_name: string | null; from_status: string | null; to_status: string | null; to_starts_at: string | null; reason: string | null; to_attendance?: Attendance | null; recorded_at: string }>
+  events: Array<{ id: number; action: string; actor_role: string; actor_name: string | null; actor_photo?: string | null; from_status: string | null; to_status: string | null; to_starts_at: string | null; reason: string | null; to_attendance?: Attendance | null; recorded_at: string }>
 }
 
 export async function loadDetail(db: Db, booking: string): Promise<RequestDetail> {
@@ -55,12 +56,12 @@ export async function loadDetail(db: Db, booking: string): Promise<RequestDetail
   return {
     id: row.id, seriesId: row.series_id ?? null, seriesRemaining: row.series_remaining ?? 0,
     events: row.events.map((event) => ({
-      id: event.id, action: event.action, actorRole: event.actor_role, actor: event.actor_name, fromStatus: event.from_status, toStatus: event.to_status, toStartsAt: event.to_starts_at, toAttendance: event.to_attendance ?? null, reason: event.reason, recordedAt: event.recorded_at,
+      id: event.id, action: event.action, actorRole: event.actor_role, actor: event.actor_name, actorPhoto: event.actor_photo ?? null, fromStatus: event.from_status, toStatus: event.to_status, toStartsAt: event.to_starts_at, toAttendance: event.to_attendance ?? null, reason: event.reason, recordedAt: event.recorded_at,
     })),
   }
 }
 
-export type TherapistChoice = { id: string; name: string; linked: boolean; busy: boolean; onLeave: boolean }
+export type TherapistChoice = { id: string; name: string; photo: string | null; linked: boolean; busy: boolean; onLeave: boolean }
 
 const scheduleQuery = (filters: ScheduleFilters, sort: RequestSort, limit: number, offset: number) => ({
   p_search: filters.search.trim() || undefined, p_statuses: filters.status === 'all' ? ['confirmed', 'rescheduled'] : [filters.status], p_from: filters.from || undefined, p_to: filters.to || undefined,
@@ -96,7 +97,7 @@ export const logExport = async (db: Db, format: 'xlsx' | 'pdf', rows: number) =>
 /** With no booking, every active therapist, for the filter. With one, those who could take it, linked ones first. */
 export async function loadTherapists(db: Db, booking?: string, startsAt?: string): Promise<TherapistChoice[]> {
   const rows = must(await db.rpc('scheduler_therapists', { p_booking: booking, p_starts: startsAt })) as unknown as Array<Omit<TherapistChoice, 'onLeave'> & { on_leave: boolean }>
-  return rows.map(({ on_leave, ...row }) => ({ ...row, onLeave: on_leave }))
+  return rows.map(({ on_leave, ...row }) => ({ ...row, photo: row.photo ?? null, onLeave: on_leave }))
 }
 
 export async function loadStaffAvailability(db: Db, month: string): Promise<Availability> {

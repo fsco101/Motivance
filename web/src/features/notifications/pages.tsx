@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router'
 import { toast } from '@/components/Toast'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
-import { loadInbox, markRead, type AppNotification } from '@/data/notifications'
+import { loadInbox, markRead, notificationTarget, type AppNotification, type NotificationWorkspace } from '@/data/notifications'
 import { asLoad } from '@/features/shared'
 import '@/locales/booking'
 import { NotificationsView } from './NotificationsView'
 
 /** Opening a notification marks it read and goes where the thing it describes can be seen. */
-function NotificationsPage({ target }: { target: string }) {
+function NotificationsPage({ workspace }: { workspace: NotificationWorkspace }) {
   const { t } = useTranslation()
   const client = useQueryClient()
   const navigate = useNavigate()
@@ -25,11 +25,11 @@ function NotificationsPage({ target }: { target: string }) {
   }
   const open = (note: AppNotification) => {
     if (!note.readAt) void mark([note.id])
-    void navigate(target)
+    void navigate(notificationTarget(note, workspace))
   }
   return <NotificationsView load={asLoad(inbox)} onOpen={open} onMarkAll={() => void mark()} />
 }
 
-export const PatientNotificationsPage = () => <NotificationsPage target="/patient/bookings" />
-export const TherapistNotificationsPage = () => <NotificationsPage target="/therapist/schedule" />
-export const SchedulerNotificationsPage = () => <NotificationsPage target="/scheduler/requests" />
+export const PatientNotificationsPage = () => <NotificationsPage workspace="patient" />
+export const TherapistNotificationsPage = () => <NotificationsPage workspace="therapist" />
+export const SchedulerNotificationsPage = () => <NotificationsPage workspace="scheduler" />

@@ -421,11 +421,11 @@
     "therapistAway": "Your therapist is away at this time."
   },
   "notifications": {
-    "detail": "What has changed with your bookings.",
+    "detail": "Updates on your bookings, exercises and care team.",
     "markAll": "Mark all as read",
     "unread": "unread",
     "noneTitle": "Nothing new",
-    "noneDetail": "Changes to your bookings will show here.",
+    "noneDetail": "Updates on your bookings, exercises and care team will show here.",
     "confirmed": "Your session on {{when}} is confirmed with {{therapist}}.",
     "rejected": "Your request for {{when}} was not approved.",
     "cancelled": "Your session on {{when}} was cancelled.",
@@ -446,6 +446,14 @@
     "series_booked": "Weekly sessions booked with {{therapist}}, from {{when}} to {{last}}. Sessions: {{sessions}}.",
     "series_assigned": "{{patient}} is booked with you weekly, from {{when}} to {{last}}. Sessions: {{sessions}}.",
     "series_cancelled": "Your weekly sessions from {{when}} were cancelled. Sessions: {{sessions}}.",
-    "session_series_cancelled": "Your weekly sessions with {{patient}} from {{when}} were cancelled. Sessions: {{sessions}}."
+    "session_series_cancelled": "Your weekly sessions with {{patient}} from {{when}} were cancelled. Sessions: {{sessions}}.",
+    "plan_updated": "{{therapist}} updated your exercise plan.",
+    "session_finished": "{{patient}} finished a session: {{completed}} of {{target}} repetitions.",
+    "practice_reminder": "You have not exercised today. Your plan is ready when you are.",
+    "patient_inactive": "{{patient}} has not exercised for {{days}} days.",
+    "care_linked": "{{therapist}} is now your therapist.",
+    "care_unlinked": "{{therapist}} is no longer linked to your account.",
+    "patient_linked": "{{patient}} is now linked to you.",
+    "patient_unlinked": "{{patient}} is no longer linked to you."
   }
 }

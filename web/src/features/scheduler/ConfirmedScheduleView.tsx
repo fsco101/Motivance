@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, IconButton } from '@/components/Button'
 import { DataTable, type Column, type Sort } from '@/components/DataTable'
-import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
+import { EmptyState, Notice, PageHeader, Panel, PersonName, StatusPill } from '@/components/Display'
 import { SelectField, TextField } from '@/components/Field'
 import type { Attendance } from '@/data/booking'
 import { NO_SCHEDULE_FILTERS, type PatientChoice, type RequestRow, type RequestSort, type ScheduleFilters, type SortKey, type TherapistChoice } from '@/data/scheduler'
@@ -29,8 +29,8 @@ export function ConfirmedScheduleView({ load, therapists, patients, filters, onF
   const total = load.status === 'ready' ? load.data.total : 0
   const columns: ReadonlyArray<Column<RequestRow>> = [
     { key: 'starts_at', header: t('scheduler.when'), sortable: true, cell: (row) => <><span className="block whitespace-nowrap font-semibold">{format.day(row.startsAt)}</span><span className="whitespace-nowrap text-slate">{format.range(row.startsAt, row.endsAt)}</span></> },
-    { key: 'patient', header: t('scheduler.patient'), sortable: true, cell: (row) => <span className="font-semibold">{row.patient}</span> },
-    { key: 'therapist', header: t('booking.therapist'), sortable: true, cell: (row) => row.therapist },
+    { key: 'patient', header: t('scheduler.patient'), sortable: true, cell: (row) => <PersonName name={row.patient} photo={row.patientPhoto} size={28} className="font-semibold" /> },
+    { key: 'therapist', header: t('booking.therapist'), sortable: true, cell: (row) => row.therapist && <PersonName name={row.therapist} photo={row.therapistPhoto} /> },
     { key: 'status', header: t('scheduler.status'), sortable: true, cell: (row) => <span className="flex flex-wrap gap-1"><StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill>{row.seriesId && <StatusPill>{t('scheduler.seriesLabel')}</StatusPill>}</span> },
     {
       key: 'attendance', header: t('booking.attendanceTitle'), sortable: true,

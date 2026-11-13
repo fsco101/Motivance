@@ -734,6 +734,47 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          bookings: boolean
+          care_team: boolean
+          exercise_plan: boolean
+          inactivity: boolean
+          reminder_time: string | null
+          session_results: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bookings?: boolean
+          care_team?: boolean
+          exercise_plan?: boolean
+          inactivity?: boolean
+          reminder_time?: string | null
+          session_results?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bookings?: boolean
+          care_team?: boolean
+          exercise_plan?: boolean
+          inactivity?: boolean
+          reminder_time?: string | null
+          session_results?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           booking_id: string | null
@@ -743,6 +784,7 @@ export type Database = {
           id: string
           kind: string
           read_at: string | null
+          subject_id: string | null
           user_id: string
         }
         Insert: {
@@ -753,6 +795,7 @@ export type Database = {
           id?: string
           kind: string
           read_at?: string | null
+          subject_id?: string | null
           user_id: string
         }
         Update: {
@@ -763,6 +806,7 @@ export type Database = {
           id?: string
           kind?: string
           read_at?: string | null
+          subject_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -771,6 +815,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1453,6 +1504,10 @@ export type Database = {
         Args: { p_starts: string; p_ends: string }
         Returns: string
       }
+      check_signup_details: {
+        Args: { p_user: string; p_details: Json }
+        Returns: undefined
+      }
       claim_notification_deliveries: {
         Args: { p_channel?: string; p_limit?: number }
         Returns: Json
@@ -1483,12 +1538,24 @@ export type Database = {
         }
         Returns: string
       }
+      delete_expired_signups: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       dispatch_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       enqueue_booking_reminders: {
         Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      enqueue_inactivity_alerts: {
+        Args: { p_now?: string }
+        Returns: number
+      }
+      enqueue_practice_reminders: {
+        Args: { p_now?: string }
         Returns: number
       }
       expire_stale_bookings: {
@@ -1539,6 +1606,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      my_notification_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       my_notifications: {
         Args: { p_limit?: number }
         Returns: Json
@@ -1551,6 +1622,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      notification_group: {
+        Args: { p_kind: string }
+        Returns: string
+      }
       notify: {
         Args: {
           p_user: string
@@ -1562,6 +1637,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_person: {
+        Args: {
+          p_user: string
+          p_kind: string
+          p_subject: string
+          p_data: Json
+          p_key: string
+          p_actor: string
+        }
+        Returns: boolean
+      }
       notify_schedulers: {
         Args: {
           p_kind: string
@@ -1572,9 +1658,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      person_name: {
+        Args: { p_person: string }
+        Returns: string
+      }
       profile_photo_upload: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      provision_account: {
+        Args: { p_user: string; p_metadata: Json }
+        Returns: undefined
       }
       publish_prescription: {
         Args: {
@@ -1638,6 +1732,17 @@ export type Database = {
       save_my_profile: {
         Args: { p_details: Json }
         Returns: undefined
+      }
+      save_notification_settings: {
+        Args: {
+          p_bookings: boolean
+          p_exercise_plan: boolean
+          p_session_results: boolean
+          p_inactivity: boolean
+          p_care_team: boolean
+          p_reminder_time?: string
+        }
+        Returns: Json
       }
       schedule_layout: {
         Args: {
@@ -1856,6 +1961,10 @@ export type Database = {
       set_my_profile_photo: {
         Args: { p_public_id: string; p_version: number; p_signature: string }
         Returns: string
+      }
+      signup_code_lifetime: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
       }
       skip_notification_delivery: {
         Args: { p_id: string; p_reason: string }

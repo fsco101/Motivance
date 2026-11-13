@@ -59,17 +59,17 @@ export const ACTIVE: readonly BookingStatus[] = ['pending', 'confirmed', 'resche
 
 export type Booking = {
   id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; previousStartsAt: string | null
-  therapist: string | null; location: string; cancelUntil: string | null; canCancel: boolean; rescheduleUntil: string | null; canReschedule: boolean; reschedulesLeft: number
+  therapist: string | null; therapistPhoto: string | null; location: string; cancelUntil: string | null; canCancel: boolean; rescheduleUntil: string | null; canReschedule: boolean; reschedulesLeft: number
 }
 
 export type RawBooking = {
   id: string; reference_no: string; status: BookingStatus; status_reason: string | null; starts_at: string; ends_at: string; previous_starts_at: string | null
-  therapist_name: string | null; location?: string; cancel_until?: string | null; can_cancel?: boolean; reschedule_until?: string | null; can_reschedule?: boolean; reschedules_left?: number
+  therapist_name: string | null; therapist_photo?: string | null; location?: string; cancel_until?: string | null; can_cancel?: boolean; reschedule_until?: string | null; can_reschedule?: boolean; reschedules_left?: number
 }
 
 export const decodeBooking = (row: RawBooking): Booking => ({
   id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, startsAt: row.starts_at, endsAt: row.ends_at, previousStartsAt: row.previous_starts_at,
-  therapist: row.therapist_name, location: row.location ?? '', cancelUntil: row.cancel_until ?? null, canCancel: row.can_cancel ?? false,
+  therapist: row.therapist_name, therapistPhoto: row.therapist_photo ?? null, location: row.location ?? '', cancelUntil: row.cancel_until ?? null, canCancel: row.can_cancel ?? false,
   rescheduleUntil: row.reschedule_until ?? null, canReschedule: row.can_reschedule ?? false, reschedulesLeft: row.reschedules_left ?? 0,
 })
 

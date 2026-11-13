@@ -10,14 +10,14 @@ export type AdminAccount = {
   joined?: string | null; lastSignIn?: string | null; photo?: string | null
 }
 
-export type AdminLink = { therapist: string; therapistName: string; patient: string; patientName: string; active: boolean }
+export type AdminLink = { therapist: string; therapistName: string; therapistPhoto: string | null; patient: string; patientName: string; patientPhoto: string | null; active: boolean }
 
 export type AdminExercise = { id: string; code: string; active: boolean; version: number; name: string; english: string; filipino: string; custom: boolean }
 
 export type AuditCategory = 'accounts' | 'links' | 'catalogue' | 'clinical' | 'privacy' | 'bookings'
 
 export type AuditEvent = {
-  id: number; kind: string; category: AuditCategory; target: string; actor: string | null; recordedAt: string
+  id: number; kind: string; category: AuditCategory; target: string; actor: string | null; actorPhoto: string | null; recordedAt: string
 }
 
 /** Mirrors AdminAccount.primaryRole on Android, used for grouping and badges. */

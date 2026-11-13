@@ -37,8 +37,10 @@ export async function loadSummary(db: Db): Promise<AdminSummary> {
 }
 
 export async function loadLinks(db: Db): Promise<AdminLink[]> {
-  const rows = must(await db.rpc('admin_links')) as unknown as Array<{ therapist_id: string; patient_id: string; active: boolean; therapist_name: string | null; patient_name: string | null }>
-  return rows.map((row) => ({ therapist: row.therapist_id, therapistName: row.therapist_name ?? '', patient: row.patient_id, patientName: row.patient_name ?? '', active: row.active }))
+  const rows = must(await db.rpc('admin_links')) as unknown as Array<{ therapist_id: string; patient_id: string; active: boolean; therapist_name: string | null; patient_name: string | null
+    therapist_photo?: string | null; patient_photo?: string | null }>
+  return rows.map((row) => ({ therapist: row.therapist_id, therapistName: row.therapist_name ?? '', therapistPhoto: row.therapist_photo ?? null, patient: row.patient_id,
+    patientName: row.patient_name ?? '', patientPhoto: row.patient_photo ?? null, active: row.active }))
 }
 
 type RawExercise = { id: string; code: string; active: boolean; exercise_versions: Array<{ version: number; algorithm_key: string; definition: unknown }> }
@@ -63,7 +65,7 @@ export async function loadAdminCatalogue(db: Db) {
 
 export type RawAudit = {
   id: number; action: string; target_type: string; target_id: string; recorded_at: string
-  actor_id: string | null; actor_name: string | null; target_name: string | null; related_name: string | null
+  actor_id: string | null; actor_name: string | null; actor_photo?: string | null; target_name: string | null; related_name: string | null
 }
 
 export async function loadActivity(db: Db, before: number | null) {
@@ -109,7 +111,7 @@ export function describeEvent(row: RawAudit, t: TFunction): AuditEvent {
       : reference()
   return {
     id: row.id, kind: auditKind(row.target_type, row.action), category, target, recordedAt: row.recorded_at,
-    actor: row.actor_id === null ? null : row.actor_name || shortId(row.actor_id),
+    actor: row.actor_id === null ? null : row.actor_name || shortId(row.actor_id), actorPhoto: row.actor_photo ?? null,
   }
 }
 
