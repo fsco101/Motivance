@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { Dialog } from '@/components/Dialog'
-import { StatusPill } from '@/components/Display'
+import { Avatar, StatusPill } from '@/components/Display'
 import { TextArea } from '@/components/Field'
 import { CENTER_ZONE, shiftMonth, todayAt, type Availability, type Slot } from '@/data/booking'
 import type { RequestRow, TherapistChoice } from '@/data/scheduler'
@@ -53,6 +53,7 @@ export function TherapistPicker({ load, value, onChange, current }: { load: Load
               return (
                 <label key={choice.id} className={cn('flex min-h-11 items-center gap-3 rounded-control border border-line px-3 py-2', blocked ? 'bg-mist text-slate' : 'cursor-pointer hover:border-lagoon', value === choice.id && 'border-lagoon bg-tide')}>
                   <input type="radio" name="therapist" className="accent-lagoon" disabled={blocked} checked={value === choice.id} onChange={() => onChange(choice.id)} />
+                  <Avatar name={choice.name} photo={choice.photo} size={28} />
                   <span className="min-w-0 flex-1 font-semibold">{choice.name}</span>
                   {choice.linked && <StatusPill tone="positive">{t('scheduler.linked')}</StatusPill>}
                   {blocked && <StatusPill tone="caution">{t(choice.onLeave ? 'scheduler.onLeave' : 'scheduler.busy')}</StatusPill>}

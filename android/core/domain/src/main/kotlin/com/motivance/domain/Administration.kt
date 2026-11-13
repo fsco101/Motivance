@@ -10,7 +10,8 @@ data class AdminAccount(
     val primaryRole get()=when {"admin" in roles -> "admin";"scheduler" in roles -> "scheduler";"therapist" in roles -> "therapist";else -> "patient"}
     val label get()=name.ifBlank {email.ifBlank {id.take(8)}}
 }
-data class AdminLink(val therapist:String,val patient:String,val active:Boolean,val therapistName:String="",val patientName:String="")
+data class AdminLink(val therapist:String,val patient:String,val active:Boolean,val therapistName:String="",val patientName:String="",
+    val therapistPhoto:String?=null,val patientPhoto:String?=null)
 data class AdminExercise(val id:String,val code:String,val active:Boolean,val version:Int,val name:String,val english:String,val filipino:String,val algorithm:String="")
 /** Whole-system counts from the server, independent of how many directory pages are loaded. */
 data class AdminSummary(
@@ -20,7 +21,7 @@ data class AdminSummary(
 )
 data class AuditEvent(
     val id:Long,val action:String,val targetType:String,val targetId:String,val recordedAt:String,
-    val actorId:String?=null,val actorName:String="",val targetName:String="",val relatedName:String="",
+    val actorId:String?=null,val actorName:String="",val targetName:String="",val relatedName:String="",val actorPhoto:String?=null,
 ) {
     /** Events written by database triggers outside an authenticated request (for example signup provisioning) have no actor. */
     val system get()=actorId==null

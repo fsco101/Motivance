@@ -42,6 +42,8 @@ class BookingRepositoryTest {
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":null,"patient_name":"Ana","therapist_name":null,"reason":null}}]}"""
                 path=="/rest/v1/rpc/mark_notifications_read" -> "0"
                 path=="/rest/v1/rpc/set_my_language" -> ""
+                path=="/rest/v1/rpc/my_notification_settings" -> """{"bookings":true,"exercise_plan":false,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":"07:30"}"""
+                path=="/rest/v1/rpc/save_notification_settings" -> """{"bookings":false,"exercise_plan":true,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":null}"""
                 path=="/rest/v1/rpc/my_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
                     {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null},
                     {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":$booking}]},
@@ -236,5 +238,59 @@ class BookingRepositoryTest {
     @Test fun cancellingNamesTheBooking()=runBlocking {
         repository().cancelBooking("b1")
         assertEquals("b1",bodies["/rest/v1/rpc/cancel_my_booking"]!!.getString("p_booking"))
+    }
+
+    @Test fun notificationSettingsAreRead()=runBlocking {
+        assertEquals(NotificationSettings(exercisePlan=false,reminderTime="07:30"),repository().loadNotificationSettings())
+    }
+
+    @Test fun savingSettingsSendsEverySwitchAndReadsBackWhatWasSaved()=runBlocking {
+        val saved=repository().saveNotificationSettings(NotificationSettings(bookings=false))
+        val body=bodies["/rest/v1/rpc/save_notification_settings"]!!
+        assertFalse(body.getBoolean("p_bookings"))
+        assertTrue(body.getBoolean("p_exercise_plan") && body.getBoolean("p_session_results") && body.getBoolean("p_inactivity") && body.getBoolean("p_care_team"))
+        assertTrue("No reminder is sent as null, which turns it off",body.isNull("p_reminder_time") && body.has("p_reminder_time"))
+        assertEquals(NotificationSettings(bookings=false),saved)
+        repository().saveNotificationSettings(NotificationSettings(reminderTime="18:00"))
+        assertEquals("18:00",bodies["/rest/v1/rpc/save_notification_settings"]!!.getString("p_reminder_time"))
+    }
+
+    @Test fun aSwitchTheServerLeftOutStaysOn() {
+        assertEquals(NotificationSettings(),BookingJson.settings(JSONObject("""{"reminder_time":null}""")))
+    }
+
+    /** These are not about one session, so they have no time, and that must not lose the rest of the inbox. */
+    @Test fun notificationsThatAreNotAboutASessionAreRead() {
+        val inbox=BookingJson.inbox(JSONObject("""{"unread":3,"rows":[
+            {"id":"n1","kind":"session_finished","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":"p1","subject_name":"Ana","subject_photo":"https://res.cloudinary.com/x/image/upload/v1/a",
+             "data":{"patient_name":"Ana","completed":6,"target":5,"side":"left"}},
+            {"id":"n2","kind":"patient_inactive","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":"p1","subject_name":"Ana","subject_photo":null,
+             "data":{"patient_name":"Ana","days":4,"last_session_at":null}},
+            {"id":"n3","kind":"practice_reminder","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":null,"subject_name":null,"subject_photo":null,"data":{"date":"2026-12-01"}}]}"""))
+        assertEquals(listOf(NotificationKind.SESSION_FINISHED,NotificationKind.PATIENT_INACTIVE,NotificationKind.PRACTICE_REMINDER),inbox.items.map {it.kind})
+        val finished=inbox.items[0]
+        assertNull(finished.startsAt);assertNull(finished.endsAt);assertEquals("",finished.reference)
+        assertEquals(6,finished.completed);assertEquals(5,finished.target)
+        assertEquals("p1",finished.subjectId);assertEquals("Ana",finished.subjectName);assertEquals("https://res.cloudinary.com/x/image/upload/v1/a",finished.subjectPhoto)
+        assertEquals(4,inbox.items[1].days);assertNull(inbox.items[1].subjectPhoto)
+        assertNull(inbox.items[2].subjectId);assertNull(inbox.items[2].days)
+    }
+
+    @Test fun aBookingNotificationIsAboutTheOtherPerson() {
+        val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n1","kind":"confirmed","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
+            "subject_id":"t1","subject_name":"Dana","subject_photo":"https://res.cloudinary.com/x/image/upload/v1/d",
+            "data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00","ends_at":"2026-12-14T03:00:00+00:00","therapist_name":"Dana"}}]}""")).items.single()
+        assertEquals("2026-12-14T02:00:00+00:00",note.startsAt)
+        assertEquals("t1",note.subjectId);assertEquals("https://res.cloudinary.com/x/image/upload/v1/d",note.subjectPhoto)
+    }
+
+    @Test fun bookingsAndSchedulesCarryPhotos() {
+        assertEquals("https://res.cloudinary.com/x/image/upload/v1/d",BookingJson.booking(JSONObject(booking).put("therapist_photo","https://res.cloudinary.com/x/image/upload/v1/d")).therapistPhoto)
+        assertNull("A booking from an older server has no photo",BookingJson.booking(JSONObject(booking)).therapistPhoto)
+        val day=BookingJson.schedule(JSONObject("""{"days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[{"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00",
+            "session":{"id":"b1","reference_no":"BK","status":"confirmed","starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","location":"","patient_id":"p1","patient_name":"Ana",
+            "patient_photo":"https://res.cloudinary.com/x/image/upload/v1/a","therapist_photo":null,"linked":true}}]}]}""")).days.single()
+        assertEquals("https://res.cloudinary.com/x/image/upload/v1/a",day.sessions.single().patientPhoto)
+        assertNull(day.sessions.single().therapistPhoto)
     }
 }

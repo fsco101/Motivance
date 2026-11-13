@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { Dialog } from '@/components/Dialog'
-import { Notice } from '@/components/Display'
+import { Avatar, Notice, PersonName } from '@/components/Display'
 import { SelectField, TextArea, TextField } from '@/components/Field'
 import { CENTER_ZONE, shiftMonth, todayAt, type Availability, type Slot } from '@/data/booking'
 import { centerInstant, dayRange, type AffectedBooking, type Closure, type ClosureDraft, type Holiday, type HolidayDraft, type HolidayKind, type Resolution, type TimeOff, type TimeOffDraft } from '@/data/calendar'
@@ -45,7 +45,12 @@ type Decision = { action: 'cancel' } | { action: 'reschedule'; slot: Slot; thera
 /** With several bookings to decide, each step says whose this one is. */
 function BookingLine({ booking }: { booking: AffectedBooking }) {
   const format = useCenterFormat()
-  return <p className="mb-4 text-sm text-slate"><span className="font-semibold text-ink">{booking.patient}</span>, {format.when(booking.startsAt, booking.endsAt)}</p>
+  return (
+    <p className="mb-4 flex items-center gap-2 text-sm text-slate">
+      <Avatar name={booking.patient} photo={booking.patientPhoto} size={24} />
+      <span><span className="font-semibold text-ink">{booking.patient}</span>, {format.when(booking.startsAt, booking.endsAt)}</span>
+    </p>
+  )
 }
 
 /** Someone else at the same time, which is usually the kindest answer when a therapist is away. */
@@ -130,7 +135,7 @@ function ResolveStep({ affected, blocked, away, reason, actions, busy, onBack, o
           const decision = decisions[booking.id]
           return (
             <li key={booking.id} aria-label={booking.patient} className="py-3">
-              <p className="font-semibold">{booking.patient}</p>
+              <p className="font-semibold"><PersonName name={booking.patient} photo={booking.patientPhoto} size={28} /></p>
               <p className="text-sm text-slate">{format.when(booking.startsAt, booking.endsAt)}, {booking.reference}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {away && <Button size="sm" variant="secondary" aria-pressed={decision?.action === 'assign'} onClick={() => setCovering(booking)}>{t('scheduler.changeTherapist')}</Button>}

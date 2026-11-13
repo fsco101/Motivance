@@ -14,11 +14,14 @@ export type CenterDay = { weekday: number; isOpen: boolean; opensAt: string; clo
 export type HolidayKind = 'regular' | 'special' | 'seasonal'
 export type Holiday = { id: string; name: string; kind: HolidayKind; startsOn: string; endsOn: string }
 export type Closure = { id: string; startsAt: string; endsAt: string; allDay: boolean; reason: string }
-export type TimeOff = { id: string; therapistId: string; therapist: string; startsAt: string; endsAt: string; reason: string }
+export type TimeOff = { id: string; therapistId: string; therapist: string; therapistPhoto: string | null; startsAt: string; endsAt: string; reason: string }
 export type CenterCalendar = { settings: CenterSettings; hours: CenterDay[]; holidays: Holiday[]; closures: Closure[]; timeOff: TimeOff[] }
 
 /** A session a closure or holiday would strand. It cannot be saved until each has a decision. */
-export type AffectedBooking = { id: string; reference: string; status: BookingStatus; startsAt: string; endsAt: string; patient: string; therapistId: string | null; therapist: string | null }
+export type AffectedBooking = {
+  id: string; reference: string; status: BookingStatus; startsAt: string; endsAt: string; patient: string; patientPhoto: string | null
+  therapistId: string | null; therapist: string | null; therapistPhoto: string | null
+}
 export type Resolution =
   | { booking: string; action: 'cancel'; reason: string }
   | { booking: string; action: 'reschedule'; starts_at: string; therapist: string }
@@ -26,7 +29,7 @@ export type Resolution =
 
 export type HolidayDraft = Omit<Holiday, 'id'> & { id: string | null }
 export type ClosureDraft = Omit<Closure, 'id'> & { id: string | null }
-export type TimeOffDraft = Omit<TimeOff, 'id' | 'therapist'> & { id: string | null }
+export type TimeOffDraft = Omit<TimeOff, 'id' | 'therapist' | 'therapistPhoto'> & { id: string | null }
 
 /** Asia/Manila keeps one offset all year, so a date and time at the center has a single instant. */
 export const centerInstant = (date: string, time = '00:00') => `${date}T${time}:00+08:00`
@@ -36,7 +39,7 @@ export const dayRange = (from: string, through: string) => ({ startsAt: centerIn
 
 const time = (value: string) => value.slice(0, 5)
 
-type RawTimeOff = { id: string; therapist_id: string; therapist_name: string; starts_at: string; ends_at: string; reason: string }
+type RawTimeOff = { id: string; therapist_id: string; therapist_name: string; therapist_photo?: string | null; starts_at: string; ends_at: string; reason: string }
 
 export async function loadCalendar(db: Db, today: string): Promise<CenterCalendar> {
   const [settings, hours, holidays, closures, timeOff] = await Promise.all([
@@ -57,16 +60,19 @@ export async function loadCalendar(db: Db, today: string): Promise<CenterCalenda
     hours: hours.data!.map((day) => ({ weekday: day.weekday, isOpen: day.is_open, opensAt: time(day.opens_at), closesAt: time(day.closes_at) })),
     holidays: holidays.data!.map((day) => ({ id: day.id, name: day.name, kind: day.kind as HolidayKind, startsOn: day.starts_on, endsOn: day.ends_on })),
     closures: closures.data!.map((day) => ({ id: day.id, startsAt: day.starts_at, endsAt: day.ends_at, allDay: day.all_day, reason: day.reason })),
-    timeOff: (timeOff.data as unknown as RawTimeOff[]).map((item) => ({ id: item.id, therapistId: item.therapist_id, therapist: item.therapist_name, startsAt: item.starts_at, endsAt: item.ends_at, reason: item.reason })),
+    timeOff: (timeOff.data as unknown as RawTimeOff[]).map((item) => ({ id: item.id, therapistId: item.therapist_id, therapist: item.therapist_name, therapistPhoto: item.therapist_photo ?? null, startsAt: item.starts_at, endsAt: item.ends_at, reason: item.reason })),
   }
 }
 
-type RawAffected = { id: string; reference_no: string; status: BookingStatus; starts_at: string; ends_at: string; patient_name: string | null; therapist_id: string | null; therapist_name: string | null }
+type RawAffected = { id: string; reference_no: string; status: BookingStatus; starts_at: string; ends_at: string; patient_name: string | null; therapist_id: string | null; therapist_name: string | null
+  patient_photo?: string | null; therapist_photo?: string | null
+}
 
 /** With a therapist, only their sessions: the center stays open, so nobody else's are affected. */
 export async function loadImpact(db: Db, startsAt: string, endsAt: string, therapist?: string): Promise<AffectedBooking[]> {
   const rows = must(await db.rpc('scheduler_calendar_impact', { p_starts: startsAt, p_ends: endsAt, p_therapist: therapist })) as unknown as RawAffected[]
-  return rows.map((row) => ({ id: row.id, reference: row.reference_no, status: row.status, startsAt: row.starts_at, endsAt: row.ends_at, patient: row.patient_name ?? '', therapistId: row.therapist_id, therapist: row.therapist_name }))
+  return rows.map((row) => ({ id: row.id, reference: row.reference_no, status: row.status, startsAt: row.starts_at, endsAt: row.ends_at, patient: row.patient_name ?? '',
+    patientPhoto: row.patient_photo ?? null, therapistId: row.therapist_id, therapist: row.therapist_name, therapistPhoto: row.therapist_photo ?? null }))
 }
 
 export const saveClosure = async (db: Db, draft: ClosureDraft, resolutions: readonly Resolution[]) => {

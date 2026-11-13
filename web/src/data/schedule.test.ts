@@ -8,7 +8,7 @@ const day = (date: string, sessions: number): ScheduleDay => ({
   date, status: 'open', holiday: null, onLeave: false,
   rows: Array.from({ length: sessions }, (_, index) => ({
     startsAt: `${date}T01:00:00Z`, endsAt: `${date}T02:00:00Z`, onLeave: false,
-    session: { id: `${date}${index}`, reference: 'BK', status: 'confirmed', startsAt: `${date}T01:00:00Z`, endsAt: `${date}T02:00:00Z`, location: '', therapist: null, patientId: null, patient: null, linked: false, attendance: null, started: false },
+    session: { id: `${date}${index}`, reference: 'BK', status: 'confirmed', startsAt: `${date}T01:00:00Z`, endsAt: `${date}T02:00:00Z`, location: '', therapist: null, therapistPhoto: null, patientId: null, patient: null, patientPhoto: null, linked: false, attendance: null, started: false },
   })),
 })
 const month = (...days: ScheduleDay[]): Schedule => ({ days })

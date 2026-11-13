@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, IconButton } from '@/components/Button'
 import { DataTable, type Column, type Sort } from '@/components/DataTable'
-import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
+import { Avatar, EmptyState, Notice, PageHeader, Panel, PersonName, StatusPill } from '@/components/Display'
 import { SelectField, TextField } from '@/components/Field'
 import { ACTIVE, type BookingStatus } from '@/data/booking'
 import { NO_FILTERS, type RequestDetail, type RequestFilters, type RequestRow, type RequestSort, type SortKey, type TherapistChoice } from '@/data/scheduler'
@@ -35,7 +35,10 @@ function History({ load }: { load: Load<RequestDetail> }) {
           {events.map((event) => (
             <li key={event.id} className="py-2 text-sm">
               <p className="font-semibold">{t(`scheduler.event.${event.action}`, event.action)}</p>
-              <p className="text-slate">{event.actor ?? t('scheduler.system')}, {format.day(event.recordedAt)} {format.time(event.recordedAt)}</p>
+              <p className="flex items-center gap-1.5 text-slate">
+                {event.actor && <Avatar name={event.actor} photo={event.actorPhoto} size={20} />}
+                <span>{event.actor ?? t('scheduler.system')}, {format.day(event.recordedAt)} {format.time(event.recordedAt)}</span>
+              </p>
               {event.toStartsAt && event.action === 'rescheduled' && <p className="text-slate">{t('scheduler.movedTo', { when: `${format.day(event.toStartsAt)}, ${format.time(event.toStartsAt)}` })}</p>}
               {event.toAttendance && <p className="text-slate">{t(`booking.attendance.${event.toAttendance}`)}</p>}
               {event.reason && <p className="text-slate">{reasonText(event.reason)}</p>}
@@ -58,6 +61,7 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
     <motion.aside aria-label={t('scheduler.details', { reference: row.reference })} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={spring.layout}
       className="rounded-card border border-line bg-paper p-5 shadow-rest desk:sticky desk:top-19">
       <div className="flex items-start gap-3">
+        <Avatar name={row.patient} photo={row.patientPhoto} size={44} />
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-xl font-bold">{row.patient}</h2>
           <p className="text-sm text-slate">{row.reference}</p>
@@ -67,7 +71,7 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
       <div className="mt-3"><StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill></div>
       <dl className="mt-4 grid gap-3">
         <Fact term={t('scheduler.when')}>{format.when(row.startsAt, row.endsAt)}</Fact>
-        {(row.therapist || active) && <Fact term={t('booking.therapist')}>{row.therapist ?? t('booking.noTherapist')}</Fact>}
+        {(row.therapist || active) && <Fact term={t('booking.therapist')}>{row.therapist ? <PersonName name={row.therapist} photo={row.therapistPhoto} /> : t('booking.noTherapist')}</Fact>}
         {row.reason && <Fact term={t('booking.reason')}>{reasonText(row.reason)}</Fact>}
         {remaining > 0 && <Fact term={t('scheduler.seriesRemaining')}>{remaining}</Fact>}
       </dl>
@@ -101,8 +105,8 @@ export function RequestsView({ load, therapists, filters, onFilters, sort, onSor
         onChange={(event) => onChecked(event.target.checked ? [...checked, row.id] : checked.filter((id) => id !== row.id))} className="size-4 accent-lagoon" />
     ) },
     { key: 'starts_at', header: t('scheduler.when'), sortable: true, cell: (row) => <><span className="block whitespace-nowrap font-semibold">{format.day(row.startsAt)}</span><span className="whitespace-nowrap text-slate">{format.range(row.startsAt, row.endsAt)}</span></> },
-    { key: 'patient', header: t('scheduler.patient'), sortable: true, cell: (row) => <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(row) }} className="text-left font-semibold hover:underline">{row.patient}</button> },
-    { key: 'therapist', header: t('booking.therapist'), sortable: true, cell: (row) => row.therapist ?? (ACTIVE.includes(row.status) && <span className="text-slate">{t('booking.noTherapist')}</span>) },
+    { key: 'patient', header: t('scheduler.patient'), sortable: true, cell: (row) => <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(row) }} className="inline-flex items-center gap-2 text-left font-semibold hover:underline"><Avatar name={row.patient} photo={row.patientPhoto} size={28} /><span>{row.patient}</span></button> },
+    { key: 'therapist', header: t('booking.therapist'), sortable: true, cell: (row) => (row.therapist ? <PersonName name={row.therapist} photo={row.therapistPhoto} /> : ACTIVE.includes(row.status) && <span className="text-slate">{t('booking.noTherapist')}</span>) },
     { key: 'status', header: t('scheduler.status'), sortable: true, cell: (row) => <span className="flex flex-wrap gap-1"><StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill>{row.seriesId && <StatusPill>{t('scheduler.seriesLabel')}</StatusPill>}</span> },
     { key: 'reference_no', header: t('booking.reference'), hideBelow: 'desk', sortable: true, cell: (row) => <span className="numeric whitespace-nowrap">{row.reference}</span> },
     { key: 'created_at', header: t('scheduler.requested'), hideBelow: 'wide', sortable: true, cell: (row) => <span className="whitespace-nowrap">{format.day(row.createdAt)}</span> },

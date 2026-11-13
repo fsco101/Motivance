@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Button, ButtonLink } from '@/components/Button'
-import { EmptyState, PageHeader, Panel, Skeleton, StatusPill } from '@/components/Display'
+import { EmptyState, PageHeader, Panel, PersonName, Skeleton, StatusPill } from '@/components/Display'
 import type { Booking } from '@/data/booking'
 import type { MyExercise, RecentSession } from '@/data/patient'
 import { statusTone, useCenterFormat } from '@/features/booking/format'
@@ -42,7 +42,7 @@ function NextSession({ session, base }: { session: Booking | null; base: string 
               <StatusPill tone={statusTone[session.status]}>{t(`booking.status.${session.status}`)}</StatusPill>
             </div>
             <p className="text-lg font-semibold text-lagoon-deep">{format.range(session.startsAt, session.endsAt)}</p>
-            <p className="mt-1 text-sm text-slate">{session.therapist ?? t('booking.noTherapist')}</p>
+            <p className="mt-1 text-sm text-slate">{session.therapist ? <PersonName name={session.therapist} photo={session.therapistPhoto} size={22} /> : t('booking.noTherapist')}</p>
             <Link to={`${base}/bookings`} className="mt-3 inline-block text-sm font-semibold text-lagoon-deep underline underline-offset-4">{t('booking.viewAll')}</Link>
           </>
         ) : (

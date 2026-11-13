@@ -421,11 +421,11 @@
     "therapistAway": "Wala ang iyong therapist sa oras na ito."
   },
   "notifications": {
-    "detail": "Ang mga nagbago sa iyong mga booking.",
+    "detail": "Mga update sa iyong mga booking, ehersisyo at care team.",
     "markAll": "Markahang nabasa lahat",
     "unread": "hindi pa nababasa",
     "noneTitle": "Walang bago",
-    "noneDetail": "Lalabas dito ang mga pagbabago sa iyong mga booking.",
+    "noneDetail": "Lalabas dito ang mga update sa iyong mga booking, ehersisyo at care team.",
     "confirmed": "Kumpirmado ang iyong session sa {{when}} kasama si {{therapist}}.",
     "rejected": "Hindi naaprubahan ang iyong kahilingan para sa {{when}}.",
     "cancelled": "Kinansela ang iyong session sa {{when}}.",
@@ -446,6 +446,14 @@
     "series_booked": "Naka-book ang iyong lingguhang session kasama si {{therapist}}, mula {{when}} hanggang {{last}}. Mga session: {{sessions}}.",
     "series_assigned": "Naka-book sa iyo si {{patient}} linggu-linggo, mula {{when}} hanggang {{last}}. Mga session: {{sessions}}.",
     "series_cancelled": "Kinansela ang iyong lingguhang session mula {{when}}. Mga session: {{sessions}}.",
-    "session_series_cancelled": "Kinansela ang lingguhang session mo kasama si {{patient}} mula {{when}}. Mga session: {{sessions}}."
+    "session_series_cancelled": "Kinansela ang lingguhang session mo kasama si {{patient}} mula {{when}}. Mga session: {{sessions}}.",
+    "plan_updated": "Binago ni {{therapist}} ang iyong plano ng ehersisyo.",
+    "session_finished": "Natapos ni {{patient}} ang isang session: {{completed}} sa {{target}} na pag-ulit.",
+    "practice_reminder": "Hindi ka pa nag-eehersisyo ngayong araw. Handa na ang iyong plano.",
+    "patient_inactive": "{{days}} araw nang hindi nag-eehersisyo si {{patient}}.",
+    "care_linked": "Si {{therapist}} na ang iyong therapist.",
+    "care_unlinked": "Hindi na naka-link si {{therapist}} sa iyong account.",
+    "patient_linked": "Naka-link na sa iyo si {{patient}}.",
+    "patient_unlinked": "Hindi na naka-link sa iyo si {{patient}}."
   }
 }

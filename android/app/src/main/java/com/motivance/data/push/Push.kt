@@ -18,9 +18,16 @@ import com.google.firebase.messaging.RemoteMessage
 import com.motivance.BuildConfig
 import com.motivance.MainActivity
 import com.motivance.R
+import com.motivance.data.local.SessionStore
+import com.motivance.domain.CENTER_ZONE
+import com.motivance.domain.NotificationGroup
+import com.motivance.domain.NotificationKind
 import com.motivance.domain.NotificationRepository
 import com.motivance.domain.PushDevices
+import com.motivance.domain.centerToday
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -30,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -94,20 +102,49 @@ fun interface DeviceTokens {suspend fun current():String?}
     private companion object {const val UNREGISTER_MS=3_000L}
 }
 
+/** One Android channel per switch, so the phone's own settings for Motivance line up with the ones on Profile. */
+fun pushChannel(kind:String?):Pair<String,Int> {
+    val group=kind?.let {NotificationKind.of(it)}?.group ?: NotificationGroup.BOOKINGS
+    return when(group) {
+        // The booking channel keeps the ID it shipped with, so a phone's choices for it carry over.
+        NotificationGroup.BOOKINGS -> "booking_updates" to R.string.push_channel
+        NotificationGroup.EXERCISE_PLAN -> "exercise_plan" to R.string.push_channel_exercise_plan
+        NotificationGroup.SESSION_RESULTS -> "session_results" to R.string.push_channel_session_results
+        NotificationGroup.INACTIVITY -> "inactivity" to R.string.push_channel_inactivity
+        NotificationGroup.CARE_TEAM -> "care_team" to R.string.push_channel_care_team
+        NotificationGroup.PRACTICE -> "practice_reminders" to R.string.push_channel_practice
+    }
+}
+
+/**
+ * A practice reminder is pointless once today's session is on this phone, which the server cannot know until it uploads. Only the
+ * person it was sent to counts, because a phone can be shared. [exercisedToday] is asked only when the answer matters.
+ */
+fun skipPush(data:Map<String,String>,exercisedToday:(String)->Boolean):Boolean {
+    if(data["kind"]!=NotificationKind.PRACTICE_REMINDER.key) return false
+    val owner=data["user_id"]?.takeIf {it.isNotBlank()} ?: return false
+    return exercisedToday(owner)
+}
+
+/** Midnight at the center today, which is when "today" starts for a practice reminder. */
+fun centerDayStart(now:Instant=Instant.now())=centerToday(now).atStartOfDay(ZoneId.of(CENTER_ZONE)).toInstant().toEpochMilli()
+
 object PushNotifier {
     const val OPEN_NOTIFICATIONS="com.motivance.OPEN_NOTIFICATIONS"
-    private const val CHANNEL="booking_updates"
 
     /** The words arrive already in the reader's language. A lock screen shows only that there is news, because a message can name a patient. */
     fun show(context:Context,data:Map<String,String>) {
         val title=data["title"]?.takeIf {it.isNotBlank()} ?: return
         val body=data["body"]?.takeIf {it.isNotBlank()} ?: return
+        val (channel,name)=pushChannel(data["kind"])
         val manager=context.getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel(CHANNEL,context.getString(R.string.push_channel),NotificationManager.IMPORTANCE_DEFAULT))
+        manager.createNotificationChannel(NotificationChannel(channel,context.getString(name),NotificationManager.IMPORTANCE_DEFAULT))
         val open=PendingIntent.getActivity(context,0,Intent(context,MainActivity::class.java).putExtra(OPEN_NOTIFICATIONS,true).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val hidden=Notification.Builder(context,CHANNEL).setSmallIcon(R.drawable.ic_notification).setContentTitle(context.getString(R.string.push_public_title)).build()
-        val note=Notification.Builder(context,CHANNEL).setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(body).setStyle(Notification.BigTextStyle().bigText(body))
+        val booking=channel=="booking_updates"
+        val hidden=Notification.Builder(context,channel).setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(if(booking) R.string.push_public_title else R.string.push_public_update)).build()
+        val note=Notification.Builder(context,channel).setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(body).setStyle(Notification.BigTextStyle().bigText(body))
             .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(hidden).setContentIntent(open).setAutoCancel(true).build()
         manager.notify("${data["kind"]}:${data["booking_id"]}:$body".hashCode(),note)
     }
@@ -115,9 +152,16 @@ object PushNotifier {
 
 @AndroidEntryPoint class MotivanceMessagingService:FirebaseMessagingService() {
     @Inject lateinit var registrar:PushRegistrar
+    @Inject lateinit var sessions:SessionStore
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
 
     override fun onNewToken(token:String) {scope.launch {registrar.tokenChanged(token)}}
-    override fun onMessageReceived(message:RemoteMessage) {PushNotifier.show(this,message.data)}
+    // FCM calls this off the main thread and waits for it, so a short local read here is allowed. A slow database shows the reminder.
+    override fun onMessageReceived(message:RemoteMessage) {
+        val skip=skipPush(message.data) {owner -> runBlocking {withTimeoutOrNull(EXERCISED_CHECK_MS) {sessions.exercisedSince(owner,centerDayStart())}} ?: false}
+        if(!skip) PushNotifier.show(this,message.data)
+    }
     override fun onDestroy() {scope.cancel();super.onDestroy()}
+
+    private companion object {const val EXERCISED_CHECK_MS=2_000L}
 }

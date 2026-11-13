@@ -67,4 +67,22 @@ class PushNotifierTest {
         PushNotifier.show(context,mapOf("title" to "Two","body" to "Second","kind" to "reminder","booking_id" to "b1"))
         assertEquals(2,shown(2).size)
     }
+
+    /** Each switch on Profile has an Android channel of the same name, so the phone's settings can quiet one without the others. */
+    @Test fun eachKindArrivesOnItsOwnChannel() {
+        PushNotifier.show(context,mapOf("title" to "Session finished: Ana","body" to "Ana finished a session: 6 of 5 repetitions.","kind" to "session_finished","booking_id" to ""))
+        PushNotifier.show(context,mapOf("title" to "Your session is confirmed","body" to "Confirmed.","kind" to "confirmed","booking_id" to "b1"))
+        val channels=shown(2).map {it.channelId}.toSet()
+        assertEquals(setOf("session_results","booking_updates"),channels)
+        assertNotNull(manager.getNotificationChannel("session_results"))
+    }
+
+    @Test fun aLockScreenSaysOnlyThatThereIsAnUpdateForNewsThatIsNotABooking() {
+        PushNotifier.show(context,mapOf("title" to "No exercise for 4 days: Ana Dela Cruz","body" to "Ana Dela Cruz has not exercised for 4 days.","kind" to "patient_inactive"))
+        val note=shown().single()
+        assertEquals("inactivity",note.channelId)
+        val hidden=note.publicVersion.extras.getString(Notification.EXTRA_TITLE).orEmpty()
+        assertEquals(context.getString(com.motivance.R.string.push_public_update),hidden)
+        assertFalse(hidden.contains("Ana"))
+    }
 }

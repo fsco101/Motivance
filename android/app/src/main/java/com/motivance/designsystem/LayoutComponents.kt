@@ -146,6 +146,17 @@ enum class PillTone { NEUTRAL, POSITIVE, ATTENTION, PRIMARY }
     }
 }
 
+/** Label above a person's face and name, merged for screen readers. The name is the value, so the face adds nothing to read. */
+@Composable fun PersonDetailRow(label: String, name: String, photoUrl: String?, modifier: Modifier = Modifier) {
+    Column(modifier.semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PersonAvatar(photoUrl, name, 28.dp)
+            Text(name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
 /**
  * Semicircular protractor showing the 0–180° joint range with the prescribed band highlighted.
  * Values outside the valid range are clamped for drawing only. When [onChange] is set, either end of the

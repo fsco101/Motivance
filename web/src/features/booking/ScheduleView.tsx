@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { Notice, PageHeader, Panel, Skeleton, StatusPill } from '@/components/Display'
+import { Avatar, Notice, PageHeader, Panel, PersonName, Skeleton, StatusPill } from '@/components/Display'
 import type { Attendance } from '@/data/booking'
 import { sessionsOn, type Schedule, type ScheduleAudience, type ScheduleDay, type ScheduleSession } from '@/data/schedule'
 import { Fact, Loadable, type Load } from '@/features/shared'
@@ -29,12 +29,17 @@ function SessionDetails({ session, audience, recordPath, onMark, marking }: Deta
     <div className="min-w-0 flex-1 basis-56 rounded-control bg-tide p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="min-w-0 font-semibold">
-          {audience === 'patient' ? t('booking.scheduleSession') : record ? <Link to={record} className="underline underline-offset-4">{session.patient}</Link> : session.patient}
+          {audience === 'patient' ? t('booking.scheduleSession') : (
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <Avatar name={session.patient ?? '?'} photo={session.patientPhoto} size={24} />
+              {record ? <Link to={record} className="underline underline-offset-4">{session.patient}</Link> : session.patient}
+            </span>
+          )}
         </p>
         <StatusPill tone={statusTone[session.status]}>{t(`booking.status.${session.status}`)}</StatusPill>
       </div>
       <dl className="mt-2 grid gap-2 tablet:grid-cols-2">
-        {audience === 'patient' && <Fact term={t('booking.therapist')}>{session.therapist ?? t('booking.noTherapist')}</Fact>}
+        {audience === 'patient' && <Fact term={t('booking.therapist')}>{session.therapist ? <PersonName name={session.therapist} photo={session.therapistPhoto} /> : t('booking.noTherapist')}</Fact>}
         {audience === 'patient' && session.location && <Fact term={t('booking.location')}>{session.location}</Fact>}
         <Fact term={t('booking.reference')}><span className="numeric">{session.reference}</span></Fact>
       </dl>

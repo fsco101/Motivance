@@ -17,7 +17,7 @@ class AdministrationRepositoryTest {
         .put("username",if(i==2) "person_two" else JSONObject.NULL).put("roles",JSONArray(if(i==2) listOf("patient","therapist") else listOf("patient")))
     private fun event(id:Long)=JSONObject().put("id",id).put("action","insert").put("target_type","therapist_patients").put("target_id","t:p")
         .put("recorded_at","2026-11-04T01:00:00+00:00").put("actor_id",if(id%2==0L) JSONObject.NULL else "actor").put("actor_name","Ada")
-        .put("target_name","Thea").put("related_name","Pat")
+        .put("target_name","Thea").put("related_name","Pat").put("actor_photo",if(id%2==0L) JSONObject.NULL else "https://res.cloudinary.com/x/image/upload/v1/ada")
     private fun repository():SupabaseAuthRepository {
         val client=OkHttpClient.Builder().addInterceptor {chain ->
             val request=chain.request();val path=request.url.encodedPath
@@ -25,7 +25,7 @@ class AdministrationRepositoryTest {
             val body=when(path) {
                 "/rest/v1/user_roles" -> """[{"role":"admin"}]"""
                 "/rest/v1/rpc/admin_accounts" -> JSONArray((0..50).map {account(it)}).toString()
-                "/rest/v1/rpc/admin_links" -> """[{"therapist_id":"t","patient_id":"p","active":true,"therapist_name":"Thea","patient_name":null}]"""
+                "/rest/v1/rpc/admin_links" -> """[{"therapist_id":"t","patient_id":"p","active":true,"therapist_name":"Thea","patient_name":null,"therapist_photo":"https://res.cloudinary.com/x/image/upload/v1/thea","patient_photo":null}]"""
                 "/rest/v1/exercises" -> """[{"id":"e","code":"elbow","active":true,"exercise_versions":[{"version":1,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Old"}},{"version":2,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Elbow","instructions_en":"Bend","instructions_fil":"Baluktot"}}]}]"""
                 "/rest/v1/rpc/admin_summary" -> """{"accounts":51,"disabled":1,"patients":49,"therapists":1,"admins":1,"schedulers":4,"active_links":1,"unlinked_patients":48,"exercises":2,"active_exercises":1,"sessions_week":7,"pending_requests":2}"""
                 "/rest/v1/rpc/admin_activity" -> JSONArray((31L downTo 1L).map {event(it)}).toString()
@@ -54,6 +54,14 @@ class AdministrationRepositoryTest {
         assertEquals(30,workspace.activity.size);assertEquals(2L,workspace.activityNext)
         assertTrue(workspace.activity.first { it.id==30L }.system);assertFalse(workspace.activity.first { it.id==31L }.system)
         assertEquals("maria",bodies.getValue("/rest/v1/rpc/admin_accounts").single().getString("p_search"))
+    }
+
+    @Test fun linksAndActivityCarryTheFacesOfThePeopleTheyName()=runBlocking {
+        val workspace=repository().loadAdministration(null,null)
+        assertEquals("https://res.cloudinary.com/x/image/upload/v1/thea",workspace.links.single().therapistPhoto)
+        assertNull("No photo stays none, not the text \"null\"",workspace.links.single().patientPhoto)
+        assertEquals("https://res.cloudinary.com/x/image/upload/v1/ada",workspace.activity.first {it.id==31L}.actorPhoto)
+        assertNull(workspace.activity.first {it.id==30L}.actorPhoto)
     }
     @Test fun blankSearchIsSentAsNullAndActivityUsesTheCursor()=runBlocking {
         val repo=repository()

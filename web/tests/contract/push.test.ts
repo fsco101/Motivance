@@ -37,6 +37,42 @@ describe('a push message', () => {
   it('leaves a booking out when there is none, because FCM takes only strings', () => {
     expect(pushMessage('one', delivery({ kind: 'place_open', booking_id: null })).message.data.booking_id).toBe('')
   })
+
+  it('says whose notification it is, so the phone can drop a reminder for a session it has not uploaded', () => {
+    expect(pushMessage('one', delivery({ user_id: 'u1' })).message.data.user_id).toBe('u1')
+    expect(pushMessage('one', delivery()).message.data.user_id).toBe('')
+  })
+})
+
+describe('a push that is not about a session', () => {
+  const care = (kind: string, data: Record<string, unknown>, language: 'en' | 'fil' = 'en') =>
+    pushMessage('one', delivery({ kind, language, booking_id: null, data: data as PushDelivery['data'] })).message.data
+
+  it.each([
+    ['plan_updated', { therapist_name: 'Dana Reyes' }, 'Your exercise plan has changed', 'Dana Reyes updated your exercise plan.'],
+    ['session_finished', { patient_name: 'Ana Dela Cruz', completed: 6, target: 5 }, 'Session finished: Ana Dela Cruz', 'Ana Dela Cruz finished a session: 6 of 5 repetitions.'],
+    ['practice_reminder', { date: '2026-12-07' }, 'Time for your exercises', 'You have not exercised today. Your plan is ready when you are.'],
+    ['patient_inactive', { patient_name: 'Ana Dela Cruz', days: 4 }, 'No exercise for 4 days: Ana Dela Cruz', 'Ana Dela Cruz has not exercised for 4 days.'],
+    ['care_linked', { therapist_name: 'Dana Reyes' }, 'You have a therapist', 'Dana Reyes is now your therapist.'],
+    ['care_unlinked', { therapist_name: 'Dana Reyes' }, 'Your therapist link has ended', 'Dana Reyes is no longer linked to your account.'],
+    ['patient_linked', { patient_name: 'Ana Dela Cruz' }, 'New patient: Ana Dela Cruz', 'Ana Dela Cruz is now linked to you.'],
+    ['patient_unlinked', { patient_name: 'Ana Dela Cruz' }, 'Patient link ended: Ana Dela Cruz', 'Ana Dela Cruz is no longer linked to you.'],
+  ])('%s has its own words', (kind, data, title, body) => {
+    expect(care(kind, data)).toMatchObject({ title, body, kind, booking_id: '' })
+  })
+
+  it('is written in the reader\'s language', () => {
+    expect(care('care_linked', { therapist_name: 'Dana Reyes' }, 'fil')).toMatchObject({ title: 'May therapist ka na', body: 'Si Dana Reyes na ang iyong therapist.' })
+    expect(care('patient_inactive', { patient_name: 'Ana', days: 3 }, 'fil').body).toBe('3 araw nang hindi nag-eehersisyo si Ana.')
+  })
+
+  it('keeps a name on one line of the title', () => {
+    expect(care('patient_linked', { patient_name: 'Ana\nDela Cruz' }).title).toBe('New patient: Ana Dela Cruz')
+  })
+
+  it('needs no session time, which these kinds do not have', () => {
+    expect(() => care('practice_reminder', {})).not.toThrow()
+  })
 })
 
 describe('what FCM answers', () => {

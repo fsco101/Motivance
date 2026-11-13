@@ -2,7 +2,7 @@ import { BookOpenIcon, CalendarCheckIcon, HeartbeatIcon, LinkSimpleIcon, ShieldC
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
-import { EmptyState, PageHeader, Panel, StatusPill, Tabs } from '@/components/Display'
+import { EmptyState, PageHeader, Panel, PersonName, StatusPill, Tabs } from '@/components/Display'
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import type { AuditCategory, AuditEvent } from './types'
 
@@ -24,7 +24,7 @@ export function ActivityTable({ events, empty }: { events: readonly AuditEvent[]
     } },
     { key: 'target', header: t('admin.affectedColumn'), cell: (event) => event.target },
     { key: 'category', header: t('admin.categoryColumn'), hideBelow: 'wide', cell: (event) => <StatusPill>{t(`admin.category.${event.category}`)}</StatusPill> },
-    { key: 'actor', header: t('admin.byColumn'), hideBelow: 'desk', cell: (event) => event.actor ?? <span className="text-slate">{t('admin.eventSystem')}</span> },
+    { key: 'actor', header: t('admin.byColumn'), hideBelow: 'desk', cell: (event) => (event.actor ? <PersonName name={event.actor} photo={event.actorPhoto} /> : <span className="text-slate">{t('admin.eventSystem')}</span>) },
     { key: 'when', header: t('admin.whenColumn'), align: 'end', cell: (event) => <time dateTime={event.recordedAt} className="whitespace-nowrap text-slate">{format.dateTime(event.recordedAt)}</time> },
   ]
   return <DataTable caption={t('nav.activity')} columns={columns} rows={events} rowKey={(event) => String(event.id)} empty={empty} />

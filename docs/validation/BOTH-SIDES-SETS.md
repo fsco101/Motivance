@@ -40,9 +40,11 @@ Emulator runs used a throwaway AVD (`motivance_verify`, `emulator-5560`), never 
 
 - The four `Live*` Android classes, which need a signed-in local account on the emulator.
 - Every physical-phone, therapist and patient check, listed in the follow-up checklist.
-- Hosted rollout: the migration is applied only to the local stack.
+- A live call against the hosted project: it would leave test records there. The hosted migration history is the read-back.
 
 ## Rollout notes
+
+- 2026-11-11: `202611110001_bilateral_sets.sql` was applied to the hosted project (`supabase db push`, after a dry run that listed only this file). `supabase migration list --linked` reads it back as applied. The web app has not been redeployed, and no Android release has been built.
 
 - Apply `202611110001_bilateral_sets.sql` to the hosted project before publishing the web app, because the web editor sends `bilateral` and `side_seconds`.
 - Older installed Android builds skip `bilateral` prescriptions, because their decoder accepts only `left` and `right`. An older build does show a single-side plan with a time, but it runs it without the time and records no `sideSeconds`, so the server rejects that upload as not matching the plan. Patients must update the app before a therapist gives them a Both plan or a time. No Android release has been distributed yet (issue #29), so no installed build is affected today.

@@ -34,6 +34,9 @@ data class LocalConsent(@PrimaryKey val id:String,val ownerId:String,val event:S
     @Query("UPDATE consent_events SET state='PENDING',attempts=0,lastError=NULL WHERE ownerId=:owner AND state IN ('FAILED','WAITING_AUTH')") suspend fun retryConsents(owner:String)
     @Query("UPDATE local_sessions SET status='INTERRUPTED',updatedAt=:time WHERE ownerId=:owner AND status='DRAFT'") suspend fun interruptDrafts(owner:String,time:Long)
     @Query("DELETE FROM cached_prescriptions WHERE ownerId=:owner") suspend fun clearPrescriptions(owner:String)
+    /** Prescribed sessions only: a camera check is local-only and is not exercising the plan. */
+    @Query("SELECT COUNT(*) FROM sync_outbox o JOIN local_sessions s ON s.id=o.sessionId WHERE o.ownerId=:owner AND o.state<>'LOCAL_ONLY' AND s.startedAt>=:since")
+    suspend fun prescribedSince(owner:String,since:Long):Int
 }
 @Database(entities=[LocalSession::class,OutboxEntry::class,CachedPrescription::class,LocalConsent::class],version=2,exportSchema=true)
 abstract class SessionDatabase:RoomDatabase() { abstract fun sessions():SessionDao }

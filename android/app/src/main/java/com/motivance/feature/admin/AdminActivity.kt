@@ -119,8 +119,11 @@ internal fun AuditKind.label()=when(this) {
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
             Text(stringResource(event.kind().label()),style=MaterialTheme.typography.titleSmall)
             Text(target,style=MaterialTheme.typography.bodyMedium,maxLines=2,overflow=TextOverflow.Ellipsis)
-            Text(stringResource(R.string.admin_event_meta,actor,adminDateTime(event.recordedAt) ?: event.recordedAt),
-                style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                if(!event.system) PersonAvatar(event.actorPhoto,actor,20.dp)
+                Text(stringResource(R.string.admin_event_meta,actor,adminDateTime(event.recordedAt) ?: event.recordedAt),
+                    style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }

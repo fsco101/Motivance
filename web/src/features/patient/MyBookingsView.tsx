@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ButtonLink, Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/Dialog'
-import { EmptyState, PageHeader, Panel, StatusPill } from '@/components/Display'
+import { EmptyState, PageHeader, Panel, PersonName, StatusPill } from '@/components/Display'
 import { ACTIVE, isUpcoming, upcomingBookings, type Booking, type WaitlistEntry } from '@/data/booking'
 import { statusTone, useCenterFormat, useReasonText } from '@/features/booking/format'
 import { Fact, Loadable, SkeletonCards, type Load } from '@/features/shared'
@@ -22,7 +22,7 @@ function BookingCard({ booking, base, onCancel }: { booking: Booking; base: stri
         <StatusPill tone={statusTone[booking.status]}>{t(`booking.status.${booking.status}`)}</StatusPill>
       </div>
       <dl className="mt-3 grid gap-3 tablet:grid-cols-3">
-        {(booking.therapist || ACTIVE.includes(booking.status)) && <Fact term={t('booking.therapist')}>{booking.therapist ?? t('booking.noTherapist')}</Fact>}
+        {(booking.therapist || ACTIVE.includes(booking.status)) && <Fact term={t('booking.therapist')}>{booking.therapist ? <PersonName name={booking.therapist} photo={booking.therapistPhoto} /> : t('booking.noTherapist')}</Fact>}
         {booking.location && <Fact term={t('booking.location')}>{booking.location}</Fact>}
         <Fact term={t('booking.reference')}>{booking.reference}</Fact>
       </dl>

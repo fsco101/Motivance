@@ -215,7 +215,7 @@ delete from public.data_requests where patient_id in ({ids}); delete from public
 delete from public.therapist_patients where therapist_id in ({ids}) or patient_id in ({ids});
 delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids});
 delete from public.patients where id in ({ids}); delete from public.user_roles where user_id in ({ids});
-delete from public.profiles where id in ({ids}); delete from auth.users where id in ({ids}); commit;""")
+delete from public.notification_deliveries where notification_id in (select id from public.notifications where user_id in ({ids}) or subject_id in ({ids})); delete from public.notifications where user_id in ({ids}) or subject_id in ({ids}); delete from public.notification_settings where user_id in ({ids}); delete from public.profiles where id in ({ids}); delete from auth.users where id in ({ids}); commit;""")
 
 
 if __name__=='__main__': main()

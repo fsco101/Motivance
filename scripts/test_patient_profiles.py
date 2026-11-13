@@ -46,7 +46,7 @@ def main():
     stale=sql("select id from auth.users where email ~ '^profile-[0-9a-f]{32}@example[.]test$';").splitlines()
     if stale:
         ids=','.join("'"+str(uuid.UUID(u))+"'" for u in stale)
-        sql(f"begin;set local session_replication_role=replica;delete from public.patient_profiles where user_id in ({ids});delete from public.therapist_patients where therapist_id in ({ids}) or patient_id in ({ids});delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids});delete from public.user_roles where user_id in ({ids});delete from public.patients where id in ({ids});delete from public.profiles where id in ({ids});delete from auth.users where id in ({ids});commit;")
+        sql(f"begin;set local session_replication_role=replica;delete from public.patient_profiles where user_id in ({ids});delete from public.therapist_patients where therapist_id in ({ids}) or patient_id in ({ids});delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids});delete from public.user_roles where user_id in ({ids});delete from public.patients where id in ({ids});delete from public.notification_deliveries where notification_id in (select id from public.notifications where user_id in ({ids}) or subject_id in ({ids})); delete from public.notifications where user_id in ({ids}) or subject_id in ({ids}); delete from public.notification_settings where user_id in ({ids}); delete from public.profiles where id in ({ids});delete from auth.users where id in ({ids});commit;")
     details={'username':'p_'+uuid.uuid4().hex[:15],'first_name':'Synthetic','last_name':'Patient','gender':'female','birthdate':'1995-05-04','address':'Synthetic test address','contact':'+639001234567','avatar':'star','consent':True}
     try:
         patient,tp,email,password=user(details=details);other,to,_,_=user();therapist,tt,_,_=user('therapist')
@@ -89,6 +89,6 @@ def main():
     finally:
         if users:
             ids=','.join("'"+u+"'" for u in users)
-            sql(f"begin; set local session_replication_role=replica; delete from public.patient_profiles where user_id in ({ids}); delete from public.therapist_patients where patient_id in ({ids}) or therapist_id in ({ids}); delete from public.user_roles where user_id in ({ids}); delete from public.patients where id in ({ids}); delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids}); delete from public.profiles where id in ({ids}); delete from auth.users where id in ({ids}); commit;")
+            sql(f"begin; set local session_replication_role=replica; delete from public.patient_profiles where user_id in ({ids}); delete from public.therapist_patients where patient_id in ({ids}) or therapist_id in ({ids}); delete from public.user_roles where user_id in ({ids}); delete from public.patients where id in ({ids}); delete from public.audit_events where actor_id in ({ids}) or target_id in ({ids}); delete from public.notification_deliveries where notification_id in (select id from public.notifications where user_id in ({ids}) or subject_id in ({ids})); delete from public.notifications where user_id in ({ids}) or subject_id in ({ids}); delete from public.notification_settings where user_id in ({ids}); delete from public.profiles where id in ({ids}); delete from auth.users where id in ({ids}); commit;")
 
 if __name__=='__main__':main()

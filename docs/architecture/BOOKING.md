@@ -77,13 +77,14 @@ All times are `timestamptz` in UTC and are shown in the center's zone (Asia/Mani
 | `bookings` | Reference no., patient, therapist (optional until confirmed), series (null unless part of a weekly course), starts at, ends at, status, status reason, previous start, attendance, marked by and at, self-reschedule count, client request ID, calendar token | Two exclusion constraints stop overlaps for one patient and for one therapist among active bookings |
 | `booking_events` | Booking, actor, actor role, action, from and to status, time and therapist, reason, recorded at | Immutable, written by a trigger so it cannot be skipped. Also mirrored to `audit_events` for the admin feed |
 | `booking_waitlist` | Patient, starts at, ends at, status, notified at | One open entry per patient per slot |
-| `notifications` | User, kind, booking, data, read at, dedupe key | The owner reads their own. Clients render the text, so it follows their language |
+| `notifications` | User, kind, booking, subject (the other person it is about), data, read at, dedupe key | The owner reads their own, with the subject's current name and photo. Clients render the text, so it follows their language. Exercise and care-team kinds share this table; see [NOTIFICATIONS.md](../operations/NOTIFICATIONS.md) |
 | `notification_deliveries` | Notification, channel (email, push), status, attempts, next attempt, last error, sent at | The queue. Retries back off, then stop as failed. A push with nobody to reach is skipped |
 | `device_tokens` | User, token, platform, updated at | For FCM |
+| `notification_settings` | User, a push switch per group (bookings, exercise plan, finished sessions, inactivity, care team), daily reminder time, updated at | Locked to clients. Read and written through the caller's own functions. No row means every switch on and no reminder |
 
 **Conflict prevention.** Exclusion constraints guard patients and therapists in the database itself. Capacity uses a transaction lock, then a count of overlapping active bookings, so two simultaneous requests for the last place cannot both pass. That single lock also covers closures and settings changes. Every confirmation re-checks hours, holidays, closures, capacity, therapist leave and therapist conflicts. A repeated request with the same client ID returns the original booking, so retries are safe.
 
-**Privacy.** `can_read_patient` is not widened. Schedulers read names, reference numbers and times through their own functions only, and tests prove they see no sessions, measurements, prescriptions, consents or patient profiles.
+**Privacy.** `can_read_patient` is not widened. Schedulers read names, photos, reference numbers and times through their own functions only, and tests prove they see no sessions, measurements, prescriptions, consents or patient profiles. A photo comes back only beside a name the same function already returns.
 
 ## Endpoints
 
@@ -91,13 +92,13 @@ All are `security definer` functions that re-check the caller. A failed role che
 
 | Who | Functions |
 | --- | --- |
-| Any active account | `booking_availability(from, to)`, `my_notifications(limit)`, `mark_notifications_read(ids)`, `set_my_language(language)`, `register_device(token, platform)`, `unregister_device(token)` |
+| Any active account | `booking_availability(from, to)`, `my_notifications(limit)`, `mark_notifications_read(ids)`, `set_my_language(language)`, `register_device(token, platform)`, `unregister_device(token)`, `my_notification_settings()`, `save_notification_settings(...)` |
 | Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist`, `my_waitlist` |
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
 | Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_schedule_patients`, `scheduler_log_export` |
 | Scheduler: calendar | `scheduler_save_settings`, `scheduler_save_hours`, `scheduler_save_holiday`, `scheduler_delete_holiday`, `scheduler_calendar_impact`, `scheduler_save_closure` (takes the resolution for each affected booking, in one transaction), `scheduler_delete_closure`, `scheduler_time_off`, `scheduler_save_time_off`, `scheduler_delete_time_off` |
 | Scheduler: series and dashboard | `scheduler_series_preview` (each date with what would stop it), `scheduler_series_create`, `scheduler_series_cancel`, `scheduler_summary` |
-| Scheduled jobs (`pg_cron`) | `enqueue_booking_reminders`, `expire_stale_bookings`, and a call to `notification-dispatch` |
+| Scheduled jobs (`pg_cron`) | `enqueue_booking_reminders`, `expire_stale_bookings`, `enqueue_practice_reminders`, `enqueue_inactivity_alerts`, and a call to `notification-dispatch` |
 
 Edge Functions in `supabase/functions/`, the first in this repository:
 

@@ -223,6 +223,22 @@ Engineering evidence is in [BOTH-SIDES-SETS.md](BOTH-SIDES-SETS.md). None of the
 - [ ] Have a therapist review the flow, the 1:00 default and 15-second steps, the 5-second countdown, and whether right-side framing needs extra guidance.
 - [ ] Have a Filipino speaker review `both_sides`, `ui_*time*`, `cue_target_keep_going`, `cue_side_done`, `cue_go`, `cue_set_complete` and `set_*` in `values-fil/strings.xml`, and `common.bilateral`, `assign.time*` and `record.time*` in `web/src/locales/fil.json`.
 
+## Avatars and notifications (2026-11-13)
+
+Engineering evidence is in [AVATARS-AND-NOTIFICATIONS.md](AVATARS-AND-NOTIFICATIONS.md). None of these checks has been run.
+
+- [ ] With the owner's approval, apply `202611130001_avatars_everywhere.sql` and `202611130002_care_and_exercise_notifications.sql` to the hosted project, deploy `notification-dispatch`, and redeploy the web app. Confirm `practice-reminders` and `inactivity-alerts` appear in `cron.job`.
+- [ ] Create the Motivance Firebase project and fill in the values in [NOTIFICATIONS.md](../operations/NOTIFICATIONS.md#push-notifications). On a physical phone signed in as a patient, have a therapist publish an exercise. Confirm one push arrives for several exercises published together, and that tapping it opens Exercises.
+- [ ] As a patient with a plan, turn on the daily reminder for a few minutes from now. Confirm it arrives once, in the right language, and not at all on a day a session was done, including one done offline that has not uploaded.
+- [ ] As a therapist, confirm a patient's finished session and a 3-day quiet stretch each push once, and that tapping opens that patient. Turn Finished sessions off on Profile and confirm the next one reaches the bell but not the phone.
+- [ ] Link and unlink a patient by invitation and as an administrator. Confirm each side hears only what they did not do themselves.
+- [ ] In the phone's settings for Motivance, confirm each group is its own channel, and that the lock screen shows only "You have an update" for the new kinds.
+- [ ] With Cloudinary configured, give a therapist, a patient and an administrator real photos. Confirm the photos appear in both apps on bookings, schedules, the Scheduler's requests and calendar, the bell, and the administrator links and activity, and that a removed photo goes from all of them.
+- [ ] Confirm a Scheduler still sees no clinical data, and a patient sees only their own therapist's photo.
+- [ ] At the largest font size on a small phone and with TalkBack, check the Notifications card, its time picker and the bell rows with faces.
+- [ ] Have a Filipino speaker review `notification_*`, `push_channel_*` and `notification_settings_*` in `values-fil/strings.xml`, the new `notifications.*` lines in `web/src/locales/booking.fil.json`, and the Filipino lines in `supabase/functions/_shared/push_text.ts`.
+- [ ] Have a therapist review whether 3 quiet days is the right inactivity threshold, and whether a push per finished session is useful or too frequent.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

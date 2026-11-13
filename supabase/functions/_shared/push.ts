@@ -1,8 +1,9 @@
 /** Plain functions with no Deno in them, so the web tests can run them directly. The network is passed in. */
 import { renderEmail, type Delivery } from './email.ts'
+import { careText, type CareFacts } from './push_text.ts'
 
 export type ServiceAccount = { project_id: string; client_email: string; private_key: string; token_uri: string }
-export type PushDelivery = Delivery & { tokens: string[]; booking_id: string | null }
+export type PushDelivery = Delivery & { tokens: string[]; booking_id: string | null; user_id?: string | null }
 export type PushOutcome = 'sent' | 'dead' | 'retry'
 
 const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging'
@@ -45,8 +46,10 @@ export async function accessToken(account: ServiceAccount, send: typeof fetch = 
  * The words are the email's, so the two cannot disagree, and they arrive in the reader's language because the server knows it.
  */
 export function pushMessage(token: string, delivery: PushDelivery) {
-  const { subject, sentence } = renderEmail(delivery, { site: '', functions: '' })
-  return { message: { token, data: { title: subject, body: sentence, kind: delivery.kind, booking_id: delivery.booking_id ?? '' }, android: { priority: 'HIGH' as const } } }
+  const care = careText(delivery.kind, delivery.language, delivery.data as CareFacts)
+  const { title, body } = care ?? (({ subject, sentence }) => ({ title: subject, body: sentence }))(renderEmail(delivery, { site: '', functions: '' }))
+  // Whose notification it is lets the phone drop a practice reminder for a session it has not uploaded yet.
+  return { message: { token, data: { title, body, kind: delivery.kind, booking_id: delivery.booking_id ?? '', user_id: delivery.user_id ?? '' }, android: { priority: 'HIGH' as const } } }
 }
 
 /** What FCM's answer means for this token. A bad token will never work, and anything else may work later. */
