@@ -201,7 +201,9 @@ internal fun BookingStatus.tone()=when(this) {
             }
             StatusPill(stringResource(booking.status.label()),booking.status.tone())
         }
-        if(booking.therapist!=null || booking.status.active) DetailRow(stringResource(R.string.booking_therapist),booking.therapist ?: stringResource(R.string.booking_no_therapist))
+        val therapist=booking.therapist
+        if(therapist!=null) PersonDetailRow(stringResource(R.string.booking_therapist),therapist,booking.therapistPhoto)
+        else if(booking.status.active) DetailRow(stringResource(R.string.booking_therapist),stringResource(R.string.booking_no_therapist))
         if(booking.location.isNotBlank()) DetailRow(stringResource(R.string.booking_location),booking.location)
         DetailRow(stringResource(R.string.booking_reference),booking.reference)
         booking.previousStartsAt?.let {Text(stringResource(R.string.booking_moved_from,format.day(it)),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
@@ -272,7 +274,10 @@ internal fun BookingStatus.tone()=when(this) {
                 StatusPill(stringResource(booking.status.label()),booking.status.tone())
             }
             Text(format.range(booking.startsAt,booking.endsAt),style=MaterialTheme.typography.titleMedium,color=MaterialTheme.colorScheme.primary)
-            Text(booking.therapist ?: stringResource(R.string.booking_no_therapist),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                booking.therapist?.let {PersonAvatar(booking.therapistPhoto,it,24.dp)}
+                Text(booking.therapist ?: stringResource(R.string.booking_no_therapist),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             TextButton(open,Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.booking_view_all))}
         }
     }

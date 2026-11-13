@@ -1,5 +1,7 @@
 package com.motivance.navigation
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -53,6 +55,8 @@ import com.motivance.domain.BodySide
 import com.motivance.domain.UserRole
 import com.motivance.domain.WorkspaceOverview
 import com.motivance.domain.nextSession
+import com.motivance.domain.NotificationDestination
+import com.motivance.domain.destination
 import com.motivance.feature.admin.*
 import com.motivance.feature.auth.*
 import com.motivance.feature.booking.*
@@ -110,6 +114,8 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     val scheduleState by schedule.state.collectAsStateWithLifecycle()
     val notifications:NotificationsViewModel=viewModel()
     val notificationState by notifications.state.collectAsStateWithLifecycle()
+    val notificationSettings:NotificationSettingsViewModel=viewModel()
+    val notificationSettingsState by notificationSettings.state.collectAsStateWithLifecycle()
     val haptics=rememberHaptics()
     LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
     LaunchedEffect(Unit) {vm.restore()}
@@ -134,7 +140,8 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     // With no Firebase values this never asks and never registers, so the app behaves as if push did not exist.
     val context=LocalContext.current
-    val askForPush=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted) vm.registerPush()}
+    var pushAllowed by remember {mutableStateOf(notificationsAllowed(context))}
+    val askForPush=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> pushAllowed=granted; if(granted) vm.registerPush()}
     LaunchedEffect(auth.session?.userId) {
         when(pushPrompt(PushSetup.enabled,auth.session!=null,Build.VERSION.SDK_INT,notificationsAllowed(context))) {
             PushPrompt.ASK -> askForPush.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -182,8 +189,11 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     val language=LocalConfiguration.current.locales[0].language.let {if(it=="fil" || it=="tl") "fil" else "en"}
     LaunchedEffect(inboxOwner,language) {
         notifications.configure(inboxOwner)
+        notificationSettings.configure(inboxOwner)
         notifications.saveLanguage(language)
     }
+    // Notifications can be allowed in the phone's settings while the app is away, so the card checks again on return.
+    LaunchedEffect(lifecycle) {lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {pushAllowed=notificationsAllowed(context)}}
     LaunchedEffect(inboxOwner,lifecycle) {
         if(inboxOwner!=null) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while(true) {notifications.refresh(); delay(NOTIFICATION_CHECK_MS)}
@@ -270,6 +280,10 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                         ClinicalCard {others.forEach {allowed -> ActionButton(allowed.title(),{selectedRole=allowed.name;route="HOME"},outlined=true)}}
                     }
                     ClinicalCard {LanguagePicker()}
+                    // The phone's own settings always work, even after the permission prompt has been dismissed twice.
+                    if(inboxOwner!=null) NotificationSettingsCard(auth.session?.roles.orEmpty(),notificationSettingsState,notificationSettings,PushSetup.enabled,pushAllowed) {
+                        context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))
+                    }
                     SectionHeading(R.string.ui_account_actions)
                     ClinicalCard {
                         Text(stringResource(R.string.memory_session_notice),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -355,9 +369,17 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "NOTIFICATIONS" -> {
                     PageHeader(R.string.nav_notifications,R.string.notifications_detail)
-                    // A Scheduler's requests are on the web, so opening one only marks it read.
-                    Notifications(notificationState,notifications) {
-                        when(actualRole) {UserRole.PATIENT -> route="BOOKINGS";UserRole.THERAPIST -> route="SCHEDULE";else -> Unit}
+                    // Each goes where what it describes can be seen. A Scheduler's requests are on the web, so opening one only marks it read.
+                    Notifications(notificationState,notifications) {note ->
+                        when(val target=note.destination(actualRole)) {
+                            NotificationDestination.Bookings -> route="BOOKINGS"
+                            NotificationDestination.Schedule -> route="SCHEDULE"
+                            NotificationDestination.Exercises -> route="EXERCISES"
+                            NotificationDestination.Home -> route="HOME"
+                            NotificationDestination.Patients -> route="PATIENTS"
+                            is NotificationDestination.Patient -> if(connected.workspace.patients.any {it.id==target.id}) {selectedPatient=target.id; route="PATIENT_DETAIL"} else route="PATIENTS"
+                            NotificationDestination.Stay -> Unit
+                        }
                     }
                 }
                 "SCHEDULE" -> {

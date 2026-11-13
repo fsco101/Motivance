@@ -72,7 +72,7 @@ private const val PICKER_SUGGESTIONS=6
     confirm:(AdminConfirmation)->Unit,vm:AdministrationViewModel) {
     ClinicalCard {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-            AdminAvatar(name,"therapist",size=44)
+            AdminAvatar(name,"therapist",size=44,photoUrl=links.firstNotNullOfOrNull {it.therapistPhoto})
             Column(Modifier.weight(1f)) {
                 Text(name,style=MaterialTheme.typography.titleMedium,maxLines=1,overflow=TextOverflow.Ellipsis)
                 Text(roleLabel("therapist"),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -83,7 +83,7 @@ private const val PICKER_SUGGESTIONS=6
             HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
             val patient=nameOf(link.patient)
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                AdminAvatar(patient,"patient",link.active,36)
+                AdminAvatar(patient,"patient",link.active,36,link.patientPhoto)
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
                     Text(patient,style=MaterialTheme.typography.titleSmall,maxLines=1,overflow=TextOverflow.Ellipsis)
                     StatusPill(stringResource(if(link.active) R.string.admin_link_active else R.string.admin_link_revoked),

@@ -14,6 +14,8 @@ import org.json.JSONObject
     @Inject constructor(@ApplicationContext context:Context):this(Room.databaseBuilder(context,SessionDatabase::class.java,"motivance-sessions.db").addMigrations(SessionMigrations.FROM_1_TO_2).build())
     val dao=database.sessions()
     suspend fun recover(owner:String)=dao.interruptDrafts(owner,System.currentTimeMillis())
+    /** Whether [owner] finished a prescribed session on this phone since [since], uploaded or not. */
+    suspend fun exercisedSince(owner:String,since:Long)=dao.prescribedSince(owner,since)>0
     suspend fun save(owner:String,id:String,rules:ExerciseRules,snapshot:AssessmentSnapshot,startedAt:Long,status:String) {
         require(owner.isNotBlank()); UUID.fromString(id)
         require(status in setOf("DRAFT","INTERRUPTED","COMPLETED"))

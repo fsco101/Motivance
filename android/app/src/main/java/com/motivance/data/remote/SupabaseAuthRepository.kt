@@ -215,7 +215,8 @@ import java.time.OffsetDateTime
             AdminAccount(a.getString("id"),a.optString("display_name"),a.getBoolean("active"),(0 until r.length()).map {r.getString(it)}.toSet(),
                 a.text("email").orEmpty(),a.text("username"),a.text("created_at"),a.text("last_sign_in_at"),a.text("photo_url"))}
         AdminWorkspace(rows,(0 until links.length()).map {val l=links.getJSONObject(it)
-                AdminLink(l.getString("therapist_id"),l.getString("patient_id"),l.getBoolean("active"),l.text("therapist_name").orEmpty(),l.text("patient_name").orEmpty())},
+                AdminLink(l.getString("therapist_id"),l.getString("patient_id"),l.getBoolean("active"),l.text("therapist_name").orEmpty(),l.text("patient_name").orEmpty(),
+                    l.text("therapist_photo"),l.text("patient_photo"))},
             (0 until exercises.length()).map {val e=exercises.getJSONObject(it);val v=e.getJSONArray("exercise_versions");val latest=(0 until v.length()).map {v.getJSONObject(it)}.maxByOrNull {it.getInt("version")};val d=latest?.getJSONObject("definition")
                 AdminExercise(e.getString("id"),e.getString("code"),e.getBoolean("active"),latest?.getInt("version") ?: 0,d?.optString("name").orEmpty(),d?.optString("instructions_en").orEmpty(),d?.optString("instructions_fil").orEmpty(),latest?.text("algorithm_key").orEmpty())},
             if(accounts.length()>ADMIN_PAGE) rows.last().id else null,
@@ -229,7 +230,7 @@ import java.time.OffsetDateTime
     private fun auditPage(rows:JSONArray):AuditPage {
         val events=(0 until minOf(rows.length(),ACTIVITY_PAGE)).map {val e=rows.getJSONObject(it)
             AuditEvent(e.getLong("id"),e.getString("action"),e.getString("target_type"),e.getString("target_id"),e.getString("recorded_at"),
-                e.text("actor_id"),e.text("actor_name").orEmpty(),e.text("target_name").orEmpty(),e.text("related_name").orEmpty())}
+                e.text("actor_id"),e.text("actor_name").orEmpty(),e.text("target_name").orEmpty(),e.text("related_name").orEmpty(),e.text("actor_photo"))}
         return AuditPage(events,if(rows.length()>ACTIVITY_PAGE) events.last().id else null)
     }
     override suspend fun setAccount(user:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_account",JSONObject().put("p_user",user).put("p_active",active),t)}}
@@ -252,6 +253,9 @@ import java.time.OffsetDateTime
     override suspend fun registerDevice(token:String) {authorized {bearer,_ -> call("/rest/v1/rpc/register_device",JSONObject().put("p_token",token).put("p_platform","android"),bearer)}}
     override suspend fun unregisterDevice(token:String) {authorized {bearer,_ -> call("/rest/v1/rpc/unregister_device",JSONObject().put("p_token",token),bearer)}}
     override suspend fun saveLanguage(language:String) {authorized {token,_ -> call("/rest/v1/rpc/set_my_language",JSONObject().put("p_language",language),token)}}
+    override suspend fun loadNotificationSettings()=authorized {token,_ -> BookingJson.settings(JSONObject(call("/rest/v1/rpc/my_notification_settings",JSONObject(),token)))}
+    override suspend fun saveNotificationSettings(settings:NotificationSettings)=authorized {token,_ ->
+        BookingJson.settings(JSONObject(call("/rest/v1/rpc/save_notification_settings",BookingJson.settingsBody(settings),token)))}
     override suspend fun loadSchedule(from:String,to:String,therapist:Boolean)=authorized {token,_ ->
         BookingJson.schedule(JSONObject(call("/rest/v1/rpc/${if(therapist) "therapist_schedule" else "my_schedule"}",JSONObject().put("p_from",from).put("p_to",to),token)))}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
