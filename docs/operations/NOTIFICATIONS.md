@@ -1,8 +1,32 @@
-# Booking notifications
+# Notifications
 
-A change to a booking writes an in-app notification, and each notification adds a row to a queue. The `notification-dispatch` Edge Function drains that queue through Gmail, and `pg_cron` calls it every minute. A booking only ever writes rows, so it never waits for Gmail and cannot fail because of it.
+A change to a booking, an exercise plan, a session upload, a care-team link, or one of two scheduled checks writes an in-app notification. Each notification adds rows to a queue. The `notification-dispatch` Edge Function drains that queue: email through Gmail, and push through FCM to Android phones. `pg_cron` calls it every minute. A change only ever writes rows, so it never waits for Gmail or FCM and cannot fail because of them.
 
-This covers booking email only. Sign-up and password email go through Supabase Auth, which `supabase/.env` and `scripts/configure_auth_email.py` configure.
+Sign-up and password email go through Supabase Auth instead, which `supabase/.env` and `scripts/configure_auth_email.py` configure.
+
+## What is sent
+
+Every kind shows in the bell on both apps. Push reaches Android only; the web has the bell and no browser push. Only booking kinds send email: a daily reminder or one email per finished session would be noise.
+
+| Kind | Who hears | When | Email | Push switch |
+| --- | --- | --- | --- | --- |
+| Booking kinds (`confirmed`, `rescheduled`, `request_received`, `reminder` and the rest) | Patient, therapist or Schedulers, as before | A booking changes, or 24 hours and 1 hour before a session | Yes | Bookings |
+| `plan_updated` | Patient | A therapist publishes an exercise or changes one. A quarter of an hour of publishing is one notification | No | Exercise plan |
+| `session_finished` | The plan's therapist, while the link is active | A patient's session uploads. It carries the repetitions and the target | No | Finished sessions |
+| `practice_reminder` | Patient who chose a reminder time and has an active plan | In the two hours after their time, if no session has started today at the center. Once a day | No | Daily practice reminder |
+| `patient_inactive` | The linked therapist | A patient with an active plan has not exercised for 3 days, counted from their last session or the plan, whichever is later. Once per quiet stretch, between 08:00 and 20:00 at the center | No | Inactive patients |
+| `care_linked`, `care_unlinked` | Patient | A link to a therapist is made, made again or ended | No | Care team |
+| `patient_linked`, `patient_unlinked` | Therapist | The same. Taking away the therapist role sends the former therapist nothing | No | Care team |
+
+Nobody is told what they did themselves: a patient accepting an invitation tells only the therapist, and a therapist ending a link tells only the patient. Each notification also records who it is about, so the bell shows that person's face.
+
+## Push settings
+
+Profile on Android has a Notifications card with a switch for each group that applies to the account: a patient sees Bookings, Exercise plan, Daily practice reminder and Care team; a therapist sees Bookings, Finished sessions, Inactive patients and Care team; a Scheduler sees Bookings. Every switch starts on, and the daily reminder starts off until the patient turns it on (it defaults to 18:00, and the time can be changed).
+
+A switch only decides push. The bell always shows everything. A push whose switch is off is still queued, as `skipped` with the reason `Turned off`, so it can be seen and is never sent later. Settings live in `notification_settings`, which only `my_notification_settings()` and `save_notification_settings(...)` read and write, for the caller alone.
+
+Each group also has its own Android notification channel, so the phone's settings for Motivance line up with the switches. Before showing a practice reminder, the phone checks for a prescribed session started today on the phone itself, which covers one that has not uploaded yet, and shows nothing if it finds one.
 
 ## Hosted setup
 
@@ -79,6 +103,7 @@ A message carries data only, so the app builds the notification itself. A lock s
 | --- | --- |
 | `skipped`, `FCM_SERVICE_ACCOUNT is not set` | Push is not turned on yet |
 | `skipped`, `No device` | Nobody to reach: no phone registered, or the phone is gone. Not a failure |
+| `skipped`, `Turned off` | The person turned that group's push off on Profile. The bell still has it |
 | `pending`, with `FCM 503` or similar | FCM had a temporary problem, and it will try again |
 | `failed` | Stopped after 5 attempts. Check the service account and the project ID |
 
@@ -124,8 +149,12 @@ A run that dies after Gmail accepts an email but before recording it will send t
 | `notification-dispatch` | Every minute | Calls the Edge Function, if there is anything to send |
 | `booking-reminders` | Every 5 minutes | Reminds patients and therapists 24 hours and 1 hour before a confirmed session |
 | `expire-booking-requests` | Every 15 minutes | Rejects pending requests whose time has passed, and tells the patient |
+| `practice-reminders` | Every 5 minutes | Reminds patients who chose a time and have not exercised today, once a day |
+| `inactivity-alerts` | Every 30 minutes, acting only from 08:00 to 20:00 at the center | Tells therapists about patients with a plan who have not exercised for 3 days, once per quiet stretch |
 
-Reminders and expiry run inside the database, so they keep working with no Edge secrets. Without the Vault secrets above, their notifications still appear in both apps, and only the email waits.
+Reminders, expiry and the exercise checks run inside the database, so they keep working with no Edge secrets. Without the Vault secrets above, their notifications still appear in both apps, and only email and push wait.
+
+Both exercise jobs take an optional time, `enqueue_practice_reminders(p_now)` and `enqueue_inactivity_alerts(p_now)`, for tests. The scheduled job always passes none, which means now. Neither can be called by a signed-in person.
 
 To pause a job, for example during maintenance, use `cron.alter_job`. The `postgres` role cannot update `cron.job` directly.
 
