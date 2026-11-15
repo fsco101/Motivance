@@ -61,6 +61,14 @@ describe('a push that is not about a session', () => {
     expect(care(kind, data)).toMatchObject({ title, body, kind, booking_id: '' })
   })
 
+  it('says a message has come and from whom, never what it says, and names the conversation', () => {
+    const data = care('chat_message', { conversation_id: 'c1', sender_name: 'Dana Reyes', body: 'My knee hurts' })
+    expect(data).toMatchObject({ title: 'New message from Dana Reyes', body: 'Open Motivance to read it.', conversation_id: 'c1', booking_id: '' })
+    expect(JSON.stringify(data)).not.toContain('knee')
+    expect(care('chat_message', { conversation_id: 'c1', sender_name: 'Dana Reyes' }, 'fil')).toMatchObject({ title: 'Bagong mensahe mula kay Dana Reyes' })
+    expect(care('plan_updated', { therapist_name: 'Dana' }).conversation_id).toBe('')
+  })
+
   it('is written in the reader\'s language', () => {
     expect(care('care_linked', { therapist_name: 'Dana Reyes' }, 'fil')).toMatchObject({ title: 'May therapist ka na', body: 'Si Dana Reyes na ang iyong therapist.' })
     expect(care('patient_inactive', { patient_name: 'Ana', days: 3 }, 'fil').body).toBe('3 araw nang hindi nag-eehersisyo si Ana.')

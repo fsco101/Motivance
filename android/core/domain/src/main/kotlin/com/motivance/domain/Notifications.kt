@@ -1,7 +1,7 @@
 package com.motivance.domain
 
 /** Which push switch a kind answers to. Mirrors notification_group() on the server. */
-enum class NotificationGroup { BOOKINGS, EXERCISE_PLAN, SESSION_RESULTS, INACTIVITY, CARE_TEAM, PRACTICE }
+enum class NotificationGroup { BOOKINGS, EXERCISE_PLAN, SESSION_RESULTS, INACTIVITY, CARE_TEAM, PRACTICE, MESSAGES }
 
 enum class NotificationKind(val key:String,val group:NotificationGroup=NotificationGroup.BOOKINGS) {
     CONFIRMED("confirmed"),REJECTED("rejected"),CANCELLED("cancelled"),RESCHEDULED("rescheduled"),THERAPIST_CHANGED("therapist_changed"),RETURNED_TO_PENDING("returned_to_pending"),
@@ -11,7 +11,8 @@ enum class NotificationKind(val key:String,val group:NotificationGroup=Notificat
     PLAN_UPDATED("plan_updated",NotificationGroup.EXERCISE_PLAN),SESSION_FINISHED("session_finished",NotificationGroup.SESSION_RESULTS),
     PRACTICE_REMINDER("practice_reminder",NotificationGroup.PRACTICE),PATIENT_INACTIVE("patient_inactive",NotificationGroup.INACTIVITY),
     CARE_LINKED("care_linked",NotificationGroup.CARE_TEAM),CARE_UNLINKED("care_unlinked",NotificationGroup.CARE_TEAM),
-    PATIENT_LINKED("patient_linked",NotificationGroup.CARE_TEAM),PATIENT_UNLINKED("patient_unlinked",NotificationGroup.CARE_TEAM);
+    PATIENT_LINKED("patient_linked",NotificationGroup.CARE_TEAM),PATIENT_UNLINKED("patient_unlinked",NotificationGroup.CARE_TEAM),
+    CHAT_MESSAGE("chat_message",NotificationGroup.MESSAGES);
     /** A kind this version does not know is left out, so a newer server never shows a blank row. */
     companion object {fun of(value:String)=entries.firstOrNull {it.key==value}}
 }
@@ -28,6 +29,8 @@ data class AppNotification(
     val subjectId:String?=null,val subjectName:String?=null,val subjectPhoto:String?=null,
     /** A finished session's repetitions, and how many days an inactive patient has been quiet. */
     val completed:Int?=null,val target:Int?=null,val days:Int?=null,
+    /** For a new message: which conversation, and who wrote. Never the words. */
+    val conversationId:String?=null,val sender:String?=null,
 ) {
     val unread get()=readAt==null
 }
@@ -41,6 +44,8 @@ sealed interface NotificationDestination {
     data object Home:NotificationDestination
     data object Patients:NotificationDestination
     data class Patient(val id:String):NotificationDestination
+    /** A conversation, or the list of them when the notification does not say which. */
+    data class Conversation(val id:String?):NotificationDestination
     /** A Scheduler's requests are on the web, so opening one only marks it read. */
     data object Stay:NotificationDestination
 }
@@ -51,6 +56,7 @@ fun AppNotification.destination(workspace:UserRole?):NotificationDestination=whe
     NotificationKind.SESSION_FINISHED,NotificationKind.PATIENT_INACTIVE,NotificationKind.PATIENT_LINKED ->
         subjectId?.let {NotificationDestination.Patient(it)} ?: NotificationDestination.Patients
     NotificationKind.PATIENT_UNLINKED -> NotificationDestination.Patients
+    NotificationKind.CHAT_MESSAGE -> NotificationDestination.Conversation(conversationId)
     else -> when(workspace) {
         UserRole.PATIENT -> NotificationDestination.Bookings
         UserRole.THERAPIST -> NotificationDestination.Schedule
@@ -63,6 +69,7 @@ data class NotificationSettings(
     val bookings:Boolean=true,val exercisePlan:Boolean=true,val sessionResults:Boolean=true,val inactivity:Boolean=true,val careTeam:Boolean=true,
     /** "HH:MM" on a 24-hour clock in the center's time zone, or null for no daily reminder. */
     val reminderTime:String?=null,
+    val messages:Boolean=true,
 ) {
     fun allows(group:NotificationGroup)=when(group) {
         NotificationGroup.BOOKINGS -> bookings
@@ -71,6 +78,7 @@ data class NotificationSettings(
         NotificationGroup.INACTIVITY -> inactivity
         NotificationGroup.CARE_TEAM -> careTeam
         NotificationGroup.PRACTICE -> reminderTime!=null
+        NotificationGroup.MESSAGES -> messages
     }
     fun with(group:NotificationGroup,on:Boolean)=when(group) {
         NotificationGroup.BOOKINGS -> copy(bookings=on)
@@ -79,6 +87,7 @@ data class NotificationSettings(
         NotificationGroup.INACTIVITY -> copy(inactivity=on)
         NotificationGroup.CARE_TEAM -> copy(careTeam=on)
         NotificationGroup.PRACTICE -> copy(reminderTime=if(on) reminderTime ?: DEFAULT_REMINDER else null)
+        NotificationGroup.MESSAGES -> copy(messages=on)
     }
     companion object {
         const val DEFAULT_REMINDER="18:00"
@@ -100,6 +109,8 @@ fun notificationGroupsFor(roles:Set<UserRole>):List<NotificationGroup> {
         if(patient) {add(NotificationGroup.EXERCISE_PLAN);add(NotificationGroup.PRACTICE)}
         if(therapist) {add(NotificationGroup.SESSION_RESULTS);add(NotificationGroup.INACTIVITY)}
         if(patient || therapist) add(NotificationGroup.CARE_TEAM)
+        // Only a patient and their therapist talk.
+        if(patient || therapist) add(NotificationGroup.MESSAGES)
     }
 }
 

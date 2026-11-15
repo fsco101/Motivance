@@ -42,7 +42,7 @@ class BookingRepositoryTest {
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":null,"patient_name":"Ana","therapist_name":null,"reason":null}}]}"""
                 path=="/rest/v1/rpc/mark_notifications_read" -> "0"
                 path=="/rest/v1/rpc/set_my_language" -> ""
-                path=="/rest/v1/rpc/my_notification_settings" -> """{"bookings":true,"exercise_plan":false,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":"07:30"}"""
+                path=="/rest/v1/rpc/my_notification_settings" -> """{"bookings":true,"exercise_plan":false,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":"07:30","messages":false}"""
                 path=="/rest/v1/rpc/save_notification_settings" -> """{"bookings":false,"exercise_plan":true,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":null}"""
                 path=="/rest/v1/rpc/my_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
                     {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null},
@@ -241,14 +241,14 @@ class BookingRepositoryTest {
     }
 
     @Test fun notificationSettingsAreRead()=runBlocking {
-        assertEquals(NotificationSettings(exercisePlan=false,reminderTime="07:30"),repository().loadNotificationSettings())
+        assertEquals(NotificationSettings(exercisePlan=false,reminderTime="07:30",messages=false),repository().loadNotificationSettings())
     }
 
     @Test fun savingSettingsSendsEverySwitchAndReadsBackWhatWasSaved()=runBlocking {
         val saved=repository().saveNotificationSettings(NotificationSettings(bookings=false))
         val body=bodies["/rest/v1/rpc/save_notification_settings"]!!
         assertFalse(body.getBoolean("p_bookings"))
-        assertTrue(body.getBoolean("p_exercise_plan") && body.getBoolean("p_session_results") && body.getBoolean("p_inactivity") && body.getBoolean("p_care_team"))
+        assertTrue(body.getBoolean("p_exercise_plan") && body.getBoolean("p_session_results") && body.getBoolean("p_inactivity") && body.getBoolean("p_care_team") && body.getBoolean("p_messages"))
         assertTrue("No reminder is sent as null, which turns it off",body.isNull("p_reminder_time") && body.has("p_reminder_time"))
         assertEquals(NotificationSettings(bookings=false),saved)
         repository().saveNotificationSettings(NotificationSettings(reminderTime="18:00"))

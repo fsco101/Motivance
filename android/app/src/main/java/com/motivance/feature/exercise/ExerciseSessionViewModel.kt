@@ -41,6 +41,10 @@ data class ExerciseSessionState(
     val switching:SideSwitch?=null,
     /** Sides finished in this run, in order, for the completion screen. */
     val sides:List<SideResult> = emptyList(),
+    /** The recording of this run, once it is in the gallery. */
+    val video:SessionVideo?=null,
+    /** A recording is being finished and saved to the gallery. */
+    val videoSaving:Boolean=false,
 )
 @HiltViewModel class ExerciseSessionViewModel @Inject constructor(private val store:SessionStore,@ApplicationContext private val context:Context,private val toasts:Toaster=Toaster()):ViewModel() {
     private val mutable=MutableStateFlow(ExerciseSessionState())
@@ -64,6 +68,40 @@ data class ExerciseSessionState(
     private var lifecycleRevision=0L
     private var resultSequence=0
     private val writes=Mutex()
+    private val videos by lazy {SessionVideoStore(context)}
+
+    /** A recording has ended and is being finished; the result shows that it is on its way. */
+    fun videoPending() {mutable.value=mutable.value.copy(video=null,videoSaving=true)}
+
+    /**
+     * Puts a finished recording in the gallery's Motivance album and remembers which sessions it shows. The working copy is
+     * always removed. [file] is null when nothing playable was recorded. Safe to call from any thread.
+     */
+    fun keepVideo(file:java.io.File?,sessions:List<String>) {
+        val account=owner
+        if(file==null) {mutable.value=mutable.value.copy(videoSaving=false); return}
+        viewModelScope.launch {
+            try {
+                val at=System.currentTimeMillis()
+                val uri=withContext(Dispatchers.IO) {GalleryVideos.save(context,file,videoName(at))}
+                val video=SessionVideo(uri.toString(),sessions,at)
+                withContext(Dispatchers.IO) {videos.add(account,video)}
+                if(owner==account) mutable.value=mutable.value.copy(video=video,videoSaving=false)
+                toasts.show(R.string.video_saved)
+            } catch(e:CancellationException) {throw e}
+            catch(_:Exception) {
+                if(owner==account) mutable.value=mutable.value.copy(videoSaving=false)
+                toasts.show(R.string.video_save_failed,ToastTone.ERROR)
+            } finally {withContext(NonCancellable+Dispatchers.IO) {file.delete()}}
+        }
+    }
+
+    /** The recording was deleted from the phone. */
+    fun videoGone(uri:String) {
+        videos.remove(owner,uri)
+        if(mutable.value.video?.uri==uri) mutable.value=mutable.value.copy(video=null)
+        toasts.show(R.string.video_deleted)
+    }
     fun configure(account:String) {
         if(owner==account) return
         interrupt()
@@ -295,6 +333,6 @@ data class ExerciseSessionState(
         val current=mutable.value
         val rules=assigned(current.cached,current.rules.prescriptionVersionId) ?: ExerciseRules()
         engine=MovementAssessment(rules)
-        mutable.value=current.copy(id=null,rules=rules,metrics=engine.snapshot,saved=false,error=false,result=null,startRefused=false,switching=null,sides=emptyList())
+        mutable.value=current.copy(id=null,rules=rules,metrics=engine.snapshot,saved=false,error=false,result=null,startRefused=false,switching=null,sides=emptyList(),video=null)
     }
 }

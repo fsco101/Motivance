@@ -20,6 +20,7 @@ export function useNotificationText() {
       when: note.startsAt && note.endsAt ? format.when(note.startsAt, note.endsAt) : '', was: was ? `${format.day(was)}, ${format.time(was)}` : '',
       patient: note.patient ?? '', therapist: note.therapist ?? t('booking.noTherapist'),
       sessions: note.sessions, last: note.lastStartsAt ? format.day(note.lastStartsAt) : '', completed: note.completed ?? 0, target: note.target ?? 0, days: note.days ?? 0,
+      sender: note.sender ?? note.subjectName ?? '',
     })
   }
 }

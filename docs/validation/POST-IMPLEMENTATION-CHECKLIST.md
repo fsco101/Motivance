@@ -273,7 +273,21 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] On Safari (Mac or iPhone), send a video from the web. Confirm it is prepared as MP4 and plays on Android.
 - [ ] Have a therapist review agreement point 5 and whether 20 videos per conversation in 30 days is enough.
 - [ ] Have a Filipino speaker review the `chat_media_*`, `chat_agreement_point5`, `chat_agreement_media_*` and `chat_error_media_*` strings on Android and the `chat.media.*`, `chat.agreement.point5` and `chat.agreement.media*` lines on the web.
+- [ ] Once Firebase is set up and `notification-dispatch` is redeployed with the new `_shared/push.ts` and `_shared/push_text.ts`: with the app closed, have the other person send three messages quickly. Confirm one notification arrives, says only who wrote, shows "You have an update" on the lock screen, and opens the conversation when tapped. With the conversation open on screen, confirm nothing arrives. Turn off Messages on Profile, and separately mute the conversation, and confirm each stops the push but not the bell.
+- [ ] Have a Filipino speaker review `notification_chat_message`, `notification_settings_messages*`, `push_channel_messages` and `chat_*mute*` on Android, `notifications.chat_message` and `chat.mute*` on the web, and `chat_message` in `supabase/functions/_shared/push_text.ts`.
+- [ ] On a phone and on the web, share progress from Progress and send a plan from a patient's page; confirm the cards show the same figures and open the right page. As a therapist on a phone, schedule a message with the date and time picker, remove one, and confirm the other arrives at its time.
+- [ ] Have a therapist review whether reminder and finished-session lines belong in the conversation, and the 60-day and 50-message limits for scheduling.
+- [ ] Have a Filipino speaker review `chat_cards_*`, `chat_lines_*` and `chat_schedule_*` on Android and `chat.cards.*`, `chat.lines.*` and `chat.schedule.*` on the web.
 - [ ] Have a Filipino speaker review the `chat_*`, `nav_messages` and `messages_unread_count` strings and the two `chat_*` plurals in `values-fil/strings.xml`.
+
+## Session video (#114, 2026-11-15)
+
+- [ ] On a phone, turn on Record this session, accept the agreement, and do a both-sides set. Confirm one video appears in the gallery's Motivance album with the skeleton, angle and caption drawn on it, mirrored like the screen for the front camera.
+- [ ] With recording on, compare the frame rate and the repetition count with a session with recording off; both must stay within the performance policy.
+- [ ] From the result, Watch, Send in chat (check the therapist receives a resized video), and Delete (check it leaves the gallery). After a reinstall, delete an older video and confirm the phone asks first.
+- [ ] With recording off, confirm no file appears anywhere. Sign out and confirm the gallery video stays.
+- [ ] On Android 9 or older, confirm the storage permission is asked and the video is saved.
+- [ ] Have a therapist and the owner review the agreement wording; have a Filipino speaker review `video_*` and the reworded privacy lines on Android and the landing page.
 
 ## Recording results
 

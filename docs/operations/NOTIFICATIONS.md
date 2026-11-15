@@ -17,14 +17,21 @@ Every kind shows in the bell on both apps. Push reaches Android only; the web ha
 | `patient_inactive` | The linked therapist | A patient with an active plan has not exercised for 3 days, counted from their last session or the plan, whichever is later. Once per quiet stretch, between 08:00 and 20:00 at the center | No | Inactive patients |
 | `care_linked`, `care_unlinked` | Patient | A link to a therapist is made, made again or ended | No | Care team |
 | `patient_linked`, `patient_unlinked` | Therapist | The same. Taking away the therapist role sends the former therapist nothing | No | Care team |
+| `chat_message` | The other person in a care chat | A message or a photo or video arrives, unless that person read the conversation in the last 2 minutes (they are reading along), or already has an unread notice for it from the last 10 minutes (a burst is one). It carries who wrote and which conversation, never the words. Reading the conversation reads its notices | No | Messages, and the conversation's mute |
+
+**New-message words.** The bell on both apps says "New message from {sender}." ("Bagong mensahe mula kay {sender}."). A push says "New message from {sender}" ("Bagong mensahe mula kay {sender}") with "Open Motivance to read it." ("Buksan ang Motivance para basahin ito."); the lock screen shows only "You have an update", as for the other non-booking kinds. A tap opens that conversation. A push for a conversation the phone has on screen is not shown, and later messages in a burst replace the one notification rather than stacking. The push data carries `conversation_id` so the phone can do both; it is empty for every other kind. This needs `notification-dispatch` redeployed with the new `_shared/push.ts` and `_shared/push_text.ts`.
+
+**Lines in the conversation.** A `practice_reminder` also adds a quiet line, "Daily practice reminder", to the patient's conversation with each therapist who has an active plan for them, and a `session_finished` adds "Session finished: 7 of 8 repetitions" to the conversation with the plan's therapist. A line is stored as facts, so each reader sees it in their own language; it is nobody's unread message, notifies nobody, and is never the line the conversation list shows. Turning the daily reminder off stops the reminder being made, so its line stops too.
+
+**Muting a conversation.** Either person can mute one conversation from its header, on both apps. It stops that conversation's push for them alone (queued as `skipped`, reason `Muted`), and changes nothing in the bell or the unread count. Mutes are kept in `chat_mutes`, which nobody can read directly; `my_conversations()` tells each person only about their own, and `set_conversation_muted(conversation, muted)` changes it.
 
 Nobody is told what they did themselves: a patient accepting an invitation tells only the therapist, and a therapist ending a link tells only the patient. Each notification also records who it is about, so the bell shows that person's face.
 
 ## Push settings
 
-Profile on Android has a Notifications card with a switch for each group that applies to the account: a patient sees Bookings, Exercise plan, Daily practice reminder and Care team; a therapist sees Bookings, Finished sessions, Inactive patients and Care team; a Scheduler sees Bookings. Every switch starts on, and the daily reminder starts off until the patient turns it on (it defaults to 18:00, and the time can be changed).
+Profile on Android has a Notifications card with a switch for each group that applies to the account: a patient sees Bookings, Exercise plan, Daily practice reminder, Care team and Messages; a therapist sees Bookings, Finished sessions, Inactive patients, Care team and Messages; a Scheduler sees Bookings. Every switch starts on, and the daily reminder starts off until the patient turns it on (it defaults to 18:00, and the time can be changed).
 
-A switch only decides push. The bell always shows everything. A push whose switch is off is still queued, as `skipped` with the reason `Turned off`, so it can be seen and is never sent later. Settings live in `notification_settings`, which only `my_notification_settings()` and `save_notification_settings(...)` read and write, for the caller alone.
+A switch only decides push. The bell always shows everything. A push whose switch is off is still queued, as `skipped` with the reason `Turned off`, so it can be seen and is never sent later. Settings live in `notification_settings`, which only `my_notification_settings()` and `save_notification_settings(...)` read and write, for the caller alone. The Messages switch is `p_messages`, added in `202611150004_chat_notifications.sql`; an older app that does not send it leaves it as it was.
 
 Each group also has its own Android notification channel, so the phone's settings for Motivance line up with the switches. Before showing a practice reminder, the phone checks for a prescribed session started today on the phone itself, which covers one that has not uploaded yet, and shows nothing if it finds one.
 
@@ -151,6 +158,7 @@ A run that dies after Gmail accepts an email but before recording it will send t
 | `expire-booking-requests` | Every 15 minutes | Rejects pending requests whose time has passed, and tells the patient |
 | `practice-reminders` | Every 5 minutes | Reminds patients who chose a time and have not exercised today, once a day |
 | `inactivity-alerts` | Every 30 minutes, acting only from 08:00 to 20:00 at the center | Tells therapists about patients with a plan who have not exercised for 3 days, once per quiet stretch |
+| `send-scheduled-messages` | Every minute | Sends each care-chat message a therapist scheduled, once, at its time, if the conversation is still open; otherwise drops it and records why |
 
 Reminders, expiry and the exercise checks run inside the database, so they keep working with no Edge secrets. Without the Vault secrets above, their notifications still appear in both apps, and only email and push wait.
 

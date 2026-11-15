@@ -16,6 +16,7 @@ import { asLoad, Loadable, ready, SkeletonCards, type Load } from '@/features/sh
 import { ProfilePage } from '@/features/profile/pages'
 import { ChatConsentPanel } from '@/features/chat/ChatAgreement'
 import { useChatAgreement } from '@/features/chat/pages'
+import { useShareProgress } from '@/features/chat/ShareDialog'
 import { useActivity, useProgressResults } from '@/features/therapist/history'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from '@/features/therapist/ProgressView'
 import '@/locales/booking'
@@ -203,11 +204,12 @@ export function PatientProgressPage() {
   const [filters, setFilters] = useState(NO_FILTERS)
   const { results, onMore } = useProgressResults(userId, filters)
   const activity = useActivity(userId)
+  const sharing = useShareProgress(userId, true)
   const state = asLoad(exercises)
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state : ready({
     patients: [], patientId: userId, exercises: [...new Map(state.data.map((item) => [item.exerciseVersionId, { id: item.exerciseVersionId, name: item.name }])).values()],
   })
-  return <ProgressView self choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} />
+  return <><ProgressView self choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} onShare={sharing.share} />{sharing.dialog}</>
 }
 
 export function PatientProfilePage() {

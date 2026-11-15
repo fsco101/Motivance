@@ -48,8 +48,10 @@ export async function accessToken(account: ServiceAccount, send: typeof fetch = 
 export function pushMessage(token: string, delivery: PushDelivery) {
   const care = careText(delivery.kind, delivery.language, delivery.data as CareFacts)
   const { title, body } = care ?? (({ subject, sentence }) => ({ title: subject, body: sentence }))(renderEmail(delivery, { site: '', functions: '' }))
-  // Whose notification it is lets the phone drop a practice reminder for a session it has not uploaded yet.
-  return { message: { token, data: { title, body, kind: delivery.kind, booking_id: delivery.booking_id ?? '', user_id: delivery.user_id ?? '' }, android: { priority: 'HIGH' as const } } }
+  // Whose notification it is lets the phone drop a practice reminder for a session it has not uploaded yet. Which conversation lets a
+  // tap open it, and lets the phone stay quiet about the one already on screen.
+  const conversation = (delivery.data as CareFacts).conversation_id ?? ''
+  return { message: { token, data: { title, body, kind: delivery.kind, booking_id: delivery.booking_id ?? '', user_id: delivery.user_id ?? '', conversation_id: conversation }, android: { priority: 'HIGH' as const } } }
 }
 
 /** What FCM's answer means for this token. A bad token will never work, and anything else may work later. */

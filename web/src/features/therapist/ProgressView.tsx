@@ -1,4 +1,7 @@
+import { ShareNetworkIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
+import { Button } from '@/components/Button'
+import type { ProgressFacts } from '@/data/chat'
 import { useTranslation } from 'react-i18next'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
 import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
@@ -32,6 +35,8 @@ type Props = {
   /** The owner clears the filters here: one patient's exercise means nothing for the next. */
   onPatient: (id: string) => void
   onMore: () => void
+  /** Shares what is on screen into a conversation. Absent where there is no chat to share into. */
+  onShare?: (facts: ProgressFacts) => void
 }
 
 /** A table cannot fit a phone without hiding the results, so there each session stacks. Only patients use this page on a phone. */
@@ -84,7 +89,7 @@ function Outcome({ series }: { series: ProgressSeries }) {
   )
 }
 
-export function ProgressView({ self, choices, results, activity, filters, onFilters, onPatient, onMore }: Props) {
+export function ProgressView({ self, choices, results, activity, filters, onFilters, onPatient, onMore, onShare }: Props) {
   const { t } = useTranslation()
   const format = useFormat()
   const sessions = results.status === 'ready' ? results.data.sessions : null
@@ -128,10 +133,16 @@ export function ProgressView({ self, choices, results, activity, filters, onFilt
             <Loadable load={results} skeleton={<SkeletonLines />}>
               {(found) => (found.sessions.length === 0 ? (filtered ? <Notice tone="info">{t('progress.noMatch')}</Notice> : <EmptyState title={t('progress.emptyTitle')} detail={t('progress.emptyDetail')} />) : (
               <div className="flex flex-col gap-5">
-                {activity && <ActivityPanel summary={activity} self={self} />}
+                {activity && <ActivityPanel summary={activity} self={self} onShare={onShare && (() => onShare({ scope: 'activity', week: activity.week, previousWeek: activity.previousWeek,
+                  activeDays: activity.activeDays, streak: activity.streak, daysSinceLast: activity.daysSinceLast }))} />}
                 {concern && <Notice tone="caution">{t(self ? 'progress.trackingSelf' : 'progress.tracking', concern)}</Notice>}
                 {series.map((item) => (
-                  <Panel key={item.key} title={item.prescription.exerciseName} description={t('progress.seriesLine', { side: t(`common.${item.side}`, item.side), version: item.prescription.version, low: item.prescription.low, high: item.prescription.high })}>
+                  <Panel key={item.key} title={item.prescription.exerciseName} description={t('progress.seriesLine', { side: t(`common.${item.side}`, item.side), version: item.prescription.version, low: item.prescription.low, high: item.prescription.high })}
+                    action={onShare && seriesOutcome(item).latest !== null && <Button size="sm" variant="secondary" leading={<ShareNetworkIcon aria-hidden />} onClick={() => {
+                      const outcome = seriesOutcome(item)
+                      onShare({ scope: 'series', exercise: item.prescription.exerciseName, side: item.side, latest: roundDegrees(outcome.latest!), best: roundDegrees(outcome.best!),
+                        change: outcome.change, measured: outcome.measured, low: item.prescription.low, high: item.prescription.high })
+                    }}>{t('chat.cards.share')}</Button>}>
                     <Outcome series={item} />
                     <div className="grid gap-8 desk:grid-cols-2">
                       <TrendChart title={t('progress.rom')} unit="°" points={romPoints(item, format.short)} />

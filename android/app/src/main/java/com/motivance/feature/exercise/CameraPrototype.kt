@@ -1,5 +1,8 @@
 package com.motivance.feature.exercise
 
+import com.motivance.designsystem.displayName
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import android.Manifest
 import android.content.pm.PackageManager
 import android.content.Intent
@@ -79,6 +82,37 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
     var active by remember { mutableStateOf(lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
     var diagnostics by remember { mutableStateOf<CameraDiagnostics.Snapshot?>(null) }
     var thermalStatus by remember { mutableStateOf(-1) }
+    // Recording is the patient's own choice for each session, off until they turn it on (issue #114).
+    val videoStore=remember {SessionVideoStore(context)}
+    var record by remember {mutableStateOf(false)}
+    var askingToRecord by remember {mutableStateOf(false)}
+    val recording=remember {ActiveRecording()}
+    val videoCaption by rememberUpdatedState(exercise.rules.displayName())
+    val storageLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {record=it}
+    fun turnOnRecording() {
+        if(GalleryVideos.needsStoragePermission && ContextCompat.checkSelfPermission(context,Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED)
+            storageLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        else record=true
+    }
+    fun finishRecording() {
+        val recorder=recording.recorder ?: return
+        val sessions=recording.sessions.toList()
+        recording.recorder=null; recording.sessions.clear(); recording.live=false
+        session.videoPending()
+        recorder.finish {file -> session.keepVideo(file,sessions)}
+    }
+    // The recording begins with the session, so a screen that is only opened writes nothing. Each side of a set joins the same video.
+    LaunchedEffect(exercise.id,record) {
+        val id=exercise.id ?: return@LaunchedEffect
+        if(!record) return@LaunchedEffect
+        if(recording.recorder==null) {
+            recording.recorder=SessionRecorder(java.io.File(context.cacheDir,"session-video/$id.mp4"))
+            recording.live=true
+        }
+        if(id !in recording.sessions) recording.sessions+=id
+    }
+    LaunchedEffect(exercise.saved) {if(exercise.saved) finishRecording()}
+    DisposableEffect(Unit) {onDispose {finishRecording()}}
     DisposableEffect(lifecycle) {
         val observer=LifecycleEventObserver { _, event ->
             active=lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
@@ -132,7 +166,16 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
                                             }
                                             // A late frame is skipped, never a reason to stop recording (issue #95).
                                             FrameAction.DROP -> upright.recycle()
-                                            FrameAction.PROCESS -> {display=frame;diagnostics=snapshot;error=null;session.frame(people,upright.width,upright.height,start)}
+                                            FrameAction.PROCESS -> {
+                                                display=frame;diagnostics=snapshot;error=null;session.frame(people,upright.width,upright.height,start)
+                                                // The shown bitmap is never recycled, so the recorder can draw it on its own thread.
+                                                recording.recorder?.let {recorder ->
+                                                    val now=session.state.value
+                                                    val angle=now.metrics.angleDegrees?.takeIf {now.metrics.quality==TrackingQuality.READY && it.isFinite()}
+                                                    recorder.offer(VideoFrame(upright,points,front,now.rules,now.metrics.quality,angle,
+                                                        context.getString(R.string.video_caption,videoCaption,angle?.let {"%.0f°".format(it)} ?: "—",now.metrics.completed,now.rules.targetRepetitions)))
+                                                }
+                                            }
                                         }
                                     } else upright.recycle()
                                 } finally {awaitingUi.set(false)}
@@ -189,6 +232,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             StatusPill(stringResource(if(exercise.rules.demo) R.string.calc_source_demo_short else R.string.calc_source_prescribed_short),
                 if(exercise.rules.demo) PillTone.NEUTRAL else PillTone.POSITIVE)
         }
+        if(recording.live) StatusPill(stringResource(R.string.video_recording),PillTone.ATTENTION)
         if(exercise.id==null && exercise.switching==null) {
             if(exercise.rules.demo) {
                 Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -222,7 +266,12 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         if(!exercise.metrics.running) GuideStage(guideMotion(exercise.rules),exerciseName,Modifier.height(220.dp),dark=true)
         val switching=exercise.switching
         if(switching!=null) SideSwitchCard(switching,{haptics.tick();session.pauseSwitch()},{haptics.confirm();session.startNextSide()})
-        else MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
+        if(switching==null && exercise.id==null && !exercise.saved && permission) RecordChoice(record) {on ->
+            haptics.tick()
+            if(!on) record=false else if(videoStore.consented(ownerId)) turnOnRecording() else askingToRecord=true
+        }
+        if(askingToRecord) RecordConsentDialog({askingToRecord=false}) {askingToRecord=false; videoStore.consent(ownerId,true); turnOnRecording()}
+        if(switching==null) MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
             {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
         RepSoundToggle(voice) {haptics.tick(); voice=it; voiceSetting.enabled=it}
         SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
@@ -249,11 +298,11 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         if(exercise.recoverable!=null && exercise.id==null && exercise.switching==null) TextButton({session.restore()},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.recover_interrupted)) }
         if(exercise.saved) {
             FeedbackNotice(R.string.session_saved_local)
-            OutlinedButton({session.newSession(); consent=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
+            OutlinedButton({finishRecording(); session.newSession(); consent=false; record=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
         }
         if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
         if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
-        if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({session.newSession();consent=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
+        if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({finishRecording();session.newSession();consent=false;record=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
         // Between sides there is a set to finish too: its first side is already saved.
         val finishable=(exercise.id!=null || exercise.switching!=null) && !exercise.saved
         ActionButton(if(finishable) R.string.finish_save_session else R.string.finish_camera,
@@ -262,6 +311,39 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         Spacer(Modifier.height(8.dp))
     }
     }
+}
+
+/** The recorder in use for this run and the sessions it has shown. Held across recompositions, never across screens. */
+private class ActiveRecording {
+    var recorder:SessionRecorder?=null
+    val sessions=mutableListOf<String>()
+    var live by mutableStateOf(false)
+}
+
+@Composable private fun RecordChoice(on:Boolean,change:(Boolean)->Unit) {
+    Surface(shape=MaterialTheme.shapes.large,color=Motion.NightPanel) {
+        Row(Modifier.fillMaxWidth().toggleable(on,role=Role.Switch,onValueChange=change).padding(16.dp),verticalAlignment=Alignment.CenterVertically,
+            horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.video_record),style=MaterialTheme.typography.titleSmall,color=Color.White)
+                Text(stringResource(R.string.video_record_detail),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+            }
+            Switch(on,null)
+        }
+    }
+}
+
+/** The recording's own agreement, separate from movement summaries, asked the first time the patient turns recording on. */
+@Composable private fun RecordConsentDialog(dismiss:()->Unit,accept:()->Unit) {
+    AlertDialog(dismiss,title={Text(stringResource(R.string.video_consent_title))},
+        text={
+            Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                listOf(R.string.video_consent_point1,R.string.video_consent_point2,R.string.video_consent_point3,R.string.video_consent_point4,R.string.video_consent_point5)
+                    .forEach {Text("• "+stringResource(it),style=MaterialTheme.typography.bodyMedium)}
+            }
+        },
+        confirmButton={TextButton(accept) {Text(stringResource(R.string.video_consent_accept))}},
+        dismissButton={TextButton(dismiss) {Text(stringResource(R.string.video_consent_decline))}})
 }
 
 private fun TrackingQuality.label()=when(this) {

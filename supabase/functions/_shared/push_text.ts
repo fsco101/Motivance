@@ -5,7 +5,7 @@
  */
 import type { Language } from './email.ts'
 
-export type CareFacts = { therapist_name?: string | null; patient_name?: string | null; completed?: number | null; target?: number | null; days?: number | null }
+export type CareFacts = { therapist_name?: string | null; patient_name?: string | null; completed?: number | null; target?: number | null; days?: number | null; sender_name?: string | null; conversation_id?: string | null }
 type Line = { title: string; body: string }
 
 /** The same sentences the apps show in the bell, so a push and its bell row say the same thing. */
@@ -19,6 +19,8 @@ const LINES: Record<Language, Record<string, Line>> = {
     care_unlinked: { title: 'Your therapist link has ended', body: '{therapist} is no longer linked to your account.' },
     patient_linked: { title: 'New patient: {patient}', body: '{patient} is now linked to you.' },
     patient_unlinked: { title: 'Patient link ended: {patient}', body: '{patient} is no longer linked to you.' },
+    // Never the message itself: only that there is one, and from whom.
+    chat_message: { title: 'New message from {sender}', body: 'Open Motivance to read it.' },
   },
   fil: {
     plan_updated: { title: 'Nagbago ang iyong plano ng ehersisyo', body: 'Binago ni {therapist} ang iyong plano ng ehersisyo.' },
@@ -29,6 +31,7 @@ const LINES: Record<Language, Record<string, Line>> = {
     care_unlinked: { title: 'Natapos ang link sa iyong therapist', body: 'Hindi na naka-link si {therapist} sa iyong account.' },
     patient_linked: { title: 'Bagong pasyente: {patient}', body: 'Naka-link na sa iyo si {patient}.' },
     patient_unlinked: { title: 'Natapos ang link: {patient}', body: 'Hindi na naka-link sa iyo si {patient}.' },
+    chat_message: { title: 'Bagong mensahe mula kay {sender}', body: 'Buksan ang Motivance para basahin ito.' },
   },
 }
 
@@ -43,7 +46,7 @@ export function careText(kind: string, language: Language, data: CareFacts): { t
   if (!line) return null
   const values: Record<string, string> = {
     therapist: data.therapist_name ?? '', patient: data.patient_name ?? '',
-    completed: String(data.completed ?? 0), target: String(data.target ?? 0), days: String(data.days ?? 0),
+    completed: String(data.completed ?? 0), target: String(data.target ?? 0), days: String(data.days ?? 0), sender: data.sender_name ?? '',
   }
   const fill = (template: string) => template.replace(/\{(\w+)\}/g, (_, key: string) => values[key] ?? '')
   return { title: oneLine(fill(line.title)), body: fill(line.body) }

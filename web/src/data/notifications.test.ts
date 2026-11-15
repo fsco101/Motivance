@@ -57,6 +57,14 @@ describe('opening a notification', () => {
     expect(notificationTarget(note('patient_unlinked', 'p1'), 'therapist')).toBe('/therapist/patients')
   })
 
+  it('opens the conversation a message is in, on either side, or the list when it does not say', () => {
+    const message = decodeNotification({ id: 'n9', kind: 'chat_message', read_at: null, created_at: row.created_at, data: { conversation_id: 'c1', sender_name: 'Dana' } })
+    expect(message).toMatchObject({ conversationId: 'c1', sender: 'Dana' })
+    expect(notificationTarget(message, 'patient')).toBe('/patient/messages/c1')
+    expect(notificationTarget(message, 'therapist')).toBe('/therapist/messages/c1')
+    expect(notificationTarget({ ...message, conversationId: null }, 'therapist')).toBe('/therapist/messages')
+  })
+
   it('goes where a booking can be seen, by workspace', () => {
     expect(notificationTarget(note('rescheduled'), 'patient')).toBe('/patient/bookings')
     expect(notificationTarget(note('session_assigned', 'p1'), 'therapist')).toBe('/therapist/schedule')

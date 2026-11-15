@@ -4,7 +4,7 @@ export type FailureKey =
   | 'errors.passwordPolicy' | 'errors.sessionExpired' | 'errors.forbidden' | 'errors.offline' | 'errors.request'
   | 'errors.chatClosed' | 'errors.chatRateLimited' | 'errors.chatTooLate' | 'errors.chatConsentRequired'
   | 'errors.chatMediaConsent' | 'errors.chatMediaTooLarge' | 'errors.chatMediaInvalid' | 'errors.chatVideoCap' | 'errors.chatMediaMissing'
-  | 'errors.chatMediaUnreadable' | 'errors.chatMediaUnsupported'
+  | 'errors.chatMediaUnreadable' | 'errors.chatMediaUnsupported' | 'errors.chatScheduleTime' | 'errors.chatScheduleGone'
 
 type Failure = { status?: number; code?: string; message?: string; name?: string }
 
@@ -20,6 +20,8 @@ export function failureKey(error: unknown): FailureKey {
   if (failure.message === 'chat_video_cap') return 'errors.chatVideoCap'
   if (failure.message === 'chat_media_missing') return 'errors.chatMediaMissing'
   if (failure.message === 'chat_media_unreadable') return 'errors.chatMediaUnreadable'
+  if (failure.message === 'chat_schedule_time') return 'errors.chatScheduleTime'
+  if (failure.message === 'chat_schedule_gone') return 'errors.chatScheduleGone'
   if (failure.message === 'chat_media_unsupported') return 'errors.chatMediaUnsupported'
   if (failure.message === 'chat_rate_limited') return 'errors.chatRateLimited'
   if (failure.message === 'chat_too_late') return 'errors.chatTooLate'

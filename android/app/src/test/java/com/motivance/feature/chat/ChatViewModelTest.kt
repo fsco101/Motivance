@@ -254,6 +254,45 @@ class ChatViewModelTest {
         override suspend fun copy(owner:String,id:String,attachment:Attachment,preview:Boolean,link:suspend (String)->String):String?=null
     }
 
+    @Test fun mutingChangesOnlyThisConversationForThisPerson() = runTest(dispatcher) {
+        val vm=started()
+        vm.setMuted(true); advanceUntilIdle()
+        assertEquals(listOf("c" to true),remote.mutes)
+        assertTrue(vm.state.value.conversation!!.muted)
+        vm.setMuted(false); advanceUntilIdle()
+        assertFalse(vm.state.value.conversation!!.muted)
+    }
+
+    @Test fun aTherapistSchedulesSeesWhatWaitsAndCanRemoveIt() = runTest(dispatcher) {
+        remote.asTherapist=true
+        val vm=started()
+        vm.schedule("  See you tomorrow  ","2026-11-16T01:00:00Z"); advanceUntilIdle()
+        assertEquals(listOf("See you tomorrow"),vm.state.value.scheduled.map {it.body})
+        vm.cancelScheduled(vm.state.value.scheduled.single().id); advanceUntilIdle()
+        assertTrue(vm.state.value.scheduled.isEmpty())
+    }
+
+    @Test fun aPatientNeverAsksWhatIsScheduled() = runTest(dispatcher) {
+        val vm=started()
+        vm.loadScheduled(); advanceUntilIdle()
+        assertEquals(0,remote.scheduledReads)
+    }
+
+    @Test fun anExerciseGoesToThatPatientsOpenConversationOrSaysThereIsNone() = runTest(dispatcher) {
+        remote.asTherapist=true
+        val vm=started()
+        vm.shareExercise(other,"a1"); advanceUntilIdle()
+        assertEquals(listOf("c" to "a1"),remote.exercises)
+        vm.shareExercise("somebody-else","a2"); advanceUntilIdle()
+        assertEquals(1,remote.exercises.size)
+    }
+
+    @Test fun progressIsSharedIntoTheChosenConversationWithItsNote() = runTest(dispatcher) {
+        val vm=started()
+        vm.shareProgress("c",ChatCard.Activity(3,1,4,2,0),"  This week  "); advanceUntilIdle()
+        assertEquals(listOf(Triple("c",ChatCard.Activity(3,1,4,2,0) as ChatCard.Progress,"This week")),remote.progress)
+    }
+
     private class FakeLive:ChatLive {
         private val events=MutableSharedFlow<LiveEvent>(extraBufferCapacity=16)
         suspend fun emit(event:LiveEvent)=events.emit(event)
@@ -278,6 +317,22 @@ class ChatViewModelTest {
         var gate:CompletableDeferred<Unit>?=null
         var waitingForAgreement=false
         val steps=mutableListOf<String>()
+        val mutes=mutableListOf<Pair<String,Boolean>>()
+        var asTherapist=false
+        var scheduledReads=0
+        val waiting=mutableListOf<ScheduledMessage>()
+        val exercises=mutableListOf<Pair<String,String>>()
+        val progress=mutableListOf<Triple<String,ChatCard.Progress,String>>()
+        override suspend fun loadScheduled(conversationId:String):List<ScheduledMessage> {scheduledReads++; return waiting.toList()}
+        override suspend fun scheduleMessage(id:String,conversationId:String,body:String,sendAt:String) {waiting+=ScheduledMessage(id,body,sendAt)}
+        override suspend fun cancelScheduled(id:String) {waiting.removeAll {it.id==id}}
+        override suspend fun shareExercise(id:String,conversationId:String,assignmentId:String,caption:String):ChatMessage {
+            exercises+=conversationId to assignmentId; return ChatMessage(id,conversationId,me,MessageKind.EXERCISE,caption,"2026-11-15T09:00:00Z")
+        }
+        override suspend fun shareProgress(id:String,conversationId:String,card:ChatCard.Progress,caption:String):ChatMessage {
+            progress+=Triple(conversationId,card,caption); return ChatMessage(id,conversationId,me,MessageKind.PROGRESS,caption,"2026-11-15T09:00:00Z")
+        }
+        override suspend fun setConversationMuted(conversationId:String,muted:Boolean) {mutes+=conversationId to muted}
         var refuseMedia:String?=null
         override suspend fun startAttachment(id:String,conversationId:String,draft:MediaDraft):MediaPlaces {
             if(offline) throw IOException("offline")
@@ -295,7 +350,7 @@ class ChatViewModelTest {
             listReads++
             gate?.let {withContext(NonCancellable) {it.await()}}
             if(offline) throw IOException("offline")
-            return listOf(Conversation("c",true,other,"Dana Reyes",null,!waitingForAgreement,null,stored.maxByOrNull {it.at},0,!waitingForAgreement))
+            return listOf(Conversation("c",!asTherapist,other,"Dana Reyes",null,!waitingForAgreement,null,stored.maxByOrNull {it.at},0,!waitingForAgreement))
         }
         override suspend fun loadMessages(conversationId:String,before:ChatMessage?):MessagePage {
             gate?.let {withContext(NonCancellable) {it.await()}}

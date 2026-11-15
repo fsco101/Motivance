@@ -83,7 +83,7 @@ function Progress() {
   // Sample data stands in for the query, which applies these filters on the server.
   const sessions = data.sessions.filter((s) => (filters.exerciseVersionId === 'all' || s.prescription?.exerciseVersionId === filters.exerciseVersionId)
     && (filters.side === 'all' || s.prescription?.side === filters.side) && (!filters.from || s.startedAt.slice(0, 10) >= filters.from) && (!filters.through || s.startedAt.slice(0, 10) <= filters.through))
-  return <ProgressView choices={useDemo(base, base)} results={useDemo({ sessions, more: true }, { sessions: [], more: false })} activity={data.exerciseActivity} filters={filters} onFilters={setFilters} onPatient={() => setFilters(NO_FILTERS)} onMore={said('Loaded older sessions')} />
+  return <ProgressView choices={useDemo(base, base)} results={useDemo({ sessions, more: true }, { sessions: [], more: false })} activity={data.exerciseActivity} filters={filters} onFilters={setFilters} onPatient={() => setFilters(NO_FILTERS)} onMore={said('Loaded older sessions')} onShare={said('Shared in chat')} />
 }
 function PatientHome() {
   const [open, setOpen] = useState(false)
@@ -133,7 +133,8 @@ function Messages({ self }: { self?: boolean }) {
   const thread = useDemo({ messages: chosen?.id === 'c1' ? data.chatMessages : [], more: chosen?.id === 'c1', otherReadAt: '2026-11-05T02:30:00Z', open: chosen?.open ?? true, consented: chosen?.consented ?? true, media: chosen?.media ?? true }, { messages: [], more: false, otherReadAt: null, open: true, consented: true, media: true })
   const waiting = params.has('waiting') ? [{ id: 'w1', conversationId: 'c1', body: 'See you on Thursday.', createdAt: '2026-11-05T02:25:00Z', failed: false }, { id: 'w2', conversationId: 'c1', body: 'Bring the resistance band.', createdAt: '2026-11-05T02:26:00Z', failed: true }] : []
   return <MessagesView base={base} me="me" self={self} conversations={useDemo(list, [])} selected={id ?? null} thread={chosen ? thread : null} outgoing={waiting} connected={params.get('live') !== 'off'}
-    actions={{ onSend: said('Sent'), onRetry: said('Trying again'), onDiscard: said('Discarded'), onOlder: said('Loaded older messages'), onDelete: said('Deleted'), onAttach: said('Attached'), onLink: sampleLink }}
+    actions={{ onSend: said('Sent'), onRetry: said('Trying again'), onDiscard: said('Discarded'), onOlder: said('Loaded older messages'), onDelete: said('Deleted'), onAttach: said('Attached'), onLink: sampleLink, onMute: said('Muted'), onSchedule: async () => toast.show('Scheduled'), onCancelScheduled: said('Removed') }}
+    scheduled={self ? [] : [{ id: 's1', body: 'Your session is tomorrow at 9.', sendAt: '2026-11-06T00:00:00Z' }]}
     preparing={params.has('preparing') ? { kind: 'video', share: 0.4 } : null}
     agreement={self ? { granted: !params.has('agreement'), media: !params.has('media'), busy: false, onAccept: said('Messages turned on') } : undefined} />
 }

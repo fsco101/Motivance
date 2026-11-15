@@ -49,7 +49,7 @@ private val FocusMint=Motion.SproutBright
 private val CautionAmber=Motion.NightCaution
 private val BodyInk=Motion.NightInk
 private val Shade=Color(0xCC021418)
-private val Bones=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,12 to 24,
+internal val SkeletonBones=listOf(11 to 12,11 to 13,13 to 15,12 to 14,14 to 16,11 to 23,12 to 24,
     23 to 24,23 to 25,25 to 27,24 to 26,26 to 28,27 to 29,29 to 31,27 to 31,28 to 30,30 to 32,28 to 32,15 to 19,16 to 20)
 
 private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".format(it)} ?: "—"
@@ -129,7 +129,7 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
                         }
                         // When the visual focus differs from the measured joint, the measured limb stays legible.
                         val measured=rules.measurementChain().let {listOf(it.proximal to it.vertex,it.vertex to it.distal)}
-                        Bones.forEach {(a,b) -> if(visible(a) && visible(b)) {
+                        SkeletonBones.forEach {(a,b) -> if(visible(a) && visible(b)) {
                             val selected=a in chain && b in chain
                             val measuring=protractor!=null && !selected && measured.any {(x,y) -> (x==a && y==b) || (x==b && y==a)}
                             val color=when {selected -> focus; measuring -> Color.White.copy(alpha=.9f); else -> BodyInk.copy(alpha=.65f)}

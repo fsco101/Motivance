@@ -10,7 +10,7 @@ class NotificationsTest {
         val server=listOf("confirmed","rejected","cancelled","rescheduled","therapist_changed","returned_to_pending","session_assigned","session_moved","session_cancelled",
             "session_removed","request_received","patient_cancelled","needs_therapist","reminder","session_reminder","place_open","patient_rescheduled","series_booked",
             "series_assigned","series_cancelled","session_series_cancelled","plan_updated","session_finished","practice_reminder","patient_inactive","care_linked",
-            "care_unlinked","patient_linked","patient_unlinked")
+            "care_unlinked","patient_linked","patient_unlinked","chat_message")
         assertEquals(server.toSet(),NotificationKind.entries.map {it.key}.toSet())
         assertNull(NotificationKind.of("from_a_newer_server"))
     }
@@ -75,12 +75,24 @@ class NotificationsTest {
     }
 
     @Test fun eachRoleSeesTheSwitchesThatMeanSomethingToIt() {
-        assertEquals(listOf(NotificationGroup.BOOKINGS,NotificationGroup.EXERCISE_PLAN,NotificationGroup.PRACTICE,NotificationGroup.CARE_TEAM),
+        assertEquals(listOf(NotificationGroup.BOOKINGS,NotificationGroup.EXERCISE_PLAN,NotificationGroup.PRACTICE,NotificationGroup.CARE_TEAM,NotificationGroup.MESSAGES),
             notificationGroupsFor(setOf(UserRole.PATIENT)))
         assertEquals("A therapist also holds the patient role, and hears about their patients",
-            listOf(NotificationGroup.BOOKINGS,NotificationGroup.SESSION_RESULTS,NotificationGroup.INACTIVITY,NotificationGroup.CARE_TEAM),
+            listOf(NotificationGroup.BOOKINGS,NotificationGroup.SESSION_RESULTS,NotificationGroup.INACTIVITY,NotificationGroup.CARE_TEAM,NotificationGroup.MESSAGES),
             notificationGroupsFor(setOf(UserRole.PATIENT,UserRole.THERAPIST)))
         assertEquals(listOf(NotificationGroup.BOOKINGS),notificationGroupsFor(setOf(UserRole.PATIENT,UserRole.SCHEDULER)))
         assertEquals("An administrator alone has no bell",emptyList<NotificationGroup>(),notificationGroupsFor(setOf(UserRole.PATIENT,UserRole.ADMIN)))
+    }
+
+    @Test fun aNewMessageOpensItsConversationAndAnswersToItsOwnSwitch() {
+        val note=AppNotification("n",NotificationKind.CHAT_MESSAGE,conversationId="c1",sender="Dana")
+        assertEquals(NotificationGroup.MESSAGES,NotificationKind.of("chat_message")?.group)
+        assertEquals(NotificationDestination.Conversation("c1"),note.destination(UserRole.PATIENT))
+        assertEquals(NotificationDestination.Conversation("c1"),note.destination(UserRole.THERAPIST))
+        assertEquals(NotificationDestination.Conversation(null),note.copy(conversationId=null).destination(UserRole.THERAPIST))
+        val settings=NotificationSettings()
+        assertTrue(settings.allows(NotificationGroup.MESSAGES))
+        assertFalse(settings.with(NotificationGroup.MESSAGES,false).allows(NotificationGroup.MESSAGES))
+        assertTrue(settings.with(NotificationGroup.MESSAGES,false).allows(NotificationGroup.BOOKINGS))
     }
 }

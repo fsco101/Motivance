@@ -29,23 +29,28 @@ class MainActivity : ComponentActivity() {
     private val auth: AuthViewModel by viewModels()
     @javax.inject.Inject lateinit var toaster: com.motivance.designsystem.Toaster
     private val openInbox=mutableStateOf(false)
+    private val openConversation=mutableStateOf<String?>(null)
 
     override fun onNewIntent(intent:android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         if(intent.getBooleanExtra(com.motivance.data.push.PushNotifier.OPEN_NOTIFICATIONS,false)) openInbox.value=true
+        intent.getStringExtra(com.motivance.data.push.PushNotifier.OPEN_CONVERSATION)?.let {openConversation.value=it}
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if(savedInstanceState==null) openInbox.value=intent.getBooleanExtra(com.motivance.data.push.PushNotifier.OPEN_NOTIFICATIONS,false)
+        if(savedInstanceState==null) {
+            openInbox.value=intent.getBooleanExtra(com.motivance.data.push.PushNotifier.OPEN_NOTIFICATIONS,false)
+            openConversation.value=intent.getStringExtra(com.motivance.data.push.PushNotifier.OPEN_CONVERSATION)
+        }
         setContent {
             MotivanceTheme {
                 val stage=androidx.compose.runtime.remember {mutableStateOf<androidx.compose.ui.graphics.Color?>(null)}
                 androidx.compose.runtime.CompositionLocalProvider(com.motivance.designsystem.LocalStageColor provides stage) {
                     Surface(Modifier.fillMaxSize(),color=stage.value ?: androidx.compose.material3.MaterialTheme.colorScheme.background) {
                         Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                            MotivanceApp(auth,toaster,openInbox.value) {openInbox.value=false}
+                            MotivanceApp(auth,toaster,openInbox.value,{openInbox.value=false},openConversation.value) {openConversation.value=null}
                         }
                     }
                 }

@@ -14,10 +14,10 @@ class ChatJsonTest {
         val list=ChatJson.conversations("""[{"id":"$conversation","side":"patient","other_id":"t1","other_name":"Dana Reyes","other_photo":null,"open":false,
             "last_message_at":"2026-11-15T07:20:00.123456+00:00","unread":2,
             "last_message":{"id":"m1","conversation_id":"$conversation","sender_id":"t1","kind":"text","body":"Hello","data":{},"created_at":"2026-11-15T07:20:00.123456+00:00","deleted":false}},
-            {"id":"c2","side":"therapist","other_id":"p2","other_name":"","other_photo":"https://example.test/p.jpg","open":true,"last_message_at":null,"last_message":null,"unread":0}]""")
+            {"id":"c2","side":"therapist","other_id":"p2","other_name":"","other_photo":"https://example.test/p.jpg","open":true,"muted":true,"last_message_at":null,"last_message":null,"unread":0}]""")
         assertEquals(Conversation(conversation,true,"t1","Dana Reyes",null,false,"2026-11-15T07:20:00.123456+00:00",
             ChatMessage("m1",conversation,"t1",MessageKind.TEXT,"Hello","2026-11-15T07:20:00.123456+00:00"),2),list[0])
-        assertEquals(Conversation("c2",false,"p2","","https://example.test/p.jpg",true,null,null,0),list[1])
+        assertEquals(Conversation("c2",false,"p2","","https://example.test/p.jpg",true,null,null,0,muted=true),list[1])
     }
 
     @Test fun readsAPageAndHowFarTheOtherPersonHasRead() {
@@ -69,6 +69,23 @@ class ChatJsonTest {
         val photo=draft.copy(kind=MediaKind.IMAGE,mime="image/jpeg",durationMs=null)
         assertEquals(photo,com.motivance.data.local.RoomChatOutbox.draft(com.motivance.data.local.RoomChatOutbox.json(photo)))
         assertNull(com.motivance.data.local.RoomChatOutbox.draft("not json"))
+    }
+
+    @Test fun readsCardsAndLinesAndWritesProgressFactsTheServerAccepts() {
+        fun message(kind:String,data:String)=ChatJson.message(JSONObject("""{"id":"m","conversation_id":"c","sender_id":null,"kind":"$kind","body":"","created_at":"2026-11-15T07:00:00Z","deleted":false,"data":$data}"""))
+        assertEquals(ChatCard.Activity(4,2,9,3,0,"2026-11-15T07:00:00+00:00"),
+            message("progress","""{"scope":"activity","week":4,"previous_week":2,"active_days":9,"streak":3,"days_since_last":0,"as_of":"2026-11-15T07:00:00+00:00"}""").card)
+        assertEquals(ChatCard.Series("Elbow flexion","left",98.0,98.0,48.0,7,20.0,120.0,null),
+            message("progress","""{"scope":"series","exercise":"Elbow flexion","side":"left","latest":98,"best":98,"change":48,"measured":7,"low":20,"high":120}""").card)
+        assertEquals(ChatCard.Exercise("a1",3,"Elbow flexion","right",20.0,120.0,10),
+            message("exercise","""{"assignment_id":"a1","version":3,"exercise":"Elbow flexion","side":"right","low":20,"high":120,"repetitions":10}""").card)
+        assertNull(message("progress","""{"scope":"series","exercise":"x"}""").card)
+        assertEquals(SystemLine.SessionFinished(7,8),message("system","""{"event":"session_finished","completed":7,"target":8}""").line)
+        assertEquals(SystemLine.PracticeReminder("2026-11-15"),message("system","""{"event":"practice_reminder","date":"2026-11-15"}""").line)
+        assertEquals(SystemLine.Unknown,message("system","""{"event":"something_new"}""").line)
+        val facts=ChatJson.progressFacts(ChatCard.Activity(4,2,9,3,null))
+        assertEquals("activity",facts.getString("scope")); assertEquals(2,facts.getInt("previous_week")); assertTrue(facts.isNull("days_since_last"))
+        assertEquals(listOf(ScheduledMessage("s1","See you","2026-11-16T01:00:00+00:00")),ChatJson.scheduled("""[{"id":"s1","body":"See you","send_at":"2026-11-16T01:00:00+00:00"}]"""))
     }
 
     @Test fun aKindThisVersionDoesNotKnowIsKeptAndSaidToBeUnshowable() {

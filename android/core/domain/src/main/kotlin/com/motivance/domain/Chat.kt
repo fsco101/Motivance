@@ -24,6 +24,10 @@ data class ChatMessage(
     val createdAt:String,val deleted:Boolean=false,
     /** A photo or video, for an attachment message; its words are the caption. */
     val attachment:Attachment?=null,
+    /** A shared progress snapshot or exercise plan; its words are the note. */
+    val card:ChatCard?=null,
+    /** For a line the system wrote: what happened. */
+    val line:SystemLine?=null,
 ) {
     val at:Instant get()=parseServerTime(createdAt)
 }
@@ -37,6 +41,8 @@ data class Conversation(
     val lastMessageAt:String?,val lastMessage:ChatMessage?,val unread:Int,val consented:Boolean=true,
     /** Whether the patient has agreed to photos and video, which needs the second version of the agreement. */
     val media:Boolean=true,
+    /** Whether the reader has muted this conversation's push. Only the reader can see this. */
+    val muted:Boolean=false,
 )
 
 /** Newest first. [otherReadAt] is how far the other person has read, for "Seen". */
@@ -44,6 +50,34 @@ data class MessagePage(val messages:List<ChatMessage>,val more:Boolean,val open:
 
 /** The patient's answer to the messages agreement. [media] is whether they agreed to its current version, which allows photos and video. */
 data class ChatConsent(val version:String,val granted:Boolean,val at:String?,val media:Boolean=false,val acceptedVersion:String?=null)
+
+/** What a card shows, written by each app from these facts in the reader's language. Mirrors ProgressCard and ExerciseCard on the web. */
+sealed interface ChatCard {
+    /** What the Progress page showed when it was shared, and when. */
+    sealed interface Progress:ChatCard
+    data class Activity(val week:Int,val previousWeek:Int,val activeDays:Int,val streak:Int,val daysSinceLast:Int?,val asOf:String?=null):Progress
+    data class Series(val exercise:String,val side:String,val latest:Double,val best:Double,val change:Double?,val measured:Int,val low:Double,val high:Double,val asOf:String?=null):Progress
+    data class Exercise(val assignmentId:String,val version:Int,val exercise:String,val side:String,val low:Double,val high:Double,val repetitions:Int):ChatCard
+}
+
+/** A quiet line about something that happened. Mirrors SystemLine on the web. */
+sealed interface SystemLine {
+    data class PracticeReminder(val date:String):SystemLine
+    data class SessionFinished(val completed:Int,val target:Int):SystemLine
+    data object Unknown:SystemLine
+}
+
+/** The card for one plan's progress, from what the Progress page shows. Null when nothing was measured yet. */
+fun ProgressSeries.card():ChatCard.Series? {
+    val outcome=outcome()
+    val latest=outcome.latest ?: return null
+    fun round(value:Double)=Math.round(value*10)/10.0
+    return ChatCard.Series(prescription.exerciseName,key.side,round(latest),round(outcome.best!!),outcome.change,outcome.measured,prescription.low,prescription.high)
+}
+fun ActivitySummary.card()=ChatCard.Activity(week,previousWeek,activeDays,streak,daysSinceLast)
+
+/** A message a therapist has waiting to arrive. Only they see it. */
+data class ScheduledMessage(val id:String,val body:String,val sendAt:String)
 
 /** Mirrors MEDIA_LIMITS on the web and chat_media_limit on the server, which checks every stored file against these. */
 object MediaLimits {
@@ -115,6 +149,15 @@ interface ChatRepository {
     suspend fun sendAttachment(id:String,caption:String):ChatMessage {throw UnsupportedOperationException()}
     /** A short-lived link to one file, for the two people in the conversation only, and only until it expires. */
     suspend fun mediaLink(path:String,seconds:Int=MediaLimits.LINK_SECONDS):String {throw UnsupportedOperationException()}
+    /** Mutes or unmutes this conversation's push for the reader. The bell and the unread count are not affected. */
+    suspend fun setConversationMuted(conversationId:String,muted:Boolean) {throw UnsupportedOperationException()}
+    /** Shares a progress snapshot; the server keeps only its known facts and stamps the moment. */
+    suspend fun shareProgress(id:String,conversationId:String,card:ChatCard.Progress,caption:String=""):ChatMessage {throw UnsupportedOperationException()}
+    /** A therapist sends one of the patient's active plans; the server writes the card from the plan itself. */
+    suspend fun shareExercise(id:String,conversationId:String,assignmentId:String,caption:String=""):ChatMessage {throw UnsupportedOperationException()}
+    suspend fun loadScheduled(conversationId:String):List<ScheduledMessage> {throw UnsupportedOperationException()}
+    suspend fun scheduleMessage(id:String,conversationId:String,body:String,sendAt:String) {throw UnsupportedOperationException()}
+    suspend fun cancelScheduled(id:String) {throw UnsupportedOperationException()}
 }
 
 /**
