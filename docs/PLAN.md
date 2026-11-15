@@ -94,6 +94,8 @@ The implemented subset is pinned in `android/gradle/libs.versions.toml`, with a 
 | Persistence tests | `androidx.room:room-testing`, `androidx.work:work-testing` | Schema upgrades, atomic saves and background upload behavior |
 | Push | `com.google.firebase:firebase-bom`, `firebase-messaging` | FCM tokens and messages. Started by hand from values in `android/.env`, so an app built without them runs no Firebase |
 
+Care chat (#105) is delivered live by Supabase Realtime, which the hosted and local Supabase projects already run; the server side adds no package. The web reaches it through the `@supabase/supabase-js` already pinned. Android has no Realtime client yet; choosing one, or a small websocket client on the OkHttp already in use, is part of #108 and must be recorded here.
+
 Add `androidx.hilt:hilt-work` and its matching compiler only if workers use Hilt integration. Add Supabase `functions-kt` only if privileged functions are implemented. `storage-kt` is optional for approved media assets; `realtime-kt` is unnecessary for the initial metrics workflow. Use Compose Canvas for the skeleton and simple trend charts initially. OpenCV, Python ML servers, cloud GPUs and a second inference runtime are not required for the baseline.
 
 Select the lite or full pose model based on measured accuracy/latency on target phones. Record its origin, licence, checksum and model version; bundle it so downloaded instructions and inference work offline. [MediaPipe Android setup](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker/android)
@@ -205,6 +207,9 @@ Use **PostgreSQL through Supabase** for shared, relational records and **SQLite 
 | `consents` | patient ID, consent type/version, granted/withdrawn timestamps | Append history; camera permission does not equal data consent |
 | `audit_events` | actor, action, target type/ID, timestamp, minimal change metadata | Trusted append; no patient/client edits or token/raw-video logging |
 | Booking tables | `center_settings`, `center_hours`, `center_holidays`, `center_closures`, `therapist_time_off`, `booking_series`, `bookings`, `booking_events`, `booking_waitlist`, `notifications`, `notification_deliveries`, `device_tokens`, `notification_settings` | Fields and rules are in [BOOKING.md](architecture/BOOKING.md). Clients reach them through functions, which re-check the caller |
+| `conversations` | One per therapist and patient pair (composite key to `therapist_patients`); time of last message | Created when a link becomes active; read only through functions |
+| `chat_messages` | Conversation, sender or null for a system note, kind, body up to 2,000 characters, `data`, deletion mark | Client-made ID makes sending idempotent; written only by functions; row rule follows the link; delivered live by Supabase Realtime |
+| `chat_reads` | Conversation, person, how far they have read | Written by functions; gives unread counts and "seen" |
 
 Allow measurements for multiple tracked joints without duplicating session identity. Prefer explicit typed columns for primary metrics and targets. Reserve JSONB for versioned exercise-specific configuration and quality summaries validated against a known schema. Optional repetition detail can be added after a demonstrated review need; per-frame pose storage is excluded by default.
 

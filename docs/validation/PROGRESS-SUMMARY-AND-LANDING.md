@@ -40,6 +40,6 @@ New or changed tests: `history.test.ts` (outcome, tracking concern, activity sum
 
 ## Not run
 
-- **Web contract and signed-in browser tests** (`npm run test:contract`, `therapist*.spec.ts`, `patient.spec.ts`): Docker was not running, so the local backend was down. A contract test for the activity query was added to `tests/contract/queries.test.ts` and has not been executed.
+- **Web contract and signed-in browser tests:** not run on the day of the change because Docker was stopped. Run later the same day, with the care chat migration also applied: `npm run test:contract` 184 passed in 17 files, including the activity query; `therapist.spec.ts`, `therapist-caseload.spec.ts` and `patient.spec.ts` 48 passed with one worker.
 - **Android connected tests** (`ResultsDashboardTest` and the rest): no emulator or phone was attached. The redesigned Android progress screen compiles and its logic is unit-tested, but it has not been seen on a device.
 - GitHub Actions remains unavailable, so nothing ran in CI.

@@ -243,7 +243,6 @@ Engineering evidence is in [AVATARS-AND-NOTIFICATIONS.md](AVATARS-AND-NOTIFICATI
 
 Engineering evidence is in [PROGRESS-SUMMARY-AND-LANDING.md](PROGRESS-SUMMARY-AND-LANDING.md). None of these checks has been run.
 
-- [ ] Start Docker and the local backend, then run `npm run test:contract` and the signed-in browser tests (`therapist.spec.ts`, `therapist-caseload.spec.ts`, `patient.spec.ts`) with one worker. These were not run when the change was made.
 - [ ] On an emulator or phone, run `ResultsDashboardTest`, then open Progress as a patient and as a therapist. Confirm the four-week card, the day strip, each plan's latest, best and change, and the labelled charts read well at the largest font size and with TalkBack.
 - [ ] On a phone set to Philippine time, finish a session before 8:00 AM. Confirm both apps show it on the same day, and that a date filter for that day finds it in both.
 - [ ] Compare one patient's four-week card on Android and on the web. The sessions, active days, days in a row and last session must match.
