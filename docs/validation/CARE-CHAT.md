@@ -165,11 +165,12 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 | The emergency line in English and Filipino, reviewed by a therapist | In the agreement and under every conversation on both apps. The therapist review is **not done**; it is in the checklist |
 | `scripts/check_admin_parity.py` passes | Pass |
 
-**Not run.** The migration is on the local database only. The Android screens have still not been seen on a device.
+**Hosted.** On the owner's instruction on 2026-11-15, `202611150002_chat_consent.sql` was applied to the hosted project after a dry run that listed only it, and read back with `migration list --linked`. Not exercised there.
+
+**Not run.** The Android screens have still not been seen on a device.
 
 ## Not run / not done (whole epic)
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
-- `202611150002_chat_consent.sql` is not on the hosted project yet.
 - The Android chat screens have not been run on a device or emulator.
 - No load check yet (#112).

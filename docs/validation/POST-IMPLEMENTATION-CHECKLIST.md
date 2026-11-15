@@ -267,7 +267,6 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] Sign out with a message still waiting. Confirm it is gone after signing in again, and was never sent.
 - [ ] Have a therapist review the messages agreement (`chat.agreement.*` on the web, `chat_agreement_*` on Android), especially the emergency line, and whether turning messages off should leave old messages readable to the therapist.
 - [ ] Have the deployment owner confirm how long messages are kept under the retention policy, and try `export_patient_chat` and `erase_patient_chat` on a test account in the protected environment before answering a real request.
-- [ ] With the owner's approval, apply `202611150002_chat_consent.sql` to the hosted project after `202611150001_care_chat.sql`.
 - [ ] Have a Filipino speaker review the `chat_*`, `nav_messages` and `messages_unread_count` strings and the two `chat_*` plurals in `values-fil/strings.xml`.
 
 ## Recording results
