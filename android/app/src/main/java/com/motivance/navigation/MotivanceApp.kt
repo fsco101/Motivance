@@ -88,17 +88,17 @@ private const val ASSIGNMENT_CHECK_MS=30_000L
 private const val NOTIFICATION_CHECK_MS=60_000L
 
 /** The toast host wraps the whole app because several screens below return early and draw without the scaffold. */
-@Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster,openInbox:Boolean=false,inboxOpened:()->Unit={}) {
+@Composable fun MotivanceApp(vm:AuthViewModel,toaster:Toaster,openInbox:Boolean=false,inboxOpened:()->Unit={},openConversation:String?=null,conversationOpened:()->Unit={}) {
     CompositionLocalProvider(LocalToaster provides toaster) {
         Box(Modifier.fillMaxSize()) {
-            AppContent(vm,openInbox,inboxOpened)
+            AppContent(vm,openInbox,inboxOpened,openConversation,conversationOpened)
             ToastHost(toaster,Modifier.align(Alignment.TopCenter))
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun AppContent(vm: AuthViewModel,openInbox:Boolean,inboxOpened:()->Unit) {
+@Composable private fun AppContent(vm: AuthViewModel,openInbox:Boolean,inboxOpened:()->Unit,openConversation:String?,conversationOpened:()->Unit) {
     val auth by vm.state.collectAsStateWithLifecycle()
     val overview by vm.overview.collectAsStateWithLifecycle()
     val exercise:ExerciseSessionViewModel=viewModel()
@@ -134,6 +134,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     var selectedPatient by rememberSaveable {mutableStateOf<String?>(null)}
     var editingAssignment by rememberSaveable {mutableStateOf<String?>(null)}
     var selectedConversation by rememberSaveable {mutableStateOf<String?>(null)}
+    var sharing by remember {mutableStateOf<Pair<String,com.motivance.domain.ChatCard.Progress>?>(null)}
     val role=selectedRole?.let { UserRole.valueOf(it) }
     LaunchedEffect(auth.session?.userId) {
         selectedPatient=null; editingAssignment=null; selectedConversation=null
@@ -212,8 +213,17 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         chatState.conversations.firstOrNull {it.otherId==person}?.let {selectedConversation=it.id; route="CONVERSATION"; return}
         selectedConversation=null; chat.openWith(person); route="CONVERSATION"
     }
+    // A tap on a new-message notification opens that conversation, once signed in as someone who can read it.
+    LaunchedEffect(openConversation,chatOwner) {
+        if(openConversation!=null && chatOwner!=null) {selectedConversation=openConversation; route="CONVERSATION"; conversationOpened()}
+    }
     // Once a link from a record has found its conversation, the route remembers it, so returning from the background keeps it.
     LaunchedEffect(chatState.openId) {if(route=="CONVERSATION" && chatState.openId!=null) selectedConversation=chatState.openId}
+    sharing?.let {(patient,card) ->
+        // A therapist shares into their conversation with the patient shown; a patient into one of their own.
+        val choices=chatState.conversations.filter {it.open && (if(actualRole==UserRole.PATIENT) it.asPatient else it.otherId==patient)}
+        ShareProgressDialog(choices,{sharing=null}) {conversation,note -> chat.shareProgress(conversation,card,note); sharing=null}
+    }
     // Notifications can be allowed in the phone's settings while the app is away, so the card checks again on return.
     LaunchedEffect(lifecycle) {lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {pushAllowed=notificationsAllowed(context)}}
     LaunchedEffect(inboxOwner,lifecycle) {
@@ -291,7 +301,14 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         },contentAlignment=Alignment.TopCenter,label="route") { (page,patientId) ->
         Box(Modifier.fillMaxSize(),contentAlignment=Alignment.TopCenter) {
         // A conversation scrolls itself, with the box to write in kept on screen, so it is drawn outside the page's scroll.
-        if(page=="CONVERSATION" && chatOwner!=null) ConversationScreen(chatState,chatOwner,chat,Modifier.widthIn(max=720.dp))
+        if(page=="CONVERSATION" && chatOwner!=null) ConversationScreen(chatState,chatOwner,chat,Modifier.widthIn(max=720.dp)) {card ->
+            // A card opens the page it came from: for a patient their own, for a therapist that patient's.
+            val other=chatState.conversation?.otherId
+            when {
+                actualRole==UserRole.PATIENT -> route=if(card is com.motivance.domain.ChatCard.Exercise) "EXERCISES" else "PROGRESS"
+                other!=null -> {selectedPatient=other; route="PATIENT_DETAIL"}
+            }
+        }
         else Column(Modifier.widthIn(max=720.dp).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=20.dp,vertical=12.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
             when(page) {
                 "SETUP" -> CameraSetup(local.rules) { route="CAMERA" }
@@ -374,9 +391,11 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     if(plans.isEmpty() && !connected.busy) EmptyState(R.string.no_assignments,R.string.ui_plan_empty_detail)
                     plans.forEach {p -> AssignedPrescriptionCard(p,connected.workspace.catalogue.firstOrNull {it.id==p.exerciseId},!connected.busy) {
                         editingAssignment=p.assignmentId; route="ASSIGN"
-                    } }
+                    }
+                        if(chatOwner!=null && patientId!=null) TextButton({chat.shareExercise(patientId,p.assignmentId)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.chat_cards_send_exercise))}
+                    }
                     SectionHeading(R.string.recovery_progress)
-                    ResultsDashboard(connected.workspace,connected.owner,patientId,history)
+                    ResultsDashboard(connected.workspace,connected.owner,patientId,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}})
                 }
                 "ASSIGN" -> {
                     val existing=connected.workspace.prescriptions.firstOrNull {it.assignmentId==editingAssignment}
@@ -409,6 +428,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                             NotificationDestination.Home -> route="HOME"
                             NotificationDestination.Patients -> route="PATIENTS"
                             is NotificationDestination.Patient -> if(connected.workspace.patients.any {it.id==target.id}) {selectedPatient=target.id; route="PATIENT_DETAIL"} else route="PATIENTS"
+                            is NotificationDestination.Conversation -> if(target.id!=null) {selectedConversation=target.id; route="CONVERSATION"} else route="MESSAGES"
                             NotificationDestination.Stay -> Unit
                         }
                     }
@@ -428,7 +448,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); history.refresh()}
-                    ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history)
+                    ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}})
                 }
                 else -> if(actualRole==UserRole.SCHEDULER) SchedulerHome() else {
                     val patientRole=actualRole==UserRole.PATIENT

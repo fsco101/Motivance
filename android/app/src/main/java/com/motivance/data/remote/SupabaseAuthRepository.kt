@@ -303,6 +303,19 @@ import java.time.OffsetDateTime
             text
         }
     }
+    override suspend fun setConversationMuted(conversationId:String,muted:Boolean) {authorized {token,_ -> call("/rest/v1/rpc/set_conversation_muted",JSONObject().put("p_conversation",conversationId).put("p_muted",muted),token)}}
+    override suspend fun shareProgress(id:String,conversationId:String,card:ChatCard.Progress,caption:String)=authorized {token,_ ->
+        ChatJson.message(JSONObject(call("/rest/v1/rpc/share_progress",JSONObject().put("p_id",id).put("p_conversation",conversationId)
+            .put("p_progress",ChatJson.progressFacts(card)).put("p_caption",caption),token)))
+    }
+    override suspend fun shareExercise(id:String,conversationId:String,assignmentId:String,caption:String)=authorized {token,_ ->
+        ChatJson.message(JSONObject(call("/rest/v1/rpc/share_exercise",JSONObject().put("p_id",id).put("p_conversation",conversationId)
+            .put("p_assignment",assignmentId).put("p_caption",caption),token)))
+    }
+    override suspend fun loadScheduled(conversationId:String)=authorized {token,_ -> ChatJson.scheduled(call("/rest/v1/rpc/my_scheduled_messages",JSONObject().put("p_conversation",conversationId),token))}
+    override suspend fun scheduleMessage(id:String,conversationId:String,body:String,sendAt:String) {authorized {token,_ ->
+        call("/rest/v1/rpc/schedule_message",JSONObject().put("p_id",id).put("p_conversation",conversationId).put("p_body",body).put("p_send_at",sendAt),token)}}
+    override suspend fun cancelScheduled(id:String) {authorized {token,_ -> call("/rest/v1/rpc/cancel_scheduled_message",JSONObject().put("p_id",id),token)}}
     override suspend fun loadChatConsent()=authorized {token,_ -> ChatJson.consent(call("/rest/v1/rpc/my_chat_consent",JSONObject(),token))}
     override suspend fun setChatConsent(granted:Boolean)=authorized {token,_ -> ChatJson.consent(call("/rest/v1/rpc/set_chat_consent",JSONObject().put("p_granted",granted),token))}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->

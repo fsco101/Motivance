@@ -39,7 +39,9 @@ private const val QUIET_DAYS = 7
  * record sees it in plain terms; a therapist also sees what they need to judge the data: tracking quality and versions.
  */
 @Composable
-fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patientId: String?, vm: HistoryViewModel) {
+fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patientId: String?, vm: HistoryViewModel,
+    /** Shares a progress card about the patient shown, into chat. Absent where there is no chat. */
+    share: ((String, ChatCard.Progress) -> Unit)? = null) {
     val self = patientId == owner
     val zone = remember { ZoneId.systemDefault() }
     var patient by rememberSaveable(owner, patientId) { mutableStateOf(patientId.orEmpty()) }
@@ -94,7 +96,8 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     val activity = state.activity
     // Nothing recorded and nothing recent: the empty state below says it better than a card of zeroes.
     if (activity != null && (rows.isNotEmpty() || activity.isNotEmpty())) {
-        ActivityCard(remember(activity) { activitySummary(activity, LocalDate.now(zone), zone) }, self, zone)
+        val summary = remember(activity) { activitySummary(activity, LocalDate.now(zone), zone) }
+        ActivityCard(summary, self, zone, share?.let { {it(patient, summary.card())} })
     }
     if (rows.isEmpty()) EmptyState(R.string.no_sessions,R.string.history_empty)
     else {
@@ -102,6 +105,8 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
         rehabilitationProgress(rows).forEach { series ->
             ClinicalCard {
                 ExerciseHeading(series.prescription, series.key.side)
+                val card = series.card()
+                if (share != null && card != null) TextButton({ share(patient, card) }, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.chat_cards_share)) }
                 if (!self) Text(stringResource(R.string.history_technical, series.key.metric, series.key.model),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (series.points.none { it.rom != null }) Text(stringResource(R.string.history_no_chart))
@@ -160,7 +165,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
  * How regularly someone has exercised lately. A patient reads it as encouragement, so it shows their streak.
  * A therapist reads it to decide who needs a call, so it shows how long ago the last session was.
  */
-@Composable private fun ActivityCard(summary: ActivitySummary, self: Boolean, zone: ZoneId) {
+@Composable private fun ActivityCard(summary: ActivitySummary, self: Boolean, zone: ZoneId, share: (() -> Unit)? = null) {
     val difference = summary.week - summary.previousWeek
     val compared = when {
         difference == 0 -> stringResource(R.string.activity_week_same)
@@ -188,6 +193,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
         if (self) Stat(stringResource(R.string.activity_streak), summary.streak.toString(),
             if (summary.lastAt != null) stringResource(R.string.activity_last_on, last) else stringResource(R.string.activity_streak_start))
         else Stat(stringResource(R.string.activity_last), last, summary.lastAt?.let { date(it, zone) })
+        if (share != null) TextButton(share, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.chat_cards_share)) }
         DayStrip(summary)
         if (!self && (since == null || since >= QUIET_DAYS)) CautionNotice(
             if (since == null) stringResource(R.string.activity_quiet_none) else stringResource(R.string.activity_quiet, since))

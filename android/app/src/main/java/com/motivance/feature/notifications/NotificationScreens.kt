@@ -62,6 +62,7 @@ import com.motivance.feature.booking.rememberSessionFormat
         NotificationKind.CARE_UNLINKED -> stringResource(R.string.notification_care_unlinked,therapist)
         NotificationKind.PATIENT_LINKED -> stringResource(R.string.notification_patient_linked,patient)
         NotificationKind.PATIENT_UNLINKED -> stringResource(R.string.notification_patient_unlinked,patient)
+        NotificationKind.CHAT_MESSAGE -> stringResource(R.string.notification_chat_message,note.sender ?: note.subjectName ?: "")
     }
 }
 

@@ -50,4 +50,14 @@ class PushRulesTest {
         assertEquals(Instant.parse("2026-12-01T16:00:00Z").toEpochMilli(),centerDayStart(Instant.parse("2026-12-01T23:30:00Z")))
         assertEquals(Instant.parse("2026-11-30T16:00:00Z").toEpochMilli(),centerDayStart(Instant.parse("2026-12-01T15:59:00Z")))
     }
+
+    @Test fun aNewMessageIsQuietOnlyWhileItsConversationIsOnScreen() {
+        val message=mapOf("kind" to "chat_message","conversation_id" to "c1","user_id" to "p1")
+        assertTrue(skipPush(message,openConversation="c1") {false})
+        assertFalse(skipPush(message,openConversation="c2") {false})
+        assertFalse(skipPush(message,openConversation=null) {false})
+        // Another kind is never affected by what is on screen.
+        assertFalse(skipPush(mapOf("kind" to "plan_updated","conversation_id" to "c1"),openConversation="c1") {true})
+        assertEquals("messages",pushChannel("chat_message").first)
+    }
 }

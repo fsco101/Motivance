@@ -113,6 +113,7 @@ fun pushChannel(kind:String?):Pair<String,Int> {
         NotificationGroup.INACTIVITY -> "inactivity" to R.string.push_channel_inactivity
         NotificationGroup.CARE_TEAM -> "care_team" to R.string.push_channel_care_team
         NotificationGroup.PRACTICE -> "practice_reminders" to R.string.push_channel_practice
+        NotificationGroup.MESSAGES -> "messages" to R.string.push_channel_messages
     }
 }
 
@@ -120,7 +121,9 @@ fun pushChannel(kind:String?):Pair<String,Int> {
  * A practice reminder is pointless once today's session is on this phone, which the server cannot know until it uploads. Only the
  * person it was sent to counts, because a phone can be shared. [exercisedToday] is asked only when the answer matters.
  */
-fun skipPush(data:Map<String,String>,exercisedToday:(String)->Boolean):Boolean {
+fun skipPush(data:Map<String,String>,openConversation:String?=ChatPresence.open,exercisedToday:(String)->Boolean):Boolean {
+    // Someone reading a conversation does not need telling it has a new message.
+    if(data["kind"]==NotificationKind.CHAT_MESSAGE.key) return openConversation!=null && data["conversation_id"]==openConversation
     if(data["kind"]!=NotificationKind.PRACTICE_REMINDER.key) return false
     val owner=data["user_id"]?.takeIf {it.isNotBlank()} ?: return false
     return exercisedToday(owner)
@@ -129,8 +132,13 @@ fun skipPush(data:Map<String,String>,exercisedToday:(String)->Boolean):Boolean {
 /** Midnight at the center today, which is when "today" starts for a practice reminder. */
 fun centerDayStart(now:Instant=Instant.now())=centerToday(now).atStartOfDay(ZoneId.of(CENTER_ZONE)).toInstant().toEpochMilli()
 
+/** Which conversation is on screen right now, if any, so its own messages are not pushed while it is being read. */
+object ChatPresence {@Volatile var open:String?=null}
+
 object PushNotifier {
     const val OPEN_NOTIFICATIONS="com.motivance.OPEN_NOTIFICATIONS"
+    /** A tap on a new message opens its conversation rather than the bell. */
+    const val OPEN_CONVERSATION="com.motivance.OPEN_CONVERSATION"
 
     /** The words arrive already in the reader's language. A lock screen shows only that there is news, because a message can name a patient. */
     fun show(context:Context,data:Map<String,String>) {
@@ -139,14 +147,19 @@ object PushNotifier {
         val (channel,name)=pushChannel(data["kind"])
         val manager=context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel(channel,context.getString(name),NotificationManager.IMPORTANCE_DEFAULT))
-        val open=PendingIntent.getActivity(context,0,Intent(context,MainActivity::class.java).putExtra(OPEN_NOTIFICATIONS,true).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val conversation=data["conversation_id"]?.takeIf {data["kind"]==NotificationKind.CHAT_MESSAGE.key && it.isNotBlank()}
+        val tag="${data["kind"]}:${data["booking_id"]}:${conversation.orEmpty()}:${if(conversation==null) body else ""}".hashCode()
+        val target=Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            .apply {if(conversation!=null) putExtra(OPEN_CONVERSATION,conversation) else putExtra(OPEN_NOTIFICATIONS,true)}
+        // Each notification has its own request code, so tapping an older one still opens what it was about.
+        val open=PendingIntent.getActivity(context,tag,target,PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val booking=channel=="booking_updates"
         val hidden=Notification.Builder(context,channel).setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(if(booking) R.string.push_public_title else R.string.push_public_update)).build()
         val note=Notification.Builder(context,channel).setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(body).setStyle(Notification.BigTextStyle().bigText(body))
             .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(hidden).setContentIntent(open).setAutoCancel(true).build()
-        manager.notify("${data["kind"]}:${data["booking_id"]}:$body".hashCode(),note)
+        // A burst in one conversation replaces its notification rather than stacking.
+        manager.notify(tag,note)
     }
 }
 

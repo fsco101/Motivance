@@ -107,4 +107,15 @@ class ChatTest {
         val item=threadItems(emptyList(),listOf(Outgoing("x","c","",1,media=draft)),"me",null,zone).filterIsInstance<ThreadItem.Message>().single()
         assertEquals(MessageKind.ATTACHMENT,item.message.kind)
     }
+
+    @Test fun aProgressCardIsWhatTheProgressPageShows() {
+        val p=HistoricalPrescription("v1","a",1,"e","Elbow flexion","elbow-flexion-v1","left",20.0,120.0,8)
+        fun session(id:String,day:String,max:Double)=HistoricalSession(id,"p","2026-11-${day}T07:00:00Z","2026-11-${day}T07:01:00Z","completed","m","a",p,
+            listOf(HistoricalMeasurement("elbow","left",10.0,max,8,0,"valid",40,0)))
+        val series=rehabilitationProgress(listOf(session("a","01",80.0),session("b","02",100.25))).single()
+        assertEquals(ChatCard.Series("Elbow flexion","left",90.3,90.3,20.3,2,20.0,120.0),series.card())
+        val none=rehabilitationProgress(listOf(session("a","01",80.0).copy(status="interrupted"))).single()
+        assertNull(none.card())
+        assertEquals(ChatCard.Activity(3,1,4,2,0),ActivitySummary(3,1,4,2,"2026-11-15T07:00:00Z",0,emptyList()).card())
+    }
 }

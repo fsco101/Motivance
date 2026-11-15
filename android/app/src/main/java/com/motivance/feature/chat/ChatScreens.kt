@@ -14,6 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,7 +50,9 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
 
 @Composable private fun words(message:ChatMessage)=when {
     message.deleted -> stringResource(R.string.chat_deleted)
-    message.kind==MessageKind.TEXT || message.kind==MessageKind.SYSTEM -> message.body
+    message.kind==MessageKind.TEXT -> message.body
+    message.kind==MessageKind.SYSTEM -> lineText(message)
+    message.card!=null -> message.body.ifBlank {cardSummary(message.card).orEmpty()}
     message.kind==MessageKind.ATTACHMENT -> message.body.ifBlank {
         stringResource(if(message.attachment?.kind==MediaKind.VIDEO) R.string.chat_media_video else R.string.chat_media_photo)
     }
@@ -107,7 +112,7 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
  * One conversation, filling the screen: who it is with, the thread with the newest at the bottom, and the box to write in.
  * It keeps its own scrolling, so it sits outside the page's scroll.
  */
-@Composable fun ConversationScreen(state:ChatState,me:String,vm:ChatViewModel,modifier:Modifier=Modifier) {
+@Composable fun ConversationScreen(state:ChatState,me:String,vm:ChatViewModel,modifier:Modifier=Modifier,openCard:(ChatCard)->Unit={}) {
     val zone=remember {ZoneId.systemDefault()}
     val conversation=state.conversation
     Column(modifier.fillMaxSize().imePadding()) {
@@ -127,6 +132,9 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
                     color=MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if(!state.live) Box(Modifier.semantics {liveRegion=LiveRegionMode.Polite}) {StatusPill(stringResource(R.string.chat_reconnecting),PillTone.NEUTRAL)}
+            IconButton({vm.setMuted(!conversation.muted)},Modifier.size(48.dp)) {
+                Icon(if(conversation.muted) Icons.Default.Clear else Icons.Default.Notifications,stringResource(if(conversation.muted) R.string.chat_unmute else R.string.chat_mute))
+            }
         }
         HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
         val items=remember(state.messages,state.waiting,state.otherReadAt,me) {threadItems(state.messages,state.waiting,me,state.otherReadAt,zone).reversed()}
@@ -140,6 +148,13 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         }
         // Read is told to the server only while the person can see the screen.
         val lifecycle=LocalLifecycleOwner.current
+        // While it is on screen, a push about this conversation would only repeat what the person is reading.
+        LaunchedEffect(state.openId) {
+            val id=state.openId ?: return@LaunchedEffect
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {com.motivance.data.push.ChatPresence.open=id; try {awaitCancellation()} finally {if(com.motivance.data.push.ChatPresence.open==id) com.motivance.data.push.ChatPresence.open=null}}
+        }
+        // Only the therapist schedules, so only they ask what is waiting.
+        LaunchedEffect(state.openId,conversation.asPatient) {if(!conversation.asPatient) vm.loadScheduled()}
         LaunchedEffect(newestTheirs,state.openId) {
             if(newestTheirs!=null) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {vm.markRead(); awaitCancellation()}
         }
@@ -159,7 +174,7 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
                                         modifier=Modifier.padding(horizontal=12.dp,vertical=4.dp).semantics {heading()})
                                 }
                             }
-                            is ThreadItem.Message -> Bubble(item,state.live,me,zone,announce=item.key==newest && !item.mine,
+                            is ThreadItem.Message -> Bubble(item,state.live,me,zone,announce=item.key==newest && !item.mine,openCard=openCard,
                                 waiting=state.waiting.firstOrNull {it.id==item.key}?.media,copy={message,preview -> vm.mediaCopy(message,preview)},
                                 onRetry={vm.retry(item.key)},onDiscard={vm.discard(item.key)},onDelete={vm.delete(item.key)})
                         }
@@ -185,7 +200,9 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
                 if(!state.media) Text(if(conversation.asPatient) stringResource(R.string.chat_media_allow_above) else stringResource(R.string.chat_media_not_allowed,name),
                     style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.padding(start=16.dp,top=8.dp))
                 if(conversation.asPatient && !state.media) Box(Modifier.padding(horizontal=16.dp)) {TextButton({vm.setConsent(true)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.chat_agreement_allow_media))}}
-                Composer(conversation.id,name,attach={AttachButton(state.media,state.preparing!=null) {uri,mime -> vm.attach(uri,mime)}}) {vm.send(it)}
+                if(!conversation.asPatient) ScheduledList(state.scheduled) {vm.cancelScheduled(it)}
+                Composer(conversation.id,name,attach={AttachButton(state.media,state.preparing!=null) {uri,mime -> vm.attach(uri,mime)}},
+                    schedule=if(conversation.asPatient) null else ({body,at -> vm.schedule(body,at)})) {vm.send(it)}
             }
             state.consented -> Box(Modifier.padding(16.dp)) {FeedbackNotice(R.string.chat_closed)}
             // The agreement is long, so it scrolls above the keyboard rather than pushing the thread away.
@@ -244,10 +261,10 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
 }
 
 @Composable private fun Bubble(item:ThreadItem.Message,live:Boolean,me:String,zone:ZoneId,announce:Boolean,waiting:MediaDraft?,copy:suspend (ChatMessage,Boolean)->String?,
-    onRetry:()->Unit,onDiscard:()->Unit,onDelete:()->Unit) {
+    onRetry:()->Unit,onDiscard:()->Unit,onDelete:()->Unit,openCard:(ChatCard)->Unit={}) {
     val message=item.message
     if(message.kind==MessageKind.SYSTEM) {
-        Text(message.body,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,textAlign=TextAlign.Center,modifier=Modifier.fillMaxWidth())
+        Text(lineText(message),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,textAlign=TextAlign.Center,modifier=Modifier.fillMaxWidth())
         return
     }
     var asking by remember {mutableStateOf(false)}
@@ -266,7 +283,9 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
             .then(if(item.state==SendState.FAILED) Modifier.border(1.5.dp,MaterialTheme.colorScheme.error,RoundedCornerShape(20.dp)).padding(3.dp) else Modifier)) {
             MediaBubble(message,item.mine,waiting,copy)
         }
-        if(!media || message.body.isNotBlank()) Surface(color=container,contentColor=content,border=border,
+        val card=message.card?.takeIf {!message.deleted}
+        if(card!=null) Box(Modifier.semantics {if(announce) liveRegion=LiveRegionMode.Polite}) {ChatCardView(card,item.mine) {openCard(card)}}
+        if((!media && card==null) || message.body.isNotBlank()) Surface(color=container,contentColor=content,border=border,
             shape=RoundedCornerShape(topStart=18.dp,topEnd=18.dp,bottomStart=if(item.mine) 18.dp else 4.dp,bottomEnd=if(item.mine) 4.dp else 18.dp),
             modifier=Modifier.widthIn(max=300.dp).semantics {contentDescription=said; if(announce && !media) liveRegion=LiveRegionMode.Polite}) {
             Text(text,style=MaterialTheme.typography.bodyLarge,fontStyle=if(message.deleted) FontStyle.Italic else FontStyle.Normal,
@@ -295,7 +314,8 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         dismissButton={TextButton({asking=false}) {Text(stringResource(R.string.chat_delete_no))}})
 }
 
-@Composable private fun Composer(conversationId:String,name:String,attach:@Composable ()->Unit={},send:(String)->Unit) {
+@Composable private fun Composer(conversationId:String,name:String,attach:@Composable ()->Unit={},schedule:((String,String)->Unit)?=null,send:(String)->Unit) {
+    var choosing by remember {mutableStateOf(false)}
     var draft by rememberSaveable(conversationId) {mutableStateOf("")}
     val words=draft.trim()
     val left=CHAT_BODY_LIMIT-draft.length
@@ -305,8 +325,12 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         OutlinedTextField(draft,{if(it.length<=CHAT_BODY_LIMIT) draft=it},Modifier.weight(1f).semantics {contentDescription=label},
             placeholder={Text(stringResource(R.string.chat_placeholder))},maxLines=5,shape=MaterialTheme.shapes.large,
             supportingText=if(left<=200) ({Text(pluralStringResource(R.plurals.chat_characters_left,left,left))}) else null)
+        if(schedule!=null) IconButton({choosing=true},enabled=words.isNotEmpty(),modifier=Modifier.padding(bottom=4.dp).size(52.dp)) {
+            Icon(Icons.Default.DateRange,stringResource(R.string.chat_schedule_open))
+        }
         FilledIconButton({send(words); draft=""},enabled=words.isNotEmpty(),modifier=Modifier.padding(bottom=4.dp).size(52.dp)) {
             Icon(Icons.AutoMirrored.Filled.Send,stringResource(R.string.chat_send))
         }
     }
+    if(choosing && schedule!=null) ScheduleDialog({choosing=false}) {at -> choosing=false; schedule(words,at); draft=""}
 }

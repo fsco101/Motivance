@@ -43,6 +43,8 @@ data class ChatState(
     val media:Boolean=true,
     /** A photo or video being made smaller before it goes into the outbox, and how far along it is. */
     val preparing:Pair<MediaKind,Float>?=null,
+    /** What this therapist has waiting to arrive in the open conversation. */
+    val scheduled:List<ScheduledMessage> = emptyList(),
 ) {
     val unread get()=conversations.sumOf {it.unread}
     val conversation get()=conversations.firstOrNull {it.id==openId}
@@ -170,7 +172,7 @@ data class ChatState(
         if(mutable.value.openId==conversationId && (mutable.value.threadLoaded || mutable.value.threadLoading)) return
         threadJob?.cancel()
         mutable.update {it.copy(openId=conversationId,wantedOther=null,messages=emptyList(),more=false,olderLoading=false,threadLoaded=false,
-            threadFailed=false,otherReadAt=null,threadOpen=it.conversations.firstOrNull {c -> c.id==conversationId}?.open ?: true,
+            threadFailed=false,otherReadAt=null,scheduled=emptyList(),threadOpen=it.conversations.firstOrNull {c -> c.id==conversationId}?.open ?: true,
             consented=it.conversations.firstOrNull {c -> c.id==conversationId}?.consented ?: true,
             media=it.conversations.firstOrNull {c -> c.id==conversationId}?.media ?: true)}
         loadThread()
@@ -272,6 +274,90 @@ data class ChatState(
         }
     }
 
+    /** What a therapist has waiting in the open conversation. A patient never schedules, so never asks. */
+    fun loadScheduled() {
+        val owner=mutable.value.owner
+        val conversation=mutable.value.conversation ?: return
+        if(conversation.asPatient) return
+        viewModelScope.launch {
+            try {
+                val found=repository.loadScheduled(conversation.id)
+                if(current(owner) && mutable.value.openId==conversation.id) mutable.update {it.copy(scheduled=found)}
+            } catch(e:CancellationException) {throw e}
+            catch(_:Exception) {}
+        }
+    }
+
+    /** A therapist's message to arrive at [sendAt], an ISO instant. */
+    fun schedule(body:String,sendAt:String) {
+        val owner=mutable.value.owner
+        val id=mutable.value.openId ?: return
+        val words=body.trim()
+        if(words.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                repository.scheduleMessage(UUID.randomUUID().toString(),id,words,sendAt)
+                if(current(owner)) {toasts.show(R.string.chat_schedule_done); loadScheduled()}
+            } catch(e:CancellationException) {throw e}
+            catch(e:Exception) {if(current(owner)) toasts.show(refusal(e),ToastTone.ERROR)}
+        }
+    }
+
+    fun cancelScheduled(scheduledId:String) {
+        val owner=mutable.value.owner
+        viewModelScope.launch {
+            try {repository.cancelScheduled(scheduledId); if(current(owner)) toasts.show(R.string.chat_schedule_removed)}
+            catch(e:CancellationException) {throw e}
+            catch(e:Exception) {if(current(owner)) toasts.show(refusal(e),ToastTone.ERROR)}
+            if(current(owner)) loadScheduled()
+        }
+    }
+
+    /**
+     * Shares what the Progress page shows into a conversation about this patient: a therapist's with that patient, or the patient's
+     * with one of their therapists. Returns whether there was an open conversation to share it in.
+     */
+    fun shareProgress(conversationId:String,card:ChatCard.Progress,caption:String) {
+        val owner=mutable.value.owner
+        viewModelScope.launch {
+            try {
+                repository.shareProgress(UUID.randomUUID().toString(),conversationId,card,caption.trim())
+                if(current(owner)) {toasts.show(R.string.chat_cards_shared); refreshList()}
+            } catch(e:CancellationException) {throw e}
+            catch(e:Exception) {if(current(owner)) toasts.show(refusal(e),ToastTone.ERROR)}
+        }
+    }
+
+    /** A therapist sends one of a patient's plans into their conversation. */
+    fun shareExercise(patientId:String,assignmentId:String) {
+        val owner=mutable.value.owner
+        viewModelScope.launch {
+            try {
+                val conversation=mutable.value.conversations.firstOrNull {it.otherId==patientId && it.open}
+                    ?: repository.loadConversations().firstOrNull {it.otherId==patientId && it.open}
+                if(conversation==null) {if(current(owner)) toasts.show(R.string.chat_cards_no_conversation,ToastTone.ERROR); return@launch}
+                repository.shareExercise(UUID.randomUUID().toString(),conversation.id,assignmentId)
+                if(current(owner)) {toasts.show(R.string.chat_cards_exercise_sent); refreshList()}
+            } catch(e:CancellationException) {throw e}
+            catch(e:Exception) {if(current(owner)) toasts.show(refusal(e),ToastTone.ERROR)}
+        }
+    }
+
+    /** Mutes or unmutes push for the open conversation, for this person only. */
+    fun setMuted(muted:Boolean) {
+        val owner=mutable.value.owner
+        val id=mutable.value.openId ?: return
+        viewModelScope.launch {
+            try {
+                repository.setConversationMuted(id,muted)
+                if(!current(owner)) return@launch
+                mutable.update {it.copy(conversations=it.conversations.map {c -> if(c.id==id) c.copy(muted=muted) else c})}
+                toasts.show(if(muted) R.string.chat_muted_toast else R.string.chat_unmuted_toast)
+            } catch(e:CancellationException) {throw e}
+            catch(e:Exception) {if(current(owner)) toasts.show(refusal(e),ToastTone.ERROR)}
+        }
+    }
+
     /** The phone's copy of a photo or video, fetched once if it is not here yet. Null when there is none to show. */
     suspend fun mediaCopy(message:ChatMessage,preview:Boolean):String? {
         val owner=mutable.value.owner
@@ -363,6 +449,8 @@ data class ChatState(
         "chat_media_unreadable" -> R.string.chat_error_media_unreadable
         "chat_video_cap" -> R.string.chat_error_video_cap
         "chat_media_missing" -> R.string.chat_error_media_missing
+        "chat_schedule_time" -> R.string.chat_error_schedule_time
+        "chat_schedule_gone" -> R.string.chat_error_schedule_gone
         "chat_rate_limited" -> R.string.chat_error_rate_limited
         "chat_too_late" -> R.string.chat_error_too_late
         else -> if(e is RemoteFailure) R.string.chat_error_request else R.string.chat_error_offline
