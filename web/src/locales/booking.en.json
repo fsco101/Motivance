@@ -421,6 +421,7 @@
     "therapistAway": "Your therapist is away at this time."
   },
   "notifications": {
+    "chat_message": "New message from {{sender}}.",
     "detail": "Updates on your bookings, exercises and care team.",
     "markAll": "Mark all as read",
     "unread": "unread",

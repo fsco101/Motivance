@@ -182,11 +182,12 @@ export const affected: AffectedBooking[] = [
 
 const noteFacts = {
   sessions: 0, lastStartsAt: null, reference: 'BK-2026-000158', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, patient: 'Ana Dela Cruz', therapist: 'Dana Reyes',
-  reason: null, readAt: null, subjectId: 't1', subjectName: 'Dana Reyes', subjectPhoto: null, completed: null, target: null, days: null,
+  reason: null, readAt: null, subjectId: 't1', subjectName: 'Dana Reyes', subjectPhoto: null, completed: null, target: null, days: null, conversationId: null, sender: null,
 }
 export const inbox: Inbox = {
   unread: 3,
   rows: [
+    { ...noteFacts, id: 'n9', kind: 'chat_message', reference: '', startsAt: null, endsAt: null, patient: null, conversationId: 'c1', sender: 'Dana Reyes', subjectName: 'Dana Reyes', createdAt: '2026-12-01T04:00:00Z' },
     { ...noteFacts, id: 'n0', kind: 'plan_updated', reference: '', startsAt: null, endsAt: null, patient: null, createdAt: '2026-12-01T03:00:00Z' },
     { ...noteFacts, id: 'n1', kind: 'confirmed', createdAt: '2026-12-01T02:00:00Z' },
     { ...noteFacts, id: 'n2', kind: 'cancelled', reason: 'Water supply maintenance', startsAt: '2026-12-09T02:00:00Z', endsAt: '2026-12-09T03:00:00Z', createdAt: '2026-11-30T05:00:00Z' },
@@ -241,20 +242,23 @@ const media = (kind: 'image' | 'video', id: string, expiresAt: string) => ({
   duration_ms: kind === 'video' ? 14_000 : null, bytes: 300_000, media_path: `c1/${id}/media`, preview_path: `c1/${id}/preview.jpg`, expires_at: expiresAt,
 })
 export const chatMessages: ChatMessage[] = [
+  said('m12', 'me', '2026-11-05T03:10:00Z', 'Try this tonight', { kind: 'exercise', data: { assignment_id: 'a1', version: 3, exercise: 'Elbow flexion', side: 'right', low: 20, high: 120, repetitions: 10 } }),
+  said('m11', 'other', '2026-11-05T03:00:00Z', '', { kind: 'progress', data: { scope: 'series', exercise: 'Elbow flexion', side: 'right', latest: 98, best: 98, change: 48, measured: 7, low: 20, high: 120, as_of: '2026-11-05T03:00:00Z' } }),
+  said('m10', null, '2026-11-05T02:50:00Z', '', { kind: 'system', data: { event: 'session_finished', completed: 9, target: 10 } }),
   said('m9', 'other', '2026-11-05T02:30:00Z', '', { kind: 'attachment', data: media('video', 'm9', '2099-01-01T00:00:00Z') }),
   said('m8', 'me', '2026-11-05T02:25:00Z', 'Hold the band like this.', { kind: 'attachment', data: media('image', 'm8', '2099-01-01T00:00:00Z') }),
   said('m7', 'other', '2026-11-04T08:30:00Z', '', { kind: 'attachment', data: media('image', 'm7', '2026-11-10T00:00:00Z') }),
   said('m6', 'me', '2026-11-05T02:20:00Z', 'Good. Keep the upper arm still, and stop if it hurts.'),
   said('m5', 'other', '2026-11-05T02:14:00Z', 'Did ten this morning. The last two were hard.'),
-  said('m4', null, '2026-11-05T01:00:00Z', 'Daily practice reminder', { kind: 'system' }),
+  said('m4', null, '2026-11-05T01:00:00Z', '', { kind: 'system', data: { event: 'practice_reminder', date: '2026-11-05' } }),
   said('m3', 'me', '2026-11-04T09:05:00Z', '', { deleted: true }),
   said('m2', 'me', '2026-11-04T09:02:00Z', 'How did the elbow feel after Monday?'),
   said('m1', 'other', '2026-11-04T08:40:00Z', 'Hello! Is it normal to feel stiff in the morning?'),
 ]
 export const conversations: Conversation[] = [
-  { id: 'c1', side: 'therapist', otherId: 'p1', otherName: 'Ana Dela Cruz', otherPhoto: null, open: true, consented: true, media: true, lastMessageAt: '2026-11-05T02:20:00Z', lastMessage: chatMessages[0]!, unread: 0 },
-  { id: 'c2', side: 'therapist', otherId: 'p2', otherName: 'Ramon Bautista', otherPhoto: null, open: true, consented: true, media: false, lastMessageAt: '2026-11-03T05:00:00Z', lastMessage: said('n1', 'other', '2026-11-03T05:00:00Z', 'Can we move Thursday?'), unread: 2 },
-  { id: 'c3', side: 'therapist', otherId: 'p3', otherName: 'Liza Santos', otherPhoto: null, open: false, consented: true, media: true, lastMessageAt: null, lastMessage: null, unread: 0 },
+  { id: 'c1', side: 'therapist', otherId: 'p1', otherName: 'Ana Dela Cruz', otherPhoto: null, open: true, consented: true, media: true, muted: false, lastMessageAt: '2026-11-05T02:20:00Z', lastMessage: chatMessages[0]!, unread: 0 },
+  { id: 'c2', side: 'therapist', otherId: 'p2', otherName: 'Ramon Bautista', otherPhoto: null, open: true, consented: true, media: false, muted: true, lastMessageAt: '2026-11-03T05:00:00Z', lastMessage: said('n1', 'other', '2026-11-03T05:00:00Z', 'Can we move Thursday?'), unread: 2 },
+  { id: 'c3', side: 'therapist', otherId: 'p3', otherName: 'Liza Santos', otherPhoto: null, open: false, consented: true, media: true, muted: false, lastMessageAt: null, lastMessage: null, unread: 0 },
   // Linked, but has not turned messages on yet.
-  { id: 'c4', side: 'therapist', otherId: 'p4', otherName: 'Noel Ramos', otherPhoto: null, open: false, consented: false, media: false, lastMessageAt: null, lastMessage: null, unread: 0 },
+  { id: 'c4', side: 'therapist', otherId: 'p4', otherName: 'Noel Ramos', otherPhoto: null, open: false, consented: false, media: false, muted: false, lastMessageAt: null, lastMessage: null, unread: 0 },
 ]

@@ -19,6 +19,8 @@ export type Conversation = {
   id: string; side: 'patient' | 'therapist'; otherId: string; otherName: string; otherPhoto: string | null; open: boolean; consented: boolean
   /** Whether the patient has agreed to photos and video, which needs the second version of the agreement. */
   media: boolean
+  /** Whether the reader has muted this conversation's push. Only the reader can see this. */
+  muted: boolean
   lastMessageAt: string | null; lastMessage: ChatMessage | null; unread: number
 }
 /** Newest first. `otherReadAt` is how far the other person has read, for "Seen". */
@@ -39,7 +41,7 @@ export function decodeMessage(raw: RawMessage): ChatMessage {
 }
 
 type RawConversation = {
-  id: string; side: 'patient' | 'therapist'; other_id: string; other_name: string; other_photo: string | null; open: boolean; consented: boolean; media: boolean
+  id: string; side: 'patient' | 'therapist'; other_id: string; other_name: string; other_photo: string | null; open: boolean; consented: boolean; media: boolean; muted?: boolean
   last_message_at: string | null; last_message: RawMessage | null; unread: number
 }
 
@@ -47,7 +49,7 @@ export async function loadConversations(db: SupabaseClient<Database>): Promise<C
   const { data, error } = await db.rpc('my_conversations')
   if (error) throw error
   return (data as unknown as RawConversation[]).map((row) => ({
-    id: row.id, side: row.side, otherId: row.other_id, otherName: row.other_name, otherPhoto: row.other_photo, open: row.open, consented: row.consented, media: row.media,
+    id: row.id, side: row.side, otherId: row.other_id, otherName: row.other_name, otherPhoto: row.other_photo, open: row.open, consented: row.consented, media: row.media, muted: row.muted ?? false,
     lastMessageAt: row.last_message_at, lastMessage: row.last_message && decodeMessage(row.last_message), unread: row.unread,
   }))
 }
@@ -58,6 +60,12 @@ export async function loadMessages(db: SupabaseClient<Database>, conversationId:
   if (error) throw error
   const page = data as unknown as { messages: RawMessage[]; more: boolean; open: boolean; consented: boolean; media: boolean; other_read_at: string | null }
   return { messages: page.messages.map(decodeMessage), more: page.more, open: page.open, consented: page.consented, media: page.media, otherReadAt: page.other_read_at }
+}
+
+/** Mutes or unmutes this conversation's push for the reader. The bell and the unread count are not affected. */
+export async function setConversationMuted(db: SupabaseClient<Database>, conversationId: string, muted: boolean) {
+  const { error } = await db.rpc('set_conversation_muted', { p_conversation: conversationId, p_muted: muted })
+  if (error) throw error
 }
 
 export async function loadChatConsent(db: SupabaseClient<Database>): Promise<ChatConsent> {
@@ -161,6 +169,77 @@ export async function mediaLink(db: SupabaseClient<Database>, path: string, seco
   const { data, error } = await db.storage.from(CHAT_BUCKET).createSignedUrl(path, seconds)
   if (error) throw error
   return data.signedUrl
+}
+
+/** What the Progress page showed when it was shared. Either the last four weeks, or one plan's range of motion. */
+export type ProgressCard =
+  | { scope: 'activity'; week: number; previousWeek: number; activeDays: number; streak: number; daysSinceLast: number | null; asOf: string }
+  | { scope: 'series'; exercise: string; side: string; latest: number; best: number; change: number | null; measured: number; low: number; high: number; asOf: string }
+/** A card's facts before the server stamps its moment, for either shape. */
+export type ProgressFacts = ProgressCard extends infer T ? (T extends unknown ? Omit<T, 'asOf'> : never) : never
+/** An exercise plan as it stood when a therapist sent it. */
+export type ExerciseCard = { assignmentId: string; version: number; exercise: string; side: string; low: number; high: number; repetitions: number }
+/** A quiet line about something that happened: today's practice reminder, or a finished session. */
+export type SystemLine = { event: 'practice_reminder'; date: string } | { event: 'session_finished'; completed: number; target: number; side: string | null } | { event: 'unknown' }
+
+const num = (value: unknown) => (typeof value === 'number' ? value : Number(value ?? 0))
+
+export function progressOf(message: ChatMessage): ProgressCard | null {
+  if (message.kind !== 'progress' || message.deleted) return null
+  const d = message.data
+  const asOf = String(d.as_of ?? message.createdAt)
+  if (d.scope === 'activity') return { scope: 'activity', week: num(d.week), previousWeek: num(d.previous_week), activeDays: num(d.active_days), streak: num(d.streak), daysSinceLast: d.days_since_last == null ? null : num(d.days_since_last), asOf }
+  if (d.scope === 'series') return { scope: 'series', exercise: String(d.exercise ?? ''), side: String(d.side ?? ''), latest: num(d.latest), best: num(d.best), change: d.change == null ? null : num(d.change), measured: num(d.measured), low: num(d.low), high: num(d.high), asOf }
+  return null
+}
+
+export function exerciseOf(message: ChatMessage): ExerciseCard | null {
+  if (message.kind !== 'exercise' || message.deleted) return null
+  const d = message.data
+  return { assignmentId: String(d.assignment_id ?? ''), version: num(d.version), exercise: String(d.exercise ?? ''), side: String(d.side ?? ''), low: num(d.low), high: num(d.high), repetitions: num(d.repetitions) }
+}
+
+export function systemLineOf(message: ChatMessage): SystemLine {
+  const d = message.data
+  if (d.event === 'practice_reminder') return { event: 'practice_reminder', date: String(d.date ?? '') }
+  if (d.event === 'session_finished') return { event: 'session_finished', completed: num(d.completed), target: num(d.target), side: typeof d.side === 'string' ? d.side : null }
+  return { event: 'unknown' }
+}
+
+/** Shares a progress snapshot. The server keeps only these facts, and stamps the moment. */
+export async function shareProgress(db: SupabaseClient<Database>, id: string, conversationId: string, card: ProgressFacts, caption = ''): Promise<ChatMessage> {
+  const facts = card.scope === 'activity'
+    ? { scope: 'activity', week: card.week, previous_week: card.previousWeek, active_days: card.activeDays, streak: card.streak, days_since_last: card.daysSinceLast }
+    : { scope: 'series', exercise: card.exercise, side: card.side, latest: card.latest, best: card.best, change: card.change, measured: card.measured, low: card.low, high: card.high }
+  const { data, error } = await db.rpc('share_progress', { p_id: id, p_conversation: conversationId, p_progress: facts, p_caption: caption })
+  if (error) throw error
+  return decodeMessage(data as unknown as RawMessage)
+}
+
+/** A therapist sends one of the patient's active plans; the server writes the card from the plan itself. */
+export async function shareExercise(db: SupabaseClient<Database>, id: string, conversationId: string, assignmentId: string, caption = ''): Promise<ChatMessage> {
+  const { data, error } = await db.rpc('share_exercise', { p_id: id, p_conversation: conversationId, p_assignment: assignmentId, p_caption: caption })
+  if (error) throw error
+  return decodeMessage(data as unknown as RawMessage)
+}
+
+export type ScheduledMessage = { id: string; body: string; sendAt: string }
+
+export async function loadScheduled(db: SupabaseClient<Database>, conversationId: string): Promise<ScheduledMessage[]> {
+  const { data, error } = await db.rpc('my_scheduled_messages', { p_conversation: conversationId })
+  if (error) throw error
+  return (data as unknown as Array<{ id: string; body: string; send_at: string }>).map((row) => ({ id: row.id, body: row.body, sendAt: row.send_at }))
+}
+
+/** A therapist's message to arrive later. The same ID again changes nothing, so a retry is safe. */
+export async function scheduleMessage(db: SupabaseClient<Database>, id: string, conversationId: string, body: string, sendAt: string) {
+  const { error } = await db.rpc('schedule_message', { p_id: id, p_conversation: conversationId, p_body: body, p_send_at: sendAt })
+  if (error) throw error
+}
+
+export async function cancelScheduled(db: SupabaseClient<Database>, id: string) {
+  const { error } = await db.rpc('cancel_scheduled_message', { p_id: id })
+  if (error) throw error
 }
 
 export type ChatEvents = {

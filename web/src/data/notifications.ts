@@ -10,7 +10,7 @@ export const BOOKING_KINDS = [
   'series_booked', 'series_assigned', 'series_cancelled', 'session_series_cancelled',
 ] as const
 /** Not about one session, so these have no time of their own. */
-export const CARE_KINDS = ['plan_updated', 'session_finished', 'practice_reminder', 'patient_inactive', 'care_linked', 'care_unlinked', 'patient_linked', 'patient_unlinked'] as const
+export const CARE_KINDS = ['plan_updated', 'session_finished', 'practice_reminder', 'patient_inactive', 'care_linked', 'care_unlinked', 'patient_linked', 'patient_unlinked', 'chat_message'] as const
 export type NotificationKind = (typeof BOOKING_KINDS)[number] | (typeof CARE_KINDS)[number]
 const KNOWN = new Set<string>([...BOOKING_KINDS, ...CARE_KINDS])
 
@@ -24,6 +24,8 @@ export type AppNotification = {
   subjectId: string | null; subjectName: string | null; subjectPhoto: string | null
   /** A finished session's repetitions, and how many days an inactive patient has been quiet. */
   completed: number | null; target: number | null; days: number | null
+  /** For a new message: which conversation, and who wrote. Never the words. */
+  conversationId: string | null; sender: string | null
 }
 export type Inbox = { unread: number; rows: AppNotification[] }
 
@@ -31,7 +33,7 @@ type RawNotification = {
   id: string; kind: string; read_at: string | null; created_at: string; subject_id?: string | null; subject_name?: string | null; subject_photo?: string | null
   data: {
     reference_no?: string; starts_at?: string; ends_at?: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null
-    sessions?: number; last_starts_at?: string | null; completed?: number; target?: number; days?: number
+    sessions?: number; last_starts_at?: string | null; completed?: number; target?: number; days?: number; conversation_id?: string; sender_name?: string | null
   }
 }
 
@@ -41,6 +43,7 @@ export const decodeNotification = (row: RawNotification & { kind: NotificationKi
   sessions: row.data.sessions ?? 0, lastStartsAt: row.data.last_starts_at ?? null,
   subjectId: row.subject_id ?? null, subjectName: row.subject_name ?? null, subjectPhoto: row.subject_photo ?? null,
   completed: row.data.completed ?? null, target: row.data.target ?? null, days: row.data.days ?? null,
+  conversationId: row.data.conversation_id ?? null, sender: row.data.sender_name ?? null,
 })
 
 /** A kind this version does not know is left out, so a newer server never shows a blank row. */
@@ -58,6 +61,10 @@ export function notificationTarget(note: AppNotification, workspace: Notificatio
     case 'session_finished': case 'patient_inactive': case 'patient_linked':
       return note.subjectId ? `/therapist/patients/${note.subjectId}` : '/therapist/patients'
     case 'patient_unlinked': return '/therapist/patients'
+    case 'chat_message': {
+      const base = workspace === 'patient' ? '/patient' : '/therapist'
+      return note.conversationId ? `${base}/messages/${note.conversationId}` : `${base}/messages`
+    }
     default: return { patient: '/patient/bookings', therapist: '/therapist/schedule', scheduler: '/scheduler/requests' }[workspace]
   }
 }

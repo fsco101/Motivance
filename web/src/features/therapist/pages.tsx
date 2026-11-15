@@ -14,6 +14,8 @@ import { SchedulePage } from '@/features/booking/SchedulePage'
 import { asLoad, ready, useFormat, type Load } from '@/features/shared'
 import { AssignmentEditorView } from './AssignmentEditorView'
 import { ExercisesView } from './ExercisesView'
+import { loadConversations, shareExercise } from '@/data/chat'
+import { useShareProgress } from '@/features/chat/ShareDialog'
 import { useActivity, useProgressResults } from './history'
 import { PatientRecordView, type PatientRecord, type PlanCard } from './PatientRecordView'
 import { PatientsView } from './PatientsView'
@@ -133,7 +135,18 @@ export function PatientRecordPage() {
       detail: t('progress.seriesLine', { side: t(`common.${series.side}`, series.side), version: series.prescription.version, low: series.prescription.low, high: series.prescription.high }),
     },
   })
-  return <PatientRecordView load={load} base={BASE} />
+  // Sends the plan into this patient's conversation, written by the server from the plan itself.
+  const sendExercise = async (planId: string) => {
+    try {
+      const conversation = (await loadConversations(supabase())).find((item) => item.otherId === id && item.open)
+      if (!conversation) { toast.show(t('chat.cards.noConversation'), 'error'); return }
+      await shareExercise(supabase(), crypto.randomUUID(), conversation.id, planId)
+      toast.show(t('chat.cards.exerciseSent'))
+    } catch (failure) {
+      toast.show(t(failureKey(failure)), 'error')
+    }
+  }
+  return <PatientRecordView load={load} base={BASE} onSendExercise={(planId) => void sendExercise(planId)} />
 }
 
 export function AssignExercisePage() {
@@ -211,6 +224,7 @@ export function ProgressPage() {
   const filters = chosen.patientId === patientId ? chosen.filters : NO_FILTERS
   const { results, onMore } = useProgressResults(patientId, filters)
   const activity = useActivity(patientId)
+  const sharing = useShareProgress(patientId, false)
   if (workspace.data && patients.length === 0) {
     return <><PageHeader title={t('nav.progress')} description={t('progress.description')} /><EmptyState title={t('progress.noPatientsTitle')} detail={t('progress.noPatientsDetail')} /></>
   }
@@ -221,7 +235,10 @@ export function ProgressPage() {
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state
     : ready({ patients: patients.map((patient) => ({ id: patient.id, name: nameOf(patient) })), patientId, exercises: [...new Map(exercises.map((item) => [item.id, item])).values()] })
   return (
-    <ProgressView choices={choices} results={results} activity={activity} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
-      onPatient={(id) => setParams({ patient: id })} onMore={onMore} />
+    <>
+      <ProgressView choices={choices} results={results} activity={activity} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
+        onPatient={(id) => setParams({ patient: id })} onMore={onMore} onShare={sharing.share} />
+      {sharing.dialog}
+    </>
   )
 }

@@ -5,7 +5,7 @@ import { Navigate, useParams, useSearchParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { toast } from '@/components/Toast'
 import {
-  deleteMessage, loadChatConsent, loadConversations, mediaLink, sendMedia, setChatConsent, loadMessages, markConversationRead, mergeMessage, sendMessage, subscribeToChat,
+  cancelScheduled, deleteMessage, loadChatConsent, loadConversations, loadScheduled, mediaLink, scheduleMessage, sendMedia, setChatConsent, setConversationMuted, loadMessages, markConversationRead, mergeMessage, sendMessage, subscribeToChat,
   type ChatMessage, type Conversation, type MessagePage,
 } from '@/data/chat'
 import { supabase } from '@/data/client'
@@ -108,6 +108,8 @@ function useThread(conversation: Conversation | undefined) {
   const id = conversation?.id ?? ''
   const [outgoing, setOutgoing] = useState<Outgoing[]>([])
   const [preparing, setPreparing] = useState<Preparing | null>(null)
+  // Only a therapist schedules, and only they see what is waiting.
+  const waiting = useQuery({ queryKey: ['chat', 'scheduled', id], enabled: Boolean(id) && conversation?.side === 'therapist', queryFn: () => loadScheduled(supabase(), id) })
   const pages = useInfiniteQuery({
     queryKey: threadKey(id), enabled: Boolean(id), initialPageParam: null as Before,
     queryFn: ({ pageParam }) => loadMessages(supabase(), id, pageParam),
@@ -142,8 +144,22 @@ function useThread(conversation: Conversation | undefined) {
   }, [client, t])
 
   return {
-    thread, outgoing, preparing,
+    thread, outgoing, preparing, scheduled: waiting.data ?? [],
     actions: {
+      onSchedule: async (body: string, sendAt: string) => {
+        if (!id) return
+        try {
+          await scheduleMessage(supabase(), crypto.randomUUID(), id, body, sendAt)
+          toast.show(t('chat.schedule.done'))
+          await waiting.refetch()
+        } catch (failure) {
+          toast.show(t(failureKey(failure)), 'error')
+          throw failure
+        }
+      },
+      onCancelScheduled: (scheduledId: string) => void cancelScheduled(supabase(), scheduledId)
+        .then(() => { toast.show(t('chat.schedule.removed')); return waiting.refetch() })
+        .catch((failure: unknown) => { toast.show(t(failureKey(failure)), 'error'); void waiting.refetch() }),
       // Made smaller here first, then sent like any message: it waits in the thread, and a failure can be tried again.
       onAttach: (file: File) => {
         if (!id || preparing) return
@@ -159,6 +175,12 @@ function useThread(conversation: Conversation | undefined) {
         }).finally(() => setPreparing(null))
       },
       onLink: (path: string) => mediaLink(supabase(), path),
+      onMute: (muted: boolean) => {
+        if (!id) return
+        void setConversationMuted(supabase(), id, muted)
+          .then(() => { toast.show(t(muted ? 'chat.mutedToast' : 'chat.unmutedToast')); return client.invalidateQueries({ queryKey: LIST_KEY }) })
+          .catch((failure: unknown) => toast.show(t(failureKey(failure)), 'error'))
+      },
       onSend: (body: string) => {
         if (!id) return
         const item: Outgoing = { id: crypto.randomUUID(), conversationId: id, body, createdAt: new Date().toISOString(), failed: false }
@@ -214,7 +236,7 @@ export function MessagesPage({ base, self }: { base: string; self?: boolean }) {
   const conversations = useConversations()
   const list = conversations.data
   const selected = list?.find((conversation) => conversation.id === id)
-  const { thread, outgoing, preparing, actions } = useThread(selected)
+  const { thread, outgoing, preparing, scheduled, actions } = useThread(selected)
   const agreement = useChatAgreement(Boolean(self))
   const wanted = params.get('with')
   if (!id && list) {
@@ -222,5 +244,5 @@ export function MessagesPage({ base, self }: { base: string; self?: boolean }) {
     if (target) return <Navigate to={`${base}/messages/${target.id}`} replace />
   }
   return <MessagesView base={base} me={userId} self={self} conversations={asLoad(conversations)} selected={id ?? null} thread={thread} outgoing={outgoing} connected={connected} actions={actions}
-    preparing={preparing} agreement={agreement.consent ? { granted: agreement.consent.granted, media: agreement.consent.media, busy: agreement.busy, onAccept: () => void agreement.change(true) } : undefined} />
+    preparing={preparing} scheduled={scheduled} agreement={agreement.consent ? { granted: agreement.consent.granted, media: agreement.consent.media, busy: agreement.busy, onAccept: () => void agreement.change(true) } : undefined} />
 }

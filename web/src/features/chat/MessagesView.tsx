@@ -1,13 +1,14 @@
-import { ArrowLeftIcon, ChatCircleDotsIcon, PaperclipIcon, PaperPlaneRightIcon, WarningCircleIcon } from '@phosphor-icons/react'
+import { ArrowLeftIcon, BellSimpleIcon, BellSimpleSlashIcon, ChatCircleDotsIcon, PaperclipIcon, PaperPlaneRightIcon, WarningCircleIcon } from '@phosphor-icons/react'
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Button } from '@/components/Button'
 import { Avatar, EmptyState, Notice, PageHeader, StatusPill } from '@/components/Display'
-import { CHAT_BODY_LIMIT, type ChatMessage, type Conversation } from '@/data/chat'
+import { CHAT_BODY_LIMIT, type ChatMessage, type Conversation, type ScheduledMessage } from '@/data/chat'
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
 import { ChatAgreementPanel, MediaAgreementPanel } from './ChatAgreement'
+import { MessageCard, SystemLineText, type CardLinks } from './ChatCards'
 import { MediaBubble } from './MediaBubble'
 import { canDelete, threadItems, type Outgoing, type ThreadItem } from './thread'
 
@@ -26,6 +27,11 @@ export type ChatActions = {
   onAttach: (file: File) => void
   /** A short-lived link to one file. */
   onLink: (path: string) => Promise<string>
+  /** Mutes or unmutes push for this conversation, for the reader only. */
+  onMute: (muted: boolean) => void
+  /** A therapist's message to arrive at `sendAt`, and the way to take one back before it does. */
+  onSchedule?: (body: string, sendAt: string) => Promise<void>
+  onCancelScheduled?: (id: string) => void
 }
 
 type Props = {
@@ -44,6 +50,8 @@ type Props = {
   /** A patient's answer to the messages agreement. Until they agree, nobody can write to them; until they agree to its second version, nobody can send photos or video. */
   agreement?: { granted: boolean; media: boolean; busy: boolean; onAccept: () => void }
   preparing?: Preparing | null
+  /** What this therapist has waiting to arrive in the open conversation. */
+  scheduled?: readonly ScheduledMessage[]
 }
 
 /** Beside the bell on every page. The label holds what the badge shows, so someone using voice control can say what they see. */
@@ -64,7 +72,8 @@ function lastLine(conversation: Conversation, me: string, t: (key: string, value
   if (!last && !conversation.consented) return t(conversation.side === 'patient' ? 'chat.turnOnToStart' : 'chat.notTurnedOn')
   if (!last) return t('chat.noMessagesYet')
   const words = last.deleted ? t('chat.deleted') : last.kind === 'text' || last.kind === 'system' ? last.body
-    : last.kind === 'attachment' ? t(last.data.attachment_kind === 'video' ? 'chat.media.video' : 'chat.media.photo') : t('chat.unsupported')
+    : last.kind === 'attachment' ? t(last.data.attachment_kind === 'video' ? 'chat.media.video' : 'chat.media.photo')
+    : last.kind === 'progress' ? t('chat.cards.sharedProgress') : last.kind === 'exercise' ? t('chat.cards.sharedExercise') : t('chat.unsupported')
   return last.senderId === me ? t('chat.youSaid', { words }) : words
 }
 
@@ -102,12 +111,13 @@ function ConversationList({ conversations, selected, base, me, className }: { co
   )
 }
 
-function Bubble({ item, actions }: { item: Extract<ThreadItem, { type: 'message' }>; actions: ChatActions }) {
+function Bubble({ item, actions, links }: { item: Extract<ThreadItem, { type: 'message' }>; actions: ChatActions; links: CardLinks }) {
   const { t } = useTranslation()
   const format = useFormat()
   const [asking, setAsking] = useState(false)
   const { message, mine } = item
-  if (message.kind === 'system') return <li className="self-center px-3 text-center text-sm text-slate">{message.body}</li>
+  if (message.kind === 'system') return <li className="self-center px-3 text-center text-sm text-slate"><SystemLineText message={message} /></li>
+  const card = (message.kind === 'progress' || message.kind === 'exercise') && !message.deleted
   const quiet = 'text-xs text-slate'
   const link = 'rounded-sm font-semibold text-lagoon-deep underline underline-offset-2'
   return (
@@ -118,10 +128,11 @@ function Bubble({ item, actions }: { item: Extract<ThreadItem, { type: 'message'
           <MediaBubble message={message} mine={mine} link={actions.onLink} />
         </div>
       )}
-      {(message.kind !== 'attachment' || message.deleted || message.body) && (
+      {card && <div><span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span><MessageCard message={message} mine={mine} links={links} /></div>}
+      {((message.kind !== 'attachment' && !card) || message.deleted || message.body) && (
         <p className={cn('whitespace-pre-wrap break-words rounded-card px-3.5 py-2', message.deleted ? 'border border-line italic text-slate' : item.state === 'failed' ? 'border border-dashed border-alarm bg-paper text-ink' : mine ? 'bg-lagoon-deep text-paper' : 'bg-tide text-ink')}>
-          {message.kind !== 'attachment' && <span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span>}
-          {message.deleted ? t('chat.deleted') : message.kind === 'text' || message.kind === 'attachment' ? message.body : t('chat.unsupported')}
+          {message.kind !== 'attachment' && !card && <span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span>}
+          {message.deleted ? t('chat.deleted') : message.kind === 'text' || message.kind === 'attachment' || card ? message.body : t('chat.unsupported')}
         </p>
       )}
       <p className={cn('flex flex-wrap items-center gap-x-3 gap-y-1', quiet, mine && 'justify-end')}>
@@ -158,9 +169,19 @@ function Attach({ allowed, blocked, preparing, onAttach }: { allowed: boolean; b
   )
 }
 
-function Composer({ name, onSend, attach }: { name: string; onSend: (body: string) => void; attach: { allowed: boolean; blocked: string; preparing: Preparing | null; onAttach: (file: File) => void } }) {
+/** The time a scheduled message is set for, as the `datetime-local` field wants it: the reader's own clock, to the minute. */
+const localInput = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+
+function Composer({ name, onSend, attach, schedule }: {
+  name: string; onSend: (body: string) => void; attach: { allowed: boolean; blocked: string; preparing: Preparing | null; onAttach: (file: File) => void }
+  schedule?: (body: string, sendAt: string) => Promise<void>
+}) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState('')
+  const [later, setLater] = useState<string | null>(null)
+  // Set when the form opens, so the earliest choice is a moment ahead of when the person started choosing.
+  const [earliest, setEarliest] = useState('')
+  const [busy, setBusy] = useState(false)
   const words = draft.trim()
   const left = CHAT_BODY_LIMIT - draft.length
   const send = (event?: FormEvent) => {
@@ -173,7 +194,25 @@ function Composer({ name, onSend, attach }: { name: string; onSend: (body: strin
   const keys = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) send(event)
   }
+  const plan = (event: FormEvent) => {
+    event.preventDefault()
+    if (!schedule || !words || !later) return
+    setBusy(true)
+    void schedule(words, new Date(later).toISOString()).then(() => { setDraft(''); setLater(null) }).catch(() => undefined).finally(() => setBusy(false))
+  }
   return (
+    <>
+    {schedule && later !== null && (
+      <form onSubmit={plan} className="flex flex-wrap items-end gap-2 border-t border-line bg-mist px-3 py-2">
+        <label className="flex flex-col gap-1 text-sm font-semibold">{t('chat.schedule.when')}
+          <input type="datetime-local" required value={later} min={earliest} onChange={(event) => setLater(event.target.value)}
+            className="rounded-control border border-line-strong bg-paper px-2 py-1.5 font-normal" />
+        </label>
+        <Button type="submit" size="sm" busy={busy} disabled={!words}>{t('chat.schedule.confirm')}</Button>
+        <Button type="button" size="sm" variant="secondary" onClick={() => setLater(null)}>{t('chat.schedule.cancel')}</Button>
+        <p className="w-full text-xs text-slate">{t('chat.schedule.hint')}</p>
+      </form>
+    )}
     <form onSubmit={send} className="flex items-end gap-2 border-t border-line p-3">
       <div className="min-w-0 flex-1">
         <label htmlFor="chat-draft" className="sr-only">{t('chat.writeTo', { name })}</label>
@@ -185,13 +224,37 @@ function Composer({ name, onSend, attach }: { name: string; onSend: (body: strin
         </p>
       </div>
       <Attach {...attach} />
+      {schedule && later === null && <Button type="button" variant="secondary" className="mb-5" onClick={() => { const now = Date.now(); setEarliest(localInput(new Date(now + 120_000))); setLater(localInput(new Date(now + 86_400_000))) }}>{t('chat.schedule.open')}</Button>}
       <Button type="submit" disabled={!words} leading={<PaperPlaneRightIcon aria-hidden weight="fill" />} className="mb-5">{t('chat.send')}</Button>
     </form>
+    </>
   )
 }
 
-function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected, actions, preparing, className }: {
-  conversation: Conversation; thread: Load<Thread>; outgoing: readonly Outgoing[]; me: string; self?: boolean; base: string; connected: boolean; actions: ChatActions; preparing: Preparing | null; className?: string
+/** What a therapist has waiting to arrive. Only they see it, until it does. */
+function Waiting({ scheduled, onCancel }: { scheduled: readonly ScheduledMessage[]; onCancel?: (id: string) => void }) {
+  const { t } = useTranslation()
+  const format = useFormat()
+  if (scheduled.length === 0) return null
+  return (
+    <section aria-label={t('chat.schedule.waiting')} className="border-t border-line bg-mist px-3 py-2">
+      <p className="text-xs font-semibold text-slate">{t('chat.schedule.waiting')}</p>
+      <ul className="mt-1 grid gap-1">
+        {scheduled.map((item) => (
+          <li key={item.id} className="flex items-center gap-3 text-sm">
+            <span className="numeric shrink-0 text-slate">{format.dateTime(item.sendAt)}</span>
+            <span className="min-w-0 flex-1 truncate">{item.body}</span>
+            {onCancel && <button type="button" onClick={() => onCancel(item.id)} className="shrink-0 rounded-sm font-semibold text-lagoon-deep underline underline-offset-2">{t('chat.schedule.remove')}</button>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected, actions, preparing, scheduled, className }: {
+  conversation: Conversation; thread: Load<Thread>; outgoing: readonly Outgoing[]; me: string; self?: boolean; base: string; connected: boolean; actions: ChatActions; preparing: Preparing | null
+  scheduled: readonly ScheduledMessage[]; className?: string
 }) {
   const { t } = useTranslation()
   const format = useFormat()
@@ -206,6 +269,9 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
   useEffect(() => { const timer = setInterval(() => tick((value) => value + 1), 30_000); return () => clearInterval(timer) }, [])
   const open = data?.open ?? conversation.open
   const consented = data?.consented ?? conversation.consented
+  const links: CardLinks = conversation.side === 'patient'
+    ? { progress: `${base}/progress`, exercises: `${base}/exercises` }
+    : { progress: `${base}/progress?patient=${conversation.otherId}`, exercises: `${base}/patients/${conversation.otherId}` }
   const media = data?.media ?? conversation.media
   return (
     <section aria-label={t('chat.conversationWith', { name: conversation.otherName })} className={cn('flex h-[calc(100dvh-15rem)] min-h-96 flex-col overflow-clip rounded-card border border-line bg-paper shadow-rest', className)}>
@@ -217,6 +283,8 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
           <p className="text-sm text-slate">{t(conversation.side === 'patient' ? 'chat.yourTherapist' : 'chat.yourPatient')}</p>
         </div>
         <span role="status">{!connected && <StatusPill tone="caution">{t('chat.reconnecting')}</StatusPill>}</span>
+        <Button size="sm" variant="secondary" aria-pressed={conversation.muted} onClick={() => actions.onMute(!conversation.muted)}
+          leading={conversation.muted ? <BellSimpleSlashIcon aria-hidden /> : <BellSimpleIcon aria-hidden />}>{t(conversation.muted ? 'chat.muted' : 'chat.mute')}</Button>
       </header>
       <div ref={scroller} tabIndex={0} aria-label={t('chat.messages')} className="flex-1 overflow-y-auto px-4 py-4">
         <Loadable load={thread} skeleton={<SkeletonLines rows={4} />}>
@@ -228,22 +296,22 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
               <div role="log" aria-live="polite" aria-relevant="additions"><ol className="flex flex-col gap-3">
                 {items.map((item) => (item.type === 'day'
                   ? <li key={item.key} className="self-center rounded-full bg-mist px-3 py-0.5 text-xs font-semibold text-slate">{format.date(item.at)}</li>
-                  : <Bubble key={item.key} item={item} actions={actions} />))}
+                  : <Bubble key={item.key} item={item} actions={actions} links={links} />))}
               </ol></div>
             </>
           )}
         </Loadable>
       </div>
       {open
-        ? <Composer key={conversation.id} name={conversation.otherName} onSend={actions.onSend}
-          attach={{ allowed: media, preparing, onAttach: actions.onAttach, blocked: t(conversation.side === 'patient' ? 'chat.media.allowAbove' : 'chat.media.notAllowed', { name: conversation.otherName }) }} />
+        ? <><Waiting scheduled={scheduled} onCancel={actions.onCancelScheduled} /><Composer key={conversation.id} name={conversation.otherName} onSend={actions.onSend} schedule={conversation.side === 'therapist' ? actions.onSchedule : undefined}
+          attach={{ allowed: media, preparing, onAttach: actions.onAttach, blocked: t(conversation.side === 'patient' ? 'chat.media.allowAbove' : 'chat.media.notAllowed', { name: conversation.otherName }) }} /></>
         : <div className="border-t border-line p-3"><Notice tone="info">{t(consented ? 'chat.closed' : conversation.side === 'patient' ? 'chat.turnOnToWrite' : 'chat.waitingForPatient', { name: conversation.otherName })}</Notice></div>}
     </section>
   )
 }
 
 /** Every conversation a person has, beside the one that is open. On a narrow window they take turns. */
-export function MessagesView({ base, me, self, conversations, selected, thread, outgoing, connected, actions, agreement, preparing = null }: Props) {
+export function MessagesView({ base, me, self, conversations, selected, thread, outgoing, connected, actions, agreement, preparing = null, scheduled = [] }: Props) {
   const { t } = useTranslation()
   return (
     <>
@@ -259,7 +327,7 @@ export function MessagesView({ base, me, self, conversations, selected, thread, 
               <div className="grid items-start gap-5 desk:grid-cols-[20rem_minmax(0,1fr)]">
                 <ConversationList conversations={list} selected={selected} base={base} me={me} className={cn(conversation && 'hidden desk:block')} />
                 {conversation && thread
-                  ? <ThreadPanel conversation={conversation} thread={thread} outgoing={outgoing} me={me} self={self} base={base} connected={connected} actions={actions} preparing={preparing} />
+                  ? <ThreadPanel conversation={conversation} thread={thread} outgoing={outgoing} me={me} self={self} base={base} connected={connected} actions={actions} preparing={preparing} scheduled={scheduled} />
                   : <div className="hidden min-h-96 place-items-center rounded-card border border-dashed border-line-strong p-8 text-center text-slate desk:grid">{t(selected ? 'chat.notFound' : 'chat.choose')}</div>}
               </div>
               <p className="mt-4 max-w-[70ch] text-sm text-slate">{t(self ? 'chat.urgentSelf' : 'chat.urgent')}</p>

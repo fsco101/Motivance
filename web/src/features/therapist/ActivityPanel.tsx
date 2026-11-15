@@ -1,4 +1,6 @@
+import { ShareNetworkIcon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 import { Notice, Panel } from '@/components/Display'
 import { ACTIVITY_DAYS, type ActivitySummary } from '@/data/history'
 import { useFormat } from '@/features/shared'
@@ -53,7 +55,7 @@ function DayStrip({ summary }: { summary: ActivitySummary }) {
  * How regularly someone has exercised lately. A patient reads it as encouragement, so it leads with their streak.
  * A therapist reads it to decide who needs a call, so it leads with how long ago the last session was.
  */
-export function ActivityPanel({ summary, self, sample, stacked }: { summary: ActivitySummary; self?: boolean; sample?: boolean; stacked?: boolean }) {
+export function ActivityPanel({ summary, self, sample, stacked, onShare }: { summary: ActivitySummary; self?: boolean; sample?: boolean; stacked?: boolean; onShare?: () => void }) {
   const { t } = useTranslation()
   const format = useFormat()
   const difference = summary.week - summary.previousWeek
@@ -62,7 +64,8 @@ export function ActivityPanel({ summary, self, sample, stacked }: { summary: Act
   const last = since === null ? t('progress.activity.none') : since === 0 ? t('progress.activity.today') : since === 1 ? t('progress.activity.yesterday') : t('progress.activity.daysAgo', { count: since })
   const quiet = !self && (since === null || since >= QUIET_DAYS)
   return (
-    <Panel title={t(self ? 'progress.activity.titleSelf' : 'progress.activity.title')} description={t(sample ? 'progress.activity.sample' : 'progress.activity.description')}>
+    <Panel title={t(self ? 'progress.activity.titleSelf' : 'progress.activity.title')} description={t(sample ? 'progress.activity.sample' : 'progress.activity.description')}
+      action={onShare && <Button size="sm" variant="secondary" leading={<ShareNetworkIcon aria-hidden />} onClick={onShare}>{t('chat.cards.share')}</Button>}>
       <div className={cn('grid items-end gap-x-10 gap-y-5', !stacked && 'desk:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]')}>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 tablet:grid-cols-3">
           <Stat value={summary.week} label={t('progress.activity.week')} detail={compared} />

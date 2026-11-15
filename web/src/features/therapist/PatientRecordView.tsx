@@ -2,7 +2,7 @@ import { ChatCircleDotsIcon, PencilSimpleIcon, PlusIcon } from '@phosphor-icons/
 import { m as motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { ButtonLink } from '@/components/Button'
+import { Button, ButtonLink } from '@/components/Button'
 import { RangeBar } from '@/components/Charts'
 import { DataTable, type Column } from '@/components/DataTable'
 import { Avatar, EmptyState, Panel, Skeleton, StatusPill } from '@/components/Display'
@@ -27,7 +27,7 @@ export type PatientRecord = {
 /** One series only, named, so a reader knows exactly what the line measures. */
 export type RecordTrend = { exercise: string; detail: string; points: TrendPoint[] }
 
-function PlanTable({ plans, editTo }: { plans: readonly PlanCard[]; editTo: string }) {
+function PlanTable({ plans, editTo, onSend }: { plans: readonly PlanCard[]; editTo: string; onSend?: (planId: string) => void }) {
   const { t } = useTranslation()
   const columns: ReadonlyArray<Column<PlanCard>> = [
     { key: 'exercise', header: t('exercises.columnName'), cell: (plan) => (
@@ -45,14 +45,18 @@ function PlanTable({ plans, editTo }: { plans: readonly PlanCard[]; editTo: stri
     ) },
     { key: 'focus', header: t('record.focus'), hideBelow: 'desk', cell: (plan) => plan.focus ?? t('record.focusAutomatic') },
     { key: 'version', header: t('admin.versionColumn'), cell: (plan) => <StatusPill tone="primary">{t('record.version', { version: plan.version })}</StatusPill> },
-    { key: 'action', header: t('patients.columnActions'), align: 'end', cell: (plan) => (plan.locked
-      ? <span className="text-xs text-slate">{t('record.otherTherapist')}</span>
-      : <ButtonLink to={`${editTo}?plan=${plan.id}`} variant="secondary" size="sm" leading={<PencilSimpleIcon aria-hidden />}>{t('record.edit')}</ButtonLink>) },
+    { key: 'action', header: t('patients.columnActions'), align: 'end', cell: (plan) => (
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {plan.locked
+          ? <span className="text-xs text-slate">{t('record.otherTherapist')}</span>
+          : <ButtonLink to={`${editTo}?plan=${plan.id}`} variant="secondary" size="sm" leading={<PencilSimpleIcon aria-hidden />}>{t('record.edit')}</ButtonLink>}
+        {onSend && <Button variant="secondary" size="sm" leading={<ChatCircleDotsIcon aria-hidden />} onClick={() => onSend(plan.id)}>{t('chat.cards.sendExercise')}</Button>}
+      </div>) },
   ]
   return <DataTable caption={t('record.plans')} columns={columns} rows={plans} rowKey={(plan) => plan.id} />
 }
 
-export function PatientRecordView({ load, base }: { load: Load<PatientRecord>; base: string }) {
+export function PatientRecordView({ load, base, onSendExercise }: { load: Load<PatientRecord>; base: string; onSendExercise?: (planId: string) => void }) {
   const { t } = useTranslation()
   const format = useFormat()
   return (
@@ -75,7 +79,7 @@ export function PatientRecordView({ load, base }: { load: Load<PatientRecord>; b
             <Panel title={t('record.plans')} flush action={<ButtonLink to={`${base}/patients/${patient.id}/assign`} size="sm" leading={<PlusIcon weight="bold" aria-hidden />}>{t('record.assign')}</ButtonLink>}>
               {patient.plans.length === 0
                 ? <EmptyState title={t('record.noPlansTitle')} detail={t('record.noPlansDetail')} />
-                : <PlanTable plans={patient.plans} editTo={`${base}/patients/${patient.id}/assign`} />}
+                : <PlanTable plans={patient.plans} editTo={`${base}/patients/${patient.id}/assign`} onSend={onSendExercise} />}
             </Panel>
             <Panel title={t('record.progress')} action={<Link to={`${base}/progress?patient=${patient.id}`} className="font-semibold text-lagoon-deep hover:underline">{t('record.allProgress')}</Link>}>
               {patient.trend === null ? <p className="text-slate">{t('patients.noSessions')}</p> : (

@@ -604,6 +604,39 @@ export type Database = {
           },
         ]
       }
+      chat_mutes: {
+        Row: {
+          conversation_id: string
+          muted_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          muted_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          muted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mutes_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mutes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_reads: {
         Row: {
           conversation_id: string
@@ -631,6 +664,57 @@ export type Database = {
           {
             foreignKeyName: "chat_reads_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_scheduled: {
+        Row: {
+          body: string
+          cancelled_at: string | null
+          conversation_id: string
+          created_at: string
+          dropped_reason: string | null
+          id: string
+          send_at: string
+          sender_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          body: string
+          cancelled_at?: string | null
+          conversation_id: string
+          created_at?: string
+          dropped_reason?: string | null
+          id: string
+          send_at: string
+          sender_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          body?: string
+          cancelled_at?: string | null
+          conversation_id?: string
+          created_at?: string
+          dropped_reason?: string | null
+          id?: string
+          send_at?: string
+          sender_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_scheduled_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_scheduled_sender_id_fkey"
+            columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -940,6 +1024,7 @@ export type Database = {
           care_team: boolean
           exercise_plan: boolean
           inactivity: boolean
+          messages: boolean
           reminder_time: string | null
           session_results: boolean
           updated_at: string
@@ -950,6 +1035,7 @@ export type Database = {
           care_team?: boolean
           exercise_plan?: boolean
           inactivity?: boolean
+          messages?: boolean
           reminder_time?: string | null
           session_results?: boolean
           updated_at?: string
@@ -960,6 +1046,7 @@ export type Database = {
           care_team?: boolean
           exercise_plan?: boolean
           inactivity?: boolean
+          messages?: boolean
           reminder_time?: string | null
           session_results?: boolean
           updated_at?: string
@@ -1692,6 +1779,10 @@ export type Database = {
         Args: { p_booking: string; p_reason?: string }
         Returns: Json
       }
+      cancel_scheduled_message: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
       center_availability: {
         Args: { p_from: string; p_to: string; p_staff: boolean }
         Returns: Json
@@ -1764,9 +1855,44 @@ export type Database = {
         Args: { m: Database["public"]["Tables"]["chat_messages"]["Row"] }
         Returns: Json
       }
+      chat_notice_window: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      chat_number: {
+        Args: {
+          p: Json
+          p_key: string
+          p_min: number
+          p_max: number
+          p_optional?: boolean
+        }
+        Returns: boolean
+      }
+      chat_open_between: {
+        Args: { p_conversation: string }
+        Returns: boolean
+      }
+      chat_progress_valid: {
+        Args: { p: Json }
+        Returns: boolean
+      }
       chat_rate_limit: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      chat_reading_window: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      chat_system_line: {
+        Args: {
+          p_conversation: string
+          p_event: string
+          p_facts: Json
+          p_key: string
+        }
+        Returns: undefined
       }
       chat_video_cap: {
         Args: Record<PropertyKey, never>
@@ -1918,6 +2044,10 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
+      my_scheduled_messages: {
+        Args: { p_conversation: string }
+        Returns: Json
+      }
       my_unread_messages: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -2045,6 +2175,7 @@ export type Database = {
           p_inactivity: boolean
           p_care_team: boolean
           p_reminder_time?: string
+          p_messages?: boolean
         }
         Returns: Json
       }
@@ -2054,6 +2185,15 @@ export type Database = {
           p_to: string
           p_owner: string
           p_therapist: boolean
+        }
+        Returns: Json
+      }
+      schedule_message: {
+        Args: {
+          p_id: string
+          p_conversation: string
+          p_body: string
+          p_send_at: string
         }
         Returns: Json
       }
@@ -2240,6 +2380,10 @@ export type Database = {
         Args: { p_id: string; p_conversation: string; p_body: string }
         Returns: Json
       }
+      send_scheduled_messages: {
+        Args: { p_now?: string }
+        Returns: number
+      }
       series_check: {
         Args: {
           p_patient: string
@@ -2270,6 +2414,10 @@ export type Database = {
         Args: { p_granted: boolean }
         Returns: Json
       }
+      set_conversation_muted: {
+        Args: { p_conversation: string; p_muted: boolean }
+        Returns: boolean
+      }
       set_my_language: {
         Args: { p_language: string }
         Returns: undefined
@@ -2277,6 +2425,24 @@ export type Database = {
       set_my_profile_photo: {
         Args: { p_public_id: string; p_version: number; p_signature: string }
         Returns: string
+      }
+      share_exercise: {
+        Args: {
+          p_id: string
+          p_conversation: string
+          p_assignment: string
+          p_caption?: string
+        }
+        Returns: Json
+      }
+      share_progress: {
+        Args: {
+          p_id: string
+          p_conversation: string
+          p_progress: Json
+          p_caption?: string
+        }
+        Returns: Json
       }
       signup_code_lifetime: {
         Args: Record<PropertyKey, never>

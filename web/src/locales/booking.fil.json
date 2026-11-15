@@ -421,6 +421,7 @@
     "therapistAway": "Wala ang iyong therapist sa oras na ito."
   },
   "notifications": {
+    "chat_message": "Bagong mensahe mula kay {{sender}}.",
     "detail": "Mga update sa iyong mga booking, ehersisyo at care team.",
     "markAll": "Markahang nabasa lahat",
     "unread": "hindi pa nababasa",
