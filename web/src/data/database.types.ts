@@ -469,6 +469,87 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          data: Json
+          deleted_at: string | null
+          id: string
+          kind: string
+          sender_id: string | null
+        }
+        Insert: {
+          body?: string
+          conversation_id: string
+          created_at?: string
+          data?: Json
+          deleted_at?: string | null
+          id: string
+          kind: string
+          sender_id?: string | null
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          data?: Json
+          deleted_at?: string | null
+          id?: string
+          kind?: string
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_reads: {
+        Row: {
+          conversation_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_reads_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consents: {
         Row: {
           client_event_id: string | null
@@ -507,6 +588,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          patient_id: string
+          therapist_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          patient_id: string
+          therapist_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          patient_id?: string
+          therapist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_therapist_id_patient_id_fkey"
+            columns: ["therapist_id", "patient_id"]
+            isOneToOne: true
+            referencedRelation: "therapist_patients"
+            referencedColumns: ["therapist_id", "patient_id"]
           },
         ]
       }
@@ -1504,6 +1617,22 @@ export type Database = {
         Args: { p_starts: string; p_ends: string }
         Returns: string
       }
+      chat_can_read: {
+        Args: { p_conversation: string }
+        Returns: boolean
+      }
+      chat_can_send: {
+        Args: { p_conversation: string }
+        Returns: boolean
+      }
+      chat_message_json: {
+        Args: { m: Database["public"]["Tables"]["chat_messages"]["Row"] }
+        Returns: Json
+      }
+      chat_rate_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       check_signup_details: {
         Args: { p_user: string; p_details: Json }
         Returns: undefined
@@ -1528,6 +1657,14 @@ export type Database = {
         Args: { p_payload: string; p_secret: string; p_algorithm?: string }
         Returns: string
       }
+      conversation_messages: {
+        Args: {
+          p_conversation: string
+          p_before_at?: string
+          p_before_id?: string
+        }
+        Returns: Json
+      }
       create_custom_exercise: {
         Args: {
           p_id: string
@@ -1541,6 +1678,10 @@ export type Database = {
       delete_expired_signups: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      delete_message: {
+        Args: { p_id: string }
+        Returns: Json
       }
       dispatch_notifications: {
         Args: Record<PropertyKey, never>
@@ -1594,6 +1735,10 @@ export type Database = {
         Args: { p_booking: string; p_attendance: string }
         Returns: Json
       }
+      mark_conversation_read: {
+        Args: { p_conversation: string }
+        Returns: undefined
+      }
       mark_notifications_read: {
         Args: { p_ids?: string[] }
         Returns: number
@@ -1603,6 +1748,10 @@ export type Database = {
         Returns: Json
       }
       my_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      my_conversations: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
@@ -1617,6 +1766,10 @@ export type Database = {
       my_schedule: {
         Args: { p_from: string; p_to: string }
         Returns: Json
+      }
+      my_unread_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       my_waitlist: {
         Args: Record<PropertyKey, never>
@@ -1926,6 +2079,10 @@ export type Database = {
       }
       scheduler_time_off: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      send_message: {
+        Args: { p_id: string; p_conversation: string; p_body: string }
         Returns: Json
       }
       series_check: {

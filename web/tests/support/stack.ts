@@ -128,6 +128,7 @@ delete from public.prescription_versions where patient_id in (${ids}); delete fr
 delete from public.exercise_versions where exercise_id in (select id from public.exercises where owner_id in (${ids}));
 delete from public.exercises where owner_id in (${ids});
 delete from public.patient_invitations where therapist_id in (${ids});
+delete from public.chat_reads where user_id in (${ids}); delete from public.conversations where therapist_id in (${ids}) or patient_id in (${ids});
 delete from public.therapist_patients where therapist_id in (${ids}) or patient_id in (${ids});
 delete from public.center_closures where created_by in (${ids}); delete from public.center_holidays where created_by in (${ids});
 delete from public.therapist_time_off where therapist_id in (${ids}) or created_by in (${ids});
