@@ -51,6 +51,7 @@ Patients and their linked therapist can write to each other in both apps (issues
 2. Messages are kept in their rehabilitation record, and they can ask for a copy or deletion from Profile.
 3. The therapist does not read messages around the clock; for anything urgent, call the local emergency number or go to the nearest hospital.
 4. Turning messages off stops new messages both ways. What was already said stays in the record, and the therapist can still read it.
+5. Photos and videos are made smaller on the device first, and Motivance removes them 15 days after they are sent; a copy the person saved themselves stays with them. This point was added in `care-chat-v2`.
 
 The patient can turn messages off and on again from Profile at any time; each change is a new audited row. A therapist agrees to nothing here, because a conversation only opens with a patient who chose it. This version covers words only. Photos and video (#106) need a new version, accepted before either can be sent, because they change what is stored.
 
@@ -62,6 +63,8 @@ The patient can turn messages off and on again from Profile at any time; each ch
 | Messages | `chat_messages` | The same. A message its sender took back within 15 minutes keeps its place but loses its words at once |
 | How far each person has read | `chat_reads` | The same |
 | The patient's answers to the agreement | `consents` | Kept, like every consent event |
+| Photos and videos | Private Storage bucket `chat-media`, with a row in `chat_attachments` | 15 days from sending, or until the sender takes the message back. After that no link is issued, and `scripts/cleanup_chat_media.py` removes the file. The message stays and says the file has expired |
+| The phone's copies of photos and videos it has shown or sent | The Android app's own storage, per account | Until sign-out on that phone, including after the server's copy is removed. They are not in the phone's gallery |
 | A message written on an Android phone and not yet sent | Room `chat_outbox` on that phone | Until it is sent, discarded, or the account signs out on that phone. Unlike an unsent exercise result, it is not kept for the next sign-in: its words should not stay on a phone someone else may use |
 | Messages on screen | The browser's memory, and the Android app's memory | Until the page or app closes. Neither keeps a copy of the conversation on disk |
 
@@ -69,7 +72,9 @@ Messages travel over Supabase Realtime only to the two people in the conversatio
 
 **When the link ends.** Nobody can send. The patient keeps reading the conversation. The therapist loses it, exactly as they lose the patient's other records, until the link is restored. Disabling either account stops both reading and sending for that account; both are already audited (`therapist_patients` and account changes), and their effect on chat follows from these rules rather than from separate events.
 
-**Abuse limits.** One person can send at most 30 messages a minute, and a message is at most 2,000 characters; both are enforced by the server. Muting one conversation's notifications comes with those notifications in #110, since there is nothing to mute yet.
+**Abuse limits.** One person can send at most 30 messages a minute, and a message is at most 2,000 characters. A photo is at most 1600 px and 1 MB, a video at most 480p, 30 seconds and 6 MB, and a conversation can hold 20 videos in 30 days. All of these are enforced by the server, whatever the app does.
+
+**Removing files.** Only Storage's own API can remove a file, so the database cannot do it by itself. Run `python scripts/cleanup_chat_media.py --target hosted --apply` daily with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set, for example from the operator's scheduled tasks. Until it runs, an expired file is still stored but cannot be reached. `--usage` shows how many files and megabytes chat holds, against the free plan's 1 GB. Muting one conversation's notifications comes with those notifications in #110, since there is nothing to mute yet.
 
 ## Export or deletion request workflow
 

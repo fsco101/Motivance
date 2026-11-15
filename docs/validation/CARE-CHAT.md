@@ -169,8 +169,56 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 
 **Not run.** The Android screens have still not been seen on a device.
 
+## #106 Photos and video
+
+**Built.**
+
+- Server: migration `202611150003_chat_media.sql` (described in [DATABASE.md](../architecture/DATABASE.md#care-chat)), and `scripts/cleanup_chat_media.py`.
+- Web: `features/chat/media.ts` shrinks a photo to 1600 px JPEG and re-encodes a video to 480p at about 1 Mbps, first 30 seconds, with the browser's canvas and `MediaRecorder` (WebM in Chrome and Firefox, MP4 in Safari); `MediaBubble.tsx` shows previews, opens files and says when one has expired. The attach button, the preparing state and the media agreement are in `MessagesView.tsx`.
+- Android: `data/local/ChatMediaFiles.kt` shrinks photos with `BitmapFactory` and re-encodes video with Media3 Transformer 1.5.1 to 480p H.264; `feature/chat/ChatMedia.kt` has the attach menu (gallery, take photo, record video), previews and the full-screen viewer. A waiting photo or video is kept in the outbox (Room version 4). The phone keeps a copy of each file it shows or sends, until sign-out.
+- The agreement is now `care-chat-v2`, adding point 5 about media; patients who agreed to v1 keep sending words, and see a short panel to allow photos and videos.
+
+**Calls made while building**
+
+- The 15-day removal has two parts. On day 15 the server stops issuing links, which is exact and tested. The file itself is removed by the cleanup script, because only Storage's API can remove files; the owner must schedule it. Storage's newer bucket lifecycle rules were not used, because they could not be confirmed on the hosted project.
+- Video on the web re-encodes in real time, so a 30-second clip takes about 30 seconds to prepare. A browser that will not play sound without a tap sends the video without sound rather than failing.
+- Phone copies stay in the app's own storage, not the gallery, and go at sign-out.
+- A sent photo or video has no caption box in the apps yet, though the server accepts one.
+
+**Tests run on 2026-11-15**
+
+| Check | Result |
+|---|---|
+| `tests/contract/chat-media.test.ts` | 10 passed, run twice |
+| `npm run test:contract` | 198 passed in 18 files |
+| `chat.spec.ts` (two browsers, a real 3000 x 2000 photo and a real 720p clip made in the browser) | 12 passed, run twice |
+| Web unit tests (including the size rules) | 292 passed |
+| Android unit tests | 363 passed, 0 failed |
+| `LiveChatStackTest` with a real photo upload | Passed twice |
+| `:app:assembleDebug`, `check_apk_native_libraries.py`, `check_resources.py`, `check_module_boundaries.py` | Pass. The APK grew from 45.2 MB to 46.4 MB |
+| Room schema version 4 | The new column matches its migration |
+| Leftover rows and files after all of the above | None |
+
+| Acceptance criterion | Evidence |
+|---|---|
+| A photo and a video each upload, appear for the other person and play or open, on Android and on the web | Web: `chat.spec.ts`, both ways, with the stored photo at 1600 x 1066 and the video at 852 x 480 opening and playing. Android: `LiveChatStackTest` sends a real photo with the app's repository and the other account fetches the same bytes; `ChatViewModelTest` covers the three-step send. Android video has **not** been re-encoded on a device |
+| Someone outside the conversation cannot fetch the file, even with its path | `chat-media.test.ts`: another therapist, a Scheduler and an administrator cannot sign, download or list it, and the public address returns nothing; `LiveChatStackTest` likewise |
+| A large photo and a long video are resized on the device before upload, and the stored files are within the limits | Web: `chat.spec.ts` with a 3000 x 2000 photo over 1 MB and a 720p clip; the size rules are unit-tested on both apps with the same cases, including trimming to 30 seconds. Android's photo and video code is compiled but has **not** run on a device |
+| A file of the wrong type or over the limit is refused by the server with a clear message | `chat-media.test.ts`: wrong type, too many pixels, too long, over 1 MB after upload, stored type different from the one agreed, a type the bucket refuses, files missing |
+| A file is gone from storage 15 days after sending, its message says it expired, and an Android phone that had downloaded it still shows it | Server and web: "closes a file on day 15, and the cleanup removes it from Storage", and the browser test "a photo past its 15 days says so". Android keeps its copy by design (`ChatMediaFiles.copy`), **not** shown on a device |
+| A signed link stops working after it expires | `chat-media.test.ts`, with a 1-second link |
+| Deleting a patient's data removes their attachments from storage | `chat-media.test.ts`: the export lists the file; after erasure and the cleanup, no file of that conversation is left |
+| The privacy agreement and the landing page's line are reworded | `care-chat-v2` point 5 in both apps and both languages; the landing page now says photos and videos are removed after 15 days. Exercise-camera wording is unchanged and still true; #114 changes it |
+
+**Found while building**
+
+- A browser-recorded video does not say how long it is until it has been read to the end, so the web seeks to the end once before preparing it.
+- The test clean-up deletes rows with triggers off, which also stops the database's own cascades. It had left 1,199 chat messages and 16 attachments from earlier test runs in the local database; none belonged to a real account. They are removed, both clean-ups now remove chat rows explicitly, and the cleanup now also catches any file no row names.
+- Gradle's offline mode had not downloaded Media3's library files, and my first "compiled" checks had hidden that failure. The Android results above are from builds that did download them.
+
 ## Not run / not done (whole epic)
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
-- The Android chat screens have not been run on a device or emulator.
+- The Android chat screens have not been run on a device or emulator, and Android has never prepared a real photo or video.
+- `202611150003_chat_media.sql` is not on the hosted project, and the cleanup is not scheduled there.
 - No load check yet (#112).
