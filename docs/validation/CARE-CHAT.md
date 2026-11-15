@@ -217,6 +217,72 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 - The test clean-up deletes rows with triggers off, which also stops the database's own cascades. It had left 1,199 chat messages and 16 attachments from earlier test runs in the local database; none belonged to a real account. They are removed, both clean-ups now remove chat rows explicitly, and the cleanup now also catches any file no row names.
 - Gradle's offline mode had not downloaded Media3's library files, and my first "compiled" checks had hidden that failure. The Android results above are from builds that did download them.
 
+## #110 New-message notifications
+
+**Built.** Migration `202611150004_chat_notifications.sql`: the `chat_message` kind in the group `messages`, a trigger on new messages, reading a conversation reads its notices, the Messages switch, and per-person muting in `chat_mutes`. `_shared/push.ts` and `_shared/push_text.ts` add the words and `conversation_id`. Web: the bell writes and opens the new kind, and the conversation header has Mute. Android: the kind, the switch on Profile, its own `messages` channel, no push for the conversation on screen (`ChatPresence`), one notification per conversation that later messages replace, a tap that opens the conversation, and Mute in the header. Words and rules are in [NOTIFICATIONS.md](../operations/NOTIFICATIONS.md#what-is-sent).
+
+**Calls made while building**
+
+- A burst is everything until the person reads, or for 10 minutes, whichever is first. Someone who read the conversation in the last 2 minutes is treated as reading along and gets nothing.
+- Either person can mute, not only the therapist, because the rule is the same for both and costs nothing.
+- The push names who wrote but never what they said. The lock screen shows only "You have an update".
+
+**Tests run on 2026-11-15, local backend**
+
+| Check | Result |
+|---|---|
+| `tests/contract/chat-notifications.test.ts` | 5 passed |
+| `tests/contract/push.test.ts` (words, no message text, `conversation_id`) | Passed |
+| `npm run test:contract` | 204 passed in 19 files |
+| Web unit tests | 293 passed |
+| `notifications.spec.ts` and `chat.spec.ts`, one worker | 19 passed; the gallery's bell and Messages pages pass axe |
+| Android unit tests | 366 passed |
+| `LiveChatStackTest`, `assembleDebug`, resource and native-library checks | Pass |
+
+| Acceptance criterion | Evidence |
+|---|---|
+| A message to someone with the app closed produces one push and one bell entry; opening it lands in that conversation | Contract: one notice with a pending push and no email. Web: `notificationTarget` opens the conversation. Android: `NotificationsTest` (destination) and `PushRulesTest`; the tap-to-open path compiles and has **not** run on a device |
+| A burst of messages produces one push | Contract: "makes a burst one notification while the last is unread"; on the phone, later pushes in a burst replace the same notification |
+| No push arrives for a conversation that is open on that device | `PushRulesTest`; on the server, nothing is made while the person reads along. **Not** seen on a device |
+| The switch stops push but not the bell or the unread count | Contract: queued as `skipped`, `Turned off`, the bell row is there; an older app cannot turn it back on |
+| `NOTIFICATIONS.md` documents the kind, its channel and its text in both languages | Done |
+| Mute, carried over from #111 | Contract: `Muted`, private to the person, refused for an outsider; `ChatViewModelTest` |
+
+**Not run.** No push has been delivered: there is no Firebase project yet, and `notification-dispatch` is not redeployed with the new words. The migration is on the local database only.
+
+## #109 Cards, lines and scheduled messages
+
+**Built.** Migration `202611150005_chat_cards.sql` (described in [DATABASE.md](../architecture/DATABASE.md#care-chat)). Web: `features/chat/ChatCards.tsx` draws progress and exercise cards and the quiet lines; `ShareDialog.tsx` shares from Progress; Send in chat on a patient's plans; scheduling and the waiting list in the conversation. Android: `feature/chat/ChatCards.kt` with the same cards, lines, a share dialog, and a date and time picker for scheduling; Share in chat in the results dashboard and Send in chat under each plan.
+
+**Calls made while building**
+
+- A progress card is the snapshot the app shows, checked by the server for shape and bounds and stamped with the moment; it is not recomputed by the server. An exercise card is written by the server from the plan.
+- Lines are facts, so each reader sees them in their own language. They are not unread, notify nobody and are never the list's last line.
+- The reminder line goes to each therapist with an active plan for the patient; the finished-session line to the plan's therapist.
+- Only therapists schedule, from 1 minute to 60 days ahead, at most 50 waiting. Nothing is sent into a conversation that has closed by then.
+
+**Tests run on 2026-11-15, local backend**
+
+| Check | Result |
+|---|---|
+| `tests/contract/chat-cards.test.ts` | 6 passed |
+| `npm run test:contract` | 210 passed in 20 files |
+| Web unit tests, typecheck, lint | 293 passed; pass |
+| `chat-cards.spec.ts` (two browsers) | 5 passed in 3 of 4 runs; the other timed out loading a record on this slow machine, and the time limit was raised to 60 seconds |
+| Wide browser run: `chat-cards`, `chat`, `therapist`, `therapist-caseload`, `patient`, `notifications`, `design`, one worker | 156 passed, none failed or flaky; the rest of the 239 are the suites' own skips |
+| Android unit tests | 372 passed |
+| `assembleDebug`, `check_resources.py`, `check_admin_parity.py` | Pass |
+
+| Acceptance criterion | Evidence |
+|---|---|
+| A shared progress card shows the same numbers as the Progress page when it was sent, on both apps | `chat-cards.spec.ts` reads the Latest figure off the patient's Progress page and finds it on the therapist's card; Android builds the card with the same `seriesOutcome` rules (`ChatTest`) |
+| A card never shows data to someone who could not open the page it links to | A conversation is only ever between a patient and their linked therapist, both of whom can open that patient's Progress and plans; exercise cards for another patient are refused (contract) |
+| A daily reminder and a finished session each appear once in the right conversation, in the reader's language | Contract: one line for a repeated reminder, one for a finished session; browser: the line in Filipino and English |
+| A scheduled message is delivered once at its time, and can be cancelled before it | Contract and browser |
+| Turning the reminder off on Profile also stops its line | The line is made only from a reminder notification, which is made only for a chosen reminder time (`enqueue_practice_reminders`) |
+
+**Not run.** The Android cards, sharing and scheduling have not been seen on a device.
+
 ## Not run / not done (whole epic)
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
