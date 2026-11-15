@@ -2,12 +2,12 @@
 
 How to ship the care chat epic (#113) to the hosted project and to phones, and what to watch afterwards. Every hosted step is applied only with the owner's approval. What ran and what did not is in [CARE-CHAT.md](../validation/CARE-CHAT.md).
 
-## State on 2026-11-15
+## State on 2026-11-16
 
 | Part | Hosted | Still to do |
 | --- | --- | --- |
-| Migrations `202611150001` to `202611150005` (conversations, agreement, media, notifications, cards and scheduling) | Applied and read back | — |
-| `202611150006_chat_list_speed.sql` (faster conversation list, from the load check) | Not applied | `db push` after approval |
+| Migrations `202611150001` to `202611150005` (conversations, agreement, media, notifications, cards and scheduling) | Applied 2026-11-15 and read back | — |
+| `202611150006_chat_list_speed.sql` (faster conversation list, from the load check) | Applied 2026-11-16 on the owner's instruction and read back | — |
 | `notification-dispatch` Edge Function | Old words for chat | Redeploy so a chat push says "New message from …" and carries the conversation |
 | Web app | Not redeployed | Redeploy; until then the live site has no Messages page |
 | Photo and video cleanup | Not scheduled | Schedule daily (below) |

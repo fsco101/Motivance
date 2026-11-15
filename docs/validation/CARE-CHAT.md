@@ -361,10 +361,11 @@ The list and the original checks agree for every one of the 150 conversations. A
 | Android device tests on the Pixel 6 emulator (at #114, no Android app code changed since) | 134 of 135; `CameraLifecycleTest` needs camera frames the headless emulator does not give, and fails the same way without chat |
 | Every web browser test, one worker | **Not completed.** Claude Code stopped it for low memory while it ran. Earlier on 2026-11-15 the chat, cards, therapist, patient, notifications and design suites passed together (156), and the landing and design suites passed (94) |
 
+**Hosted.** `202611150006_chat_list_speed.sql` was applied on 2026-11-16 on the owner's instruction and read back with `migration list --linked`. The list has not been timed on hosted.
+
 **Not run.**
 - The full browser suite in one run.
 - Anything on the hosted project, which needs the owner's approval.
-- `202611150006` on hosted.
 - A load check on hosted hardware.
 - Two real phones on a real network.
 

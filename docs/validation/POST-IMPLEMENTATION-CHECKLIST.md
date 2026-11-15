@@ -292,7 +292,7 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 ## Care chat rollout (#112, 2026-11-15)
 
 - [ ] Rerun every web browser test in one run with one worker; on 2026-11-15 it was stopped for low memory.
-- [ ] After the owner approves, apply `202611150006_chat_list_speed.sql` to hosted, redeploy `notification-dispatch` and the web app, schedule the media cleanup, and release the Android build, in the order in `docs/operations/CARE-CHAT-ROLLOUT.md`.
+- [ ] After the owner approves, redeploy `notification-dispatch` and the web app, schedule the media cleanup, and release the Android build, in the order in `docs/operations/CARE-CHAT-ROLLOUT.md`.
 - [ ] On hosted with real accounts, run the after-rollout checks in that file: live delivery on the web and a phone, a photo and a video, the cleanup, a push that opens its conversation, and a scheduled message.
 - [ ] With a therapist who has many patients, confirm the Messages list opens quickly on a phone over mobile data.
 
