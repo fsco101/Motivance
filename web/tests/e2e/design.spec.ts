@@ -55,6 +55,21 @@ test('on a phone, each session shows its range of motion and result', async ({ p
   await expect(page.getByRole('table', { name: 'Sessions' })).toBeHidden()
 })
 
+test('progress opens with the last four weeks and where each plan stands, worded for whoever is reading', async ({ page }) => {
+  await page.goto('/design/patient/progress')
+  await expect(page.getByRole('heading', { name: 'Your last 4 weeks' })).toBeVisible()
+  await expect(page.getByText('Days in a row')).toBeVisible()
+  await expect(page.getByText('Last session', { exact: true })).toHaveCount(0)
+  await page.goto('/design/therapist/progress')
+  await expect(page.getByRole('heading', { name: 'Last 4 weeks', exact: true })).toBeVisible()
+  await expect(page.getByText('Last session', { exact: true })).toBeVisible()
+  await expect(page.getByText('Days in a row')).toHaveCount(0)
+  await expect(page.getByRole('img', { name: 'Completed sessions on 7 of the last 28 days' })).toBeVisible()
+  // Reach went from 64 to 112 degrees from a 14 degree start: 50 to 98, and the interrupted session is left out.
+  const plan = page.locator('section', { has: page.getByRole('heading', { name: 'Elbow flexion', level: 2 }) })
+  await expect(plan.locator('dl')).toHaveText(/Latest98°Best98°Change since the first session\+48°/)
+})
+
 for (const [path, empty] of [
   ['/design/therapist', 'Invite your first patient'], ['/design/therapist/patients', 'No patients yet'], ['/design/therapist/patients/p1', 'No exercise assigned yet'], ['/design/therapist/progress', 'No sessions yet'],
 ]) {

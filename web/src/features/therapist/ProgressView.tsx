@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
 import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
 import { SelectField, TextField } from '@/components/Field'
-import { rehabilitationProgress, resultStatus, rom, roundDegrees, usable, type HistoricalSession, type ResultStatus } from '@/data/history'
-import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
+import { rehabilitationProgress, resultStatus, rom, roundDegrees, seriesOutcome, trackingConcern, usable, type ActivitySummary, type HistoricalSession, type ProgressSeries, type ResultStatus } from '@/data/history'
+import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
+import { ActivityPanel } from './ActivityPanel'
 import { romPoints } from './summaries'
 import { TrendChart } from './TrendChart'
 
@@ -24,6 +25,8 @@ type Props = {
   /** Separate from the results, so the filters stay on screen and keep focus while a new query runs. */
   choices: Load<ProgressChoices>
   results: Load<ProgressResults>
+  /** Absent while it loads or if it could not be read: the sessions below never wait for it. */
+  activity?: ActivitySummary | null
   filters: ProgressFilters
   onFilters: (filters: ProgressFilters) => void
   /** The owner clears the filters here: one patient's exercise means nothing for the next. */
@@ -59,11 +62,34 @@ function SessionList({ sessions }: { sessions: readonly HistoricalSession[] }) {
   )
 }
 
-export function ProgressView({ self, choices, results, filters, onFilters, onPatient, onMore }: Props) {
+/** The answer before the chart: where this plan stands now, at its best, and against where it started. */
+function Outcome({ series }: { series: ProgressSeries }) {
+  const { t } = useTranslation()
+  const outcome = seriesOutcome(series)
+  if (outcome.latest === null) return null
+  const degrees = (value: number) => `${roundDegrees(value)}°`
+  // A real minus sign, and a plus so that a gain is not read as a bare measurement.
+  const change = outcome.change === null ? null : `${outcome.change > 0 ? '+' : outcome.change < 0 ? '−' : ''}${Math.abs(outcome.change)}°`
+  return (
+    <dl className="mb-5 grid grid-cols-2 gap-x-8 gap-y-3 tablet:grid-cols-[auto_auto_minmax(0,1fr)]">
+      <Fact term={t('progress.latest')}><span className="numeric text-2xl">{degrees(outcome.latest)}</span></Fact>
+      <Fact term={t('progress.best')}><span className="numeric text-2xl">{degrees(outcome.best!)}</span></Fact>
+      <div className="col-span-2 tablet:col-span-1">
+        <dt className="text-sm text-slate">{t('progress.change')}</dt>
+        <dd className="font-semibold">{change === null ? <span className="font-normal text-slate">{t('progress.changeNone')}</span>
+          : <><span className="numeric text-2xl">{change}</span> <span className="text-sm font-normal text-slate">{t('progress.changeHelp')}</span></>}
+        </dd>
+      </div>
+    </dl>
+  )
+}
+
+export function ProgressView({ self, choices, results, activity, filters, onFilters, onPatient, onMore }: Props) {
   const { t } = useTranslation()
   const format = useFormat()
   const sessions = results.status === 'ready' ? results.data.sessions : null
   const series = useMemo(() => rehabilitationProgress(sessions ?? []), [sessions])
+  const concern = useMemo(() => trackingConcern(sessions ?? []), [sessions])
   const filtered = filters.exerciseVersionId !== 'all' || filters.side !== 'all' || Boolean(filters.from) || Boolean(filters.through)
 
   const columns: ReadonlyArray<Column<HistoricalSession>> = [
@@ -102,8 +128,11 @@ export function ProgressView({ self, choices, results, filters, onFilters, onPat
             <Loadable load={results} skeleton={<SkeletonLines />}>
               {(found) => (found.sessions.length === 0 ? (filtered ? <Notice tone="info">{t('progress.noMatch')}</Notice> : <EmptyState title={t('progress.emptyTitle')} detail={t('progress.emptyDetail')} />) : (
               <div className="flex flex-col gap-5">
+                {activity && <ActivityPanel summary={activity} self={self} />}
+                {concern && <Notice tone="caution">{t(self ? 'progress.trackingSelf' : 'progress.tracking', concern)}</Notice>}
                 {series.map((item) => (
                   <Panel key={item.key} title={item.prescription.exerciseName} description={t('progress.seriesLine', { side: t(`common.${item.side}`, item.side), version: item.prescription.version, low: item.prescription.low, high: item.prescription.high })}>
+                    <Outcome series={item} />
                     <div className="grid gap-8 desk:grid-cols-2">
                       <TrendChart title={t('progress.rom')} unit="°" points={romPoints(item, format.short)} />
                       <TrendChart title={t('record.repetitions')} unit="" max={Math.max(item.prescription.targetRepetitions * 2, 2)} points={item.points.map((p) => ({ id: p.session.id, label: format.short(p.session.startedAt), value: p.repetitions }))} />

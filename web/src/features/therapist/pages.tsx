@@ -14,7 +14,7 @@ import { SchedulePage } from '@/features/booking/SchedulePage'
 import { asLoad, ready, useFormat, type Load } from '@/features/shared'
 import { AssignmentEditorView } from './AssignmentEditorView'
 import { ExercisesView } from './ExercisesView'
-import { useProgressResults } from './history'
+import { useActivity, useProgressResults } from './history'
 import { PatientRecordView, type PatientRecord, type PlanCard } from './PatientRecordView'
 import { PatientsView } from './PatientsView'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from './ProgressView'
@@ -210,6 +210,7 @@ export function ProgressPage() {
   const [chosen, setChosen] = useState({ patientId, filters: NO_FILTERS })
   const filters = chosen.patientId === patientId ? chosen.filters : NO_FILTERS
   const { results, onMore } = useProgressResults(patientId, filters)
+  const activity = useActivity(patientId)
   if (workspace.data && patients.length === 0) {
     return <><PageHeader title={t('nav.progress')} description={t('progress.description')} /><EmptyState title={t('progress.noPatientsTitle')} detail={t('progress.noPatientsDetail')} /></>
   }
@@ -220,7 +221,7 @@ export function ProgressPage() {
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state
     : ready({ patients: patients.map((patient) => ({ id: patient.id, name: nameOf(patient) })), patientId, exercises: [...new Map(exercises.map((item) => [item.id, item])).values()] })
   return (
-    <ProgressView choices={choices} results={results} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
+    <ProgressView choices={choices} results={results} activity={activity} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
       onPatient={(id) => setParams({ patient: id })} onMore={onMore} />
   )
 }

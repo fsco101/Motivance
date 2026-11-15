@@ -3,7 +3,7 @@ import type { AffectedBooking, CenterCalendar } from '@/data/calendar'
 import type { CatalogueExercise } from '@/data/catalogue'
 import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
 import type { RequestDetail, RequestRow, SchedulerSummary, SeriesDate, TherapistChoice } from '@/data/scheduler'
-import type { HistoricalSession } from '@/data/history'
+import { activitySummary, type HistoricalSession } from '@/data/history'
 import type { Inbox } from '@/data/notifications'
 import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
@@ -64,6 +64,8 @@ export const sessions: HistoricalSession[] = days.map((day, index): HistoricalSe
   prescription: prescription('rx1', 3),
   measurements: [{ key: 'elbow-flexion-v1', side: 'right', minimum: 14, maximum: reach[index]!, repetitions: index === 5 ? 7 : index === 3 ? 4 : 10, incomplete: index === 5 ? 3 : 0, quality: index === 3 ? 'limited' : 'valid', validFrames: 420, invalidFrames: 12 }],
 })).reverse()
+/** A fixed day, so the sample summary reads the same whenever it is reviewed. */
+export const exerciseActivity = activitySummary(sessions, new Date(2026, 10, 6, 12))
 
 export const myExercises: MyExercise[] = [
   { assignmentId: 'a1', versionId: 'pv1', exerciseVersionId: 'v1', name: 'Elbow flexion', instructions: 'Sit tall, keep your upper arm still, and bend your elbow slowly.', side: 'left', low: 20, high: 120, repetitions: 10, focus: 'ELBOW', version: 2, sideSeconds: null },
