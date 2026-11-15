@@ -11,7 +11,7 @@ import javax.inject.Singleton
 import org.json.JSONObject
 
 @Singleton class SessionStore internal constructor(val database:SessionDatabase) {
-    @Inject constructor(@ApplicationContext context:Context):this(Room.databaseBuilder(context,SessionDatabase::class.java,"motivance-sessions.db").addMigrations(SessionMigrations.FROM_1_TO_2).build())
+    @Inject constructor(@ApplicationContext context:Context):this(Room.databaseBuilder(context,SessionDatabase::class.java,"motivance-sessions.db").addMigrations(*SessionMigrations.ALL).build())
     val dao=database.sessions()
     suspend fun recover(owner:String)=dao.interruptDrafts(owner,System.currentTimeMillis())
     /** Whether [owner] finished a prescribed session on this phone since [since], uploaded or not. */
@@ -48,7 +48,11 @@ import org.json.JSONObject
         require(prescriptions.all {it.ownerId==owner})
         database.withTransaction { dao.clearPrescriptions(owner); prescriptions.forEach {cache(it)} }
     }
-    suspend fun clearCacheOnLogout(owner:String) { database.withTransaction { dao.clearPrescriptions(owner); dao.interruptDrafts(owner,System.currentTimeMillis()) } }
+    /**
+     * Unlike an exercise result, an unsent chat message is not kept for the next sign-in: its words should not stay on a phone
+     * someone else may use, and the person can write it again.
+     */
+    suspend fun clearCacheOnLogout(owner:String) { database.withTransaction { dao.clearPrescriptions(owner); dao.clearChat(owner); dao.interruptDrafts(owner,System.currentTimeMillis()) } }
     /**
      * Adopts a withdrawal made on the web. Without this, [recordConsent] would keep returning the old grant, and the server
      * would reject the session on upload. Stored as already synced, because it came from the server.

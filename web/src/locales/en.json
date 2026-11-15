@@ -6,6 +6,7 @@
     "loadFailedTitle": "This page could not load", "loadFailed": "Check your connection and try again."
   },
   "nav": {
+    "messages": "Messages", "messagesUnread_one": "Messages, {{shown}} unread", "messagesUnread_other": "Messages, {{shown}} unread",
     "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling", "patient": "Your care" },
     "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
     "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here",
@@ -54,6 +55,7 @@
     "photoProblem": { "unconfigured": "Photo uploads are not available yet. Ask your administrator to finish the image setup.", "limit": "Too many uploads in the last hour. Try again later.", "unreadable": "That image could not be read. Choose a JPEG, PNG or WebP photo.", "failed": "The photo could not be uploaded. Check your connection and try again." }
   },
   "errors": {
+    "chatClosed": "This conversation is closed, so the message was not sent.", "chatRateLimited": "You are sending messages too quickly. Wait a moment and try again.", "chatTooLate": "A message can only be deleted in the first 15 minutes.",
     "credentials": "That email and password do not match.", "rateLimited": "Too many requests. Wait a moment before requesting another code or trying again.",
     "unconfirmed": "Confirm your email before signing in. Enter your email code or request a new one.", "invalidCode": "The code is invalid or expired. Request a new code and use the latest email.",
     "passwordPolicy": "Choose a different password that meets the account password requirements.", "sessionExpired": "Your session has expired. Sign in again.",
@@ -81,6 +83,7 @@
     "revokeTitle": "Revoke access to {{name}}?", "revokeMessage": "You will lose access to {{name}}’s records, and your active assignments for this patient will end."
   },
   "record": {
+    "message": "Message",
     "otherTherapist": "Assigned by another therapist, so only they can edit it.",
     "crumb": "Patient record", "notFoundTitle": "This patient is not linked to you", "notFoundDetail": "Check the Patients page. If the link was revoked, invite the patient again.",
     "time": "Time: {{time}}", "timeEach": "Time per side: {{time}}", "planLine_one": "{{side}}, {{low}}° to {{high}}°, {{count}} repetition", "planLine_other": "{{side}}, {{low}}° to {{high}}°, {{count}} repetitions",
@@ -170,5 +173,8 @@
     "title": "403: This page is for Schedulers",
     "detail": "Your account does not have the Scheduler role. An administrator can grant it.",
     "back": "Back to your workspace"
+  },
+  "chat": {
+    "description": "Talk with your patients between visits.", "descriptionSelf": "Talk with your therapist between visits.", "conversations": "Conversations", "conversationWith": "Conversation with {{name}}", "messages": "Messages in this conversation", "unnamed": "Unnamed account", "yourTherapist": "Your therapist", "yourPatient": "Your patient", "back": "Back to conversations", "noMessagesYet": "No messages yet", "youSaid": "You: {{words}}", "unread_one": "{{count}} unread message", "unread_other": "{{count}} unread messages", "deleted": "Message deleted", "unsupported": "This message cannot be shown here yet.", "fromYou": "You said:", "fromThem": "They said:", "sending": "Sending…", "notSent": "Not sent", "retry": "Try again", "discard": "Discard", "seen": "Seen", "delete": "Delete", "deleteAsk": "Delete for both of you?", "deleteYes": "Delete", "deleteNo": "Keep", "writeTo": "Message to {{name}}", "placeholder": "Write a message", "send": "Send", "enterHint": "Enter sends. Shift and Enter starts a new line.", "charactersLeft_one": "{{count}} character left", "charactersLeft_other": "{{count}} characters left", "older": "Load older messages", "reconnecting": "Reconnecting…", "start": "No messages yet. Write the first one to {{name}}.", "startSelf": "No messages yet. Say hello to {{name}}.", "closed": "This conversation is closed because you are no longer linked. You can still read it.", "choose": "Choose a conversation.", "notFound": "This conversation is not available.", "emptyTitle": "No conversations yet", "emptyDetail": "A conversation opens with each patient as soon as they are linked to you.", "emptySelfTitle": "No therapist to message yet", "emptySelfDetail": "A conversation opens as soon as you are linked to a therapist. You can connect from your Profile.", "urgent": "Patients are told that messages are not read around the clock, and to use local emergency services for anything urgent.", "urgentSelf": "Your therapist does not read messages around the clock. If something is urgent, call your local emergency number or go to the nearest hospital."
   }
 }

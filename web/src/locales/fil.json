@@ -6,6 +6,7 @@
     "loadFailedTitle": "Hindi ma-load ang pahinang ito", "loadFailed": "Suriin ang koneksyon at subukan muli."
   },
   "nav": {
+    "messages": "Mga mensahe", "messagesUnread_one": "Mga mensahe, {{shown}} hindi pa nababasa", "messagesUnread_other": "Mga mensahe, {{shown}} hindi pa nababasa",
     "workspace": { "admin": "Pangangasiwa", "therapist": "Workspace ng therapist", "scheduler": "Pag-iiskedyul", "patient": "Iyong pangangalaga" },
     "main": "Pangunahin", "home": "Home", "patients": "Mga pasyente", "exercises": "Mga ehersisyo", "progress": "Pag-unlad", "overview": "Buod", "accounts": "Mga account",
     "links": "Ugnayan", "catalogue": "Katalogo", "activity": "Aktibidad", "skip": "Lumaktaw sa nilalaman", "breadcrumbs": "Narito ka",
@@ -54,6 +55,7 @@
     "photoProblem": { "unconfigured": "Hindi pa available ang pag-upload ng larawan. Hilingin sa administrator na tapusin ang setup.", "limit": "Masyadong maraming upload sa nakaraang oras. Subukang muli mamaya.", "unreadable": "Hindi mabasa ang larawang iyon. Pumili ng JPEG, PNG o WebP na larawan.", "failed": "Hindi na-upload ang larawan. Suriin ang koneksiyon at subukang muli." }
   },
   "errors": {
+    "chatClosed": "Sarado na ang usapang ito, kaya hindi naipadala ang mensahe.", "chatRateLimited": "Masyadong mabilis ang pagpapadala mo ng mensahe. Maghintay sandali at subukan muli.", "chatTooLate": "Mabubura lang ang mensahe sa unang 15 minuto.",
     "credentials": "Hindi tugma ang email at password.", "rateLimited": "Masyadong maraming kahilingan. Maghintay muna bago humiling ng bagong code o muling subukan.",
     "unconfirmed": "Kumpirmahin ang email bago mag-sign in. Ilagay ang code mula sa email o humiling ng bago.", "invalidCode": "Hindi wasto o paso na ang code. Humiling ng bago at gamitin ang pinakabagong email.",
     "passwordPolicy": "Pumili ng ibang password na tumutugon sa mga kinakailangan ng account.", "sessionExpired": "Nag-expire ang iyong session. Mag-sign in muli.",
@@ -81,6 +83,7 @@
     "revokeTitle": "Bawiin ang access kay {{name}}?", "revokeMessage": "Mawawalan ka ng access sa mga tala ni {{name}}, at matatapos ang iyong aktibong takda para sa pasyenteng ito."
   },
   "record": {
+    "message": "Mag-mensahe",
     "otherTherapist": "Itinalaga ng ibang therapist, kaya siya lamang ang makakapag-edit nito.",
     "crumb": "Tala ng pasyente", "notFoundTitle": "Hindi nakaugnay sa iyo ang pasyenteng ito", "notFoundDetail": "Tingnan ang pahina ng Mga pasyente. Kung binawi ang ugnayan, imbitahan muli ang pasyente.",
     "time": "Oras: {{time}}", "timeEach": "Oras bawat panig: {{time}}", "planLine_one": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit", "planLine_other": "{{side}}, {{low}}° hanggang {{high}}°, {{count}} ulit",
@@ -170,5 +173,8 @@
     "title": "403: Para sa mga Scheduler ang pahinang ito",
     "detail": "Walang Scheduler role ang iyong account. Maaari itong ibigay ng isang administrator.",
     "back": "Bumalik sa iyong workspace"
+  },
+  "chat": {
+    "description": "Makipag-usap sa mga pasyente mo sa pagitan ng mga pagbisita.", "descriptionSelf": "Makipag-usap sa therapist mo sa pagitan ng mga pagbisita.", "conversations": "Mga usapan", "conversationWith": "Usapan kay {{name}}", "messages": "Mga mensahe sa usapang ito", "unnamed": "Account na walang pangalan", "yourTherapist": "Therapist mo", "yourPatient": "Pasyente mo", "back": "Bumalik sa mga usapan", "noMessagesYet": "Wala pang mensahe", "youSaid": "Ikaw: {{words}}", "unread_one": "{{count}} mensaheng hindi pa nababasa", "unread_other": "{{count}} mensaheng hindi pa nababasa", "deleted": "Binura ang mensahe", "unsupported": "Hindi pa maipapakita rito ang mensaheng ito.", "fromYou": "Sabi mo:", "fromThem": "Sabi niya:", "sending": "Ipinapadala…", "notSent": "Hindi naipadala", "retry": "Subukan muli", "discard": "Itapon", "seen": "Nabasa na", "delete": "Burahin", "deleteAsk": "Burahin para sa inyong dalawa?", "deleteYes": "Burahin", "deleteNo": "Huwag", "writeTo": "Mensahe kay {{name}}", "placeholder": "Sumulat ng mensahe", "send": "Ipadala", "enterHint": "Enter para ipadala. Shift at Enter para sa bagong linya.", "charactersLeft_one": "{{count}} karakter na lang", "charactersLeft_other": "{{count}} karakter na lang", "older": "Mag-load ng mas lumang mensahe", "reconnecting": "Kumokonekta muli…", "start": "Wala pang mensahe. Isulat ang una kay {{name}}.", "startSelf": "Wala pang mensahe. Batiin si {{name}}.", "closed": "Sarado na ang usapang ito dahil hindi na kayo magkaugnay. Mababasa mo pa rin ito.", "choose": "Pumili ng usapan.", "notFound": "Hindi available ang usapang ito.", "emptyTitle": "Wala pang usapan", "emptyDetail": "Magbubukas ang usapan sa bawat pasyente sa oras na maiugnay sila sa iyo.", "emptySelfTitle": "Wala pang therapist na mapadadalhan", "emptySelfDetail": "Magbubukas ang usapan sa oras na maiugnay ka sa isang therapist. Maaari kang kumonekta mula sa Profile mo.", "urgent": "Sinasabihan ang mga pasyente na hindi binabasa ang mga mensahe sa lahat ng oras, at gumamit ng lokal na emergency services para sa anumang apurahan.", "urgentSelf": "Hindi binabasa ng therapist mo ang mga mensahe sa lahat ng oras. Kung apurahan, tumawag sa lokal na emergency number o pumunta sa pinakamalapit na ospital."
   }
 }

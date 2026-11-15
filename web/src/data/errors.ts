@@ -2,12 +2,17 @@
 export type FailureKey =
   | 'errors.credentials' | 'errors.rateLimited' | 'errors.unconfirmed' | 'errors.invalidCode'
   | 'errors.passwordPolicy' | 'errors.sessionExpired' | 'errors.forbidden' | 'errors.offline' | 'errors.request'
+  | 'errors.chatClosed' | 'errors.chatRateLimited' | 'errors.chatTooLate'
 
 type Failure = { status?: number; code?: string; message?: string; name?: string }
 
 export function failureKey(error: unknown): FailureKey {
   const failure = (error ?? {}) as Failure
   const code = failure.code
+  // The chat functions name their refusals in the message, as the booking ones do.
+  if (failure.message === 'chat_closed') return 'errors.chatClosed'
+  if (failure.message === 'chat_rate_limited') return 'errors.chatRateLimited'
+  if (failure.message === 'chat_too_late') return 'errors.chatTooLate'
   if (failure.status === 429 || code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') return 'errors.rateLimited'
   if (code === 'invalid_credentials') return 'errors.credentials'
   if (code === 'email_not_confirmed') return 'errors.unconfirmed'

@@ -251,6 +251,22 @@ Engineering evidence is in [PROGRESS-SUMMARY-AND-LANDING.md](PROGRESS-SUMMARY-AN
 - [ ] Have a Filipino speaker review `activity_*`, `history_latest`, `history_best`, `history_change*`, `history_tracking*`, `history_rom_value` and `history_rep_value` in `values-fil/strings.xml`, the new `progress.*` lines in `web/src/locales/fil.json`, and the new `landing.*` lines in `web/src/locales/landing.fil.json`.
 - [ ] Redeploy the web app so the hosted landing page and Progress pages pick this up. No database change is needed.
 
+## Care chat (started 2026-11-15)
+
+Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks has been run.
+
+- [ ] Redeploy the web app, then sign in on the live site as a linked therapist and patient in two browsers. Confirm a message arrives live in both directions, the unread count appears and clears, and "Reconnecting" shows when one browser's network is turned off.
+- [ ] On a real phone browser as a patient, open Messages, write with the on-screen keyboard and confirm the composer stays visible above it.
+- [ ] Have a therapist review the emergency line shown to patients (`chat.urgentSelf`) and the closed-conversation wording, and say whether a patient should keep reading a conversation after the link ends.
+- [ ] Have a Filipino speaker review the `chat.*`, `nav.messages*` and `errors.chat*` lines in `web/src/locales/fil.json`.
+- [ ] With a screen reader, confirm a new message is announced once and that the conversation list reads the unread count.
+- [ ] On an emulator or phone, run `ConversationScreenTest`, then sign in as a patient and as a therapist on two phones (or a phone and the web). Confirm a message arrives live both ways, "Seen" appears, and the unread count beside the bell matches the web.
+- [ ] On a phone, turn on airplane mode, write two messages, close the app, turn airplane mode off and open the app. Confirm both arrive once, in order.
+- [ ] On a phone, leave the app in the background for several minutes, have the other person write, then return. Confirm the message is there without pulling to refresh, and that "Reconnecting" clears.
+- [ ] At the largest font size on a small phone, with the keyboard open, confirm the box to write in and the Send button stay visible, and that TalkBack reads each message as "You said" or "They said".
+- [ ] Sign out with a message still waiting. Confirm it is gone after signing in again, and was never sent.
+- [ ] Have a Filipino speaker review the `chat_*`, `nav_messages` and `messages_unread_count` strings and the two `chat_*` plurals in `values-fil/strings.xml`.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useSearchParams, type RouteObject } from 'react-router'
+import { Link, useParams, useSearchParams, type RouteObject } from 'react-router'
 import type { Slot } from '@/data/booking'
 import type { Closure, Holiday, TimeOff } from '@/data/calendar'
 import type { ScheduleAudience } from '@/data/schedule'
@@ -28,6 +28,7 @@ import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
 import { ScheduleView } from '@/features/booking/ScheduleView'
+import { MessagesIconLink, MessagesView } from '@/features/chat/MessagesView'
 import { BellLink } from '@/features/notifications/NotificationBell'
 import { NotificationsView } from '@/features/notifications/NotificationsView'
 import { ClosureDialog, HolidayDialog, TimeOffDialog, type CalendarActions } from '@/features/scheduler/CalendarDialogs'
@@ -63,7 +64,7 @@ const said = (message: string) => () => toast.show(message)
 
 function Frame({ workspace }: { workspace: Workspace }) {
   return (
-    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : workspace === 'scheduler' ? SCHEDULER : THERAPIST} onSignOut={said('Signed out')} bell={workspace === 'admin' ? undefined : <BellLink to={`/design/${workspace}/notifications`} count={2} />} onSwitch={said('Switched workspace')}
+    <Shell workspace={workspace} base={workspace === 'admin' ? ADMIN : workspace === 'patient' ? PATIENT : workspace === 'scheduler' ? SCHEDULER : THERAPIST} onSignOut={said('Signed out')} bell={workspace === 'admin' ? undefined : <>{(workspace === 'patient' || workspace === 'therapist') && <MessagesIconLink to={`/design/${workspace}/messages`} count={2} />}<BellLink to={`/design/${workspace}/notifications`} count={2} /></>} onSwitch={said('Switched workspace')}
       account={{ name: 'Dana Reyes', email: 'dana.reyes@example.test', workspaces: ['admin', 'therapist', 'patient'] }}>
       <AnimatedOutlet />
     </Shell>
@@ -116,6 +117,18 @@ function PatientProfile() {
       </div>
     </>
   )
+}
+/** ?live=off shows the dropped connection, and ?waiting shows a message on its way and one that failed. */
+function Messages({ self }: { self?: boolean }) {
+  const { id } = useParams()
+  const [params] = useSearchParams()
+  const base = self ? PATIENT : THERAPIST
+  const list = self ? [{ ...data.conversations[0]!, side: 'patient' as const, otherId: 't1', otherName: 'Dana Reyes' }] : data.conversations
+  const chosen = list.find((item) => item.id === id)
+  const thread = useDemo({ messages: chosen?.id === 'c1' ? data.chatMessages : [], more: chosen?.id === 'c1', otherReadAt: '2026-11-05T02:30:00Z', open: chosen?.open ?? true }, { messages: [], more: false, otherReadAt: null, open: true })
+  const waiting = params.has('waiting') ? [{ id: 'w1', conversationId: 'c1', body: 'See you on Thursday.', createdAt: '2026-11-05T02:25:00Z', failed: false }, { id: 'w2', conversationId: 'c1', body: 'Bring the resistance band.', createdAt: '2026-11-05T02:26:00Z', failed: true }] : []
+  return <MessagesView base={base} me="me" self={self} conversations={useDemo(list, [])} selected={id ?? null} thread={chosen ? thread : null} outgoing={waiting} connected={params.get('live') !== 'off'}
+    actions={{ onSend: said('Sent'), onRetry: said('Trying again'), onDiscard: said('Discarded'), onOlder: said('Loaded older messages'), onDelete: said('Deleted') }} />
 }
 const requestActions: RequestActions = {
   therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),
@@ -197,7 +210,7 @@ const Profile = () => <ProfileView load={useDemo(data.profile, { ...data.profile
 
 const SCREENS = [
   ['Landing', '/design/landing'], ['Sign-in', '/design/sign-in'], ['Sign-up', '/design/sign-up'], ['Components', '/design/components'],
-  ['Therapist home', THERAPIST], ['Patients', `${THERAPIST}/patients`], ['Patient record', `${THERAPIST}/patients/p1`], ['Assignment editor', `${THERAPIST}/patients/p1/assign`], ['Exercises', `${THERAPIST}/exercises`], ['Progress', `${THERAPIST}/progress`],
+  ['Therapist home', THERAPIST], ['Patients', `${THERAPIST}/patients`], ['Patient record', `${THERAPIST}/patients/p1`], ['Assignment editor', `${THERAPIST}/patients/p1/assign`], ['Exercises', `${THERAPIST}/exercises`], ['Progress', `${THERAPIST}/progress`], ['Messages', `${THERAPIST}/messages/c1`],
   ['Admin overview', ADMIN], ['Accounts', `${ADMIN}/accounts`], ['Links', `${ADMIN}/links`], ['Catalogue', `${ADMIN}/catalogue`], ['Activity', `${ADMIN}/activity`], ['Profile', `${ADMIN}/profile`],
 ] as const
 
@@ -234,6 +247,7 @@ export const galleryRoutes: RouteObject[] = [{
         ] },
         { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
+        { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <Messages /> }, { path: ':id', element: <Messages /> }] },
         { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
       ],
     },
@@ -248,6 +262,7 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'bookings/move', element: <PatientMove />, handle: { crumb: 'nav.moveSession' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
         { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
+        { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <Messages self /> }, { path: ':id', element: <Messages self /> }] },
         { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },
       ],
     },
