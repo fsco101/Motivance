@@ -248,7 +248,7 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 | `NOTIFICATIONS.md` documents the kind, its channel and its text in both languages | Done |
 | Mute, carried over from #111 | Contract: `Muted`, private to the person, refused for an outsider; `ChatViewModelTest` |
 
-**Not run.** No push has been delivered: there is no Firebase project yet, and `notification-dispatch` is not redeployed with the new words. The migration is on the local database only.
+**Not run.** No push has been delivered: there is no Firebase project yet, and `notification-dispatch` is not redeployed with the new words. The migration was applied to the hosted project on 2026-11-15 on the owner's instruction and read back.
 
 ## #109 Cards, lines and scheduled messages
 
@@ -280,6 +280,8 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 | A daily reminder and a finished session each appear once in the right conversation, in the reader's language | Contract: one line for a repeated reminder, one for a finished session; browser: the line in Filipino and English |
 | A scheduled message is delivered once at its time, and can be cancelled before it | Contract and browser |
 | Turning the reminder off on Profile also stops its line | The line is made only from a reminder notification, which is made only for a chosen reminder time (`enqueue_practice_reminders`) |
+
+**Hosted.** `202611150005_chat_cards.sql` was applied on 2026-11-15 on the owner's instruction and read back; the `send-scheduled-messages` job is created by it. Nothing has been sent on hosted.
 
 **Not run.** The Android cards, sharing and scheduling have not been seen on a device.
 
