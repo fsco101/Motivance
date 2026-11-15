@@ -13,6 +13,8 @@ import com.motivance.domain.ChatRepository
 import com.motivance.domain.ChatOutbox
 import com.motivance.domain.ChatLive
 import com.motivance.data.local.RoomChatOutbox
+import com.motivance.data.local.ChatMediaFiles
+import com.motivance.data.local.ChatMediaStore
 import com.motivance.data.remote.LiveChat
 import dagger.Binds
 import dagger.Module
@@ -29,6 +31,7 @@ abstract class AppModule {
     @Binds @Singleton abstract fun chat(impl: SupabaseAuthRepository): ChatRepository
     @Binds @Singleton abstract fun chatOutbox(impl: RoomChatOutbox): ChatOutbox
     @Binds abstract fun chatLive(impl: LiveChat): ChatLive
+    @Binds @Singleton abstract fun chatMedia(impl: ChatMediaFiles): ChatMediaStore
     @Binds @Singleton abstract fun deviceTokens(impl: FirebaseDeviceTokens): DeviceTokens
     @Binds @Singleton abstract fun pushDevices(impl: PushRegistrar): PushDevices
 }

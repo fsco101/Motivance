@@ -10,8 +10,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import org.json.JSONObject
 
-@Singleton class SessionStore internal constructor(val database:SessionDatabase) {
-    @Inject constructor(@ApplicationContext context:Context):this(Room.databaseBuilder(context,SessionDatabase::class.java,"motivance-sessions.db").addMigrations(*SessionMigrations.ALL).build())
+@Singleton class SessionStore internal constructor(val database:SessionDatabase,private val filesRoot:java.io.File?=null) {
+    @Inject constructor(@ApplicationContext context:Context):this(Room.databaseBuilder(context,SessionDatabase::class.java,"motivance-sessions.db").addMigrations(*SessionMigrations.ALL).build(),context.filesDir)
     val dao=database.sessions()
     suspend fun recover(owner:String)=dao.interruptDrafts(owner,System.currentTimeMillis())
     /** Whether [owner] finished a prescribed session on this phone since [since], uploaded or not. */
@@ -52,7 +52,11 @@ import org.json.JSONObject
      * Unlike an exercise result, an unsent chat message is not kept for the next sign-in: its words should not stay on a phone
      * someone else may use, and the person can write it again.
      */
-    suspend fun clearCacheOnLogout(owner:String) { database.withTransaction { dao.clearPrescriptions(owner); dao.clearChat(owner); dao.interruptDrafts(owner,System.currentTimeMillis()) } }
+    suspend fun clearCacheOnLogout(owner:String) {
+        database.withTransaction { dao.clearPrescriptions(owner); dao.clearChat(owner); dao.interruptDrafts(owner,System.currentTimeMillis()) }
+        // The phone's copies of chat photos and videos, and any waiting to be sent, go with the account. Owner IDs are UUIDs, so these stay inside the folders.
+        if(runCatching {UUID.fromString(owner)}.isSuccess) filesRoot?.let {root -> listOf("chat-media","chat-outbox").forEach {java.io.File(root,"$it/$owner").deleteRecursively()}}
+    }
     /**
      * Adopts a withdrawal made on the web. Without this, [recordConsent] would keep returning the old grant, and the server
      * would reject the session on upload. Stored as already synced, because it came from the server.

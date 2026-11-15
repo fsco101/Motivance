@@ -1114,4 +1114,33 @@
     <string name="chat_agreement_keep_on">Keep them on</string>
     <string name="chat_agreement_turn_off_title">Turn off messages?</string>
     <string name="chat_agreement_turn_off_detail">Nobody will be able to send new messages, you included. What was already said stays in your record, and your therapist can still read it. You can turn messages on again later.</string>
+    <!-- Chat photos and videos (issue #106) -->
+    <string name="chat_agreement_point5">Photos and videos you send are made smaller on your device first. Motivance removes them 15 days after they are sent; a copy you saved yourself stays with you.</string>
+    <string name="chat_agreement_media_title">Photos and videos</string>
+    <string name="chat_agreement_media_detail">You can now send photos and short videos. Read what that means before you allow it.</string>
+    <string name="chat_agreement_allow_media">Allow photos and videos</string>
+    <string name="chat_media_attach">Photo or video</string>
+    <string name="chat_media_gallery">Choose from gallery</string>
+    <string name="chat_media_take_photo">Take a photo</string>
+    <string name="chat_media_record_video">Record a video</string>
+    <string name="chat_media_photo">Photo</string>
+    <string name="chat_media_video">Video</string>
+    <string name="chat_media_open">Open %1$s</string>
+    <string name="chat_media_photo_alt">Photo sent in the conversation</string>
+    <string name="chat_media_photo_expired">Photo expired after 15 days</string>
+    <string name="chat_media_video_expired">Video expired after 15 days</string>
+    <string name="chat_media_kept">Removed from Motivance after 15 days. This copy is on your phone.</string>
+    <string name="chat_media_unavailable">This file cannot be shown right now.</string>
+    <string name="chat_media_preparing_photo">Preparing photo…</string>
+    <string name="chat_media_preparing_video">Preparing video… %1$d%%</string>
+    <string name="chat_media_allow_above">Allow photos and videos to send them.</string>
+    <string name="chat_media_not_allowed">%1$s has not agreed to photos and videos yet.</string>
+    <string name="chat_media_close">Close</string>
+    <string name="chat_media_camera_denied">Allow the camera for Motivance in your phone settings to take a photo or video here.</string>
+    <string name="chat_error_media_consent">Photos and videos are not allowed in this conversation yet, so it was not sent.</string>
+    <string name="chat_error_media_too_large">That file is too large to send, even after making it smaller. Try a shorter video or another photo.</string>
+    <string name="chat_error_media_invalid">That kind of file cannot be sent. Send a photo or a video.</string>
+    <string name="chat_error_media_unreadable">This phone could not open that file. Try another photo or video.</string>
+    <string name="chat_error_video_cap">This conversation has reached its limit of 20 videos in 30 days. Photos and messages still work.</string>
+    <string name="chat_error_media_missing">The file did not finish uploading. Try again.</string>
 </resources>

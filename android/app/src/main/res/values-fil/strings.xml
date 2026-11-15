@@ -1114,4 +1114,33 @@
     <string name="chat_agreement_keep_on">Panatilihing naka-on</string>
     <string name="chat_agreement_turn_off_title">I-off ang mga mensahe?</string>
     <string name="chat_agreement_turn_off_detail">Wala nang makapagpapadala ng bagong mensahe, kasama ka. Mananatili sa record mo ang nasabi na, at mababasa pa rin ito ng therapist mo. Maaari mong i-on muli ang mga mensahe mamaya.</string>
+    <!-- Chat photos and videos (issue #106) -->
+    <string name="chat_agreement_point5">Pinaliliit muna sa device mo ang mga larawan at video na ipinadadala mo. Inaalis ng Motivance ang mga ito 15 araw matapos maipadala; mananatili sa iyo ang kopyang ikaw mismo ang nag-save.</string>
+    <string name="chat_agreement_media_title">Mga larawan at video</string>
+    <string name="chat_agreement_media_detail">Maaari ka na ngayong magpadala ng mga larawan at maiikling video. Basahin ang ibig sabihin nito bago mo payagan.</string>
+    <string name="chat_agreement_allow_media">Payagan ang mga larawan at video</string>
+    <string name="chat_media_attach">Larawan o video</string>
+    <string name="chat_media_gallery">Pumili mula sa gallery</string>
+    <string name="chat_media_take_photo">Kumuha ng larawan</string>
+    <string name="chat_media_record_video">Mag-record ng video</string>
+    <string name="chat_media_photo">Larawan</string>
+    <string name="chat_media_video">Video</string>
+    <string name="chat_media_open">Buksan ang %1$s</string>
+    <string name="chat_media_photo_alt">Larawang ipinadala sa usapan</string>
+    <string name="chat_media_photo_expired">Nag-expire ang larawan matapos ang 15 araw</string>
+    <string name="chat_media_video_expired">Nag-expire ang video matapos ang 15 araw</string>
+    <string name="chat_media_kept">Inalis na sa Motivance matapos ang 15 araw. Nasa telepono mo ang kopyang ito.</string>
+    <string name="chat_media_unavailable">Hindi maipakita ang file na ito ngayon.</string>
+    <string name="chat_media_preparing_photo">Inihahanda ang larawan…</string>
+    <string name="chat_media_preparing_video">Inihahanda ang video… %1$d%%</string>
+    <string name="chat_media_allow_above">Payagan ang mga larawan at video para maipadala ang mga ito.</string>
+    <string name="chat_media_not_allowed">Hindi pa pumapayag si %1$s sa mga larawan at video.</string>
+    <string name="chat_media_close">Isara</string>
+    <string name="chat_media_camera_denied">Payagan ang camera para sa Motivance sa settings ng telepono mo para makakuha ng larawan o video rito.</string>
+    <string name="chat_error_media_consent">Hindi pa pinapayagan ang mga larawan at video sa usapang ito, kaya hindi ito naipadala.</string>
+    <string name="chat_error_media_too_large">Masyadong malaki ang file para maipadala, kahit pinaliit na. Subukan ang mas maikling video o ibang larawan.</string>
+    <string name="chat_error_media_invalid">Hindi maipapadala ang ganitong file. Magpadala ng larawan o video.</string>
+    <string name="chat_error_media_unreadable">Hindi mabuksan ng teleponong ito ang file. Subukan ang ibang larawan o video.</string>
+    <string name="chat_error_video_cap">Naabot na ng usapang ito ang limitasyong 20 video sa loob ng 30 araw. Gumagana pa rin ang mga larawan at mensahe.</string>
+    <string name="chat_error_media_missing">Hindi natapos ang pag-upload ng file. Subukan muli.</string>
 </resources>

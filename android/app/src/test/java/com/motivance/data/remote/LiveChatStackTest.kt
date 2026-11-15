@@ -42,7 +42,11 @@ class LiveChatStackTest {
 delete from public.notification_deliveries where notification_id in (select id from public.notifications where user_id in ($ids) or subject_id in ($ids));
 delete from public.notifications where user_id in ($ids) or subject_id in ($ids);
 delete from public.patient_invitations where therapist_id in ($ids);
-delete from public.chat_reads where user_id in ($ids); delete from public.conversations where therapist_id in ($ids) or patient_id in ($ids);
+insert into public.chat_media_trash(path) select unnest(array[a.media_path,a.preview_path]) from public.chat_attachments a join public.conversations c on c.id=a.conversation_id where (c.therapist_id in ($ids) or c.patient_id in ($ids)) and a.removed_at is null on conflict do nothing;
+delete from public.chat_attachments where conversation_id in (select id from public.conversations where therapist_id in ($ids) or patient_id in ($ids));
+delete from public.chat_reads where user_id in ($ids) or conversation_id in (select id from public.conversations where therapist_id in ($ids) or patient_id in ($ids));
+delete from public.chat_messages where conversation_id in (select id from public.conversations where therapist_id in ($ids) or patient_id in ($ids));
+delete from public.conversations where therapist_id in ($ids) or patient_id in ($ids);
 delete from public.therapist_patients where therapist_id in ($ids) or patient_id in ($ids);
 delete from public.audit_events where actor_id in ($ids) or target_id in ($ids);
 delete from public.patient_profiles where user_id in ($ids); delete from public.patients where id in ($ids); delete from public.user_roles where user_id in ($ids);
@@ -99,7 +103,7 @@ delete from public.profiles where id in ($ids); delete from auth.users where id 
         assertFalse(conversation.consented)
         assertEquals("chat_consent_required",(runCatching {therapist.sendMessage(UUID.randomUUID().toString(),conversation.id,"Hello")}.exceptionOrNull() as RemoteFailure).code)
         assertEquals(403,(runCatching {therapist.setChatConsent(true)}.exceptionOrNull() as RemoteFailure).status)
-        assertEquals(ChatConsent("care-chat-v1",false,null),patient.loadChatConsent())
+        assertEquals(ChatConsent("care-chat-v2",false,null,false,null),patient.loadChatConsent())
         assertTrue(patient.setChatConsent(true).granted)
         assertTrue(therapist.loadConversations().single().let {it.open && it.consented})
 
@@ -135,9 +139,31 @@ delete from public.profiles where id in ($ids); delete from auth.users where id 
             therapistLive.until("the reply") {events -> events.any {it is LiveEvent.Message && it.message.id==reply.id}}
             assertTrue("The outsider heard: ${outsiderLive.events.value}",outsiderLive.events.value.none {it !is LiveEvent.Connection})
 
+            // A photo, the way the app sends one, opened by the other person and by nobody else.
+            val photoId=UUID.randomUUID().toString()
+            val draft=MediaDraft(MediaKind.IMAGE,"","image/jpeg","",1600,1200,null)
+            val places=therapist.startAttachment(photoId,conversation.id,draft)
+            val picture=ByteArray(150_000) {(it%251).toByte()}
+            therapist.uploadMedia(places.mediaPath,picture,"image/jpeg")
+            therapist.uploadMedia(places.previewPath,ByteArray(10_000),"image/jpeg")
+            // An upload repeated after a lost reply is harmless.
+            therapist.uploadMedia(places.previewPath,ByteArray(10_000),"image/jpeg")
+            val photo=therapist.sendAttachment(photoId,"Your posture")
+            assertEquals(MediaKind.IMAGE,photo.attachment?.kind)
+            patientLive.until("the live photo") {events -> events.any {it is LiveEvent.Message && it.message.id==photoId && it.message.attachment!=null}}
+            val link=patient.mediaLink(places.mediaPath)
+            assertArrayEquals(picture,http.newCall(Request.Builder().url(link).build()).execute().use {it.body!!.bytes()})
+            assertTrue(runCatching {outsider.mediaLink(places.mediaPath)}.isFailure)
+            val tooLarge=UUID.randomUUID().toString()
+            val big=therapist.startAttachment(tooLarge,conversation.id,draft)
+            therapist.uploadMedia(big.mediaPath,ByteArray(1_048_577),"image/jpeg")
+            therapist.uploadMedia(big.previewPath,ByteArray(100),"image/jpeg")
+            assertEquals("chat_media_too_large",(runCatching {therapist.sendAttachment(tooLarge,"")}.exceptionOrNull() as RemoteFailure).code)
+
             val page=patient.loadMessages(conversation.id)
-            assertEquals(listOf(reply.id,id),page.messages.map {it.id})
+            assertEquals(listOf(photoId,reply.id,id),page.messages.map {it.id})
             assertTrue(page.messages.last().deleted)
+            assertEquals(places.mediaPath,page.messages.first().attachment?.mediaPath)
             val failure=runCatching {outsider.sendMessage(UUID.randomUUID().toString(),conversation.id,"Hello")}.exceptionOrNull() as RemoteFailure
             assertEquals("chat_closed",failure.code)
             listOf(patientLive,therapistLive,outsiderLive).forEach {it.job.cancel()}

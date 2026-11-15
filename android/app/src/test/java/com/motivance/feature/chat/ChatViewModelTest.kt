@@ -189,6 +189,71 @@ class ChatViewModelTest {
         assertFalse(vm.state.value.consented)
     }
 
+    @Test fun aPhotoIsMadeSmallerWaitsInTheOutboxAndGoesInThreeSteps() = runTest(dispatcher) {
+        val files=FakeFiles()
+        val vm=ChatViewModel(remote,box,live,Toaster(),files)
+        vm.configure(me); vm.open("c"); advanceUntilIdle()
+        vm.attach("content://picker/1","image/jpeg"); advanceUntilIdle()
+        assertNull(vm.state.value.preparing)
+        val sent=remote.stored.single {it.kind==MessageKind.ATTACHMENT}
+        assertEquals(listOf("start","upload media.jpg image/jpeg 3","upload preview.jpg image/jpeg 2","send"),remote.steps)
+        assertEquals(listOf(sent.id),files.kept)
+        assertTrue(box.rows.value.isEmpty())
+        assertEquals(1,vm.state.value.messages.count {it.id==sent.id})
+    }
+
+    @Test fun aRefusedPhotoWaitsForThePersonAndADiscardedOneLeavesNoFiles() = runTest(dispatcher) {
+        val files=FakeFiles()
+        val vm=ChatViewModel(remote,box,live,Toaster(),files)
+        vm.configure(me); vm.open("c"); advanceUntilIdle()
+        remote.refuseMedia="chat_media_too_large"
+        vm.attach("content://picker/1","image/jpeg"); advanceUntilIdle()
+        val waiting=vm.state.value.outgoing.single()
+        assertTrue(waiting.failed)
+        assertNotNull(waiting.media)
+        vm.discard(waiting.id); advanceUntilIdle()
+        assertEquals(listOf(waiting.media!!.file),files.discarded)
+        assertTrue(box.rows.value.isEmpty())
+    }
+
+    @Test fun aPhotoWrittenOfflineIsSentOnceWhenTheConnectionReturns() = runTest(dispatcher) {
+        val files=FakeFiles()
+        val vm=ChatViewModel(remote,box,live,Toaster(),files)
+        vm.configure(me); vm.open("c"); advanceUntilIdle()
+        backgroundScope.launch {vm.stayLive()}; runCurrent()
+        remote.offline=true
+        vm.attach("content://picker/1","image/jpeg"); advanceUntilIdle()
+        assertFalse(vm.state.value.outgoing.single().failed)
+        remote.offline=false
+        live.emit(LiveEvent.Connection(true)); settle()
+        assertEquals(1,remote.stored.count {it.kind==MessageKind.ATTACHMENT})
+        assertTrue(vm.state.value.outgoing.isEmpty())
+    }
+
+    @Test fun aFileThatCannotBePreparedSaysSoAndSendsNothing() = runTest(dispatcher) {
+        val files=FakeFiles(fail=true)
+        val vm=ChatViewModel(remote,box,live,Toaster(),files)
+        vm.configure(me); vm.open("c"); advanceUntilIdle()
+        vm.attach("content://picker/1","video/mp4"); advanceUntilIdle()
+        assertNull(vm.state.value.preparing)
+        assertTrue(box.rows.value.isEmpty())
+        assertTrue(remote.steps.isEmpty())
+    }
+
+    private class FakeFiles(val fail:Boolean=false):com.motivance.data.local.ChatMediaStore {
+        val kept=mutableListOf<String>()
+        val discarded=mutableListOf<String>()
+        override suspend fun prepare(owner:String,uri:String,onProgress:(Float)->Unit):MediaDraft {
+            if(fail) throw com.motivance.data.local.MediaProblem("chat_media_unreadable")
+            onProgress(.5f)
+            return MediaDraft(MediaKind.IMAGE,"/files/a.jpg","image/jpeg","/files/a-preview.jpg",1600,1200,null)
+        }
+        override suspend fun read(path:String)=if(path.endsWith("preview.jpg")) ByteArray(2) else ByteArray(3)
+        override suspend fun keep(owner:String,id:String,draft:MediaDraft) {kept+=id}
+        override suspend fun discard(draft:MediaDraft) {discarded+=draft.file}
+        override suspend fun copy(owner:String,id:String,attachment:Attachment,preview:Boolean,link:suspend (String)->String):String?=null
+    }
+
     private class FakeLive:ChatLive {
         private val events=MutableSharedFlow<LiveEvent>(extraBufferCapacity=16)
         suspend fun emit(event:LiveEvent)=events.emit(event)
@@ -212,6 +277,18 @@ class ChatViewModelTest {
         var listReads=0
         var gate:CompletableDeferred<Unit>?=null
         var waitingForAgreement=false
+        val steps=mutableListOf<String>()
+        var refuseMedia:String?=null
+        override suspend fun startAttachment(id:String,conversationId:String,draft:MediaDraft):MediaPlaces {
+            if(offline) throw IOException("offline")
+            refuseMedia?.let {throw RemoteFailure(400,it)}
+            steps+="start"; return MediaPlaces("c/$id/media.jpg","c/$id/preview.jpg")
+        }
+        override suspend fun uploadMedia(path:String,bytes:ByteArray,mime:String) {steps+="upload ${path.substringAfterLast('/')} $mime ${bytes.size}"}
+        override suspend fun sendAttachment(id:String,caption:String):ChatMessage {
+            steps+="send"
+            return ChatMessage(id,"c",me,MessageKind.ATTACHMENT,caption,"2026-11-15T09:00:${(clock++).toString().padStart(2,'0')}Z").also {stored+=it}
+        }
         private var clock=0L
         fun message(id:String,sender:String,body:String,at:String="2026-11-15T07:00:${(clock++).toString().padStart(2,'0')}Z")=ChatMessage(id,"c",sender,MessageKind.TEXT,body,at)
         override suspend fun loadConversations():List<Conversation> {

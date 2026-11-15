@@ -49,6 +49,28 @@ class ChatJsonTest {
         assertFalse(ChatJson.page("""{"messages":[],"more":false,"open":false,"consented":false,"other_read_at":null}""").consented)
     }
 
+    @Test fun readsAPhotoOrVideoFromItsMessage() {
+        val video=ChatJson.message(JSONObject("""{"id":"m","conversation_id":"c","sender_id":"x","kind":"attachment","body":"","created_at":"2026-11-15T07:00:00Z","deleted":false,
+            "data":{"attachment_kind":"video","mime":"video/mp4","width":852,"height":480,"duration_ms":14000,"bytes":3000000,"media_path":"c/m/media.mp4","preview_path":"c/m/preview.jpg","expires_at":"2026-11-30T07:00:00+00:00"}}"""))
+        assertEquals(Attachment(MediaKind.VIDEO,"video/mp4",852,480,14_000,3_000_000,"c/m/media.mp4","c/m/preview.jpg","2026-11-30T07:00:00+00:00"),video.attachment)
+        val photo=ChatJson.message(JSONObject("""{"id":"m","conversation_id":"c","sender_id":"x","kind":"attachment","body":"Look","created_at":"2026-11-15T07:00:00Z","deleted_at":null,
+            "data":{"attachment_kind":"image","mime":"image/jpeg","width":1600,"height":1200,"duration_ms":null,"bytes":200000,"media_path":"c/m/media.jpg","preview_path":"c/m/preview.jpg","expires_at":"2026-11-30T07:00:00+00:00"}}"""))
+        assertEquals(MediaKind.IMAGE,photo.attachment?.kind); assertNull(photo.attachment?.durationMs); assertEquals("Look",photo.body)
+        // A taken-back one has no file, and broken data is left out rather than shown wrong.
+        assertNull(ChatJson.message(JSONObject("""{"id":"m","conversation_id":"c","sender_id":"x","kind":"attachment","body":"","created_at":"2026-11-15T07:00:00Z","deleted":true,"data":{}}""")).attachment)
+        assertNull(ChatJson.message(JSONObject("""{"id":"m","conversation_id":"c","sender_id":"x","kind":"attachment","body":"","created_at":"2026-11-15T07:00:00Z","deleted":false,"data":{"mime":"x"}}""")).attachment)
+        assertEquals(ChatConsent("care-chat-v2",true,null,false,"care-chat-v1"),ChatJson.consent("""{"version":"care-chat-v2","granted":true,"media":false,"accepted_version":"care-chat-v1","at":null}"""))
+        assertEquals(MediaPlaces("c/a/media.jpg","c/a/preview.jpg"),ChatJson.places("""{"media_path":"c/a/media.jpg","preview_path":"c/a/preview.jpg","limit":1048576}"""))
+    }
+
+    @Test fun aWaitingPhotoOrVideoIsKeptWholeInTheOutbox() {
+        val draft=MediaDraft(MediaKind.VIDEO,"/data/f.mp4","video/mp4","/data/f-preview.jpg",852,480,14_000)
+        assertEquals(draft,com.motivance.data.local.RoomChatOutbox.draft(com.motivance.data.local.RoomChatOutbox.json(draft)))
+        val photo=draft.copy(kind=MediaKind.IMAGE,mime="image/jpeg",durationMs=null)
+        assertEquals(photo,com.motivance.data.local.RoomChatOutbox.draft(com.motivance.data.local.RoomChatOutbox.json(photo)))
+        assertNull(com.motivance.data.local.RoomChatOutbox.draft("not json"))
+    }
+
     @Test fun aKindThisVersionDoesNotKnowIsKeptAndSaidToBeUnshowable() {
         val message=ChatJson.message(JSONObject("""{"id":"m","conversation_id":"c","sender_id":"x","kind":"poll","body":"","data":{},"created_at":"2026-11-15T07:00:00Z","deleted":false}"""))
         assertNull(message.kind)
