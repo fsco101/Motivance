@@ -4,6 +4,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object SessionMigrations {
+    /** Every migration, in order, for each place that opens the database. */
+    val ALL get()=arrayOf(FROM_1_TO_2,FROM_2_TO_3)
+    /** Chat messages written offline (issue #108). Nothing existing changes. */
+    val FROM_2_TO_3=object:Migration(2,3) {
+        override fun migrate(db:SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS chat_outbox (id TEXT NOT NULL, ownerId TEXT NOT NULL, conversationId TEXT NOT NULL, body TEXT NOT NULL, createdAt INTEGER NOT NULL, failed INTEGER NOT NULL, PRIMARY KEY(id))")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_chat_outbox_ownerId ON chat_outbox(ownerId)")
+        }
+    }
     val FROM_1_TO_2=object:Migration(1,2) {
         override fun migrate(db:SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE local_sessions ADD COLUMN consentId TEXT DEFAULT NULL")

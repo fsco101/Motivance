@@ -50,7 +50,7 @@ class ExerciseLifecycleTest {
     @Test fun backgroundWhileConsentWriteIsPendingCannotStartMeasurementLater()=runBlocking {
         val context:android.content.Context=ApplicationProvider.getApplicationContext()
         val name="lifecycle-${UUID.randomUUID()}.db"
-        val db=Room.databaseBuilder(context,SessionDatabase::class.java,name).addMigrations(SessionMigrations.FROM_1_TO_2).build()
+        val db=Room.databaseBuilder(context,SessionDatabase::class.java,name).addMigrations(*SessionMigrations.ALL).build()
         val store=SessionStore(db)
         val vm=ExerciseSessionViewModel(store,context)
         try {

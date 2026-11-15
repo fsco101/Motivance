@@ -13,6 +13,10 @@ data class CachedPrescription(val ownerId:String,val versionId:String,val assign
 @Entity(tableName="consent_events",indices=[Index("ownerId")])
 data class LocalConsent(@PrimaryKey val id:String,val ownerId:String,val event:String,val version:String,val occurredAt:Long,val state:String="PENDING",val attempts:Int=0,val lastError:String?=null)
 
+/** A chat message written on this phone and not yet confirmed by the server. Kept per account, and gone at sign-out. */
+@Entity(tableName="chat_outbox",indices=[Index("ownerId")])
+data class ChatOutboxEntry(@PrimaryKey val id:String,val ownerId:String,val conversationId:String,val body:String,val createdAt:Long,val failed:Boolean)
+
 @Dao interface SessionDao {
     @Insert(onConflict=OnConflictStrategy.REPLACE) suspend fun put(session:LocalSession)
     @Insert(onConflict=OnConflictStrategy.ABORT) suspend fun enqueue(entry:OutboxEntry)
@@ -34,9 +38,14 @@ data class LocalConsent(@PrimaryKey val id:String,val ownerId:String,val event:S
     @Query("UPDATE consent_events SET state='PENDING',attempts=0,lastError=NULL WHERE ownerId=:owner AND state IN ('FAILED','WAITING_AUTH')") suspend fun retryConsents(owner:String)
     @Query("UPDATE local_sessions SET status='INTERRUPTED',updatedAt=:time WHERE ownerId=:owner AND status='DRAFT'") suspend fun interruptDrafts(owner:String,time:Long)
     @Query("DELETE FROM cached_prescriptions WHERE ownerId=:owner") suspend fun clearPrescriptions(owner:String)
+    @Insert(onConflict=OnConflictStrategy.IGNORE) suspend fun addChat(entry:ChatOutboxEntry)
+    @Query("SELECT * FROM chat_outbox WHERE ownerId=:owner ORDER BY createdAt") fun observeChat(owner:String):Flow<List<ChatOutboxEntry>>
+    @Query("UPDATE chat_outbox SET failed=:failed WHERE ownerId=:owner AND id=:id") suspend fun chatFailed(owner:String,id:String,failed:Boolean)
+    @Query("DELETE FROM chat_outbox WHERE ownerId=:owner AND id=:id") suspend fun removeChat(owner:String,id:String)
+    @Query("DELETE FROM chat_outbox WHERE ownerId=:owner") suspend fun clearChat(owner:String)
     /** Prescribed sessions only: a camera check is local-only and is not exercising the plan. */
     @Query("SELECT COUNT(*) FROM sync_outbox o JOIN local_sessions s ON s.id=o.sessionId WHERE o.ownerId=:owner AND o.state<>'LOCAL_ONLY' AND s.startedAt>=:since")
     suspend fun prescribedSince(owner:String,since:Long):Int
 }
-@Database(entities=[LocalSession::class,OutboxEntry::class,CachedPrescription::class,LocalConsent::class],version=2,exportSchema=true)
+@Database(entities=[LocalSession::class,OutboxEntry::class,CachedPrescription::class,LocalConsent::class,ChatOutboxEntry::class],version=3,exportSchema=true)
 abstract class SessionDatabase:RoomDatabase() { abstract fun sessions():SessionDao }

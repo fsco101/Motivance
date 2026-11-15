@@ -58,6 +58,7 @@ import com.motivance.domain.nextSession
 import com.motivance.domain.NotificationDestination
 import com.motivance.domain.destination
 import com.motivance.feature.admin.*
+import com.motivance.feature.chat.*
 import com.motivance.feature.auth.*
 import com.motivance.feature.booking.*
 import com.motivance.feature.notifications.*
@@ -116,6 +117,8 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     val notificationState by notifications.state.collectAsStateWithLifecycle()
     val notificationSettings:NotificationSettingsViewModel=viewModel()
     val notificationSettingsState by notificationSettings.state.collectAsStateWithLifecycle()
+    val chat:ChatViewModel=viewModel()
+    val chatState by chat.state.collectAsStateWithLifecycle()
     val haptics=rememberHaptics()
     LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
     LaunchedEffect(Unit) {vm.restore()}
@@ -130,9 +133,10 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     var selectedRole by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedPatient by rememberSaveable {mutableStateOf<String?>(null)}
     var editingAssignment by rememberSaveable {mutableStateOf<String?>(null)}
+    var selectedConversation by rememberSaveable {mutableStateOf<String?>(null)}
     val role=selectedRole?.let { UserRole.valueOf(it) }
     LaunchedEffect(auth.session?.userId) {
-        selectedPatient=null; editingAssignment=null
+        selectedPatient=null; editingAssignment=null; selectedConversation=null
         // A workspace chosen on the profile page belongs to that sign-in; the next one starts from the account's roles.
         if(auth.session==null) selectedRole=null
         if(auth.session!=null) { route="HOME"; vm.loadOverview() }
@@ -192,6 +196,24 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         notificationSettings.configure(inboxOwner)
         notifications.saveLanguage(language)
     }
+    // Only a patient and their therapist talk. The live connection stays open while the app is in front, and closes behind it.
+    val chatOwner=auth.session?.userId?.takeIf {actualRole==UserRole.PATIENT || actualRole==UserRole.THERAPIST}
+    LaunchedEffect(chatOwner) {chat.configure(chatOwner)}
+    LaunchedEffect(chatOwner,lifecycle) {
+        if(chatOwner!=null) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {chat.stayLive()}
+    }
+    // The conversation on screen follows the route, so the back button and a link from a record both land on the right one.
+    LaunchedEffect(route,selectedConversation,chatOwner) {
+        if(chatOwner==null) return@LaunchedEffect
+        if(route=="CONVERSATION") selectedConversation?.let {chat.open(it)} else chat.close()
+        if(route=="MESSAGES") chat.refreshList()
+    }
+    fun openConversationWith(person:String) {
+        chatState.conversations.firstOrNull {it.otherId==person}?.let {selectedConversation=it.id; route="CONVERSATION"; return}
+        selectedConversation=null; chat.openWith(person); route="CONVERSATION"
+    }
+    // Once a link from a record has found its conversation, the route remembers it, so returning from the background keeps it.
+    LaunchedEffect(chatState.openId) {if(route=="CONVERSATION" && chatState.openId!=null) selectedConversation=chatState.openId}
     // Notifications can be allowed in the phone's settings while the app is away, so the card checks again on return.
     LaunchedEffect(lifecycle) {lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {pushAllowed=notificationsAllowed(context)}}
     LaunchedEffect(inboxOwner,lifecycle) {
@@ -205,7 +227,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         "LOCAL_HISTORY" -> "PROFILE"
         "BOOK","MOVE" -> "BOOKINGS"
         "SCHEDULE" -> if(therapistRole) "SCHEDULE" else "BOOKINGS"
-        "NOTIFICATIONS" -> "HOME"
+        "NOTIFICATIONS","MESSAGES","CONVERSATION" -> "HOME"
         else -> route
     }
     val accountName=overview.data?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_account)
@@ -214,6 +236,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         if(route=="PROGRESS" || route=="PATIENT_DETAIL") history.refresh()
         if(route=="BOOKINGS") booking.refresh()
         if(route=="SCHEDULE") schedule.open()
+        if(route=="MESSAGES" || route=="CONVERSATION") chat.refresh()
         notifications.refresh()
         vm.loadOverview()
     }
@@ -232,7 +255,8 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         containerColor=MaterialTheme.colorScheme.background,
         topBar={BrandHeader(onProfile=if(auth.session!=null && route!="PROFILE") ({route="PROFILE"}) else null,
             onBack=if(route !in rootRoutes) ({goBack()}) else null,photoUrl=profileState.profile?.photoUrl,name=accountName,
-            onNotifications=if(inboxOwner!=null && route!="NOTIFICATIONS") ({route="NOTIFICATIONS"}) else null,unread=notificationState.inbox.unread)},
+            onNotifications=if(inboxOwner!=null && route!="NOTIFICATIONS") ({route="NOTIFICATIONS"}) else null,unread=notificationState.inbox.unread,
+            onMessages=if(chatOwner!=null && route!="MESSAGES") ({route="MESSAGES"}) else null,messagesUnread=chatState.unread)},
         bottomBar={if(auth.session!=null) {
             val destinations=when(actualRole) {
                 UserRole.ADMIN -> listOf(Triple("HOME",R.string.nav_home,Icons.Default.Home),Triple("ADMIN",R.string.role_admin,Icons.Default.Settings),Triple("PROFILE",R.string.nav_profile,Icons.Default.AccountCircle))
@@ -266,7 +290,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
             }
         },contentAlignment=Alignment.TopCenter,label="route") { (page,patientId) ->
         Box(Modifier.fillMaxSize(),contentAlignment=Alignment.TopCenter) {
-        Column(Modifier.widthIn(max=720.dp).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=20.dp,vertical=12.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
+        // A conversation scrolls itself, with the box to write in kept on screen, so it is drawn outside the page's scroll.
+        if(page=="CONVERSATION" && chatOwner!=null) ConversationScreen(chatState,chatOwner,chat,Modifier.widthIn(max=720.dp))
+        else Column(Modifier.widthIn(max=720.dp).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=20.dp,vertical=12.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
             when(page) {
                 "SETUP" -> CameraSetup(local.rules) { route="CAMERA" }
                 "CHECK_COMPLETE" -> SessionComplete(local.saved,local.metrics.completed,local.rules.targetRepetitions,local.metrics.romDegrees,
@@ -329,10 +355,14 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
                     else PatientManagement(connected,rehabilitation) {selectedPatient=it; route="PATIENT_DETAIL"}
                 }
+                "MESSAGES" -> if(chatOwner!=null) MessagesScreen(chatState,chatOwner,actualRole==UserRole.PATIENT,{chat.refreshList()}) {selectedConversation=it; route="CONVERSATION"}
                 "PATIENT_DETAIL" -> {
                     val patient=connected.workspace.patients.firstOrNull {it.id==patientId}
                     val plans=connected.workspace.prescriptions.filter {it.patientId==patientId}
                     PageHeader(R.string.patient_management,eyebrow=patient?.name?.ifBlank {null} ?: patientId?.take(8))
+                    if(chatOwner!=null && patientId!=null) OutlinedButton({openConversationWith(patientId)},Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {
+                        Icon(Icons.Default.Email,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.chat_message_patient))
+                    }
                     patient?.profile?.let {PatientProfileSummary(it)}
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
                     SectionHeading(R.string.ui_exercise_plan) {
@@ -450,7 +480,8 @@ private const val NOTIFICATION_CHECK_MS=60_000L
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
 private fun depth(route:String,therapist:Boolean)=when(route) {
     "ASSIGN" -> 2
-    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","MOVE","NOTIFICATIONS" -> 1
+    "CONVERSATION" -> 2
+    "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","MOVE","NOTIFICATIONS","MESSAGES" -> 1
     "SCHEDULE" -> if(therapist) 0 else 1
     else -> 0
 }
@@ -460,6 +491,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
     "CAMERA" -> "SETUP"
     "ASSIGN" -> "PATIENT_DETAIL"
     "PATIENT_DETAIL" -> "PATIENTS"
+    "CONVERSATION" -> "MESSAGES"
     "BOOK","MOVE" -> "BOOKINGS"
     "SCHEDULE" -> if(therapist) "HOME" else "BOOKINGS"
     "LOCAL_HISTORY" -> if(signedIn) "PROFILE" else "CHECK_COMPLETE"
@@ -500,7 +532,8 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
  * The app bar sits on the page ground rather than on a white strip, so content reads as one surface. The
  * account button shows the person's own avatar, which is both a shortcut and a reminder of who is signed in.
  */
-@Composable fun BrandHeader(onProfile:(()->Unit)?=null,onBack:(()->Unit)?=null,photoUrl:String?=null,name:String="",onNotifications:(()->Unit)?=null,unread:Int=0) {
+@Composable fun BrandHeader(onProfile:(()->Unit)?=null,onBack:(()->Unit)?=null,photoUrl:String?=null,name:String="",onNotifications:(()->Unit)?=null,unread:Int=0,
+    onMessages:(()->Unit)?=null,messagesUnread:Int=0) {
     Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).heightIn(min=64.dp)
         .padding(start=if(onBack!=null) 4.dp else 20.dp,end=12.dp,top=6.dp,bottom=6.dp),
         verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -508,6 +541,11 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
         Image(painterResource(R.drawable.motivance_logo),null,modifier=Modifier.size(34.dp))
         Text(stringResource(R.string.app_name),style=MaterialTheme.typography.titleLarge,color=MaterialTheme.colorScheme.onSurface,
             modifier=Modifier.weight(1f).semantics {heading()})
+        if(onMessages!=null) IconButton(onMessages,Modifier.size(48.dp)) {
+            BadgedBox(badge={if(messagesUnread>0) Badge {Text(if(messagesUnread>9) "9+" else messagesUnread.toString())}}) {
+                Icon(Icons.Default.Email,if(messagesUnread>0) stringResource(R.string.messages_unread_count,messagesUnread) else stringResource(R.string.nav_messages),tint=MaterialTheme.colorScheme.onSurface)
+            }
+        }
         if(onNotifications!=null) IconButton(onNotifications,Modifier.size(48.dp)) {
             BadgedBox(badge={if(unread>0) Badge {Text(if(unread>9) "9+" else unread.toString())}}) {
                 Icon(Icons.Default.Notifications,if(unread>0) stringResource(R.string.notifications_unread_count,unread) else stringResource(R.string.nav_notifications),tint=MaterialTheme.colorScheme.onSurface)

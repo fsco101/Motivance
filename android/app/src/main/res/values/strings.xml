@@ -1032,4 +1032,64 @@
     <string name="notification_settings_pick_time">Reminder time</string>
     <string name="notification_settings_time_ok">Set time</string>
     <string name="notification_settings_time_cancel">Cancel</string>
+
+    <!-- Care chat (issue #108) -->
+    <string name="nav_messages">Messages</string>
+    <string name="messages_unread_count">Messages, %1$d unread</string>
+    <string name="chat_message_patient">Message</string>
+    <string name="chat_description">Talk with your patients between visits.</string>
+    <string name="chat_description_self">Talk with your therapist between visits.</string>
+    <string name="chat_loading">Loading messages…</string>
+    <string name="chat_list_failed">Messages could not be loaded. Check your connection, then try again.</string>
+    <string name="chat_thread_failed">This conversation could not be loaded. Check your connection, then try again.</string>
+    <string name="chat_not_found">This conversation is not available.</string>
+    <string name="chat_empty_title">No conversations yet</string>
+    <string name="chat_empty_detail">A conversation opens with each patient as soon as they are linked to you.</string>
+    <string name="chat_empty_self_title">No therapist to message yet</string>
+    <string name="chat_empty_self_detail">A conversation opens as soon as you are linked to a therapist. You can connect from your Profile.</string>
+    <string name="chat_urgent">Patients are told that messages are not read around the clock, and to use local emergency services for anything urgent.</string>
+    <string name="chat_urgent_self">Your therapist does not read messages around the clock. If something is urgent, call your local emergency number or go to the nearest hospital.</string>
+    <string name="chat_unnamed">Unnamed account</string>
+    <string name="chat_open">Open conversation</string>
+    <string name="chat_you_said">You: %1$s</string>
+    <string name="chat_no_messages_yet">No messages yet</string>
+    <string name="chat_deleted">Message deleted</string>
+    <string name="chat_unsupported">This message cannot be shown here yet.</string>
+    <string name="chat_your_therapist">Your therapist</string>
+    <string name="chat_your_patient">Your patient</string>
+    <string name="chat_reconnecting">Reconnecting…</string>
+    <string name="chat_start">No messages yet. Write the first one to %1$s.</string>
+    <string name="chat_start_self">No messages yet. Say hello to %1$s.</string>
+    <string name="chat_older">Load older messages</string>
+    <string name="chat_older_loading">Loading older messages…</string>
+    <string name="chat_older_failed">Older messages could not be loaded. Try again.</string>
+    <string name="chat_closed">This conversation is closed because you are no longer linked. You can still read it.</string>
+    <string name="chat_from_you">You said: %1$s</string>
+    <string name="chat_from_them">They said: %1$s</string>
+    <string name="chat_sending">Sending…</string>
+    <string name="chat_waiting">Waiting for a connection</string>
+    <string name="chat_not_sent">Not sent</string>
+    <string name="chat_retry">Try again</string>
+    <string name="chat_discard">Discard</string>
+    <string name="chat_seen">Seen</string>
+    <string name="chat_delete">Delete</string>
+    <string name="chat_delete_ask">Delete for both of you?</string>
+    <string name="chat_delete_detail">The message is replaced by \"Message deleted\" on both phones and screens. This cannot be undone.</string>
+    <string name="chat_delete_no">Keep</string>
+    <string name="chat_write_to">Message to %1$s</string>
+    <string name="chat_placeholder">Write a message</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_error_closed">This conversation is closed, so the message was not sent.</string>
+    <string name="chat_error_rate_limited">You are sending messages too quickly. Wait a moment and try again.</string>
+    <string name="chat_error_too_late">A message can only be deleted in the first 15 minutes.</string>
+    <string name="chat_error_request">The message could not be sent. Check it, then try again.</string>
+    <string name="chat_error_offline">Could not reach Motivance. Check your connection and try again.</string>
+    <plurals name="chat_unread">
+        <item quantity="one">%1$d unread message</item>
+        <item quantity="other">%1$d unread messages</item>
+    </plurals>
+    <plurals name="chat_characters_left">
+        <item quantity="one">%1$d character left</item>
+        <item quantity="other">%1$d characters left</item>
+    </plurals>
 </resources>

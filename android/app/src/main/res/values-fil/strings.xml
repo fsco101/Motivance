@@ -1032,4 +1032,64 @@
     <string name="notification_settings_pick_time">Oras ng paalala</string>
     <string name="notification_settings_time_ok">Itakda ang oras</string>
     <string name="notification_settings_time_cancel">Kanselahin</string>
+
+    <!-- Care chat (issue #108) -->
+    <string name="nav_messages">Mga mensahe</string>
+    <string name="messages_unread_count">Mga mensahe, %1$d hindi pa nababasa</string>
+    <string name="chat_message_patient">Mag-mensahe</string>
+    <string name="chat_description">Makipag-usap sa mga pasyente mo sa pagitan ng mga pagbisita.</string>
+    <string name="chat_description_self">Makipag-usap sa therapist mo sa pagitan ng mga pagbisita.</string>
+    <string name="chat_loading">Kinukuha ang mga mensahe…</string>
+    <string name="chat_list_failed">Hindi makuha ang mga mensahe. Suriin ang koneksiyon mo, saka subukan muli.</string>
+    <string name="chat_thread_failed">Hindi makuha ang usapang ito. Suriin ang koneksiyon mo, saka subukan muli.</string>
+    <string name="chat_not_found">Hindi available ang usapang ito.</string>
+    <string name="chat_empty_title">Wala pang usapan</string>
+    <string name="chat_empty_detail">Magbubukas ang usapan sa bawat pasyente sa oras na maiugnay sila sa iyo.</string>
+    <string name="chat_empty_self_title">Wala pang therapist na mapadadalhan</string>
+    <string name="chat_empty_self_detail">Magbubukas ang usapan sa oras na maiugnay ka sa isang therapist. Maaari kang kumonekta mula sa Profile mo.</string>
+    <string name="chat_urgent">Sinasabihan ang mga pasyente na hindi binabasa ang mga mensahe sa lahat ng oras, at gumamit ng lokal na emergency services para sa anumang apurahan.</string>
+    <string name="chat_urgent_self">Hindi binabasa ng therapist mo ang mga mensahe sa lahat ng oras. Kung apurahan, tumawag sa lokal na emergency number o pumunta sa pinakamalapit na ospital.</string>
+    <string name="chat_unnamed">Account na walang pangalan</string>
+    <string name="chat_open">Buksan ang usapan</string>
+    <string name="chat_you_said">Ikaw: %1$s</string>
+    <string name="chat_no_messages_yet">Wala pang mensahe</string>
+    <string name="chat_deleted">Binura ang mensahe</string>
+    <string name="chat_unsupported">Hindi pa maipapakita rito ang mensaheng ito.</string>
+    <string name="chat_your_therapist">Therapist mo</string>
+    <string name="chat_your_patient">Pasyente mo</string>
+    <string name="chat_reconnecting">Kumokonekta muli…</string>
+    <string name="chat_start">Wala pang mensahe. Isulat ang una kay %1$s.</string>
+    <string name="chat_start_self">Wala pang mensahe. Batiin si %1$s.</string>
+    <string name="chat_older">Mag-load ng mas lumang mensahe</string>
+    <string name="chat_older_loading">Kinukuha ang mas lumang mensahe…</string>
+    <string name="chat_older_failed">Hindi makuha ang mas lumang mensahe. Subukan muli.</string>
+    <string name="chat_closed">Sarado na ang usapang ito dahil hindi na kayo magkaugnay. Mababasa mo pa rin ito.</string>
+    <string name="chat_from_you">Sabi mo: %1$s</string>
+    <string name="chat_from_them">Sabi niya: %1$s</string>
+    <string name="chat_sending">Ipinapadala…</string>
+    <string name="chat_waiting">Naghihintay ng koneksiyon</string>
+    <string name="chat_not_sent">Hindi naipadala</string>
+    <string name="chat_retry">Subukan muli</string>
+    <string name="chat_discard">Itapon</string>
+    <string name="chat_seen">Nabasa na</string>
+    <string name="chat_delete">Burahin</string>
+    <string name="chat_delete_ask">Burahin para sa inyong dalawa?</string>
+    <string name="chat_delete_detail">Mapapalitan ang mensahe ng \"Binura ang mensahe\" sa inyong dalawa. Hindi na ito maibabalik.</string>
+    <string name="chat_delete_no">Huwag</string>
+    <string name="chat_write_to">Mensahe kay %1$s</string>
+    <string name="chat_placeholder">Sumulat ng mensahe</string>
+    <string name="chat_send">Ipadala</string>
+    <string name="chat_error_closed">Sarado na ang usapang ito, kaya hindi naipadala ang mensahe.</string>
+    <string name="chat_error_rate_limited">Masyadong mabilis ang pagpapadala mo ng mensahe. Maghintay sandali at subukan muli.</string>
+    <string name="chat_error_too_late">Mabubura lang ang mensahe sa unang 15 minuto.</string>
+    <string name="chat_error_request">Hindi naipadala ang mensahe. Suriin ito, saka subukan muli.</string>
+    <string name="chat_error_offline">Hindi maabot ang Motivance. Suriin ang koneksiyon mo at subukan muli.</string>
+    <plurals name="chat_unread">
+        <item quantity="one">%1$d mensaheng hindi pa nababasa</item>
+        <item quantity="other">%1$d mensaheng hindi pa nababasa</item>
+    </plurals>
+    <plurals name="chat_characters_left">
+        <item quantity="one">%1$d karakter na lang</item>
+        <item quantity="other">%1$d karakter na lang</item>
+    </plurals>
 </resources>

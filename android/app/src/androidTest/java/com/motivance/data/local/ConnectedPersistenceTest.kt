@@ -24,7 +24,7 @@ class ConnectedPersistenceTest {
     private lateinit var store:SessionStore
     private val rules=ExerciseRules(demo=false,prescriptionVersionId=UUID.randomUUID().toString())
     @Before fun setup() {open()}
-    private fun open() {db=Room.databaseBuilder(context,SessionDatabase::class.java,name).addMigrations(SessionMigrations.FROM_1_TO_2).build();store=SessionStore(db)}
+    private fun open() {db=Room.databaseBuilder(context,SessionDatabase::class.java,name).addMigrations(*SessionMigrations.ALL).build();store=SessionStore(db)}
     @After fun cleanup() {db.close();context.deleteDatabase(name)}
     private suspend fun complete():String {
         val grant=store.recordConsent(owner,true); val id=UUID.randomUUID().toString()

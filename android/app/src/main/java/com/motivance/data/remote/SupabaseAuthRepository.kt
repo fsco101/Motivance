@@ -29,7 +29,7 @@ import java.time.OffsetDateTime
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null,
     private val cloudinaryApi:String=CLOUDINARY_API,
-) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -70,7 +70,7 @@ import java.time.OffsetDateTime
                 val failure=runCatching {JSONObject(response.body?.string().orEmpty())}.getOrNull()
                 // Only known codes pass: other server messages can name tables and columns.
                 val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
-                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_")}
+                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_")}
                 throw RemoteFailure(response.code,code)
             }
             response.body?.string().orEmpty()
@@ -258,6 +258,18 @@ import java.time.OffsetDateTime
         BookingJson.settings(JSONObject(call("/rest/v1/rpc/save_notification_settings",BookingJson.settingsBody(settings),token)))}
     override suspend fun loadSchedule(from:String,to:String,therapist:Boolean)=authorized {token,_ ->
         BookingJson.schedule(JSONObject(call("/rest/v1/rpc/${if(therapist) "therapist_schedule" else "my_schedule"}",JSONObject().put("p_from",from).put("p_to",to),token)))}
+    override suspend fun loadConversations()=authorized {token,_ -> ChatJson.conversations(call("/rest/v1/rpc/my_conversations",JSONObject(),token))}
+    override suspend fun loadMessages(conversationId:String,before:ChatMessage?)=authorized {token,_ ->
+        ChatJson.page(call("/rest/v1/rpc/conversation_messages",JSONObject().put("p_conversation",conversationId)
+            .put("p_before_at",before?.createdAt ?: JSONObject.NULL).put("p_before_id",before?.id ?: JSONObject.NULL),token))
+    }
+    override suspend fun sendMessage(id:String,conversationId:String,body:String)=authorized {token,_ ->
+        ChatJson.message(JSONObject(call("/rest/v1/rpc/send_message",JSONObject().put("p_id",id).put("p_conversation",conversationId).put("p_body",body),token)))
+    }
+    override suspend fun markConversationRead(conversationId:String) {authorized {token,_ -> call("/rest/v1/rpc/mark_conversation_read",JSONObject().put("p_conversation",conversationId),token)}}
+    override suspend fun deleteMessage(id:String)=authorized {token,_ -> ChatJson.message(JSONObject(call("/rest/v1/rpc/delete_message",JSONObject().put("p_id",id),token)))}
+    /** Asking the server who this is renews an expired token first, so the live connection never joins with one. */
+    override suspend fun liveAccess()=authorized {token,_ -> call("/auth/v1/user",null,token,"GET"); LiveAccess(baseUrl,publicKey,token)}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }
