@@ -1,6 +1,7 @@
 package com.motivance.feature.chat
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +48,9 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
 @Composable private fun words(message:ChatMessage)=when {
     message.deleted -> stringResource(R.string.chat_deleted)
     message.kind==MessageKind.TEXT || message.kind==MessageKind.SYSTEM -> message.body
+    message.kind==MessageKind.ATTACHMENT -> message.body.ifBlank {
+        stringResource(if(message.attachment?.kind==MediaKind.VIDEO) R.string.chat_media_video else R.string.chat_media_photo)
+    }
     else -> stringResource(R.string.chat_unsupported)
 }
 
@@ -55,6 +59,7 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
     val zone=remember {ZoneId.systemDefault()}
     PageHeader(R.string.nav_messages,if(asPatient) R.string.chat_description_self else R.string.chat_description)
     if(asPatient && state.consent?.granted==false && state.conversations.isNotEmpty()) AgreementCard(state.consentBusy,accept)
+    if(asPatient && state.consent?.granted==true && state.consent.media==false && state.conversations.isNotEmpty()) MediaAgreementCard(state.consentBusy,accept)
     if(state.listLoading && !state.listLoaded) LoadingNotice(R.string.chat_loading)
     if(state.listFailed && state.conversations.isEmpty()) FeedbackNotice(R.string.chat_list_failed,error=true,retry=retry)
     if(state.listLoaded && state.conversations.isEmpty()) {
@@ -155,6 +160,7 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
                                 }
                             }
                             is ThreadItem.Message -> Bubble(item,state.live,me,zone,announce=item.key==newest && !item.mine,
+                                waiting=state.waiting.firstOrNull {it.id==item.key}?.media,copy={message,preview -> vm.mediaCopy(message,preview)},
                                 onRetry={vm.retry(item.key)},onDiscard={vm.discard(item.key)},onDelete={vm.delete(item.key)})
                         }
                     }
@@ -170,7 +176,17 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         }
         HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
         when {
-            state.threadOpen -> Composer(conversation.id,name) {vm.send(it)}
+            state.threadOpen -> {
+                state.preparing?.let {(kind,share) ->
+                    Text(if(kind==MediaKind.VIDEO) stringResource(R.string.chat_media_preparing_video,(share*100).toInt()) else stringResource(R.string.chat_media_preparing_photo),
+                        style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier=Modifier.padding(start=16.dp,top=8.dp).semantics {liveRegion=LiveRegionMode.Polite})
+                }
+                if(!state.media) Text(if(conversation.asPatient) stringResource(R.string.chat_media_allow_above) else stringResource(R.string.chat_media_not_allowed,name),
+                    style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.padding(start=16.dp,top=8.dp))
+                if(conversation.asPatient && !state.media) Box(Modifier.padding(horizontal=16.dp)) {TextButton({vm.setConsent(true)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.chat_agreement_allow_media))}}
+                Composer(conversation.id,name,attach={AttachButton(state.media,state.preparing!=null) {uri,mime -> vm.attach(uri,mime)}}) {vm.send(it)}
+            }
             state.consented -> Box(Modifier.padding(16.dp)) {FeedbackNotice(R.string.chat_closed)}
             // The agreement is long, so it scrolls above the keyboard rather than pushing the thread away.
             conversation.asPatient -> Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState()).padding(16.dp)) {AgreementCard(state.consentBusy) {vm.setConsent(true)}}
@@ -180,9 +196,9 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
     }
 }
 
-/** The four things a patient agrees to by turning messages on, in the same words as the web. Version care-chat-v1. */
-@Composable fun AgreementPoints() {
-    listOf(R.string.chat_agreement_point1,R.string.chat_agreement_point2,R.string.chat_agreement_point3,R.string.chat_agreement_point4).forEach {point ->
+/** What a patient agrees to by turning messages on, in the same words as the web. Version care-chat-v2; the fifth point is what v2 added. */
+@Composable fun AgreementPoints(only:List<Int>?=null) {
+    (only ?: listOf(R.string.chat_agreement_point1,R.string.chat_agreement_point2,R.string.chat_agreement_point3,R.string.chat_agreement_point4,R.string.chat_agreement_point5)).forEach {point ->
         Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Default.CheckCircle,null,Modifier.size(18.dp).padding(top=2.dp),tint=MaterialTheme.colorScheme.primary)
             Text(stringResource(point),style=MaterialTheme.typography.bodyMedium,modifier=Modifier.weight(1f))
@@ -199,6 +215,16 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
     }
 }
 
+/** For a patient who agreed before photos and video existed: what they are agreeing to now, and the way to agree. */
+@Composable private fun MediaAgreementCard(busy:Boolean,accept:()->Unit) {
+    ClinicalCard {
+        Text(stringResource(R.string.chat_agreement_media_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.semantics {heading()})
+        Text(stringResource(R.string.chat_agreement_media_detail),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        AgreementPoints(listOf(R.string.chat_agreement_point5))
+        ActionButton(R.string.chat_agreement_allow_media,accept,busy=busy)
+    }
+}
+
 /** On Profile, beside the other privacy choices: whether messages are on, and the way to change it. */
 @Composable fun ChatConsentCard(state:ChatState,change:(Boolean)->Unit) {
     val consent=state.consent ?: return
@@ -207,6 +233,7 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         Text(stringResource(R.string.chat_agreement_profile_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.semantics {heading()})
         Text(stringResource(R.string.chat_agreement_profile_detail),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
         StatusPill(stringResource(if(consent.granted) R.string.chat_agreement_on else R.string.chat_agreement_off),if(consent.granted) PillTone.POSITIVE else PillTone.NEUTRAL)
+        if(consent.granted && !consent.media) {AgreementPoints(listOf(R.string.chat_agreement_point5)); ActionButton(R.string.chat_agreement_allow_media,{change(true)},busy=state.consentBusy)}
         if(consent.granted) ActionButton(R.string.chat_agreement_turn_off,{confirming=true},outlined=true,busy=state.consentBusy)
         else {AgreementPoints(); ActionButton(R.string.chat_agreement_accept,{change(true)},busy=state.consentBusy)}
     }
@@ -216,7 +243,8 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         dismissButton={TextButton({confirming=false}) {Text(stringResource(R.string.chat_agreement_keep_on))}})
 }
 
-@Composable private fun Bubble(item:ThreadItem.Message,live:Boolean,me:String,zone:ZoneId,announce:Boolean,onRetry:()->Unit,onDiscard:()->Unit,onDelete:()->Unit) {
+@Composable private fun Bubble(item:ThreadItem.Message,live:Boolean,me:String,zone:ZoneId,announce:Boolean,waiting:MediaDraft?,copy:suspend (ChatMessage,Boolean)->String?,
+    onRetry:()->Unit,onDiscard:()->Unit,onDelete:()->Unit) {
     val message=item.message
     if(message.kind==MessageKind.SYSTEM) {
         Text(message.body,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,textAlign=TextAlign.Center,modifier=Modifier.fillMaxWidth())
@@ -233,9 +261,14 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         else -> Triple(MaterialTheme.colorScheme.secondaryContainer,MaterialTheme.colorScheme.onSecondaryContainer,null)
     }
     Column(Modifier.fillMaxWidth(),horizontalAlignment=if(item.mine) Alignment.End else Alignment.Start,verticalArrangement=Arrangement.spacedBy(2.dp)) {
-        Surface(color=container,contentColor=content,border=border,
+        val media=message.kind==MessageKind.ATTACHMENT && !message.deleted
+        if(media) Box(Modifier.semantics {if(announce) liveRegion=LiveRegionMode.Polite}
+            .then(if(item.state==SendState.FAILED) Modifier.border(1.5.dp,MaterialTheme.colorScheme.error,RoundedCornerShape(20.dp)).padding(3.dp) else Modifier)) {
+            MediaBubble(message,item.mine,waiting,copy)
+        }
+        if(!media || message.body.isNotBlank()) Surface(color=container,contentColor=content,border=border,
             shape=RoundedCornerShape(topStart=18.dp,topEnd=18.dp,bottomStart=if(item.mine) 18.dp else 4.dp,bottomEnd=if(item.mine) 4.dp else 18.dp),
-            modifier=Modifier.widthIn(max=300.dp).semantics {contentDescription=said; if(announce) liveRegion=LiveRegionMode.Polite}) {
+            modifier=Modifier.widthIn(max=300.dp).semantics {contentDescription=said; if(announce && !media) liveRegion=LiveRegionMode.Polite}) {
             Text(text,style=MaterialTheme.typography.bodyLarge,fontStyle=if(message.deleted) FontStyle.Italic else FontStyle.Normal,
                 modifier=Modifier.padding(horizontal=14.dp,vertical=9.dp))
         }
@@ -262,12 +295,13 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
         dismissButton={TextButton({asking=false}) {Text(stringResource(R.string.chat_delete_no))}})
 }
 
-@Composable private fun Composer(conversationId:String,name:String,send:(String)->Unit) {
+@Composable private fun Composer(conversationId:String,name:String,attach:@Composable ()->Unit={},send:(String)->Unit) {
     var draft by rememberSaveable(conversationId) {mutableStateOf("")}
     val words=draft.trim()
     val left=CHAT_BODY_LIMIT-draft.length
     Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
         val label=stringResource(R.string.chat_write_to,name)
+        attach()
         OutlinedTextField(draft,{if(it.length<=CHAT_BODY_LIMIT) draft=it},Modifier.weight(1f).semantics {contentDescription=label},
             placeholder={Text(stringResource(R.string.chat_placeholder))},maxLines=5,shape=MaterialTheme.shapes.large,
             supportingText=if(left<=200) ({Text(pluralStringResource(R.plurals.chat_characters_left,left,left))}) else null)

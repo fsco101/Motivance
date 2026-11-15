@@ -1,7 +1,7 @@
-import type { ChatMessage } from '@/data/chat'
+import type { ChatMessage, MediaDraft } from '@/data/chat'
 
 /** A message this device has written and the server has not yet confirmed. It keeps its ID across retries, so it can never arrive twice. */
-export type Outgoing = { id: string; conversationId: string; body: string; createdAt: string; failed: boolean }
+export type Outgoing = { id: string; conversationId: string; body: string; createdAt: string; failed: boolean; media?: MediaDraft; previewUrl?: string }
 
 export type ThreadItem =
   | { type: 'day'; key: string; at: string }
@@ -23,7 +23,8 @@ export function threadItems(messages: readonly ChatMessage[], outgoing: readonly
   const seen = Boolean(lastMine && otherReadAt && Date.parse(otherReadAt) >= Date.parse(lastMine.createdAt))
   const waiting = outgoing.filter((item) => !known.has(item.id)).map((item): Extract<ThreadItem, { type: 'message' }> => ({
     type: 'message', key: item.id, mine: true, state: item.failed ? 'failed' : 'sending', seen: false,
-    message: { id: item.id, conversationId: item.conversationId, senderId: me, kind: 'text', body: item.body, data: {}, createdAt: item.createdAt, deleted: false },
+    message: { id: item.id, conversationId: item.conversationId, senderId: me, kind: item.media ? 'attachment' : 'text', body: item.body,
+      data: item.media ? { attachment_kind: item.media.kind, local_preview: item.previewUrl } : {}, createdAt: item.createdAt, deleted: false },
   }))
   const rows = [
     ...delivered.map((message): Extract<ThreadItem, { type: 'message' }> => ({ type: 'message', key: message.id, message, mine: message.senderId === me, state: 'sent', seen: seen && message.id === lastMine!.id })),

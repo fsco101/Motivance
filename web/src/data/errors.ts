@@ -3,6 +3,8 @@ export type FailureKey =
   | 'errors.credentials' | 'errors.rateLimited' | 'errors.unconfirmed' | 'errors.invalidCode'
   | 'errors.passwordPolicy' | 'errors.sessionExpired' | 'errors.forbidden' | 'errors.offline' | 'errors.request'
   | 'errors.chatClosed' | 'errors.chatRateLimited' | 'errors.chatTooLate' | 'errors.chatConsentRequired'
+  | 'errors.chatMediaConsent' | 'errors.chatMediaTooLarge' | 'errors.chatMediaInvalid' | 'errors.chatVideoCap' | 'errors.chatMediaMissing'
+  | 'errors.chatMediaUnreadable' | 'errors.chatMediaUnsupported'
 
 type Failure = { status?: number; code?: string; message?: string; name?: string }
 
@@ -12,6 +14,13 @@ export function failureKey(error: unknown): FailureKey {
   // The chat functions name their refusals in the message, as the booking ones do.
   if (failure.message === 'chat_closed') return 'errors.chatClosed'
   if (failure.message === 'chat_consent_required') return 'errors.chatConsentRequired'
+  if (failure.message === 'chat_media_consent_required') return 'errors.chatMediaConsent'
+  if (failure.message === 'chat_media_too_large') return 'errors.chatMediaTooLarge'
+  if (failure.message === 'chat_media_invalid') return 'errors.chatMediaInvalid'
+  if (failure.message === 'chat_video_cap') return 'errors.chatVideoCap'
+  if (failure.message === 'chat_media_missing') return 'errors.chatMediaMissing'
+  if (failure.message === 'chat_media_unreadable') return 'errors.chatMediaUnreadable'
+  if (failure.message === 'chat_media_unsupported') return 'errors.chatMediaUnsupported'
   if (failure.message === 'chat_rate_limited') return 'errors.chatRateLimited'
   if (failure.message === 'chat_too_late') return 'errors.chatTooLate'
   if (failure.status === 429 || code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') return 'errors.rateLimited'

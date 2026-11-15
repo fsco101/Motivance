@@ -5,7 +5,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 object SessionMigrations {
     /** Every migration, in order, for each place that opens the database. */
-    val ALL get()=arrayOf(FROM_1_TO_2,FROM_2_TO_3)
+    val ALL get()=arrayOf(FROM_1_TO_2,FROM_2_TO_3,FROM_3_TO_4)
+    /** A photo or video waiting with a chat message (issue #106). Messages already waiting have none. */
+    val FROM_3_TO_4=object:Migration(3,4) {
+        override fun migrate(db:SupportSQLiteDatabase) {db.execSQL("ALTER TABLE chat_outbox ADD COLUMN mediaJson TEXT DEFAULT NULL")}
+    }
     /** Chat messages written offline (issue #108). Nothing existing changes. */
     val FROM_2_TO_3=object:Migration(2,3) {
         override fun migrate(db:SupportSQLiteDatabase) {

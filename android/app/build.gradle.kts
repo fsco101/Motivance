@@ -36,6 +36,8 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     implementation(libs.room.runtime); implementation(libs.room.ktx); ksp(libs.room.compiler)
     implementation(libs.work.runtime)
+    // Care chat video (#106): re-encodes a picked clip to 480p H.264 on the phone before upload.
+    implementation(libs.media3.transformer); implementation(libs.media3.effect); implementation(libs.media3.common)
     implementation(platform(libs.firebase.bom)); implementation(libs.firebase.messaging)
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")

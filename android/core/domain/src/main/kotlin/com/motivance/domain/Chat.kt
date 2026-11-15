@@ -22,6 +22,8 @@ enum class MessageKind(val key:String) {
 data class ChatMessage(
     val id:String,val conversationId:String,val senderId:String?,val kind:MessageKind?,val body:String,
     val createdAt:String,val deleted:Boolean=false,
+    /** A photo or video, for an attachment message; its words are the caption. */
+    val attachment:Attachment?=null,
 ) {
     val at:Instant get()=parseServerTime(createdAt)
 }
@@ -33,13 +35,61 @@ data class ChatMessage(
 data class Conversation(
     val id:String,val asPatient:Boolean,val otherId:String,val otherName:String,val otherPhoto:String?,val open:Boolean,
     val lastMessageAt:String?,val lastMessage:ChatMessage?,val unread:Int,val consented:Boolean=true,
+    /** Whether the patient has agreed to photos and video, which needs the second version of the agreement. */
+    val media:Boolean=true,
 )
 
 /** Newest first. [otherReadAt] is how far the other person has read, for "Seen". */
-data class MessagePage(val messages:List<ChatMessage>,val more:Boolean,val open:Boolean,val otherReadAt:String?,val consented:Boolean=true)
+data class MessagePage(val messages:List<ChatMessage>,val more:Boolean,val open:Boolean,val otherReadAt:String?,val consented:Boolean=true,val media:Boolean=true)
 
-/** The patient's answer to the current messages agreement, care-chat-v1 on the server. */
-data class ChatConsent(val version:String,val granted:Boolean,val at:String?)
+/** The patient's answer to the messages agreement. [media] is whether they agreed to its current version, which allows photos and video. */
+data class ChatConsent(val version:String,val granted:Boolean,val at:String?,val media:Boolean=false,val acceptedVersion:String?=null)
+
+/** Mirrors MEDIA_LIMITS on the web and chat_media_limit on the server, which checks every stored file against these. */
+object MediaLimits {
+    const val IMAGE=1_048_576L
+    const val VIDEO=6_291_456L
+    const val PREVIEW=204_800L
+    const val PHOTO_LONG_SIDE=1600
+    const val PREVIEW_LONG_SIDE=320
+    const val VIDEO_SHORT_SIDE=480
+    const val VIDEO_LONG_SIDE=854
+    const val VIDEO_MS=30_000L
+    const val VIDEO_BITS=1_000_000
+    const val LINK_SECONDS=300
+}
+
+enum class MediaKind(val key:String) { IMAGE("image"), VIDEO("video") }
+
+/** A photo or video as its message describes it. */
+data class Attachment(
+    val kind:MediaKind,val mime:String,val width:Int,val height:Int,val durationMs:Long?,val bytes:Long,
+    val mediaPath:String,val previewPath:String,val expiresAt:String,
+) {
+    /** After 15 days the server issues no link and the file is removed, whatever is still on screen. */
+    fun expired(now:Long=System.currentTimeMillis())=parseServerTime(expiresAt).toEpochMilli()<=now
+}
+
+data class Size(val width:Int,val height:Int)
+
+/** The largest even size inside the limits that keeps the shape. Even, because video encoders need it. Never enlarges. Mirrors fitWithin on the web. */
+fun fitWithin(width:Int,height:Int,longSide:Int,shortSide:Int=longSide):Size {
+    val scale=minOf(1.0,longSide.toDouble()/maxOf(width,height),shortSide.toDouble()/minOf(width,height))
+    fun even(value:Int)=maxOf(2,(kotlin.math.floor(value*scale/2)*2).toInt())
+    return Size(even(width),even(height))
+}
+
+/** What a video becomes: its size, and how much of it is kept. Longer clips keep their first 30 seconds. Mirrors videoPlan on the web. */
+data class VideoPlan(val width:Int,val height:Int,val durationMs:Long,val trimmed:Boolean)
+fun videoPlan(width:Int,height:Int,durationMs:Long):VideoPlan {
+    require(width>0 && height>0 && durationMs>0) {"chat_media_invalid"}
+    val size=fitWithin(width,height,MediaLimits.VIDEO_LONG_SIDE,MediaLimits.VIDEO_SHORT_SIDE)
+    return VideoPlan(size.width,size.height,minOf(durationMs,MediaLimits.VIDEO_MS),durationMs>MediaLimits.VIDEO_MS+250)
+}
+
+/** A photo or video made smaller on this phone and waiting to be sent: its two files, and what the server is told about them. */
+data class MediaDraft(val kind:MediaKind,val file:String,val mime:String,val preview:String,val width:Int,val height:Int,val durationMs:Long?)
+data class MediaPlaces(val mediaPath:String,val previewPath:String)
 data class ReadMark(val conversationId:String,val userId:String,val readAt:String)
 
 /** Where and how this account may open the live connection. The token is fresh: an expired one is refused at join. */
@@ -57,6 +107,14 @@ interface ChatRepository {
     suspend fun loadChatConsent():ChatConsent
     /** Turning messages on or off. Giving the same answer twice records nothing. */
     suspend fun setChatConsent(granted:Boolean):ChatConsent
+    /** Step one of sending a photo or video: the server agrees to it and names where its files go. The same ID again gives the same places. */
+    suspend fun startAttachment(id:String,conversationId:String,draft:MediaDraft):MediaPlaces {throw UnsupportedOperationException()}
+    /** A file already there from an earlier try counts as stored: nothing can overwrite it. */
+    suspend fun uploadMedia(path:String,bytes:ByteArray,mime:String) {throw UnsupportedOperationException()}
+    /** Step two, once both files are stored. A file the server finds over its limit is refused and removed. */
+    suspend fun sendAttachment(id:String,caption:String):ChatMessage {throw UnsupportedOperationException()}
+    /** A short-lived link to one file, for the two people in the conversation only, and only until it expires. */
+    suspend fun mediaLink(path:String,seconds:Int=MediaLimits.LINK_SECONDS):String {throw UnsupportedOperationException()}
 }
 
 /**
@@ -81,7 +139,7 @@ fun ChatMessage.deletable(me:String,now:Long=System.currentTimeMillis())=
  * [failed] means the server refused it, so it waits for the person to try again or discard it. Anything else is still going,
  * and goes again by itself when the connection returns.
  */
-data class Outgoing(val id:String,val conversationId:String,val body:String,val createdAt:Long,val failed:Boolean=false)
+data class Outgoing(val id:String,val conversationId:String,val body:String,val createdAt:Long,val failed:Boolean=false,val media:MediaDraft?=null)
 
 sealed interface ThreadItem {
     val key:String
@@ -102,7 +160,7 @@ fun threadItems(messages:List<ChatMessage>,outgoing:List<Outgoing>,me:String,oth
     val seen=lastMine!=null && otherReadAt!=null && parseServerTime(otherReadAt)>=lastMine.at
     val rows=delivered.map {ThreadItem.Message(it,it.senderId==me,SendState.SENT,seen && it.id==lastMine?.id)} +
         outgoing.filter {it.id !in known}.sortedBy {it.createdAt}
-            .map {ThreadItem.Message(ChatMessage(it.id,it.conversationId,me,MessageKind.TEXT,it.body,Instant.ofEpochMilli(it.createdAt).toString()),true,
+            .map {ThreadItem.Message(ChatMessage(it.id,it.conversationId,me,if(it.media!=null) MessageKind.ATTACHMENT else MessageKind.TEXT,it.body,Instant.ofEpochMilli(it.createdAt).toString()),true,
                 if(it.failed) SendState.FAILED else SendState.SENDING,false)}
     val items=mutableListOf<ThreadItem>()
     var day:java.time.LocalDate?=null

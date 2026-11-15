@@ -82,4 +82,29 @@ class ChatTest {
         assertEquals(SendFailure.REFUSED,sendFailure(RemoteFailure(400,"chat_closed")))
         assertEquals(SendFailure.SIGNED_OUT,sendFailure(RemoteFailure(401)))
     }
+
+    @Test fun sizesForUploadMatchTheWeb() {
+        assertEquals(Size(1600,1200),fitWithin(4032,3024,1600))
+        assertEquals(Size(1200,1600),fitWithin(3024,4032,1600))
+        assertEquals(Size(800,600),fitWithin(800,600,1600))
+        assertEquals(VideoPlan(852,480,12_000,false),videoPlan(1920,1080,12_000))
+        assertEquals(VideoPlan(480,852,12_000,false),videoPlan(1080,1920,12_000))
+        assertEquals(VideoPlan(640,480,5_000,false),videoPlan(640,480,5_000))
+        assertEquals(VideoPlan(852,478,5_000,false),videoPlan(1001,563,5_000))
+        assertEquals(VideoPlan(852,480,30_000,true),videoPlan(1280,720,95_000))
+        assertFalse(videoPlan(1280,720,30_100).trimmed)
+        assertTrue(runCatching {videoPlan(0,720,5_000)}.isFailure)
+    }
+
+    @Test fun anAttachmentExpiresOnItsDay() {
+        val attachment=Attachment(MediaKind.IMAGE,"image/jpeg",1600,1200,null,200_000,"c/a/media.jpg","c/a/preview.jpg","2026-11-30T07:00:00+00:00")
+        assertFalse(attachment.expired(java.time.Instant.parse("2026-11-30T06:59:59Z").toEpochMilli()))
+        assertTrue(attachment.expired(java.time.Instant.parse("2026-11-30T07:00:00Z").toEpochMilli()))
+    }
+
+    @Test fun aPhotoOnItsWayShowsAsAnAttachment() {
+        val draft=MediaDraft(MediaKind.IMAGE,"f","image/jpeg","p",1600,1200,null)
+        val item=threadItems(emptyList(),listOf(Outgoing("x","c","",1,media=draft)),"me",null,zone).filterIsInstance<ThreadItem.Message>().single()
+        assertEquals(MessageKind.ATTACHMENT,item.message.kind)
+    }
 }

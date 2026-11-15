@@ -58,10 +58,14 @@ import java.time.OffsetDateTime
             action(checkNotNull(access),id)
         }
     }
-    private suspend fun call(path: String, body: JSONObject?, bearer: String? = null, method: String = "POST"): String = withContext(Dispatchers.IO) {
+    /** Every request goes to HTTPS, or in a debug build to the local stack on port 54321, and never carries credentials in the address. */
+    private fun requireSafeBase() {
         val url = baseUrl.toHttpUrlOrNull()
         val localDebug = allowLocalDevelopment && url?.scheme == "http" && url.host in setOf("localhost", "127.0.0.1", "10.0.2.2") && url.port == 54321
         check(url != null && (url.scheme == "https" || localDebug) && url.encodedUsername.isEmpty() && url.encodedPassword.isEmpty() && publicKey.isNotBlank()) { "Configure an HTTPS Supabase endpoint, or the debug-only local endpoint on port 54321." }
+    }
+    private suspend fun call(path: String, body: JSONObject?, bearer: String? = null, method: String = "POST"): String = withContext(Dispatchers.IO) {
+        requireSafeBase()
         val builder = Request.Builder().url(baseUrl.trimEnd('/') + path).header("apikey", publicKey)
         if (bearer != null) builder.header("Authorization", "Bearer $bearer")
         if (method == "GET") builder.get() else builder.method(method, (body ?: JSONObject()).toString().toRequestBody("application/json".toMediaType()))
@@ -270,6 +274,35 @@ import java.time.OffsetDateTime
     override suspend fun deleteMessage(id:String)=authorized {token,_ -> ChatJson.message(JSONObject(call("/rest/v1/rpc/delete_message",JSONObject().put("p_id",id),token)))}
     /** Asking the server who this is renews an expired token first, so the live connection never joins with one. */
     override suspend fun liveAccess()=authorized {token,_ -> call("/auth/v1/user",null,token,"GET"); LiveAccess(baseUrl,publicKey,token)}
+    override suspend fun startAttachment(id:String,conversationId:String,draft:MediaDraft)=authorized {token,_ ->
+        ChatJson.places(call("/rest/v1/rpc/start_attachment",JSONObject().put("p_id",id).put("p_conversation",conversationId).put("p_kind",draft.kind.key)
+            .put("p_mime",draft.mime).put("p_width",draft.width).put("p_height",draft.height).put("p_duration_ms",draft.durationMs ?: JSONObject.NULL),token))
+    }
+    override suspend fun uploadMedia(path:String,bytes:ByteArray,mime:String) {authorized {token,_ -> storage("/storage/v1/object/$CHAT_BUCKET/$path",bytes.toRequestBody(mime.toMediaType()),token,upload=true)}}
+    override suspend fun sendAttachment(id:String,caption:String)=authorized {token,_ ->
+        val result=JSONObject(call("/rest/v1/rpc/send_attachment",JSONObject().put("p_id",id).put("p_caption",caption),token))
+        // A file over its limit is refused and removed in the same step, so the answer says so rather than failing.
+        result.optString("refused").takeIf {it.isNotBlank()}?.let {throw RemoteFailure(400,it)}
+        ChatJson.message(result)
+    }
+    override suspend fun mediaLink(path:String,seconds:Int)=authorized {token,_ ->
+        val signed=JSONObject(storage("/storage/v1/object/sign/$CHAT_BUCKET/$path",JSONObject().put("expiresIn",seconds).toString().toRequestBody("application/json".toMediaType()),token)).getString("signedURL")
+        baseUrl.trimEnd('/')+"/storage/v1"+signed
+    }
+    /** Storage takes raw files, so it has its own call. Paths come from the server and are checked before they are used. */
+    private suspend fun storage(path:String,body:RequestBody,bearer:String,upload:Boolean=false):String = withContext(Dispatchers.IO) {
+        requireSafeBase()
+        check(STORAGE_PATH.matches(path.substringBefore('?'))) {"Unexpected storage path"}
+        val request=Request.Builder().url(baseUrl.trimEnd('/')+path).header("apikey",publicKey).header("Authorization","Bearer $bearer")
+            .apply {if(upload) header("x-upsert","false")}.post(body).build()
+        http.newCall(request).execute().use {response ->
+            val text=response.body?.string().orEmpty()
+            // A file stored by an earlier try cannot be replaced, and need not be.
+            if(upload && !response.isSuccessful && text.contains("Duplicate",ignoreCase=true)) return@use text
+            if(!response.isSuccessful) throw RemoteFailure(response.code,null)
+            text
+        }
+    }
     override suspend fun loadChatConsent()=authorized {token,_ -> ChatJson.consent(call("/rest/v1/rpc/my_chat_consent",JSONObject(),token))}
     override suspend fun setChatConsent(granted:Boolean)=authorized {token,_ -> ChatJson.consent(call("/rest/v1/rpc/set_chat_consent",JSONObject().put("p_granted",granted),token))}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
@@ -307,3 +340,7 @@ private const val ADMIN_PAGE=50
 private const val ACTIVITY_PAGE=30
 /** JSON null and missing keys both read as null; org.json's optString would return the text "null". */
 private fun JSONObject.text(key:String):String?=if(isNull(key)) null else getString(key)
+
+private const val CHAT_BUCKET="chat-media"
+/** conversation/attachment/media.ext or preview.jpg, under the chat bucket, for upload or for a link. */
+private val STORAGE_PATH=Regex("/storage/v1/object/(sign/)?chat-media/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.(jpg|webp|mp4|webm)|preview\\.jpg)")

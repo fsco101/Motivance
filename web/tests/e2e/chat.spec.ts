@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
@@ -48,6 +49,8 @@ test.afterAll(async () => {
   await staff.close()
   await person.close()
   removeUsers([therapist, patient, quiet])
+  // Removing the accounts queued their photos and videos; this takes them out of Storage too.
+  execFileSync('python', ['../scripts/cleanup_chat_media.py', '--target', 'local', '--apply'], { encoding: 'utf8' })
 })
 
 test('a therapist finds a conversation for each patient, and a patient with one therapist lands in theirs', async () => {
@@ -108,6 +111,87 @@ test('unread messages are counted beside the bell and in the list, and clear whe
   await expect(log(staff)).toContainText('One more question.')
   await expect(staff.getByRole('link', { name: 'Messages', exact: true }).first()).toBeVisible({ timeout: 10_000 })
   await expect(staff.getByRole('link', { name: /Messages, \d+ unread/ })).toHaveCount(0)
+})
+
+/** A large, detailed photo made in the browser, so no picture is committed: noise does not compress, so it starts well over 1 MB. */
+const bigPhoto = (page: Page) => page.evaluate(async () => {
+  const canvas = Object.assign(document.createElement('canvas'), { width: 3000, height: 2000 })
+  const context = canvas.getContext('2d')!
+  const pixels = context.createImageData(3000, 2000)
+  for (let index = 0; index < pixels.data.length; index += 1) pixels.data[index] = index % 4 === 3 ? 255 : Math.random() * 255
+  context.putImageData(pixels, 0, 0)
+  const blob = await new Promise<Blob>((resolve) => canvas.toBlob((made) => resolve(made!), 'image/jpeg', 0.95))
+  return Array.from(new Uint8Array(await blob.arrayBuffer()))
+})
+
+/** A short 720p clip recorded in the browser, larger than what is sent. */
+const clip = (page: Page) => page.evaluate(async () => {
+  const canvas = Object.assign(document.createElement('canvas'), { width: 1280, height: 720 })
+  const context = canvas.getContext('2d')!
+  const recorder = new MediaRecorder(canvas.captureStream(30), { mimeType: 'video/webm', videoBitsPerSecond: 4_000_000 })
+  const parts: Blob[] = []
+  recorder.ondataavailable = (event) => parts.push(event.data)
+  const done = new Promise((resolve) => { recorder.onstop = resolve })
+  recorder.start(250)
+  const started = performance.now()
+  while (performance.now() - started < 2500) {
+    context.fillStyle = `hsl(${(performance.now() / 10) % 360} 70% 50%)`
+    context.fillRect(0, 0, 1280, 720)
+    context.fillStyle = '#fff'
+    context.fillRect(((performance.now() - started) / 2500) * 1180, 300, 100, 100)
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+  }
+  recorder.stop()
+  await done
+  return Array.from(new Uint8Array(await new Blob(parts).arrayBuffer()))
+})
+
+test('a photo and a video are made smaller, sent, and open for the other person', async () => {
+  test.setTimeout(90_000)
+  const original = Buffer.from(await bigPhoto(staff))
+  expect(original.byteLength).toBeGreaterThan(1_048_576)
+  await staff.locator('input[type=file]').setInputFiles({ name: 'exercise.jpg', mimeType: 'image/jpeg', buffer: original })
+  const sentPhoto = log(staff).getByRole('button', { name: 'Open Photo' })
+  await expect(sentPhoto).toBeVisible({ timeout: 20_000 })
+  await expect(log(staff).getByText('Sending…')).toHaveCount(0, { timeout: 20_000 })
+  await expect(log(person).getByRole('button', { name: 'Open Photo' })).toBeVisible({ timeout: 10_000 })
+  // What was stored is the shrunk photo, inside every limit.
+  const photo = sql(`select width||'x'||height||' '||bytes||' '||mime from public.chat_attachments a join public.conversations c on c.id=a.conversation_id
+    where c.patient_id='${patient.id}' and a.kind='image' and a.sent_at is not null order by a.sent_at desc limit 1`)
+  const [size, bytes, mime] = photo.split(' ')
+  expect(size).toBe('1600x1066')
+  expect(Number(bytes)).toBeLessThanOrEqual(1_048_576)
+  expect(mime).toBe('image/jpeg')
+  await log(person).getByRole('button', { name: 'Open Photo' }).click()
+  const opened = person.getByRole('dialog').getByRole('img', { name: 'Photo sent in the conversation' })
+  await expect(opened).toBeVisible()
+  await expect.poll(() => opened.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1600)
+  await person.keyboard.press('Escape')
+
+  await person.locator('input[type=file]').setInputFiles({ name: 'clip.webm', mimeType: 'video/webm', buffer: Buffer.from(await clip(person)) })
+  await expect(person.getByText(/Preparing video/)).toBeVisible()
+  await expect(log(staff).getByRole('button', { name: /^Open Video/ })).toBeVisible({ timeout: 30_000 })
+  const video = sql(`select width||'x'||height||' '||bytes||' '||duration_ms||' '||mime from public.chat_attachments a join public.conversations c on c.id=a.conversation_id
+    where c.patient_id='${patient.id}' and a.kind='video' and a.sent_at is not null order by a.sent_at desc limit 1`).split(' ')
+  expect(video[0]).toBe('852x480')
+  expect(Number(video[1])).toBeLessThanOrEqual(6_291_456)
+  expect(Number(video[2])).toBeGreaterThan(1_000)
+  expect(Number(video[2])).toBeLessThanOrEqual(30_500)
+  await log(staff).getByRole('button', { name: /^Open Video/ }).click()
+  const player = staff.getByRole('dialog').locator('video')
+  await expect.poll(() => player.evaluate((element: HTMLVideoElement) => element.readyState), { timeout: 10_000 }).toBeGreaterThanOrEqual(2)
+  expect(await player.evaluate((element: HTMLVideoElement) => element.videoWidth)).toBe(852)
+  await staff.keyboard.press('Escape')
+  await noViolations(staff)
+})
+
+test('a photo past its 15 days says so instead of showing', async () => {
+  sql(`update public.chat_messages set data=jsonb_set(data,'{expires_at}',to_jsonb(now()-interval '1 second')) where kind='attachment' and data->>'attachment_kind'='image'
+    and conversation_id=(select id from public.conversations where patient_id='${patient.id}')`)
+  sql(`update public.chat_attachments set expires_at=now()-interval '1 second' where kind='image' and conversation_id=(select id from public.conversations where patient_id='${patient.id}')`)
+  await person.reload()
+  await expect(log(person).getByText('Photo expired after 15 days')).toBeVisible()
+  await expect(log(person).getByRole('button', { name: 'Open Photo' })).toHaveCount(0)
 })
 
 test('a message taken back disappears for both, and leaves a mark', async () => {

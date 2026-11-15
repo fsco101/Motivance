@@ -15,7 +15,9 @@ data class LocalConsent(@PrimaryKey val id:String,val ownerId:String,val event:S
 
 /** A chat message written on this phone and not yet confirmed by the server. Kept per account, and gone at sign-out. */
 @Entity(tableName="chat_outbox",indices=[Index("ownerId")])
-data class ChatOutboxEntry(@PrimaryKey val id:String,val ownerId:String,val conversationId:String,val body:String,val createdAt:Long,val failed:Boolean)
+data class ChatOutboxEntry(@PrimaryKey val id:String,val ownerId:String,val conversationId:String,val body:String,val createdAt:Long,val failed:Boolean,
+    /** A photo or video made smaller and waiting with this message: where its two files are on the phone, and what the server is told. */
+    @ColumnInfo(defaultValue="NULL") val mediaJson:String?=null)
 
 @Dao interface SessionDao {
     @Insert(onConflict=OnConflictStrategy.REPLACE) suspend fun put(session:LocalSession)
@@ -47,5 +49,5 @@ data class ChatOutboxEntry(@PrimaryKey val id:String,val ownerId:String,val conv
     @Query("SELECT COUNT(*) FROM sync_outbox o JOIN local_sessions s ON s.id=o.sessionId WHERE o.ownerId=:owner AND o.state<>'LOCAL_ONLY' AND s.startedAt>=:since")
     suspend fun prescribedSince(owner:String,since:Long):Int
 }
-@Database(entities=[LocalSession::class,OutboxEntry::class,CachedPrescription::class,LocalConsent::class,ChatOutboxEntry::class],version=3,exportSchema=true)
+@Database(entities=[LocalSession::class,OutboxEntry::class,CachedPrescription::class,LocalConsent::class,ChatOutboxEntry::class],version=4,exportSchema=true)
 abstract class SessionDatabase:RoomDatabase() { abstract fun sessions():SessionDao }

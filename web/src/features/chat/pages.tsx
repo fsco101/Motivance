@@ -5,13 +5,14 @@ import { Navigate, useParams, useSearchParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { toast } from '@/components/Toast'
 import {
-  deleteMessage, loadChatConsent, loadConversations, setChatConsent, loadMessages, markConversationRead, mergeMessage, sendMessage, subscribeToChat,
+  deleteMessage, loadChatConsent, loadConversations, mediaLink, sendMedia, setChatConsent, loadMessages, markConversationRead, mergeMessage, sendMessage, subscribeToChat,
   type ChatMessage, type Conversation, type MessagePage,
 } from '@/data/chat'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
 import { asLoad, ready, type Load } from '@/features/shared'
-import { MessagesIconLink, MessagesView, type Thread } from './MessagesView'
+import { MediaError, prepareVideo, preparePhoto } from './media'
+import { MessagesIconLink, MessagesView, type Preparing, type Thread } from './MessagesView'
 import type { Outgoing } from './thread'
 
 /** The live connection carries news as it happens. This is only the safety net for a connection that died without saying so. */
@@ -106,6 +107,7 @@ function useThread(conversation: Conversation | undefined) {
   const { userId } = useSignedIn()
   const id = conversation?.id ?? ''
   const [outgoing, setOutgoing] = useState<Outgoing[]>([])
+  const [preparing, setPreparing] = useState<Preparing | null>(null)
   const pages = useInfiniteQuery({
     queryKey: threadKey(id), enabled: Boolean(id), initialPageParam: null as Before,
     queryFn: ({ pageParam }) => loadMessages(supabase(), id, pageParam),
@@ -114,7 +116,7 @@ function useThread(conversation: Conversation | undefined) {
   const first = pages.data?.pages[0]
   const messages = pages.data?.pages.flatMap((page) => page.messages)
   const thread: Load<Thread> | null = !id ? null : messages && first
-    ? ready({ messages, more: pages.hasNextPage, loadingOlder: pages.isFetchingNextPage, otherReadAt: first.otherReadAt, open: first.open, consented: first.consented })
+    ? ready({ messages, more: pages.hasNextPage, loadingOlder: pages.isFetchingNextPage, otherReadAt: first.otherReadAt, open: first.open, consented: first.consented, media: first.media })
     : pages.isError ? { status: 'error', retry: () => void pages.refetch() } : { status: 'loading' }
 
   // Reading is told to the server once for each new message from the other person, and only while the page is in front of the reader.
@@ -126,9 +128,10 @@ function useThread(conversation: Conversation | undefined) {
 
   const deliver = useCallback(async (item: Outgoing) => {
     try {
-      const stored = await sendMessage(supabase(), item.id, item.conversationId, item.body)
+      const stored = item.media ? await sendMedia(supabase(), item.id, item.conversationId, item.media, item.body) : await sendMessage(supabase(), item.id, item.conversationId, item.body)
       place(client, stored)
       setOutgoing((waiting) => waiting.filter((other) => other.id !== item.id))
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
       void client.invalidateQueries({ queryKey: LIST_KEY })
     } catch (failure) {
       setOutgoing((waiting) => waiting.map((other) => (other.id === item.id ? { ...other, failed: true } : other)))
@@ -139,8 +142,23 @@ function useThread(conversation: Conversation | undefined) {
   }, [client, t])
 
   return {
-    thread, outgoing,
+    thread, outgoing, preparing,
     actions: {
+      // Made smaller here first, then sent like any message: it waits in the thread, and a failure can be tried again.
+      onAttach: (file: File) => {
+        if (!id || preparing) return
+        const kind = file.type.startsWith('video/') ? 'video' : 'image'
+        setPreparing({ kind, share: 0 })
+        const made = kind === 'video' ? prepareVideo(file, (share) => setPreparing({ kind, share })) : preparePhoto(file)
+        void made.then((media) => {
+          const item: Outgoing = { id: crypto.randomUUID(), conversationId: id, body: '', createdAt: new Date().toISOString(), failed: false, media, previewUrl: URL.createObjectURL(media.preview) }
+          setOutgoing((waiting) => [...waiting, item])
+          void deliver(item)
+        }).catch((failure: unknown) => {
+          toast.show(t(failureKey(failure instanceof MediaError ? { message: failure.message } : failure)), 'error')
+        }).finally(() => setPreparing(null))
+      },
+      onLink: (path: string) => mediaLink(supabase(), path),
       onSend: (body: string) => {
         if (!id) return
         const item: Outgoing = { id: crypto.randomUUID(), conversationId: id, body, createdAt: new Date().toISOString(), failed: false }
@@ -154,7 +172,10 @@ function useThread(conversation: Conversation | undefined) {
         setOutgoing((waiting) => waiting.map((other) => (other.id === messageId ? { ...other, failed: false } : other)))
         void deliver({ ...item, failed: false })
       },
-      onDiscard: (messageId: string) => setOutgoing((waiting) => waiting.filter((other) => other.id !== messageId)),
+      onDiscard: (messageId: string) => setOutgoing((waiting) => waiting.filter((other) => {
+        if (other.id === messageId && other.previewUrl) URL.revokeObjectURL(other.previewUrl)
+        return other.id !== messageId
+      })),
       onOlder: () => void pages.fetchNextPage().then((result) => { if (result.isError) toast.show(t(failureKey(result.error)), 'error') }),
       onDelete: (messageId: string) => void deleteMessage(supabase(), messageId)
         .then((stored) => { place(client, stored); void client.invalidateQueries({ queryKey: LIST_KEY }) })
@@ -193,7 +214,7 @@ export function MessagesPage({ base, self }: { base: string; self?: boolean }) {
   const conversations = useConversations()
   const list = conversations.data
   const selected = list?.find((conversation) => conversation.id === id)
-  const { thread, outgoing, actions } = useThread(selected)
+  const { thread, outgoing, preparing, actions } = useThread(selected)
   const agreement = useChatAgreement(Boolean(self))
   const wanted = params.get('with')
   if (!id && list) {
@@ -201,5 +222,5 @@ export function MessagesPage({ base, self }: { base: string; self?: boolean }) {
     if (target) return <Navigate to={`${base}/messages/${target.id}`} replace />
   }
   return <MessagesView base={base} me={userId} self={self} conversations={asLoad(conversations)} selected={id ?? null} thread={thread} outgoing={outgoing} connected={connected} actions={actions}
-    agreement={agreement.consent ? { granted: agreement.consent.granted, busy: agreement.busy, onAccept: () => void agreement.change(true) } : undefined} />
+    preparing={preparing} agreement={agreement.consent ? { granted: agreement.consent.granted, media: agreement.consent.media, busy: agreement.busy, onAccept: () => void agreement.change(true) } : undefined} />
 }

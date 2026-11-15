@@ -3,6 +3,8 @@ package com.motivance.feature.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.motivance.R
+import com.motivance.data.local.ChatMediaStore
+import com.motivance.data.local.MediaProblem
 import com.motivance.designsystem.ToastTone
 import com.motivance.designsystem.Toaster
 import com.motivance.domain.*
@@ -37,6 +39,10 @@ data class ChatState(
     /** A patient's own answer to the messages agreement. Null until read, and always null for a therapist. */
     val consent:ChatConsent?=null,
     val consentBusy:Boolean=false,
+    /** Whether the open conversation's patient has agreed to photos and video. */
+    val media:Boolean=true,
+    /** A photo or video being made smaller before it goes into the outbox, and how far along it is. */
+    val preparing:Pair<MediaKind,Float>?=null,
 ) {
     val unread get()=conversations.sumOf {it.unread}
     val conversation get()=conversations.firstOrNull {it.id==openId}
@@ -45,6 +51,7 @@ data class ChatState(
 
 @HiltViewModel class ChatViewModel @Inject constructor(
     private val repository:ChatRepository,private val outbox:ChatOutbox,private val live:ChatLive,private val toasts:Toaster=Toaster(),
+    private val files:ChatMediaStore=NoMedia,
 ):ViewModel() {
     private val mutable=MutableStateFlow(ChatState())
     val state=mutable.asStateFlow()
@@ -164,7 +171,8 @@ data class ChatState(
         threadJob?.cancel()
         mutable.update {it.copy(openId=conversationId,wantedOther=null,messages=emptyList(),more=false,olderLoading=false,threadLoaded=false,
             threadFailed=false,otherReadAt=null,threadOpen=it.conversations.firstOrNull {c -> c.id==conversationId}?.open ?: true,
-            consented=it.conversations.firstOrNull {c -> c.id==conversationId}?.consented ?: true)}
+            consented=it.conversations.firstOrNull {c -> c.id==conversationId}?.consented ?: true,
+            media=it.conversations.firstOrNull {c -> c.id==conversationId}?.media ?: true)}
         loadThread()
     }
 
@@ -195,7 +203,7 @@ data class ChatState(
                 mutable.update {
                     val messages=if(it.threadLoaded) page.messages.fold(it.messages) {list,message -> list.merge(message)} else page.messages
                     it.copy(messages=messages,more=if(it.threadLoaded && it.messages.size>page.messages.size) it.more else page.more,otherReadAt=page.otherReadAt,
-                        threadOpen=page.open,consented=page.consented,threadLoading=false,threadLoaded=true)
+                        threadOpen=page.open,consented=page.consented,media=page.media,threadLoading=false,threadLoaded=true)
                 }
             } catch(e:CancellationException) {throw e}
             catch(_:Exception) {
@@ -244,6 +252,35 @@ data class ChatState(
         viewModelScope.launch {outbox.add(owner,Outgoing(UUID.randomUUID().toString(),id,words,System.currentTimeMillis()))}
     }
 
+    /**
+     * A picked photo or video is made smaller on the phone first, then waits in the outbox like any message, so a closed app or a
+     * lost connection does not lose it.
+     */
+    fun attach(uri:String,mime:String) {
+        val owner=mutable.value.owner
+        val id=mutable.value.openId ?: return
+        if(owner.isBlank() || mutable.value.preparing!=null) return
+        mutable.update {it.copy(preparing=(if(mime.startsWith("video/")) MediaKind.VIDEO else MediaKind.IMAGE) to 0f)}
+        viewModelScope.launch {
+            try {
+                val draft=files.prepare(owner,uri) {share -> if(current(owner)) mutable.update {it.copy(preparing=it.preparing?.copy(second=share))}}
+                if(!current(owner)) {files.discard(draft); return@launch}
+                outbox.add(owner,Outgoing(UUID.randomUUID().toString(),id,"",System.currentTimeMillis(),media=draft))
+            } catch(e:CancellationException) {throw e}
+            catch(e:Exception) {if(current(owner)) toasts.show(refusal(e),ToastTone.ERROR)}
+            finally {if(current(owner)) mutable.update {it.copy(preparing=null)}}
+        }
+    }
+
+    /** The phone's copy of a photo or video, fetched once if it is not here yet. Null when there is none to show. */
+    suspend fun mediaCopy(message:ChatMessage,preview:Boolean):String? {
+        val owner=mutable.value.owner
+        val attachment=message.attachment ?: return null
+        return try {files.copy(owner,message.id,attachment,preview) {repository.mediaLink(it)}}
+        catch(e:CancellationException) {throw e}
+        catch(_:Exception) {null}
+    }
+
     /** The same ID goes again, so a message that did arrive the first time is not sent twice. */
     fun retry(id:String) {
         val owner=mutable.value.owner
@@ -253,8 +290,9 @@ data class ChatState(
 
     fun discard(id:String) {
         val owner=mutable.value.owner
+        val media=mutable.value.outgoing.firstOrNull {it.id==id}?.media
         mutable.update {it.copy(outgoing=it.outgoing.filter {o -> o.id!=id})}
-        viewModelScope.launch {outbox.remove(owner,id)}
+        viewModelScope.launch {outbox.remove(owner,id); media?.let {files.discard(it)}}
     }
 
     fun delete(id:String) {
@@ -286,8 +324,9 @@ data class ChatState(
                 while(current(owner)) {
                     val next=mutable.value.outgoing.nextToSend() ?: break
                     try {
-                        val stored=repository.sendMessage(next.id,next.conversationId,next.body)
+                        val stored=next.media?.let {draft -> sendMedia(next,draft)} ?: repository.sendMessage(next.id,next.conversationId,next.body)
                         if(!current(owner)) return@launch
+                        next.media?.let {files.keep(owner,next.id,it)}
                         mutable.update {it.copy(outgoing=it.outgoing.filter {o -> o.id!=next.id})}
                         outbox.remove(owner,next.id)
                         place(stored)
@@ -307,11 +346,34 @@ data class ChatState(
         }
     }
 
-    private fun refusal(e:Exception)=when((e as? RemoteFailure)?.code) {
+    /** Three steps, each safe to repeat with the same ID: the server agrees and names the places, both files go up, then the message. */
+    private suspend fun sendMedia(next:Outgoing,draft:MediaDraft):ChatMessage {
+        val places=repository.startAttachment(next.id,next.conversationId,draft)
+        repository.uploadMedia(places.mediaPath,files.read(draft.file),draft.mime)
+        repository.uploadMedia(places.previewPath,files.read(draft.preview),"image/jpeg")
+        return repository.sendAttachment(next.id,next.body)
+    }
+
+    private fun refusal(e:Exception)=when((e as? RemoteFailure)?.code ?: (e as? MediaProblem)?.code) {
         "chat_closed" -> R.string.chat_error_closed
         "chat_consent_required" -> R.string.chat_error_consent_required
+        "chat_media_consent_required" -> R.string.chat_error_media_consent
+        "chat_media_too_large" -> R.string.chat_error_media_too_large
+        "chat_media_invalid" -> R.string.chat_error_media_invalid
+        "chat_media_unreadable" -> R.string.chat_error_media_unreadable
+        "chat_video_cap" -> R.string.chat_error_video_cap
+        "chat_media_missing" -> R.string.chat_error_media_missing
         "chat_rate_limited" -> R.string.chat_error_rate_limited
         "chat_too_late" -> R.string.chat_error_too_late
         else -> if(e is RemoteFailure) R.string.chat_error_request else R.string.chat_error_offline
     }
+}
+
+/** For a screen or test with no media: nothing can be prepared, and nothing is kept. */
+object NoMedia:ChatMediaStore {
+    override suspend fun prepare(owner:String,uri:String,onProgress:(Float)->Unit):MediaDraft=throw MediaProblem("chat_media_invalid")
+    override suspend fun read(path:String)=ByteArray(0)
+    override suspend fun keep(owner:String,id:String,draft:MediaDraft) {}
+    override suspend fun discard(draft:MediaDraft) {}
+    override suspend fun copy(owner:String,id:String,attachment:Attachment,preview:Boolean,link:suspend (String)->String):String?=null
 }

@@ -115,23 +115,27 @@ function PatientProfile() {
       <div className="mt-5 grid items-start gap-5 desk:grid-cols-2">
         <ConnectPanel onConnect={async () => toast.show('Connected')} />
         <PrivacyPanel load={useDemo(data.privacy, { consent: null, requests: [] })} onWithdraw={async () => toast.show('Withdrawn')} onRequest={async () => toast.show('Requested')} />
-        <ChatConsentPanel load={useDemo({ version: 'care-chat-v1', granted: true, at: '2026-11-05T02:00:00Z' }, { version: 'care-chat-v1', granted: false, at: null })} onChange={async () => toast.show('Changed')} />
+        <ChatConsentPanel load={useDemo({ version: 'care-chat-v2', granted: true, media: true, accepted_version: 'care-chat-v2', at: '2026-11-05T02:00:00Z' }, { version: 'care-chat-v2', granted: false, media: false, accepted_version: null, at: null })} onChange={async () => toast.show('Changed')} />
       </div>
     </>
   )
 }
-/** ?live=off shows the dropped connection, ?waiting a message on its way and one that failed, and ?agreement a patient who has not turned messages on. */
+/** A drawn stand-in for a stored file, since the gallery has no server to sign a link. */
+const sampleLink = async (path: string) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='450'><rect width='600' height='450' fill='${path.includes('m9') ? '#0e7c86' : '#dcefec'}'/><circle cx='300' cy='200' r='90' fill='#6fe08f'/></svg>`)}`
+
+/** ?live=off shows the dropped connection, ?preparing a video being made smaller, ?media a patient who has not allowed media, ?waiting a message on its way and one that failed, and ?agreement a patient who has not turned messages on. */
 function Messages({ self }: { self?: boolean }) {
   const { id } = useParams()
   const [params] = useSearchParams()
   const base = self ? PATIENT : THERAPIST
   const list = self ? [{ ...data.conversations[0]!, side: 'patient' as const, otherId: 't1', otherName: 'Dana Reyes' }] : data.conversations
   const chosen = list.find((item) => item.id === id)
-  const thread = useDemo({ messages: chosen?.id === 'c1' ? data.chatMessages : [], more: chosen?.id === 'c1', otherReadAt: '2026-11-05T02:30:00Z', open: chosen?.open ?? true, consented: chosen?.consented ?? true }, { messages: [], more: false, otherReadAt: null, open: true, consented: true })
+  const thread = useDemo({ messages: chosen?.id === 'c1' ? data.chatMessages : [], more: chosen?.id === 'c1', otherReadAt: '2026-11-05T02:30:00Z', open: chosen?.open ?? true, consented: chosen?.consented ?? true, media: chosen?.media ?? true }, { messages: [], more: false, otherReadAt: null, open: true, consented: true, media: true })
   const waiting = params.has('waiting') ? [{ id: 'w1', conversationId: 'c1', body: 'See you on Thursday.', createdAt: '2026-11-05T02:25:00Z', failed: false }, { id: 'w2', conversationId: 'c1', body: 'Bring the resistance band.', createdAt: '2026-11-05T02:26:00Z', failed: true }] : []
   return <MessagesView base={base} me="me" self={self} conversations={useDemo(list, [])} selected={id ?? null} thread={chosen ? thread : null} outgoing={waiting} connected={params.get('live') !== 'off'}
-    actions={{ onSend: said('Sent'), onRetry: said('Trying again'), onDiscard: said('Discarded'), onOlder: said('Loaded older messages'), onDelete: said('Deleted') }}
-    agreement={self ? { granted: !params.has('agreement'), busy: false, onAccept: said('Messages turned on') } : undefined} />
+    actions={{ onSend: said('Sent'), onRetry: said('Trying again'), onDiscard: said('Discarded'), onOlder: said('Loaded older messages'), onDelete: said('Deleted'), onAttach: said('Attached'), onLink: sampleLink }}
+    preparing={params.has('preparing') ? { kind: 'video', share: 0.4 } : null}
+    agreement={self ? { granted: !params.has('agreement'), media: !params.has('media'), busy: false, onAccept: said('Messages turned on') } : undefined} />
 }
 const requestActions: RequestActions = {
   therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),

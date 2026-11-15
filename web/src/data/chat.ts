@@ -2,6 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
 export const CHAT_BODY_LIMIT = 2000
+/** Mirrors chat_media_limit on the server, which checks every stored file against these. */
+export const MEDIA_LIMITS = { image: 1_048_576, video: 6_291_456, preview: 204_800 } as const
+export const CHAT_BUCKET = 'chat-media'
+/** A signed link is made when a file is opened, and lasts only long enough to load it. */
+export const LINK_SECONDS = 300
 
 export type MessageKind = 'text' | 'attachment' | 'progress' | 'exercise' | 'system'
 /** `senderId` is null for a note the system wrote. A deleted message keeps its place and loses its words. */
@@ -12,12 +17,14 @@ export type ChatMessage = { id: string; conversationId: string; senderId: string
  */
 export type Conversation = {
   id: string; side: 'patient' | 'therapist'; otherId: string; otherName: string; otherPhoto: string | null; open: boolean; consented: boolean
+  /** Whether the patient has agreed to photos and video, which needs the second version of the agreement. */
+  media: boolean
   lastMessageAt: string | null; lastMessage: ChatMessage | null; unread: number
 }
 /** Newest first. `otherReadAt` is how far the other person has read, for "Seen". */
-export type MessagePage = { messages: ChatMessage[]; more: boolean; open: boolean; consented: boolean; otherReadAt: string | null }
+export type MessagePage = { messages: ChatMessage[]; more: boolean; open: boolean; consented: boolean; media: boolean; otherReadAt: string | null }
 /** The patient's answer to the current messages agreement. */
-export type ChatConsent = { version: string; granted: boolean; at: string | null }
+export type ChatConsent = { version: string; granted: boolean; media: boolean; accepted_version: string | null; at: string | null }
 export type ReadMark = { conversationId: string; userId: string; readAt: string }
 
 type RawMessage = { id: string; conversation_id: string; sender_id: string | null; kind: string; body: string; data: unknown; created_at: string; deleted?: boolean; deleted_at?: string | null }
@@ -32,7 +39,7 @@ export function decodeMessage(raw: RawMessage): ChatMessage {
 }
 
 type RawConversation = {
-  id: string; side: 'patient' | 'therapist'; other_id: string; other_name: string; other_photo: string | null; open: boolean; consented: boolean
+  id: string; side: 'patient' | 'therapist'; other_id: string; other_name: string; other_photo: string | null; open: boolean; consented: boolean; media: boolean
   last_message_at: string | null; last_message: RawMessage | null; unread: number
 }
 
@@ -40,7 +47,7 @@ export async function loadConversations(db: SupabaseClient<Database>): Promise<C
   const { data, error } = await db.rpc('my_conversations')
   if (error) throw error
   return (data as unknown as RawConversation[]).map((row) => ({
-    id: row.id, side: row.side, otherId: row.other_id, otherName: row.other_name, otherPhoto: row.other_photo, open: row.open, consented: row.consented,
+    id: row.id, side: row.side, otherId: row.other_id, otherName: row.other_name, otherPhoto: row.other_photo, open: row.open, consented: row.consented, media: row.media,
     lastMessageAt: row.last_message_at, lastMessage: row.last_message && decodeMessage(row.last_message), unread: row.unread,
   }))
 }
@@ -49,8 +56,8 @@ export async function loadConversations(db: SupabaseClient<Database>): Promise<C
 export async function loadMessages(db: SupabaseClient<Database>, conversationId: string, before?: Pick<ChatMessage, 'id' | 'createdAt'> | null): Promise<MessagePage> {
   const { data, error } = await db.rpc('conversation_messages', { p_conversation: conversationId, p_before_at: before?.createdAt, p_before_id: before?.id })
   if (error) throw error
-  const page = data as unknown as { messages: RawMessage[]; more: boolean; open: boolean; consented: boolean; other_read_at: string | null }
-  return { messages: page.messages.map(decodeMessage), more: page.more, open: page.open, consented: page.consented, otherReadAt: page.other_read_at }
+  const page = data as unknown as { messages: RawMessage[]; more: boolean; open: boolean; consented: boolean; media: boolean; other_read_at: string | null }
+  return { messages: page.messages.map(decodeMessage), more: page.more, open: page.open, consented: page.consented, media: page.media, otherReadAt: page.other_read_at }
 }
 
 export async function loadChatConsent(db: SupabaseClient<Database>): Promise<ChatConsent> {
@@ -88,6 +95,72 @@ export async function loadUnreadMessages(db: SupabaseClient<Database>): Promise<
   const { data, error } = await db.rpc('my_unread_messages')
   if (error) throw error
   return data
+}
+
+/** A photo or video as its message describes it. The words of the message are its caption. */
+export type Attachment = {
+  kind: 'image' | 'video'; mime: string; width: number; height: number; durationMs: number | null; bytes: number
+  mediaPath: string; previewPath: string; expiresAt: string
+}
+
+export function attachmentOf(message: ChatMessage): Attachment | null {
+  if (message.kind !== 'attachment' || message.deleted) return null
+  const d = message.data
+  if (typeof d.media_path !== 'string' || typeof d.preview_path !== 'string' || typeof d.expires_at !== 'string') return null
+  return {
+    kind: d.attachment_kind === 'video' ? 'video' : 'image', mime: String(d.mime ?? ''), width: Number(d.width ?? 0), height: Number(d.height ?? 0),
+    durationMs: typeof d.duration_ms === 'number' ? d.duration_ms : null, bytes: Number(d.bytes ?? 0),
+    mediaPath: d.media_path, previewPath: d.preview_path, expiresAt: d.expires_at,
+  }
+}
+
+/** After 15 days the server issues no link and the file is removed, whatever is still on screen. */
+export const expired = (attachment: Attachment, now = Date.now()) => Date.parse(attachment.expiresAt) <= now
+
+export type MediaDraft = { kind: 'image' | 'video'; file: Blob; mime: string; preview: Blob; width: number; height: number; durationMs: number | null }
+export type MediaPlaces = { mediaPath: string; previewPath: string }
+
+/** Step one: the server agrees to the file and names where it and its preview go. The same ID again returns the same places. */
+export async function startAttachment(db: SupabaseClient<Database>, id: string, conversationId: string, draft: Omit<MediaDraft, 'file' | 'preview'>): Promise<MediaPlaces> {
+  const { data, error } = await db.rpc('start_attachment', {
+    p_id: id, p_conversation: conversationId, p_kind: draft.kind, p_mime: draft.mime, p_width: draft.width, p_height: draft.height,
+    p_duration_ms: draft.durationMs ?? undefined,
+  })
+  if (error) throw error
+  const places = data as { media_path: string; preview_path: string }
+  return { mediaPath: places.media_path, previewPath: places.preview_path }
+}
+
+/** A file already there from an earlier try counts as stored: nothing can overwrite it. */
+export async function uploadMedia(db: SupabaseClient<Database>, path: string, file: Blob, contentType: string) {
+  // Storage takes the type from the file itself, so a file without one is labelled with what the server agreed to.
+  const typed = file.type === contentType ? file : new Blob([file], { type: contentType })
+  const { error } = await db.storage.from(CHAT_BUCKET).upload(path, typed, { contentType, upsert: false })
+  if (error && !/exists|duplicate/i.test(error.message)) throw error
+}
+
+/** Step two: the message, once both files are stored. A file the server finds over its limit is refused and removed. */
+export async function sendAttachment(db: SupabaseClient<Database>, id: string, caption: string): Promise<ChatMessage> {
+  const { data, error } = await db.rpc('send_attachment', { p_id: id, p_caption: caption })
+  if (error) throw error
+  const result = data as unknown as RawMessage & { refused?: string }
+  if (result.refused) throw Object.assign(new Error(result.refused), { message: result.refused })
+  return decodeMessage(result)
+}
+
+/** All three steps, for one photo or video. */
+export async function sendMedia(db: SupabaseClient<Database>, id: string, conversationId: string, draft: MediaDraft, caption: string) {
+  const places = await startAttachment(db, id, conversationId, draft)
+  await uploadMedia(db, places.mediaPath, draft.file, draft.mime)
+  await uploadMedia(db, places.previewPath, draft.preview, 'image/jpeg')
+  return sendAttachment(db, id, caption)
+}
+
+/** A short-lived link to one file, issued only to the two people in the conversation and only until the file expires. */
+export async function mediaLink(db: SupabaseClient<Database>, path: string, seconds = LINK_SECONDS) {
+  const { data, error } = await db.storage.from(CHAT_BUCKET).createSignedUrl(path, seconds)
+  if (error) throw error
+  return data.signedUrl
 }
 
 export type ChatEvents = {

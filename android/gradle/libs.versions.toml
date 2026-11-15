@@ -8,6 +8,7 @@ camera = "1.4.2"
 lifecycle = "2.9.0"
 room = "2.8.5"
 work = "2.10.5"
+media3 = "1.5.1"
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -36,5 +37,8 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+media3-transformer = { module = "androidx.media3:media3-transformer", version.ref = "media3" }
+media3-effect = { module = "androidx.media3:media3-effect", version.ref = "media3" }
+media3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.16.0" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }

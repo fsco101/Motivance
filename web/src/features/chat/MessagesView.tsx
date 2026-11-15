@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, ChatCircleDotsIcon, PaperPlaneRightIcon, WarningCircleIcon } from '@phosphor-icons/react'
+import { ArrowLeftIcon, ChatCircleDotsIcon, PaperclipIcon, PaperPlaneRightIcon, WarningCircleIcon } from '@phosphor-icons/react'
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -7,11 +7,15 @@ import { Avatar, EmptyState, Notice, PageHeader, StatusPill } from '@/components
 import { CHAT_BODY_LIMIT, type ChatMessage, type Conversation } from '@/data/chat'
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
-import { ChatAgreementPanel } from './ChatAgreement'
+import { ChatAgreementPanel, MediaAgreementPanel } from './ChatAgreement'
+import { MediaBubble } from './MediaBubble'
 import { canDelete, threadItems, type Outgoing, type ThreadItem } from './thread'
 
 /** Newest first, as it is loaded. */
-export type Thread = { messages: ChatMessage[]; more: boolean; loadingOlder?: boolean; otherReadAt: string | null; open: boolean; consented: boolean }
+export type Thread = { messages: ChatMessage[]; more: boolean; loadingOlder?: boolean; otherReadAt: string | null; open: boolean; consented: boolean; media: boolean }
+
+/** A photo or video being made smaller before it is sent. Video takes as long as the part of it that is kept. */
+export type Preparing = { kind: 'image' | 'video'; share: number }
 
 export type ChatActions = {
   onSend: (body: string) => void
@@ -19,6 +23,9 @@ export type ChatActions = {
   onDiscard: (id: string) => void
   onOlder: () => void
   onDelete: (id: string) => void
+  onAttach: (file: File) => void
+  /** A short-lived link to one file. */
+  onLink: (path: string) => Promise<string>
 }
 
 type Props = {
@@ -34,8 +41,9 @@ type Props = {
   /** False while the live connection is down. Messages still send; new ones appear when it returns. */
   connected: boolean
   actions: ChatActions
-  /** A patient's answer to the messages agreement. Until they agree, nobody can write to them. */
-  agreement?: { granted: boolean; busy: boolean; onAccept: () => void }
+  /** A patient's answer to the messages agreement. Until they agree, nobody can write to them; until they agree to its second version, nobody can send photos or video. */
+  agreement?: { granted: boolean; media: boolean; busy: boolean; onAccept: () => void }
+  preparing?: Preparing | null
 }
 
 /** Beside the bell on every page. The label holds what the badge shows, so someone using voice control can say what they see. */
@@ -55,7 +63,8 @@ function lastLine(conversation: Conversation, me: string, t: (key: string, value
   const last = conversation.lastMessage
   if (!last && !conversation.consented) return t(conversation.side === 'patient' ? 'chat.turnOnToStart' : 'chat.notTurnedOn')
   if (!last) return t('chat.noMessagesYet')
-  const words = last.deleted ? t('chat.deleted') : last.kind === 'text' || last.kind === 'system' ? last.body : t('chat.unsupported')
+  const words = last.deleted ? t('chat.deleted') : last.kind === 'text' || last.kind === 'system' ? last.body
+    : last.kind === 'attachment' ? t(last.data.attachment_kind === 'video' ? 'chat.media.video' : 'chat.media.photo') : t('chat.unsupported')
   return last.senderId === me ? t('chat.youSaid', { words }) : words
 }
 
@@ -103,10 +112,18 @@ function Bubble({ item, actions }: { item: Extract<ThreadItem, { type: 'message'
   const link = 'rounded-sm font-semibold text-lagoon-deep underline underline-offset-2'
   return (
     <li className={cn('flex max-w-[85%] flex-col gap-1 tablet:max-w-[70%]', mine ? 'items-end self-end' : 'items-start self-start')}>
-      <p className={cn('whitespace-pre-wrap break-words rounded-card px-3.5 py-2', message.deleted ? 'border border-line italic text-slate' : item.state === 'failed' ? 'border border-dashed border-alarm bg-paper text-ink' : mine ? 'bg-lagoon-deep text-paper' : 'bg-tide text-ink')}>
-        <span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span>
-        {message.deleted ? t('chat.deleted') : message.kind === 'text' ? message.body : t('chat.unsupported')}
-      </p>
+      {message.kind === 'attachment' && !message.deleted && (
+        <div className={cn(item.state === 'failed' && 'rounded-card outline-2 outline-offset-2 outline-dashed outline-alarm')}>
+          <span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span>
+          <MediaBubble message={message} mine={mine} link={actions.onLink} />
+        </div>
+      )}
+      {(message.kind !== 'attachment' || message.deleted || message.body) && (
+        <p className={cn('whitespace-pre-wrap break-words rounded-card px-3.5 py-2', message.deleted ? 'border border-line italic text-slate' : item.state === 'failed' ? 'border border-dashed border-alarm bg-paper text-ink' : mine ? 'bg-lagoon-deep text-paper' : 'bg-tide text-ink')}>
+          {message.kind !== 'attachment' && <span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span>}
+          {message.deleted ? t('chat.deleted') : message.kind === 'text' || message.kind === 'attachment' ? message.body : t('chat.unsupported')}
+        </p>
+      )}
       <p className={cn('flex flex-wrap items-center gap-x-3 gap-y-1', quiet, mine && 'justify-end')}>
         {item.state === 'sending' && <span>{t('chat.sending')}</span>}
         {item.state === 'failed' && (
@@ -126,7 +143,22 @@ function Bubble({ item, actions }: { item: Extract<ThreadItem, { type: 'message'
   )
 }
 
-function Composer({ name, onSend }: { name: string; onSend: (body: string) => void }) {
+/** Photos and video, once the patient has agreed to them. Choosing one sends it, after it is made smaller. */
+function Attach({ allowed, blocked, preparing, onAttach }: { allowed: boolean; blocked: string; preparing: Preparing | null; onAttach: (file: File) => void }) {
+  const { t } = useTranslation()
+  const input = useRef<HTMLInputElement>(null)
+  return (
+    <>
+      <input ref={input} type="file" accept="image/*,video/*" className="sr-only" tabIndex={-1} aria-hidden
+        onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) onAttach(file) }} />
+      <Button type="button" variant="secondary" disabled={!allowed || preparing !== null} onClick={() => input.current?.click()} className="mb-5"
+        leading={<PaperclipIcon aria-hidden />} aria-describedby={allowed ? undefined : 'chat-attach-blocked'}>{t('chat.media.attach')}</Button>
+      {!allowed && <span id="chat-attach-blocked" className="sr-only">{blocked}</span>}
+    </>
+  )
+}
+
+function Composer({ name, onSend, attach }: { name: string; onSend: (body: string) => void; attach: { allowed: boolean; blocked: string; preparing: Preparing | null; onAttach: (file: File) => void } }) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState('')
   const words = draft.trim()
@@ -147,15 +179,19 @@ function Composer({ name, onSend }: { name: string; onSend: (body: string) => vo
         <label htmlFor="chat-draft" className="sr-only">{t('chat.writeTo', { name })}</label>
         <textarea id="chat-draft" rows={2} value={draft} maxLength={CHAT_BODY_LIMIT} onChange={(event) => setDraft(event.target.value)} onKeyDown={keys} placeholder={t('chat.placeholder')}
           aria-describedby="chat-draft-help" className="block max-h-40 w-full resize-none rounded-control border border-line-strong bg-paper px-3 py-2 text-ink placeholder:text-slate hover:border-lagoon" />
-        <p id="chat-draft-help" className="mt-1 text-xs text-slate">{left <= 200 ? t('chat.charactersLeft', { count: left }) : t('chat.enterHint')}</p>
+        <p id="chat-draft-help" className="mt-1 text-xs text-slate" role="status">
+          {attach.preparing ? t(attach.preparing.kind === 'video' ? 'chat.media.preparingVideo' : 'chat.media.preparingPhoto', { share: Math.round(attach.preparing.share * 100) })
+            : !attach.allowed ? attach.blocked : left <= 200 ? t('chat.charactersLeft', { count: left }) : t('chat.enterHint')}
+        </p>
       </div>
+      <Attach {...attach} />
       <Button type="submit" disabled={!words} leading={<PaperPlaneRightIcon aria-hidden weight="fill" />} className="mb-5">{t('chat.send')}</Button>
     </form>
   )
 }
 
-function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected, actions, className }: {
-  conversation: Conversation; thread: Load<Thread>; outgoing: readonly Outgoing[]; me: string; self?: boolean; base: string; connected: boolean; actions: ChatActions; className?: string
+function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected, actions, preparing, className }: {
+  conversation: Conversation; thread: Load<Thread>; outgoing: readonly Outgoing[]; me: string; self?: boolean; base: string; connected: boolean; actions: ChatActions; preparing: Preparing | null; className?: string
 }) {
   const { t } = useTranslation()
   const format = useFormat()
@@ -170,6 +206,7 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
   useEffect(() => { const timer = setInterval(() => tick((value) => value + 1), 30_000); return () => clearInterval(timer) }, [])
   const open = data?.open ?? conversation.open
   const consented = data?.consented ?? conversation.consented
+  const media = data?.media ?? conversation.media
   return (
     <section aria-label={t('chat.conversationWith', { name: conversation.otherName })} className={cn('flex h-[calc(100dvh-15rem)] min-h-96 flex-col overflow-clip rounded-card border border-line bg-paper shadow-rest', className)}>
       <header className="flex items-center gap-3 border-b border-line px-4 py-3">
@@ -198,14 +235,15 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
         </Loadable>
       </div>
       {open
-        ? <Composer key={conversation.id} name={conversation.otherName} onSend={actions.onSend} />
+        ? <Composer key={conversation.id} name={conversation.otherName} onSend={actions.onSend}
+          attach={{ allowed: media, preparing, onAttach: actions.onAttach, blocked: t(conversation.side === 'patient' ? 'chat.media.allowAbove' : 'chat.media.notAllowed', { name: conversation.otherName }) }} />
         : <div className="border-t border-line p-3"><Notice tone="info">{t(consented ? 'chat.closed' : conversation.side === 'patient' ? 'chat.turnOnToWrite' : 'chat.waitingForPatient', { name: conversation.otherName })}</Notice></div>}
     </section>
   )
 }
 
 /** Every conversation a person has, beside the one that is open. On a narrow window they take turns. */
-export function MessagesView({ base, me, self, conversations, selected, thread, outgoing, connected, actions, agreement }: Props) {
+export function MessagesView({ base, me, self, conversations, selected, thread, outgoing, connected, actions, agreement, preparing = null }: Props) {
   const { t } = useTranslation()
   return (
     <>
@@ -217,10 +255,11 @@ export function MessagesView({ base, me, self, conversations, selected, thread, 
           return (
             <>
               {agreement && !agreement.granted && <ChatAgreementPanel busy={agreement.busy} onAccept={agreement.onAccept} />}
+              {agreement && agreement.granted && !agreement.media && <MediaAgreementPanel busy={agreement.busy} onAccept={agreement.onAccept} />}
               <div className="grid items-start gap-5 desk:grid-cols-[20rem_minmax(0,1fr)]">
                 <ConversationList conversations={list} selected={selected} base={base} me={me} className={cn(conversation && 'hidden desk:block')} />
                 {conversation && thread
-                  ? <ThreadPanel conversation={conversation} thread={thread} outgoing={outgoing} me={me} self={self} base={base} connected={connected} actions={actions} />
+                  ? <ThreadPanel conversation={conversation} thread={thread} outgoing={outgoing} me={me} self={self} base={base} connected={connected} actions={actions} preparing={preparing} />
                   : <div className="hidden min-h-96 place-items-center rounded-card border border-dashed border-line-strong p-8 text-center text-slate desk:grid">{t(selected ? 'chat.notFound' : 'chat.choose')}</div>}
               </div>
               <p className="mt-4 max-w-[70ch] text-sm text-slate">{t(self ? 'chat.urgentSelf' : 'chat.urgent')}</p>
