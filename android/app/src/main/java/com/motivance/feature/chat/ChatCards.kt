@@ -156,3 +156,16 @@ private fun day(iso:String?,zone:ZoneId)=iso?.let {runCatching {DateTimeFormatte
         confirmButton={TextButton({chosen?.let {share(it,note)}},enabled=chosen!=null) {Text(stringResource(R.string.chat_cards_send))}},
         dismissButton={TextButton(dismiss) {Text(stringResource(R.string.chat_schedule_cancel))}})
 }
+
+/** Choosing which of the patient's conversations a file goes to, when there is more than one. */
+@Composable fun ChooseConversationDialog(conversations:List<Conversation>,dismiss:()->Unit,choose:(String)->Unit) {
+    AlertDialog(dismiss,title={Text(stringResource(R.string.video_send_to))},
+        text={
+            Column {
+                conversations.forEach {c ->
+                    Row(Modifier.fillMaxWidth().heightIn(min=48.dp).clickable(role=Role.Button) {choose(c.id)},verticalAlignment=Alignment.CenterVertically) {Text(c.otherName)}
+                }
+            }
+        },
+        confirmButton={},dismissButton={TextButton(dismiss) {Text(stringResource(R.string.chat_schedule_cancel))}})
+}

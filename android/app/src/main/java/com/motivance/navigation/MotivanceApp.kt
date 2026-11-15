@@ -63,6 +63,8 @@ import com.motivance.feature.auth.*
 import com.motivance.feature.booking.*
 import com.motivance.feature.notifications.*
 import com.motivance.feature.exercise.CameraPrototype
+import com.motivance.feature.exercise.SessionVideo
+import com.motivance.feature.exercise.SessionVideoCard
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.exercise.SideResult
 import com.motivance.feature.rehabilitation.*
@@ -135,6 +137,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     var editingAssignment by rememberSaveable {mutableStateOf<String?>(null)}
     var selectedConversation by rememberSaveable {mutableStateOf<String?>(null)}
     var sharing by remember {mutableStateOf<Pair<String,com.motivance.domain.ChatCard.Progress>?>(null)}
+    var sendingVideo by remember {mutableStateOf<Pair<com.motivance.feature.exercise.SessionVideo,List<com.motivance.domain.Conversation>>?>(null)}
     val role=selectedRole?.let { UserRole.valueOf(it) }
     LaunchedEffect(auth.session?.userId) {
         selectedPatient=null; editingAssignment=null; selectedConversation=null
@@ -219,6 +222,11 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     // Once a link from a record has found its conversation, the route remembers it, so returning from the background keeps it.
     LaunchedEffect(chatState.openId) {if(route=="CONVERSATION" && chatState.openId!=null) selectedConversation=chatState.openId}
+    sendingVideo?.let {(video,choices) ->
+        com.motivance.feature.chat.ChooseConversationDialog(choices,{sendingVideo=null}) {id ->
+            sendingVideo=null; chat.open(id); selectedConversation=id; route="CONVERSATION"; chat.attach(video.uri,"video/mp4")
+        }
+    }
     sharing?.let {(patient,card) ->
         // A therapist shares into their conversation with the patient shown; a patient into one of their own.
         val choices=chatState.conversations.filter {it.open && (if(actualRole==UserRole.PATIENT) it.asPatient else it.otherId==patient)}
@@ -314,7 +322,18 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "SETUP" -> CameraSetup(local.rules) { route="CAMERA" }
                 "CHECK_COMPLETE" -> SessionComplete(local.saved,local.metrics.completed,local.rules.targetRepetitions,local.metrics.romDegrees,
                     local.metrics.incomplete,local.metrics.durationMs,connected.outbox.firstOrNull {it.sessionId==local.id}?.state,local.sides,
-                    again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"})
+                    again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"}) {
+                    val videoToaster=LocalToaster.current
+                    SessionVideoCard(local.video,local.videoSaving,
+                        send=if(chatOwner!=null && actualRole==UserRole.PATIENT) ({video:SessionVideo ->
+                            // Only conversations that take videos are offered; the video then goes the way any attached one does.
+                            val choices=chatState.conversations.filter {it.open && it.asPatient && it.media}
+                            if(choices.isEmpty()) videoToaster.show(R.string.video_no_conversation,ToastTone.ERROR)
+                            else if(choices.size==1) {chat.open(choices.single().id); selectedConversation=choices.single().id; route="CONVERSATION"; chat.attach(video.uri,"video/mp4")}
+                            else sendingVideo=video to choices
+                        }) else null,
+                        gone={exercise.videoGone(it)})
+                }
                 "PROFILE" -> {
                     PageHeader(R.string.nav_profile,R.string.account_and_access)
                     PatientProfileEditor(profile,accountName,{StatusPill(stringResource(actualRole.title()),PillTone.PRIMARY)}) {vm.loadOverview();rehabilitation.refresh()}
@@ -626,7 +645,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
 
 /** Closing screen for a camera session: the arc fills to the share of target repetitions completed. */
 @Composable private fun SessionComplete(saved:Boolean,completed:Int,target:Int,rom:Double?,incomplete:Int,durationMs:Long,sync:String?,
-    sides:List<SideResult>,again:()->Unit,history:()->Unit,done:()->Unit) {
+    sides:List<SideResult>,again:()->Unit,history:()->Unit,done:()->Unit,extra:@Composable ()->Unit={}) {
     val haptics=rememberHaptics()
     LaunchedEffect(saved) {if(saved) haptics.confirm()}
     PageHeader(R.string.camera_check_complete,if(saved) R.string.session_saved_local else R.string.camera_preview_only)
@@ -658,6 +677,7 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
             sync?.let {Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center) {StatusPill(syncLabel(it),if(it=="SYNCED") PillTone.POSITIVE else PillTone.NEUTRAL)}}
         } else Text(stringResource(R.string.no_clinical_record),style=MaterialTheme.typography.bodyMedium,textAlign=TextAlign.Center,modifier=Modifier.fillMaxWidth())
     }
+    extra()
     ActionButton(R.string.try_camera_again,again)
     ActionButton(R.string.local_history,history,outlined=true)
     TextButton(done,Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(stringResource(R.string.back)) }

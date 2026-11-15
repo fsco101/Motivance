@@ -13,7 +13,7 @@
     <string name="dashboard_pending">Darating sa Sprint 3 ang mga gawain ng pasyente at therapist.</string>
     <string name="refresh_session">I-refresh ang session</string>
     <string name="sign_out">Mag-sign out</string>
-    <string name="camera_privacy">Nananatili sa telepono ang camera. Buod lamang na pinahintulutan ang sine-save. Walang sine-save na larawan, video o landmark.</string>
+    <string name="camera_privacy">Nananatili sa telepono ang camera. Buod lamang na pinahintulutan ang sine-save. May video lamang kung in-on mo ang I-record ang sesyong ito, at sa gallery lamang ng teleponong ito.</string>
     <string name="open_camera">Buksan ang skeleton prototype</string>
     <string name="camera_title">Live na pagsusuri ng paggalaw</string>
     <string name="camera_setup">Ilagay ang telepono sa matatag na patungan. Tumagilid para sa elbow flexion; humarap sa camera para sa shoulder abduction. Panatilihing nakikita ang napiling balikat, siko, pulso at balakang. Magsimula sa komportableng neutral na posisyon.</string>
@@ -128,7 +128,7 @@
     <string name="completed_reps">Pag-ulit: %1$d / %2$d</string>
     <string name="session_metrics">ROM: %1$s degrees | Hindi kumpleto: %2$d | Aktibo: %3$d s</string>
     <string name="session_targets">Magsimula sa %1$d° o mas mababa, abutin ang %2$d° o higit pa, pagkatapos ay bumalik.</string>
-    <string name="local_metrics_consent">I-save ang buod ng paggalaw sa telepono. Walang sine-save na video o mga landmark.</string>
+    <string name="local_metrics_consent">I-save ang buod ng paggalaw sa telepono. Walang sine-save na landmark, at walang video maliban kung in-on mo ang pag-record.</string>
     <string name="recover_interrupted">Ibalik ang naantalang session</string>
     <string name="session_saved_local">Nai-save ang sesyon sa telepono. Ina-upload ang resultang may reseta kapag online at naka-sign in; lokal lamang ang demo.</string>
     <string name="new_session">Bagong session</string>
@@ -202,7 +202,7 @@
     <string name="sync_failed">Naubos ang automatic retries. Suriin ang koneksyon at piliin ang Sync.</string>
     <string name="sync_legacy">Walang upload consent evidence ang naunang resulta; nasa device para repasuhin.</string>
     <string name="sync_pending">Hinihintay ang upload; susubukan muli kapag konektado</string>
-    <string name="sync_metrics_consent">Pumapayag akong itago sa telepono at i-sync sa aking rehabilitation account ang movement summaries. Walang itinatagong video o landmarks.</string>
+    <string name="sync_metrics_consent">Pumapayag akong itago sa telepono at i-sync sa aking rehabilitation account ang movement summaries. Walang itinatagong landmark, at walang video maliban kung in-on ko ang pag-record; nananatili sa telepono ang video.</string>
     <string name="history_filters">Mga filter ng kasaysayan</string>
     <string name="history_all_exercises">Lahat ng bersiyon ng ehersisyo</string>
     <string name="history_side">Panig</string>
@@ -659,7 +659,7 @@
     <string name="signup_privacy_point_1">Makikita ng iyong konektadong therapist ang mga detalye ng iyong profile para suportahan ang iyong pangangalaga.</string>
     <string name="signup_privacy_point_2">Ginagamit lamang ang iyong mga rehabilitation record para sa pagsubaybay ng sesyon at pagsusuri ng progreso.</string>
     <string name="signup_privacy_point_3">Maaari mong i-edit ang iyong profile, o humiling ng kopya o pagbura ng iyong data, sa Profile. Sinusuri muna ang mga kahilingan.</string>
-    <string name="signup_privacy_point_4">Kailangan ng hiwalay na pahintulot bago ang iyong unang sesyon para maitala ang mga buod ng paggalaw.</string>
+    <string name="signup_privacy_point_4">Kailangan ng hiwalay na pahintulot bago ang iyong unang sesyon para maitala ang mga buod ng paggalaw. May video ng sesyon lamang kung in-on mo ang pag-record, at sa telepono mo lamang.</string>
     <string name="signup_privacy_read_full">Basahin ang buong kasunduan</string>
     <string name="signup_privacy_hide_full">Itago ang buong kasunduan</string>
     <string name="form_birthdate_required">Piliin ang iyong petsa ng kapanganakan.</string>
@@ -1188,4 +1188,32 @@
     <string name="chat_schedule_removed">Inalis na ang naka-iskedyul na mensahe.</string>
     <string name="chat_error_schedule_time">Pumili ng oras na hindi bababa sa isang minuto mula ngayon at sa loob ng 60 araw.</string>
     <string name="chat_error_schedule_gone">Naipadala o naalis na ang mensaheng iyon.</string>
+    <!-- Session video saved to the gallery (issue #114) -->
+    <string name="video_record">I-record ang sesyong ito</string>
+    <string name="video_record_detail">Magse-save ng video na may skeleton at anggulo mo, sa gallery lamang ng teleponong ito.</string>
+    <string name="video_recording">Nire-record</string>
+    <string name="video_caption">%1$s · %2$s · %3$d / %4$d</string>
+    <string name="video_consent_title">I-record ang mga sesyon mo?</string>
+    <string name="video_consent_point1">Ipinapakita ng video ang kuha ng camera na may skeleton mo at ang nasukat na anggulo, gaya ng nakikita mo habang nag-eehersisyo.</string>
+    <string name="video_consent_point2">Sa teleponong ito lamang ito sine-save, sa Motivance album ng gallery mo. Hindi ito ina-upload ng Motivance.</string>
+    <string name="video_consent_point3">Kung bina-back up ng telepono mo ang gallery sa isang cloud photo service, maaaring ma-back up din doon ang video.</string>
+    <string name="video_consent_point4">Makakarating lamang ito sa therapist mo kung ipapadala mo ito sa usapan. Aalisin ng Motivance ang kopya nito 15 araw matapos itong maipadala; mananatili ang nasa telepono mo.</string>
+    <string name="video_consent_point5">Hindi ito naaalis kapag nag-sign out ka. Burahin ito sa resulta ng sesyon o sa gallery mo. Nananatiling naka-off ang pag-record hanggang i-on mo ito para sa isang sesyon.</string>
+    <string name="video_consent_accept">I-record ang mga sesyon</string>
+    <string name="video_consent_decline">Hindi muna</string>
+    <string name="video_title">Video ng sesyon</string>
+    <string name="video_saving">Sine-save ang video sa gallery mo…</string>
+    <string name="video_in_gallery">Naka-save sa Motivance album ng gallery mo. Mananatili ito sa teleponong ito maliban kung ipadala mo.</string>
+    <string name="video_watch">Panoorin</string>
+    <string name="video_send">Ipadala sa chat</string>
+    <string name="video_delete">Burahin ang video</string>
+    <string name="video_delete_title">Burahin ang video na ito?</string>
+    <string name="video_delete_detail">Aalisin ito sa gallery ng teleponong ito. Ang kopyang naipadala mo na ay mananatili sa usapan hanggang alisin ito ng Motivance.</string>
+    <string name="video_keep">Itago</string>
+    <string name="video_saved">Naka-save na ang video sa gallery mo.</string>
+    <string name="video_save_failed">Hindi na-save ang video. Ligtas ang mga resulta ng sesyon mo.</string>
+    <string name="video_deleted">Nabura na ang video.</string>
+    <string name="video_open_failed">Walang app sa teleponong ito na makakapag-play ng video.</string>
+    <string name="video_no_conversation">Payagan muna ang mga larawan at video sa usapan ninyo ng therapist mo.</string>
+    <string name="video_send_to">Ipadala kay</string>
 </resources>
