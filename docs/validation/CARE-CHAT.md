@@ -125,8 +125,51 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 - The screens have not been seen on a device or emulator, and `ConversationScreenTest` has not run.
 - The live test ran on the computer's JVM, not on a phone, so a phone's network changes (sleep, airplane mode, switching networks) are covered only by the unit tests.
 
+## #111 Privacy, safety and administrator rules
+
+**Built.**
+
+- Migration `202611150002_chat_consent.sql`: the `care-chat-v1` agreement and its rules, and the operator's export and erase functions. Described in [DATABASE.md](../architecture/DATABASE.md#care-chat) and [DATA-LIFECYCLE.md](../operations/DATA-LIFECYCLE.md#care-chat).
+- Web: the agreement above a patient's conversations until they turn messages on (`features/chat/ChatAgreement.tsx`), "has not turned on messages yet" for the therapist, and a Messages panel on the patient's Profile to turn them off or on, with a confirm for off.
+- Android: the same agreement on Messages and inside a conversation, the same therapist notice, and a Messages card on the patient's Profile.
+- The landing page's privacy line now says what is stored: movement summaries from sessions, no camera images, video or landmarks, and messages once turned on. The Android exercise-camera wording is about sessions and is still true; #114 changes it.
+
+**Calls made while building, for the owner to check**
+
+- A therapist agrees to nothing in the app; only the patient does. Staff duties belong to the center's own policies.
+- Turning messages off leaves what was said readable to both, rather than hiding it from the therapist, because it is part of the care record. The agreement says so.
+- The agreement covers words only. Photos and video will need `care-chat-v2`, accepted before sending media.
+- Erasing removes both people's words in the patient's conversations.
+- Muting one conversation moves to #110, because there are no chat notifications to mute yet.
+
+**Tests run on 2026-11-15, local backend**
+
+| Check | Result |
+|---|---|
+| `tests/contract/chat.test.ts` | 14 passed |
+| `npm run test:contract` | 188 passed in 17 files |
+| `chat.spec.ts` (two browsers) | 10 passed, run twice |
+| `patient.spec.ts`, `profile.spec.ts`, `landing.spec.ts`, `chat.spec.ts`, `therapist.spec.ts`, one worker | 64 passed |
+| Design gallery axe checks for the new states (`?agreement`, `messages/c4`, `profile?state=empty`) | Passed |
+| `npm test`, typecheck, lint | 288 passed; pass |
+| Android unit tests | 354 passed, 0 failed |
+| `LiveChatStackTest` with the agreement | Passed twice; accounts removed |
+| `:app:assembleDebug`, `:app:compileDebugAndroidTestKotlin` | Pass |
+| `scripts/check_admin_parity.py` | Pass: no administrator function was added |
+
+| Acceptance criterion | Evidence |
+|---|---|
+| The privacy agreement, `DATA-LIFECYCLE.md` and the consent version are updated, and chat is unavailable until the new version is accepted | `care-chat-v1`; "lets nobody write until the patient turns messages on, and records the answer once" (contract), the first chat browser test, and `LiveChatStackTest` |
+| An administrator and a Scheduler cannot read messages | "keeps outsiders out of the messages, by function and by table" (contract). Attachments do not exist yet; #106 must add the same test for them |
+| A data export includes the patient's messages; a deletion removes them | "gives the trusted operator, and nobody else, an export…" and "erases the patient's messages only for an open deletion request…" (contract). Attachments follow in #106 |
+| The emergency line in English and Filipino, reviewed by a therapist | In the agreement and under every conversation on both apps. The therapist review is **not done**; it is in the checklist |
+| `scripts/check_admin_parity.py` passes | Pass |
+
+**Not run.** The migration is on the local database only. The Android screens have still not been seen on a device.
+
 ## Not run / not done (whole epic)
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
+- `202611150002_chat_consent.sql` is not on the hosted project yet.
 - The Android chat screens have not been run on a device or emulator.
 - No load check yet (#112).
