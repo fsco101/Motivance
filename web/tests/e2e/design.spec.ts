@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
 /** Runs against the design gallery, which uses the same components and views as the app. */
 const SCREENS = [
   '/design/patient/notifications', '/design/patient/bookings/move', '/design/scheduler', '/design/scheduler/schedule', '/design/scheduler/schedule?series', '/design/scheduler/requests', '/design/scheduler/calendar', '/design/scheduler/calendar?tab=holidays', '/design/scheduler/calendar?tab=closures', '/design/scheduler/calendar?tab=timeoff', '/design/scheduler/calendar?outside', '/design/therapist/schedule', '/design/patient/schedule', '/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile', '/design/components', '/design/landing', '/design/sign-in', '/design/sign-up', '/design/therapist', '/design/therapist/patients', '/design/therapist/patients/p1', '/design/therapist/patients/p1/assign',
-  '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
+  '/design/therapist/exercises', '/design/therapist/progress', '/design/therapist/messages', '/design/therapist/messages/c1?waiting', '/design/therapist/messages/c3', '/design/therapist/messages/c1?live=off', '/design/patient/messages/c1', '/design/therapist/profile', '/design/admin/profile', '/design/admin', '/design/admin/accounts', '/design/admin/links', '/design/admin/catalogue', '/design/admin/activity',
 ]
 
 for (const path of SCREENS) {
@@ -35,7 +35,7 @@ for (const width of [768, 1024, 1440, 1920]) {
 test('nothing on a patient page runs past a phone\'s edge', async ({ page }) => {
   test.setTimeout(60_000)
   await page.setViewportSize({ width: 360, height: 760 })
-  for (const path of ['/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/bookings/move', '/design/patient/exercises', '/design/patient/progress', '/design/patient/profile']) {
+  for (const path of ['/design/patient', '/design/patient/book', '/design/patient/bookings', '/design/patient/bookings/move', '/design/patient/exercises', '/design/patient/progress', '/design/patient/messages/c1', '/design/patient/profile']) {
     await page.goto(path)
     await page.waitForLoadState('networkidle')
     const cut = await page.evaluate(() => [...document.querySelectorAll('main *')].filter((element) => {

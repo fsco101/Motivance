@@ -11,6 +11,7 @@ import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { SkeletonLines } from '@/features/shared'
 import { saveLanguage } from '@/data/notifications'
+import { MessagesLink, MessagesPage } from '@/features/chat/pages'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { Shell } from '@/layout/Shell'
 import { MotionArc } from '@/motion/MotionArc'
@@ -131,7 +132,7 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   // The server enforces this too; here it simply keeps people out of pages that would only fail.
   if (!held.includes(workspace)) return workspace === 'scheduler' ? <Forbidden /> : <Navigate to={homePath(roles)} replace />
   return (
-    <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))} bell={workspace === 'admin' ? undefined : <NotificationBell base={workspacePath(workspace)} />}
+    <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))} bell={workspace === 'admin' ? undefined : <>{(workspace === 'patient' || workspace === 'therapist') && <MessagesLink base={workspacePath(workspace)} />}<NotificationBell base={workspacePath(workspace)} /></>}
       account={{ name: profile.data?.display_name || email, email, photo: profile.data?.photo_url, workspaces: held }}>
       <Suspense fallback={<SkeletonLines />}><AnimatedOutlet /></Suspense>
     </Shell>
@@ -163,6 +164,7 @@ export const routes: RouteObject[] = [
           },
           { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
+          { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <MessagesPage base="/therapist" /> }, { path: ':id', element: <MessagesPage base="/therapist" /> }] },
           { path: 'profile', element: <Profile />, handle: { crumb: 'account.profile' } },
         ],
       },
@@ -177,6 +179,7 @@ export const routes: RouteObject[] = [
           { path: 'bookings/:id/move', element: <PatientReschedule />, handle: { crumb: 'nav.moveSession' } },
           { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
+          { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <MessagesPage base="/patient" self /> }, { path: ':id', element: <MessagesPage base="/patient" self /> }] },
           { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },
         ],
       },

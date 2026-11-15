@@ -35,8 +35,9 @@ export function useFormat() {
     const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' })
     const dateTime = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
     const short = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' })
+    const time = new Intl.DateTimeFormat(locale, { timeStyle: 'short' })
     // A calendar day has no time zone. Read as UTC it would show a day early west of Greenwich.
-    return { day: (value: string) => date.format(new Date(`${value}T00:00:00`)), date: (iso: string) => date.format(new Date(iso)), dateTime: (iso: string) => dateTime.format(new Date(iso)), short: (iso: string) => short.format(new Date(iso)) }
+    return { day: (value: string) => date.format(new Date(`${value}T00:00:00`)), date: (iso: string) => date.format(new Date(iso)), dateTime: (iso: string) => dateTime.format(new Date(iso)), short: (iso: string) => short.format(new Date(iso)), time: (iso: string) => time.format(new Date(iso)) }
   }, [locale])
 }
 

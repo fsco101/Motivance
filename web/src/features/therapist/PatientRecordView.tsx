@@ -1,4 +1,4 @@
-import { PencilSimpleIcon, PlusIcon } from '@phosphor-icons/react'
+import { ChatCircleDotsIcon, PencilSimpleIcon, PlusIcon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -63,6 +63,7 @@ export function PatientRecordView({ load, base }: { load: Load<PatientRecord>; b
             <motion.span layoutId={`patient-${patient.id}`} transition={spring.layout} className="inline-flex"><Avatar name={patient.name} photo={patient.photo} size={72} /></motion.span>
             <h1 className="mt-3 text-title font-bold">{patient.name}</h1>
             {patient.username && <p className="text-slate">@{patient.username}</p>}
+            <ButtonLink to={`${base}/messages?with=${patient.id}`} variant="secondary" size="sm" className="mt-4" leading={<ChatCircleDotsIcon aria-hidden />}>{t('record.message')}</ButtonLink>
             <dl className="mt-6 grid gap-3 border-t border-line pt-5">
               {patient.gender && <Fact term={t('record.gender')}>{patient.gender}</Fact>}
               {patient.birthdate && <Fact term={t('record.birthdate')}>{format.day(patient.birthdate)}</Fact>}

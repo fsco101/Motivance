@@ -1,6 +1,7 @@
 import type { Availability, Booking, WaitlistEntry } from '@/data/booking'
 import type { AffectedBooking, CenterCalendar } from '@/data/calendar'
 import type { CatalogueExercise } from '@/data/catalogue'
+import type { ChatMessage, Conversation } from '@/data/chat'
 import type { Schedule, ScheduleRow, ScheduleSession } from '@/data/schedule'
 import type { RequestDetail, RequestRow, SchedulerSummary, SeriesDate, TherapistChoice } from '@/data/scheduler'
 import { activitySummary, type HistoricalSession } from '@/data/history'
@@ -232,3 +233,19 @@ export const profile: MyProfile = {
   firstName: 'Dana', lastName: 'Reyes', username: 'dana_reyes', gender: 'female', birthdate: '1988-07-02', address: 'Quezon City', contact: '+63 917 555 0133', consent: true,
   email: 'dana.reyes@example.test', photo: null, complete: true,
 }
+
+const said = (id: string, senderId: string | null, createdAt: string, body: string, extra: Partial<ChatMessage> = {}): ChatMessage => ({ id, conversationId: 'c1', senderId, kind: 'text', body, data: {}, createdAt, deleted: false, ...extra })
+/** Newest first, as the server returns them. `me` is the reader in the gallery, whichever workspace is shown. */
+export const chatMessages: ChatMessage[] = [
+  said('m6', 'me', '2026-11-05T02:20:00Z', 'Good. Keep the upper arm still, and stop if it hurts.'),
+  said('m5', 'other', '2026-11-05T02:14:00Z', 'Did ten this morning. The last two were hard.'),
+  said('m4', null, '2026-11-05T01:00:00Z', 'Daily practice reminder', { kind: 'system' }),
+  said('m3', 'me', '2026-11-04T09:05:00Z', '', { deleted: true }),
+  said('m2', 'me', '2026-11-04T09:02:00Z', 'How did the elbow feel after Monday?'),
+  said('m1', 'other', '2026-11-04T08:40:00Z', 'Hello! Is it normal to feel stiff in the morning?'),
+]
+export const conversations: Conversation[] = [
+  { id: 'c1', side: 'therapist', otherId: 'p1', otherName: 'Ana Dela Cruz', otherPhoto: null, open: true, lastMessageAt: '2026-11-05T02:20:00Z', lastMessage: chatMessages[0]!, unread: 0 },
+  { id: 'c2', side: 'therapist', otherId: 'p2', otherName: 'Ramon Bautista', otherPhoto: null, open: true, lastMessageAt: '2026-11-03T05:00:00Z', lastMessage: said('n1', 'other', '2026-11-03T05:00:00Z', 'Can we move Thursday?'), unread: 2 },
+  { id: 'c3', side: 'therapist', otherId: 'p3', otherName: 'Liza Santos', otherPhoto: null, open: false, lastMessageAt: null, lastMessage: null, unread: 0 },
+]

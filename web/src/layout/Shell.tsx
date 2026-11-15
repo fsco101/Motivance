@@ -1,4 +1,4 @@
-import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
 import type { ReactNode } from 'react'
@@ -19,6 +19,7 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
     { path: 'patients', label: 'nav.patients', icon: UsersThreeIcon },
     { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
     { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
+    { path: 'messages', label: 'nav.messages', icon: ChatCircleDotsIcon },
   ],
   patient: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
@@ -27,6 +28,8 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
     { path: 'bookings', label: 'nav.bookings', short: 'nav.bookingsShort', icon: CalendarBlankIcon },
     { path: 'exercises', label: 'nav.exercises', icon: PersonSimpleTaiChiIcon },
     { path: 'progress', label: 'nav.progress', icon: ChartLineUpIcon },
+    // The bottom bar is full, so on a phone the way in is the icon beside the bell.
+    { path: 'messages', label: 'nav.messages', icon: ChatCircleDotsIcon, wide: true },
   ],
   scheduler: [
     { path: '', label: 'nav.home', icon: HouseIcon, end: true },
