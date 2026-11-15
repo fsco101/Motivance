@@ -11,6 +11,7 @@ Project documents live in [docs/](docs/PLAN.md). Sprint planning JSON stays in [
 - [Booking and scheduling design](docs/architecture/BOOKING.md)
 - [Required Android environment values](docs/operations/ENVIRONMENT.md)
 - [Booking notifications, email and push](docs/operations/NOTIFICATIONS.md)
+- [Care chat rollout](docs/operations/CARE-CHAT-ROLLOUT.md)
 - [Booking final regression and handover](docs/validation/BOOKING-REGRESSION.md)
 - [Production preparation and distribution](docs/operations/PRODUCTION-READINESS.md)
 - [Post-implementation device and therapist checklist](docs/validation/POST-IMPLEMENTATION-CHECKLIST.md)
