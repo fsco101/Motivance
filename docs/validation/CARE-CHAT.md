@@ -198,6 +198,7 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 | `:app:assembleDebug`, `check_apk_native_libraries.py`, `check_resources.py`, `check_module_boundaries.py` | Pass. The APK grew from 45.2 MB to 46.4 MB |
 | Room schema version 4 | The new column matches its migration |
 | Leftover rows and files after all of the above | None |
+| Wide browser run (`chat`, `patient`, `profile`, `landing`, `therapist`, `design`), one worker | 149 passed, 83 skipped (the suite's own); the admin profile axe check failed once in the 13-minute run and passed alone, the known low-memory pattern on this machine |
 
 | Acceptance criterion | Evidence |
 |---|---|
@@ -220,5 +221,5 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
 - The Android chat screens have not been run on a device or emulator, and Android has never prepared a real photo or video.
-- `202611150003_chat_media.sql` is not on the hosted project, and the cleanup is not scheduled there.
+- `202611150003_chat_media.sql` is on the hosted project (applied 2026-11-15 on the owner's instruction, read back with `migration list --linked`), but the cleanup is not scheduled there and no file has been sent on hosted.
 - No load check yet (#112).
