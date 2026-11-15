@@ -83,8 +83,50 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 - A message still "Sending" or "Not sent" is held in the page only. Leaving the Messages page drops it.
 - The dropped-connection test proves catch-up and no duplicates. It cannot prove the socket itself was down, for the reason above.
 
+## #108 The conversation on Android
+
+**Built.**
+
+- `core/domain/.../Chat.kt`: the models, `ChatRepository`, and the rules both apps share (thread order, day lines in the reader's calendar, "Seen", the 15-minute delete window, send order). `ChatTest.kt` uses the same cases as the web's `thread.test.ts`.
+- `data/remote/ChatJson.kt` reads the server functions and live rows. The chat calls are in `SupabaseAuthRepository`, which now also passes `chat_*` refusals through by name.
+- `data/remote/LiveChat.kt` is the Realtime client on OkHttp's websocket. It joins with a token checked just before, so an expired one is renewed first; it reports the connection live only once Realtime says it is listening; it sends a heartbeat every 25 seconds, and OkHttp pings every 20; after any drop it waits 1, 2, 4, 8, 16, then 30 seconds and tries again.
+- `data/local`: a `chat_outbox` table in Room (database version 3, migration `FROM_2_TO_3`), cleared for that account at sign-out.
+- `feature/chat/ChatViewModel.kt` and `ChatScreens.kt`, routes `MESSAGES` and `CONVERSATION`, the icon beside the bell, and Message on the patient's page. English and Filipino strings, including two plurals.
+
+**How sending works.** A message goes into the outbox first, then is sent one at a time in the order written, each with the ID it was given when written. A lost connection stops the run and leaves the message waiting; the next live connection sends it. A refusal (a closed conversation, too many messages) marks only that message for the person, and the rest carry on. A retry uses the same ID, so the server stores it once whatever happened before.
+
+**Not in this issue.** Attaching photos and video waits for the storage rules in #106, so the camera and gallery permissions are not asked for yet. Shared progress and system notes are #109, and push for new messages is #110.
+
+**Tests run on 2026-11-15**
+
+| Check | Result |
+|---|---|
+| `LiveChatStackTest`: the real repository and websocket client against the local backend, with a therapist, a patient and an outsider | 1 passed, run four times. Its accounts are removed afterwards (0 left) |
+| `ChatViewModelTest` | 12 passed |
+| `ChatJsonTest`, `RealtimeFramesTest` | 9 passed |
+| `ChatTest` (shared rules) | 9 passed |
+| All Android unit tests (`:core:domain:test`, `:app:testDebugUnitTest`) | 350 passed, 0 failed; the live test is skipped when the stack's keys are not given |
+| `:app:compileDebugAndroidTestKotlin`, `:app:assembleDebug` | Pass |
+| Room's generated schema for `chat_outbox` | Matches the migration's SQL exactly |
+
+| Acceptance criterion | Evidence |
+|---|---|
+| A message sent from the web appears on Android without a refresh, and the other way round | `LiveChatStackTest`: a message sent through the server functions reaches the other account's websocket within 15 seconds, both ways. The web side of the same functions is `chat.spec.ts` |
+| A message written in airplane mode sends once when the connection returns | `ChatViewModelTest`: "a message written offline waits and sends once when the connection returns", and "messages go in the order written and survive the app closing" |
+| Unread counts match the web | `LiveChatStackTest` reads `my_conversations`, the function the web reads: 1 before reading, 0 after |
+| Leaving and returning reconnects and catches up without duplicates | `ChatViewModelTest`: "what was said while disconnected is read again when the connection returns"; the live connection is held only while the app is started |
+| Signing out clears cached messages | The outbox is deleted in `clearCacheOnLogout`; the screen's state is dropped with the account (`ChatViewModelTest`: "nothing is sent for an account that signed out") |
+| Unit tests cover the send queue and reconnect logic; a connected test covers the screen | Above. `ConversationScreenTest` (3 tests) compiles and has **not been run**, because no emulator or phone was attached |
+
+**Found while building.** In the test library, work in the background scope is not run by "advance until idle", so the view model tests run it explicitly. This affected the tests only.
+
+**Not run on Android**
+
+- The screens have not been seen on a device or emulator, and `ConversationScreenTest` has not run.
+- The live test ran on the computer's JVM, not on a phone, so a phone's network changes (sleep, airplane mode, switching networks) are covered only by the unit tests.
+
 ## Not run / not done (whole epic)
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
-- Android has no chat code yet (#108).
+- The Android chat screens have not been run on a device or emulator.
 - No load check yet (#112).
