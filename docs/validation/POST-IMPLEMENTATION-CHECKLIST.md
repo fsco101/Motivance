@@ -251,6 +251,16 @@ Engineering evidence is in [PROGRESS-SUMMARY-AND-LANDING.md](PROGRESS-SUMMARY-AN
 - [ ] Have a Filipino speaker review `activity_*`, `history_latest`, `history_best`, `history_change*`, `history_tracking*`, `history_rom_value` and `history_rep_value` in `values-fil/strings.xml`, the new `progress.*` lines in `web/src/locales/fil.json`, and the new `landing.*` lines in `web/src/locales/landing.fil.json`.
 - [ ] Redeploy the web app so the hosted landing page and Progress pages pick this up. No database change is needed.
 
+## Care chat (started 2026-11-15)
+
+Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks has been run.
+
+- [ ] Redeploy the web app, then sign in on the live site as a linked therapist and patient in two browsers. Confirm a message arrives live in both directions, the unread count appears and clears, and "Reconnecting" shows when one browser's network is turned off.
+- [ ] On a real phone browser as a patient, open Messages, write with the on-screen keyboard and confirm the composer stays visible above it.
+- [ ] Have a therapist review the emergency line shown to patients (`chat.urgentSelf`) and the closed-conversation wording, and say whether a patient should keep reading a conversation after the link ends.
+- [ ] Have a Filipino speaker review the `chat.*`, `nav.messages*` and `errors.chat*` lines in `web/src/locales/fil.json`.
+- [ ] With a screen reader, confirm a new message is announced once and that the conversation list reads the unread count.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

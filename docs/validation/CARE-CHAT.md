@@ -38,5 +38,53 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 
 **Not run / not done**
 
-- Android has no chat code yet, so nothing was run there.
+## #107 The conversation on the web
+
+**Built.** `web/src/features/chat/` (`MessagesView.tsx`, `pages.tsx`, `thread.ts`), routes `/therapist/messages` and `/patient/messages`, a Messages entry in both sidebars, a Messages icon with an unread count beside the bell, and a Message button on the patient record. English and Filipino. Design gallery: `/design/therapist/messages`, `/design/patient/messages` (`?waiting`, `?live=off`, `?state=`).
+
+**How it behaves**
+
+- One live connection per workspace keeps every loaded conversation and the unread count current. The page says "Reconnecting" when the browser loses its network or the server stops sending rows, and reads everything again when either returns, when the tab comes back to the front, and once a minute as a safety net.
+- A message shows at once as "Sending", then with its time. A failed send stays in the thread as "Not sent" with Try again and Discard. Trying again reuses the message's ID, so it cannot arrive twice.
+- "Seen" sits under the reader's newest message once the other person has read that far.
+- A sender can delete their own message for 15 minutes, after a two-step confirm. It leaves "Message deleted" for both.
+- A closed conversation stays readable to the patient, without a composer.
+- Under every conversation the patient reads that messages are not read around the clock and what to do if something is urgent. The wording is not yet reviewed by a therapist (#111).
+
+**Not in this issue.** Photos and video (#106), shared progress and exercise cards and system notes (#109: the screen already draws a system line and says so when it meets a kind it cannot show), and new-message notifications (#110).
+
+**Tests run on 2026-11-15, local backend**
+
+| Check | Result |
+|---|---|
+| `tests/e2e/chat.spec.ts`, two signed-in browsers, one worker | 9 passed, run three times |
+| `design.spec.ts`, `landing.spec.ts`, `chat.spec.ts` together | 98 passed, 83 skipped (the suite's own skips) |
+| `therapist.spec.ts`, `therapist-caseload.spec.ts`, `patient.spec.ts`, `notifications`, `dashboard` | 59 passed |
+| `npm test` (unit, 21 files) | 288 passed |
+| `npm run test:contract` | 184 passed |
+| `npm run typecheck`, `npm run lint` | Pass |
+
+| Acceptance criterion | Evidence in `chat.spec.ts` unless named |
+|---|---|
+| A message appears for the other person without a refresh | "a message appears for the other person without a refresh, and is marked seen" |
+| The unread count clears when read | "unread messages are counted beside the bell and in the list, and clear when read". Matching Android waits for #108 |
+| A dropped connection is shown, and what was sent meanwhile arrives once | "what was said while the connection was down arrives when it returns, once" |
+| A failed send stays marked as not sent, with a retry | "a send that fails stays in the thread as not sent, and goes once when tried again" |
+| Keyboard, screen-reader announcements and axe | Enter sends in the live test; the thread is a polite live log; axe passes on the live pages at desktop and 360 px, and on five gallery states |
+| Gallery routes and `WEB-DESIGN.md` | Added |
+
+**Found while building**
+
+- Playwright's offline mode does not close an open websocket, and a real socket can stay silent for most of a minute after the network goes. The page therefore also listens to the browser's own online and offline events.
+- The failed-send bubble was first dimmed, which broke text contrast; it is now outlined instead.
+
+**Limits to know**
+
+- A message still "Sending" or "Not sent" is held in the page only. Leaving the Messages page drops it.
+- The dropped-connection test proves catch-up and no duplicates. It cannot prove the socket itself was down, for the reason above.
+
+## Not run / not done (whole epic)
+
+- Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
+- Android has no chat code yet (#108).
 - No load check yet (#112).
