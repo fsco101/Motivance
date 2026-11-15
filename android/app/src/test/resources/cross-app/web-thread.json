@@ -1,0 +1,139 @@
+{
+  "more": false,
+  "open": true,
+  "media": true,
+  "messages": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "body": "A scheduled hello",
+      "data": {},
+      "kind": "text",
+      "deleted": false,
+      "sender_id": "00000000-0000-4000-8000-000000000002",
+      "created_at": "2026-11-15T07:00:07.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "body": "",
+      "data": {
+        "date": "2026-11-15",
+        "event": "practice_reminder"
+      },
+      "kind": "system",
+      "deleted": false,
+      "sender_id": null,
+      "created_at": "2026-11-15T07:00:06.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "body": "Tonight",
+      "data": {
+        "low": 20,
+        "high": 90,
+        "side": "left",
+        "version": 1,
+        "exercise": "Elbow flexion",
+        "repetitions": 8,
+        "assignment_id": "00000000-0000-4000-8000-000000000006"
+      },
+      "kind": "exercise",
+      "deleted": false,
+      "sender_id": "00000000-0000-4000-8000-000000000002",
+      "created_at": "2026-11-15T07:00:05.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "body": "",
+      "data": {
+        "low": 20,
+        "best": 101,
+        "high": 90,
+        "side": "left",
+        "as_of": "2026-11-15T07:00:04.000+00:00",
+        "scope": "series",
+        "change": -2.5,
+        "latest": 98.5,
+        "exercise": "Elbow flexion",
+        "measured": 7
+      },
+      "kind": "progress",
+      "deleted": false,
+      "sender_id": "00000000-0000-4000-8000-000000000002",
+      "created_at": "2026-11-15T07:00:04.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "body": "My month",
+      "data": {
+        "week": 4,
+        "as_of": "2026-11-15T07:00:03.000+00:00",
+        "scope": "activity",
+        "streak": 3,
+        "active_days": 9,
+        "previous_week": 2,
+        "days_since_last": 0
+      },
+      "kind": "progress",
+      "deleted": false,
+      "sender_id": "00000000-0000-4000-8000-000000000009",
+      "created_at": "2026-11-15T07:00:03.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "body": "",
+      "data": {
+        "mime": "video/webm",
+        "bytes": 80000,
+        "width": 640,
+        "height": 480,
+        "expires_at": "2026-11-15T07:00:09.000+00:00",
+        "media_path": "00000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000010/media.webm",
+        "duration_ms": 12000,
+        "preview_path": "00000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000010/preview.jpg",
+        "attachment_kind": "video"
+      },
+      "kind": "attachment",
+      "deleted": false,
+      "sender_id": "00000000-0000-4000-8000-000000000009",
+      "created_at": "2026-11-15T07:00:02.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "body": "My setup",
+      "data": {
+        "mime": "image/jpeg",
+        "bytes": 50000,
+        "width": 1600,
+        "height": 1200,
+        "expires_at": "2026-11-15T07:00:08.000+00:00",
+        "media_path": "00000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000011/media.jpg",
+        "duration_ms": null,
+        "preview_path": "00000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000011/preview.jpg",
+        "attachment_kind": "image"
+      },
+      "kind": "attachment",
+      "deleted": false,
+      "sender_id": "00000000-0000-4000-8000-000000000009",
+      "created_at": "2026-11-15T07:00:01.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "body": "Hello from the web",
+      "data": {},
+      "kind": "text",
+      "deleted": false,
+      "sender_id": "00000000-0000-4000-8000-000000000002",
+      "created_at": "2026-11-15T07:00:00.000+00:00",
+      "conversation_id": "00000000-0000-4000-8000-000000000003"
+    }
+  ],
+  "consented": true,
+  "other_read_at": "2026-11-15T07:00:05.000+00:00"
+}

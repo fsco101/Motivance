@@ -324,9 +324,54 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 
 **Not run.** A real session recorded on a phone with its camera, frame rate and counting measured while recording; playing, sending and deleting from the result on a phone; Android 9 and older with the storage permission.
 
+## #112 Regression, cross-app check, load check and rollout
+
+**Built.**
+- `tests/contract/chat-cross-app.test.ts` (web) and `CrossAppTest.kt` (Android) check payloads both ways:
+  - The web writes one of each message kind: text, photo, video, both progress cards, an exercise card, a reminder line and a scheduled message.
+  - It keeps the server's exact reply, with IDs and times made stable, in `android/app/src/test/resources/cross-app/`, and Android parses that.
+  - The other way, the web sends the progress facts Android writes, from `android-progress.json`, and reads them as its own.
+  - A change in shape fails one side. `MOTIVANCE_UPDATE_FIXTURES=1` accepts it.
+- `tests/contract/chat-load.test.ts` runs on demand with `MOTIVANCE_LOAD=1`. It sets up one therapist with 150 conversations and one conversation of 5,020 messages.
+- The load check found the conversation list slow, fixed by `202611150006_chat_list_speed.sql` (see [DATABASE.md](../architecture/DATABASE.md)).
+- Rollout notes: [CARE-CHAT-ROLLOUT.md](../operations/CARE-CHAT-ROLLOUT.md).
+
+**Load check, local stack, 2026-11-15**
+
+| Call | Before the fix | After |
+|---|---|---|
+| `my_conversations`, 150 conversations (median of 7) | 569 ms (`chat_can_read` and `chat_can_send` about 200 ms each) | 28 ms |
+| First page of the 5,020-message conversation | 10 ms | 10 ms |
+| A page 20 pages back in the history | 10 ms | 10 ms; the plan uses `chat_messages_page` (index-only scan) |
+| `send_message` into that conversation | 8 ms | 8 ms |
+| `mark_conversation_read` | 8 ms | 7 ms |
+
+The list and the original checks agree for every one of the 150 conversations. After one link is closed and one agreement withdrawn, exactly those rows change, and they change the same way in both.
+
+**Regression run on 2026-11-15**
+
+| Suite | Result |
+|---|---|
+| Web typecheck and lint | Pass |
+| Web unit tests | 293 passed |
+| Web contract tests, one file at a time | 212 passed in 21 files; the 3 load tests skipped as designed, and passed in their own run with `MOTIVANCE_LOAD=1` |
+| Cross-app: `chat-cross-app.test.ts` (twice, the fixture stable between runs) and `CrossAppTest` | 2 and 3 passed |
+| Android `LiveChatStackTest` against the local stack | Passed |
+| Android unit tests (app, domain, assessment) | 433 passed, 1 skipped (the live-stack test, run on its own above) |
+| Android device tests on the Pixel 6 emulator (at #114, no Android app code changed since) | 134 of 135; `CameraLifecycleTest` needs camera frames the headless emulator does not give, and fails the same way without chat |
+| Every web browser test, one worker | **Not completed.** Claude Code stopped it for low memory while it ran. Earlier on 2026-11-15 the chat, cards, therapist, patient, notifications and design suites passed together (156), and the landing and design suites passed (94) |
+
+**Hosted.** `202611150006_chat_list_speed.sql` was applied on 2026-11-16 on the owner's instruction and read back with `migration list --linked`. The list has not been timed on hosted.
+
+**Not run.**
+- The full browser suite in one run.
+- Anything on the hosted project, which needs the owner's approval.
+- A load check on hosted hardware.
+- Two real phones on a real network.
+
 ## Not run / not done (whole epic)
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.
 - The Android chat screens have not been run on a device or emulator, and Android has never prepared a real photo or video.
 - `202611150003_chat_media.sql` is on the hosted project (applied 2026-11-15 on the owner's instruction, read back with `migration list --linked`), but the cleanup is not scheduled there and no file has been sent on hosted.
-- No load check yet (#112).
+- The load check ran on the local stack only (#112).
