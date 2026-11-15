@@ -32,6 +32,11 @@ data class ChatState(
     val outgoing:List<Outgoing> = emptyList(),
     /** True only while rows are flowing. Sending still works without it; new messages wait for it. */
     val live:Boolean=false,
+    /** Whether the open conversation's patient has turned messages on. */
+    val consented:Boolean=true,
+    /** A patient's own answer to the messages agreement. Null until read, and always null for a therapist. */
+    val consent:ChatConsent?=null,
+    val consentBusy:Boolean=false,
 ) {
     val unread get()=conversations.sumOf {it.unread}
     val conversation get()=conversations.firstOrNull {it.id==openId}
@@ -49,7 +54,16 @@ data class ChatState(
     private var flushJob:Job?=null
     @Volatile private var flushAgain=false
 
+    /** Only a patient answers the messages agreement, so only a patient's answer is read. */
+    private var asPatient=false
+
     /** Everything belongs to one account. A result that arrives for an account that has since signed out is dropped. */
+    fun configure(owner:String?,patient:Boolean) {
+        asPatient=patient
+        configure(owner)
+        if(patient) loadConsent()
+    }
+
     fun configure(owner:String?) {
         val id=owner.orEmpty()
         if(id==mutable.value.owner) return
@@ -90,7 +104,37 @@ data class ChatState(
         }
     }
 
-    fun refresh() {refreshList(); if(mutable.value.openId!=null) loadThread()}
+    fun refresh() {refreshList(); if(mutable.value.openId!=null) loadThread(); if(asPatient) loadConsent()}
+
+    private fun loadConsent() {
+        val owner=mutable.value.owner
+        if(owner.isBlank()) return
+        viewModelScope.launch {
+            try {val found=repository.loadChatConsent(); if(current(owner)) mutable.update {it.copy(consent=found)}}
+            catch(e:CancellationException) {throw e}
+            catch(_:Exception) {}
+        }
+    }
+
+    /** Turns messages on or off for this patient, then reads everything again, because every conversation opens or closes with it. */
+    fun setConsent(granted:Boolean) {
+        val owner=mutable.value.owner
+        if(owner.isBlank() || mutable.value.consentBusy) return
+        mutable.update {it.copy(consentBusy=true)}
+        viewModelScope.launch {
+            try {
+                val saved=repository.setChatConsent(granted)
+                if(!current(owner)) return@launch
+                mutable.update {it.copy(consent=saved,consentBusy=false)}
+                toasts.show(if(saved.granted) R.string.chat_agreement_turned_on else R.string.chat_agreement_turned_off)
+                refresh()
+                flush()
+            } catch(e:CancellationException) {throw e}
+            catch(e:Exception) {
+                if(current(owner)) {mutable.update {it.copy(consentBusy=false)}; toasts.show(refusal(e),ToastTone.ERROR)}
+            }
+        }
+    }
 
     fun refreshList() {
         val owner=mutable.value.owner
@@ -119,7 +163,8 @@ data class ChatState(
         if(mutable.value.openId==conversationId && (mutable.value.threadLoaded || mutable.value.threadLoading)) return
         threadJob?.cancel()
         mutable.update {it.copy(openId=conversationId,wantedOther=null,messages=emptyList(),more=false,olderLoading=false,threadLoaded=false,
-            threadFailed=false,otherReadAt=null,threadOpen=it.conversations.firstOrNull {c -> c.id==conversationId}?.open ?: true)}
+            threadFailed=false,otherReadAt=null,threadOpen=it.conversations.firstOrNull {c -> c.id==conversationId}?.open ?: true,
+            consented=it.conversations.firstOrNull {c -> c.id==conversationId}?.consented ?: true)}
         loadThread()
     }
 
@@ -150,7 +195,7 @@ data class ChatState(
                 mutable.update {
                     val messages=if(it.threadLoaded) page.messages.fold(it.messages) {list,message -> list.merge(message)} else page.messages
                     it.copy(messages=messages,more=if(it.threadLoaded && it.messages.size>page.messages.size) it.more else page.more,otherReadAt=page.otherReadAt,
-                        threadOpen=page.open,threadLoading=false,threadLoaded=true)
+                        threadOpen=page.open,consented=page.consented,threadLoading=false,threadLoaded=true)
                 }
             } catch(e:CancellationException) {throw e}
             catch(_:Exception) {
@@ -264,6 +309,7 @@ data class ChatState(
 
     private fun refusal(e:Exception)=when((e as? RemoteFailure)?.code) {
         "chat_closed" -> R.string.chat_error_closed
+        "chat_consent_required" -> R.string.chat_error_consent_required
         "chat_rate_limited" -> R.string.chat_error_rate_limited
         "chat_too_late" -> R.string.chat_error_too_late
         else -> if(e is RemoteFailure) R.string.chat_error_request else R.string.chat_error_offline

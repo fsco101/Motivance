@@ -28,6 +28,7 @@ import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
 import { ScheduleView } from '@/features/booking/ScheduleView'
+import { ChatConsentPanel } from '@/features/chat/ChatAgreement'
 import { MessagesIconLink, MessagesView } from '@/features/chat/MessagesView'
 import { BellLink } from '@/features/notifications/NotificationBell'
 import { NotificationsView } from '@/features/notifications/NotificationsView'
@@ -114,21 +115,23 @@ function PatientProfile() {
       <div className="mt-5 grid items-start gap-5 desk:grid-cols-2">
         <ConnectPanel onConnect={async () => toast.show('Connected')} />
         <PrivacyPanel load={useDemo(data.privacy, { consent: null, requests: [] })} onWithdraw={async () => toast.show('Withdrawn')} onRequest={async () => toast.show('Requested')} />
+        <ChatConsentPanel load={useDemo({ version: 'care-chat-v1', granted: true, at: '2026-11-05T02:00:00Z' }, { version: 'care-chat-v1', granted: false, at: null })} onChange={async () => toast.show('Changed')} />
       </div>
     </>
   )
 }
-/** ?live=off shows the dropped connection, and ?waiting shows a message on its way and one that failed. */
+/** ?live=off shows the dropped connection, ?waiting a message on its way and one that failed, and ?agreement a patient who has not turned messages on. */
 function Messages({ self }: { self?: boolean }) {
   const { id } = useParams()
   const [params] = useSearchParams()
   const base = self ? PATIENT : THERAPIST
   const list = self ? [{ ...data.conversations[0]!, side: 'patient' as const, otherId: 't1', otherName: 'Dana Reyes' }] : data.conversations
   const chosen = list.find((item) => item.id === id)
-  const thread = useDemo({ messages: chosen?.id === 'c1' ? data.chatMessages : [], more: chosen?.id === 'c1', otherReadAt: '2026-11-05T02:30:00Z', open: chosen?.open ?? true }, { messages: [], more: false, otherReadAt: null, open: true })
+  const thread = useDemo({ messages: chosen?.id === 'c1' ? data.chatMessages : [], more: chosen?.id === 'c1', otherReadAt: '2026-11-05T02:30:00Z', open: chosen?.open ?? true, consented: chosen?.consented ?? true }, { messages: [], more: false, otherReadAt: null, open: true, consented: true })
   const waiting = params.has('waiting') ? [{ id: 'w1', conversationId: 'c1', body: 'See you on Thursday.', createdAt: '2026-11-05T02:25:00Z', failed: false }, { id: 'w2', conversationId: 'c1', body: 'Bring the resistance band.', createdAt: '2026-11-05T02:26:00Z', failed: true }] : []
   return <MessagesView base={base} me="me" self={self} conversations={useDemo(list, [])} selected={id ?? null} thread={chosen ? thread : null} outgoing={waiting} connected={params.get('live') !== 'off'}
-    actions={{ onSend: said('Sent'), onRetry: said('Trying again'), onDiscard: said('Discarded'), onOlder: said('Loaded older messages'), onDelete: said('Deleted') }} />
+    actions={{ onSend: said('Sent'), onRetry: said('Trying again'), onDiscard: said('Discarded'), onOlder: said('Loaded older messages'), onDelete: said('Deleted') }}
+    agreement={self ? { granted: !params.has('agreement'), busy: false, onAccept: said('Messages turned on') } : undefined} />
 }
 const requestActions: RequestActions = {
   therapists: async () => data.therapistChoices, availability: async () => data.availability, confirm: async () => toast.show('Confirmed'), assign: async () => toast.show('Assigned'),

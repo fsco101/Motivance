@@ -2,6 +2,8 @@ package com.motivance.feature.chat
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -48,9 +51,10 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
 }
 
 /** Every conversation the person has, newest activity first, with what is unread. */
-@Composable fun ColumnScope.MessagesScreen(state:ChatState,me:String,asPatient:Boolean,retry:()->Unit,open:(String)->Unit) {
+@Composable fun ColumnScope.MessagesScreen(state:ChatState,me:String,asPatient:Boolean,retry:()->Unit,accept:()->Unit,open:(String)->Unit) {
     val zone=remember {ZoneId.systemDefault()}
     PageHeader(R.string.nav_messages,if(asPatient) R.string.chat_description_self else R.string.chat_description)
+    if(asPatient && state.consent?.granted==false && state.conversations.isNotEmpty()) AgreementCard(state.consentBusy,accept)
     if(state.listLoading && !state.listLoaded) LoadingNotice(R.string.chat_loading)
     if(state.listFailed && state.conversations.isEmpty()) FeedbackNotice(R.string.chat_list_failed,error=true,retry=retry)
     if(state.listLoaded && state.conversations.isEmpty()) {
@@ -69,7 +73,11 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
 @Composable private fun ConversationRow(conversation:Conversation,me:String,zone:ZoneId,open:()->Unit) {
     val name=conversation.otherName.ifBlank {stringResource(R.string.chat_unnamed)}
     val last=conversation.lastMessage?.let {message -> words(message).let {if(message.senderId==me) stringResource(R.string.chat_you_said,it) else it}}
-        ?: stringResource(R.string.chat_no_messages_yet)
+        ?: stringResource(when {
+            conversation.consented -> R.string.chat_no_messages_yet
+            conversation.asPatient -> R.string.chat_turn_on_to_start
+            else -> R.string.chat_not_turned_on
+        })
     val unread=if(conversation.unread>0) pluralStringResource(R.plurals.chat_unread,conversation.unread,conversation.unread) else null
     Row(Modifier.fillMaxWidth().heightIn(min=64.dp).clickable(onClickLabel=stringResource(R.string.chat_open)) {open()}
         .semantics(mergeDescendants=true) {contentDescription=listOfNotNull(name,last,unread).joinToString(". ")},
@@ -161,9 +169,51 @@ private fun shortDay(at:Instant,zone:ZoneId)=DateTimeFormatter.ofPattern("MMM d"
             }
         }
         HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-        if(state.threadOpen) Composer(conversation.id,name) {vm.send(it)}
-        else Box(Modifier.padding(16.dp)) {FeedbackNotice(R.string.chat_closed)}
+        when {
+            state.threadOpen -> Composer(conversation.id,name) {vm.send(it)}
+            state.consented -> Box(Modifier.padding(16.dp)) {FeedbackNotice(R.string.chat_closed)}
+            // The agreement is long, so it scrolls above the keyboard rather than pushing the thread away.
+            conversation.asPatient -> Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState()).padding(16.dp)) {AgreementCard(state.consentBusy) {vm.setConsent(true)}}
+            else -> Box(Modifier.padding(16.dp)) {Text(stringResource(R.string.chat_waiting_for_patient,name),style=MaterialTheme.typography.bodyMedium,
+                color=MaterialTheme.colorScheme.onSurfaceVariant)}
+        }
     }
+}
+
+/** The four things a patient agrees to by turning messages on, in the same words as the web. Version care-chat-v1. */
+@Composable fun AgreementPoints() {
+    listOf(R.string.chat_agreement_point1,R.string.chat_agreement_point2,R.string.chat_agreement_point3,R.string.chat_agreement_point4).forEach {point ->
+        Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+            Icon(Icons.Default.CheckCircle,null,Modifier.size(18.dp).padding(top=2.dp),tint=MaterialTheme.colorScheme.primary)
+            Text(stringResource(point),style=MaterialTheme.typography.bodyMedium,modifier=Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable private fun AgreementCard(busy:Boolean,accept:()->Unit) {
+    ClinicalCard {
+        Text(stringResource(R.string.chat_agreement_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.semantics {heading()})
+        Text(stringResource(R.string.chat_agreement_detail),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        AgreementPoints()
+        ActionButton(R.string.chat_agreement_accept,accept,busy=busy)
+    }
+}
+
+/** On Profile, beside the other privacy choices: whether messages are on, and the way to change it. */
+@Composable fun ChatConsentCard(state:ChatState,change:(Boolean)->Unit) {
+    val consent=state.consent ?: return
+    var confirming by remember {mutableStateOf(false)}
+    ClinicalCard {
+        Text(stringResource(R.string.chat_agreement_profile_title),style=MaterialTheme.typography.titleLarge,modifier=Modifier.semantics {heading()})
+        Text(stringResource(R.string.chat_agreement_profile_detail),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        StatusPill(stringResource(if(consent.granted) R.string.chat_agreement_on else R.string.chat_agreement_off),if(consent.granted) PillTone.POSITIVE else PillTone.NEUTRAL)
+        if(consent.granted) ActionButton(R.string.chat_agreement_turn_off,{confirming=true},outlined=true,busy=state.consentBusy)
+        else {AgreementPoints(); ActionButton(R.string.chat_agreement_accept,{change(true)},busy=state.consentBusy)}
+    }
+    if(confirming) AlertDialog(onDismissRequest={confirming=false},title={Text(stringResource(R.string.chat_agreement_turn_off_title))},
+        text={Text(stringResource(R.string.chat_agreement_turn_off_detail))},
+        confirmButton={TextButton({confirming=false; change(false)}) {Text(stringResource(R.string.chat_agreement_turn_off))}},
+        dismissButton={TextButton({confirming=false}) {Text(stringResource(R.string.chat_agreement_keep_on))}})
 }
 
 @Composable private fun Bubble(item:ThreadItem.Message,live:Boolean,me:String,zone:ZoneId,announce:Boolean,onRetry:()->Unit,onDiscard:()->Unit,onDelete:()->Unit) {

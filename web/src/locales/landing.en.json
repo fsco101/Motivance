@@ -35,7 +35,7 @@
     "administrators": "Administrators",
     "administratorsDetail": "Manage accounts, care-team links and the exercise catalogue. Every change is confirmed and audited.",
     "privacyTitle": "Camera frames stay on the phone.",
-    "privacyDetail": "Only consented movement summaries are saved. No images, video or landmarks are stored.",
+    "privacyDetail": "From exercise sessions, only the movement summaries you agree to are saved. No camera images, video or landmarks are stored. Messages with your therapist are kept in your record once you turn them on.",
     "notValidated": "Development prototype. Movement measurements require professional validation.",
     "demoLabel": "A sample skeleton measuring elbow flexion",
     "demoSlider": "Forearm angle",

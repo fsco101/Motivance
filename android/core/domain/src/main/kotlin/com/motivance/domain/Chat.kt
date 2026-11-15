@@ -26,14 +26,20 @@ data class ChatMessage(
     val at:Instant get()=parseServerTime(createdAt)
 }
 
-/** [open] is whether anything can still be sent: it turns false when the link between the two ends. */
+/**
+ * [open] is whether anything can be sent: it is false when the link between the two has ended, and until the patient has
+ * turned messages on, which [consented] says.
+ */
 data class Conversation(
     val id:String,val asPatient:Boolean,val otherId:String,val otherName:String,val otherPhoto:String?,val open:Boolean,
-    val lastMessageAt:String?,val lastMessage:ChatMessage?,val unread:Int,
+    val lastMessageAt:String?,val lastMessage:ChatMessage?,val unread:Int,val consented:Boolean=true,
 )
 
 /** Newest first. [otherReadAt] is how far the other person has read, for "Seen". */
-data class MessagePage(val messages:List<ChatMessage>,val more:Boolean,val open:Boolean,val otherReadAt:String?)
+data class MessagePage(val messages:List<ChatMessage>,val more:Boolean,val open:Boolean,val otherReadAt:String?,val consented:Boolean=true)
+
+/** The patient's answer to the current messages agreement, care-chat-v1 on the server. */
+data class ChatConsent(val version:String,val granted:Boolean,val at:String?)
 data class ReadMark(val conversationId:String,val userId:String,val readAt:String)
 
 /** Where and how this account may open the live connection. The token is fresh: an expired one is refused at join. */
@@ -48,6 +54,9 @@ interface ChatRepository {
     suspend fun markConversationRead(conversationId:String)
     suspend fun deleteMessage(id:String):ChatMessage
     suspend fun liveAccess():LiveAccess
+    suspend fun loadChatConsent():ChatConsent
+    /** Turning messages on or off. Giving the same answer twice records nothing. */
+    suspend fun setChatConsent(granted:Boolean):ChatConsent
 }
 
 /**

@@ -88,5 +88,7 @@ class ConversationScreenTest {
         override suspend fun markConversationRead(conversationId:String) {}
         override suspend fun deleteMessage(id:String)=error("unused")
         override suspend fun liveAccess()=error("unused")
+        override suspend fun loadChatConsent()=ChatConsent("care-chat-v1",true,null)
+        override suspend fun setChatConsent(granted:Boolean)=ChatConsent("care-chat-v1",granted,null)
     }
 }

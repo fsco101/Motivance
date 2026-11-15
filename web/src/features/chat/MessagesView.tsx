@@ -7,10 +7,11 @@ import { Avatar, EmptyState, Notice, PageHeader, StatusPill } from '@/components
 import { CHAT_BODY_LIMIT, type ChatMessage, type Conversation } from '@/data/chat'
 import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
+import { ChatAgreementPanel } from './ChatAgreement'
 import { canDelete, threadItems, type Outgoing, type ThreadItem } from './thread'
 
 /** Newest first, as it is loaded. */
-export type Thread = { messages: ChatMessage[]; more: boolean; loadingOlder?: boolean; otherReadAt: string | null; open: boolean }
+export type Thread = { messages: ChatMessage[]; more: boolean; loadingOlder?: boolean; otherReadAt: string | null; open: boolean; consented: boolean }
 
 export type ChatActions = {
   onSend: (body: string) => void
@@ -33,6 +34,8 @@ type Props = {
   /** False while the live connection is down. Messages still send; new ones appear when it returns. */
   connected: boolean
   actions: ChatActions
+  /** A patient's answer to the messages agreement. Until they agree, nobody can write to them. */
+  agreement?: { granted: boolean; busy: boolean; onAccept: () => void }
 }
 
 /** Beside the bell on every page. The label holds what the badge shows, so someone using voice control can say what they see. */
@@ -50,6 +53,7 @@ export function MessagesIconLink({ to, count }: { to: string; count: number }) {
 
 function lastLine(conversation: Conversation, me: string, t: (key: string, values?: Record<string, unknown>) => string) {
   const last = conversation.lastMessage
+  if (!last && !conversation.consented) return t(conversation.side === 'patient' ? 'chat.turnOnToStart' : 'chat.notTurnedOn')
   if (!last) return t('chat.noMessagesYet')
   const words = last.deleted ? t('chat.deleted') : last.kind === 'text' || last.kind === 'system' ? last.body : t('chat.unsupported')
   return last.senderId === me ? t('chat.youSaid', { words }) : words
@@ -165,6 +169,7 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
   const [, tick] = useState(0)
   useEffect(() => { const timer = setInterval(() => tick((value) => value + 1), 30_000); return () => clearInterval(timer) }, [])
   const open = data?.open ?? conversation.open
+  const consented = data?.consented ?? conversation.consented
   return (
     <section aria-label={t('chat.conversationWith', { name: conversation.otherName })} className={cn('flex h-[calc(100dvh-15rem)] min-h-96 flex-col overflow-clip rounded-card border border-line bg-paper shadow-rest', className)}>
       <header className="flex items-center gap-3 border-b border-line px-4 py-3">
@@ -194,13 +199,13 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
       </div>
       {open
         ? <Composer key={conversation.id} name={conversation.otherName} onSend={actions.onSend} />
-        : <div className="border-t border-line p-3"><Notice tone="info">{t('chat.closed')}</Notice></div>}
+        : <div className="border-t border-line p-3"><Notice tone="info">{t(consented ? 'chat.closed' : conversation.side === 'patient' ? 'chat.turnOnToWrite' : 'chat.waitingForPatient', { name: conversation.otherName })}</Notice></div>}
     </section>
   )
 }
 
 /** Every conversation a person has, beside the one that is open. On a narrow window they take turns. */
-export function MessagesView({ base, me, self, conversations, selected, thread, outgoing, connected, actions }: Props) {
+export function MessagesView({ base, me, self, conversations, selected, thread, outgoing, connected, actions, agreement }: Props) {
   const { t } = useTranslation()
   return (
     <>
@@ -211,6 +216,7 @@ export function MessagesView({ base, me, self, conversations, selected, thread, 
           const conversation = list.find((item) => item.id === selected)
           return (
             <>
+              {agreement && !agreement.granted && <ChatAgreementPanel busy={agreement.busy} onAccept={agreement.onAccept} />}
               <div className="grid items-start gap-5 desk:grid-cols-[20rem_minmax(0,1fr)]">
                 <ConversationList conversations={list} selected={selected} base={base} me={me} className={cn(conversation && 'hidden desk:block')} />
                 {conversation && thread

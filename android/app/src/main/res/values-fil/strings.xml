@@ -1092,4 +1092,26 @@
         <item quantity="one">%1$d karakter na lang</item>
         <item quantity="other">%1$d karakter na lang</item>
     </plurals>
+    <!-- Messages agreement, care-chat-v1 (issue #111) -->
+    <string name="chat_not_turned_on">Hindi pa niya na-on ang mga mensahe</string>
+    <string name="chat_turn_on_to_start">I-on ang mga mensahe para magsimula</string>
+    <string name="chat_waiting_for_patient">Hindi pa na-on ni %1$s ang mga mensahe. Makakasulat ka kapag na-on na niya.</string>
+    <string name="chat_error_consent_required">Hindi pa naka-on ang mga mensahe sa usapang ito, kaya hindi naipadala ang mensahe.</string>
+    <string name="chat_agreement_title">Mga mensahe sa therapist mo</string>
+    <string name="chat_agreement_detail">Basahin kung ano ang ibig sabihin ng pag-on ng mga mensahe. Maaari mo itong i-off anumang oras sa Profile.</string>
+    <string name="chat_agreement_point1">Sa therapist na kaugnay mo lang napupunta ang mga mensahe. Hindi ito mababasa ng mga administrator at scheduler.</string>
+    <string name="chat_agreement_point2">Itinatago ang mga mensahe sa iyong rehabilitation record. Sa Profile, maaari kang humingi ng kopya, o ipabura ang mga ito.</string>
+    <string name="chat_agreement_point3">Hindi binabasa ng therapist mo ang mga mensahe sa lahat ng oras. Kung apurahan, tumawag sa lokal na emergency number o pumunta sa pinakamalapit na ospital.</string>
+    <string name="chat_agreement_point4">Kapag in-off mo ang mga mensahe, wala nang makapagpapadala ng bago. Mananatili sa record mo ang nasabi na, at mababasa pa rin ito ng therapist mo.</string>
+    <string name="chat_agreement_accept">I-on ang mga mensahe</string>
+    <string name="chat_agreement_turned_on">Naka-on na ang mga mensahe.</string>
+    <string name="chat_agreement_turned_off">Naka-off na ang mga mensahe.</string>
+    <string name="chat_agreement_profile_title">Mga mensahe</string>
+    <string name="chat_agreement_profile_detail">Kung maaari kayong magsulatan ng therapist mo rito.</string>
+    <string name="chat_agreement_on">Naka-on</string>
+    <string name="chat_agreement_off">Naka-off</string>
+    <string name="chat_agreement_turn_off">I-off ang mga mensahe</string>
+    <string name="chat_agreement_keep_on">Panatilihing naka-on</string>
+    <string name="chat_agreement_turn_off_title">I-off ang mga mensahe?</string>
+    <string name="chat_agreement_turn_off_detail">Wala nang makapagpapadala ng bagong mensahe, kasama ka. Mananatili sa record mo ang nasabi na, at mababasa pa rin ito ng therapist mo. Maaari mong i-on muli ang mga mensahe mamaya.</string>
 </resources>

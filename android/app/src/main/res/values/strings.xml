@@ -1092,4 +1092,26 @@
         <item quantity="one">%1$d character left</item>
         <item quantity="other">%1$d characters left</item>
     </plurals>
+    <!-- Messages agreement, care-chat-v1 (issue #111) -->
+    <string name="chat_not_turned_on">Has not turned on messages yet</string>
+    <string name="chat_turn_on_to_start">Turn on messages to start</string>
+    <string name="chat_waiting_for_patient">%1$s has not turned on messages yet. You can write once they do.</string>
+    <string name="chat_error_consent_required">Messages are not turned on in this conversation yet, so the message was not sent.</string>
+    <string name="chat_agreement_title">Messages with your therapist</string>
+    <string name="chat_agreement_detail">Read what turning on messages means. You can turn them off at any time in Profile.</string>
+    <string name="chat_agreement_point1">Messages go only to the therapist you are linked with. Administrators and schedulers cannot read them.</string>
+    <string name="chat_agreement_point2">Messages are kept in your rehabilitation record. From Profile you can ask for a copy, or for them to be deleted.</string>
+    <string name="chat_agreement_point3">Your therapist does not read messages around the clock. For anything urgent, call your local emergency number or go to the nearest hospital.</string>
+    <string name="chat_agreement_point4">If you turn messages off, nobody can send new ones. What was already said stays in your record, and your therapist can still read it.</string>
+    <string name="chat_agreement_accept">Turn on messages</string>
+    <string name="chat_agreement_turned_on">Messages are on.</string>
+    <string name="chat_agreement_turned_off">Messages are off.</string>
+    <string name="chat_agreement_profile_title">Messages</string>
+    <string name="chat_agreement_profile_detail">Whether you and your therapist can write to each other here.</string>
+    <string name="chat_agreement_on">On</string>
+    <string name="chat_agreement_off">Off</string>
+    <string name="chat_agreement_turn_off">Turn off messages</string>
+    <string name="chat_agreement_keep_on">Keep them on</string>
+    <string name="chat_agreement_turn_off_title">Turn off messages?</string>
+    <string name="chat_agreement_turn_off_detail">Nobody will be able to send new messages, you included. What was already said stays in your record, and your therapist can still read it. You can turn messages on again later.</string>
 </resources>

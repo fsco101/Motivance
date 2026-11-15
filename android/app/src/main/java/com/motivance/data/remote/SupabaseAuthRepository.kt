@@ -270,6 +270,8 @@ import java.time.OffsetDateTime
     override suspend fun deleteMessage(id:String)=authorized {token,_ -> ChatJson.message(JSONObject(call("/rest/v1/rpc/delete_message",JSONObject().put("p_id",id),token)))}
     /** Asking the server who this is renews an expired token first, so the live connection never joins with one. */
     override suspend fun liveAccess()=authorized {token,_ -> call("/auth/v1/user",null,token,"GET"); LiveAccess(baseUrl,publicKey,token)}
+    override suspend fun loadChatConsent()=authorized {token,_ -> ChatJson.consent(call("/rest/v1/rpc/my_chat_consent",JSONObject(),token))}
+    override suspend fun setChatConsent(granted:Boolean)=authorized {token,_ -> ChatJson.consent(call("/rest/v1/rpc/set_chat_consent",JSONObject().put("p_granted",granted),token))}
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }

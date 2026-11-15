@@ -14,6 +14,8 @@ import {
 import { SchedulePage } from '@/features/booking/SchedulePage'
 import { asLoad, Loadable, ready, SkeletonCards, type Load } from '@/features/shared'
 import { ProfilePage } from '@/features/profile/pages'
+import { ChatConsentPanel } from '@/features/chat/ChatAgreement'
+import { useChatAgreement } from '@/features/chat/pages'
 import { useActivity, useProgressResults } from '@/features/therapist/history'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from '@/features/therapist/ProgressView'
 import '@/locales/booking'
@@ -219,6 +221,7 @@ export function PatientProfilePage() {
       return { consent, requests }
     },
   })
+  const messages = useChatAgreement(true)
   // Reports the result here, so the panels only have to show they are working.
   const act = async (work: () => Promise<void>, done: string) => {
     try {
@@ -237,6 +240,7 @@ export function PatientProfilePage() {
         <PrivacyPanel load={asLoad(privacy)}
           onWithdraw={() => act(() => withdrawConsent(supabase()), t('patient.consentWithdrawn'))}
           onRequest={(kind: DataRequestKind) => act(() => requestData(supabase(), kind), t('patient.requestStatus.requested'))} />
+        <ChatConsentPanel load={asLoad(messages.load)} onChange={messages.change} />
       </div>
     </>
   )

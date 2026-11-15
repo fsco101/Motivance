@@ -245,7 +245,9 @@ export const chatMessages: ChatMessage[] = [
   said('m1', 'other', '2026-11-04T08:40:00Z', 'Hello! Is it normal to feel stiff in the morning?'),
 ]
 export const conversations: Conversation[] = [
-  { id: 'c1', side: 'therapist', otherId: 'p1', otherName: 'Ana Dela Cruz', otherPhoto: null, open: true, lastMessageAt: '2026-11-05T02:20:00Z', lastMessage: chatMessages[0]!, unread: 0 },
-  { id: 'c2', side: 'therapist', otherId: 'p2', otherName: 'Ramon Bautista', otherPhoto: null, open: true, lastMessageAt: '2026-11-03T05:00:00Z', lastMessage: said('n1', 'other', '2026-11-03T05:00:00Z', 'Can we move Thursday?'), unread: 2 },
-  { id: 'c3', side: 'therapist', otherId: 'p3', otherName: 'Liza Santos', otherPhoto: null, open: false, lastMessageAt: null, lastMessage: null, unread: 0 },
+  { id: 'c1', side: 'therapist', otherId: 'p1', otherName: 'Ana Dela Cruz', otherPhoto: null, open: true, consented: true, lastMessageAt: '2026-11-05T02:20:00Z', lastMessage: chatMessages[0]!, unread: 0 },
+  { id: 'c2', side: 'therapist', otherId: 'p2', otherName: 'Ramon Bautista', otherPhoto: null, open: true, consented: true, lastMessageAt: '2026-11-03T05:00:00Z', lastMessage: said('n1', 'other', '2026-11-03T05:00:00Z', 'Can we move Thursday?'), unread: 2 },
+  { id: 'c3', side: 'therapist', otherId: 'p3', otherName: 'Liza Santos', otherPhoto: null, open: false, consented: true, lastMessageAt: null, lastMessage: null, unread: 0 },
+  // Linked, but has not turned messages on yet.
+  { id: 'c4', side: 'therapist', otherId: 'p4', otherName: 'Noel Ramos', otherPhoto: null, open: false, consented: false, lastMessageAt: null, lastMessage: null, unread: 0 },
 ]

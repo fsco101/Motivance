@@ -41,6 +41,14 @@ class ChatJsonTest {
         assertFalse(ChatJson.message(row.put("deleted_at",JSONObject.NULL).put("body","Hello")).deleted)
     }
 
+    @Test fun readsTheAgreementAndWhetherAConversationWaitsForIt() {
+        assertEquals(ChatConsent("care-chat-v1",true,"2026-11-15T07:00:00+00:00"),ChatJson.consent("""{"version":"care-chat-v1","granted":true,"at":"2026-11-15T07:00:00+00:00"}"""))
+        assertEquals(ChatConsent("care-chat-v1",false,null),ChatJson.consent("""{"version":"care-chat-v1","granted":false,"at":null}"""))
+        val waiting=ChatJson.conversations("""[{"id":"c","side":"therapist","other_id":"p","other_name":"Ana","other_photo":null,"open":false,"consented":false,"last_message_at":null,"last_message":null,"unread":0}]""").single()
+        assertFalse(waiting.open); assertFalse(waiting.consented)
+        assertFalse(ChatJson.page("""{"messages":[],"more":false,"open":false,"consented":false,"other_read_at":null}""").consented)
+    }
+
     @Test fun aKindThisVersionDoesNotKnowIsKeptAndSaidToBeUnshowable() {
         val message=ChatJson.message(JSONObject("""{"id":"m","conversation_id":"c","sender_id":"x","kind":"poll","body":"","data":{},"created_at":"2026-11-15T07:00:00Z","deleted":false}"""))
         assertNull(message.kind)
