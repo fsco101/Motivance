@@ -10,6 +10,24 @@ Three things hold the rules together. One transaction lock, `pg_advisory_xact_lo
 
 The tables, functions and rules for booking are in [BOOKING.md](BOOKING.md). `center_problem` holds the rules that bind everyone, and `slot_problem` adds the ones that bind only patients: notice, horizon and the slot grid. Schedulers skip those, so they can book at short notice.
 
+## Care chat
+
+Migration `202611150001_care_chat.sql` adds a direct conversation between a therapist and a patient (issue #105).
+
+| Table | What it holds | Rule |
+|---|---|---|
+| `conversations` | One row per therapist and patient pair, with the time of its last message | Created by a trigger when a link becomes active, and for every link already active. No direct access; read through functions |
+| `chat_messages` | A message: its sender (null for a system note), kind (`text`, `attachment`, `progress`, `exercise`, `system`), up to 2,000 characters, and a `data` object for what a kind needs | The ID is made by the sender's device. Rows are written only by functions. `select` is granted with a row rule, for live delivery |
+| `chat_reads` | How far each person has read each conversation | Written by functions; `select` with the same row rule |
+
+**Who can do what.** `chat_can_send` is true for either person while the link is active, both accounts are active and the therapist still holds the therapist role. `chat_can_read` is true whenever sending is, and always for the patient. So when a link ends nobody can send, the patient keeps reading what was said to them, and the therapist loses the conversation exactly as they lose the patient's records, until the link is restored. Administrators and Schedulers have no rule that lets them in.
+
+**Functions.** `my_conversations()` lists what the caller may read with the other person's name and photo, the last message and the unread count. `conversation_messages(conversation, before_at, before_id)` returns 50 messages newest first, by keyset, with how far the other person has read. `send_message(id, conversation, body)` returns the stored message; the same ID again returns the same message, so a retry cannot send twice, even after the link has ended. It refuses empty or over-long text (`chat_invalid`), a closed conversation (`chat_closed`) and more than 30 messages a minute from one person (`chat_rate_limited`). `mark_conversation_read`, `delete_message` (the sender only, within 15 minutes, leaving a mark and no words; `chat_too_late` after that) and `my_unread_messages` complete the set. There is no editing.
+
+**Live delivery.** `chat_messages` and `chat_reads` are in the `supabase_realtime` publication. Supabase Realtime sends each change over a websocket only to connections whose user passes the row rule, so live delivery and reading can never disagree. A client must treat the connection as live only after Realtime reports that it is listening to the database, and must fetch again after any drop.
+
+Photos and video (#106), shared progress and system notes (#109), notifications (#110) and the consent, export and deletion rules (#111) are not built yet.
+
 ## Both-sides sets and a time per side
 
 `202611110001_bilateral_sets.sql` lets `publish_prescription` accept the side `bilateral` and an optional `side_seconds` parameter: a whole number of seconds from 15 to 1800, applied to each side. A both-sides prescription runs left, then right. The phone records each side as its own session against the same prescription version and consent. It uploads the side it measured (`LEFT` or `RIGHT`) with `bilateral: true` and, when the plan has a time, the matching `sideSeconds`. `ingest_session` rejects `BILATERAL` as a recorded side, a missing or misplaced `bilateral` flag, and a time that differs from the plan's. `session_measurements.side` stores the measured side, never `bilateral`, so each side keeps its own history and progress line. Uploads from older app versions omit both keys and still validate. The history side filter in both apps therefore matches `session_measurements.side` through an extra `measured:session_measurements!inner(side)` embed. No table or column was added. See [both-sides sets](../validation/BOTH-SIDES-SETS.md).
