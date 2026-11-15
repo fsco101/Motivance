@@ -45,7 +45,22 @@
     "demoReach": "Reach {{degrees}}°",
     "demoReturn": "Return to {{degrees}}°",
     "demoCount": "{{count}} of {{target}}",
-    "demoCountLabel": "Repetitions counted"
+    "demoCountLabel": "Repetitions counted",
+    "sections": "Sections of this page",
+    "navApp": "The app",
+    "navPrivacy": "Privacy",
+    "factPrivate": "Camera frames stay on your phone",
+    "factLanguages": "In English and Filipino",
+    "factBrowser": "Bookings and progress in your browser",
+    "progressTitle": "See how you are doing",
+    "progressDetail": "Every exercise you finish adds to your record: how often you practised, and how far the joint moved. You and your therapist read the same numbers.",
+    "progressPoint1": "Sessions and active days over the last four weeks",
+    "progressPoint2": "Range of motion for each exercise, session by session",
+    "progressPoint3": "Your therapist sees the same record, and can adjust your plan",
+    "progressChart": "Sample measurements, not patient data.",
+    "staffSignIn": "Staff sign-in",
+    "closingTitle": "Ready when you are.",
+    "closingDetail": "Create an account, choose a time, and a Scheduler confirms it."
   },
   "signup": {
     "promise": "Book your sessions and follow your progress from one account.",

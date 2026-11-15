@@ -45,7 +45,22 @@
     "demoReach": "Abutin ang {{degrees}}°",
     "demoReturn": "Bumalik sa {{degrees}}°",
     "demoCount": "{{count}} sa {{target}}",
-    "demoCountLabel": "Nabilang na ulit"
+    "demoCountLabel": "Nabilang na ulit",
+    "sections": "Mga bahagi ng pahinang ito",
+    "navApp": "Ang app",
+    "navPrivacy": "Privacy",
+    "factPrivate": "Nananatili sa telepono mo ang kuha ng camera",
+    "factLanguages": "Sa English at Filipino",
+    "factBrowser": "Mga booking at progreso sa browser mo",
+    "progressTitle": "Tingnan ang iyong pag-unlad",
+    "progressDetail": "Bawat ehersisyong natapos mo ay nadaragdag sa iyong tala: gaano ka kadalas nag-ensayo, at gaano kalayo ang naigalaw ng kasukasuan. Iisang mga numero ang binabasa mo at ng therapist mo.",
+    "progressPoint1": "Mga sesyon at araw na aktibo sa huling apat na linggo",
+    "progressPoint2": "Saklaw ng galaw sa bawat ehersisyo, sesyon kada sesyon",
+    "progressPoint3": "Nakikita ng therapist mo ang parehong tala, at maaari niyang baguhin ang plano mo",
+    "progressChart": "Halimbawang sukat, hindi datos ng pasyente.",
+    "staffSignIn": "Sign-in ng staff",
+    "closingTitle": "Handa kami kapag handa ka na.",
+    "closingDetail": "Gumawa ng account, pumili ng oras, at kukumpirmahin ito ng Scheduler."
   },
   "signup": {
     "promise": "Mag-book ng mga session at subaybayan ang progreso mo sa iisang account.",
