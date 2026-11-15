@@ -76,8 +76,9 @@ class ResultsDashboardTest {
         compose.onNodeWithText(text(R.string.history_completed)).assertExists()
     }
 
-    private class FixtureRepository(private val rows: List<HistoricalSession>) : RehabilitationRepository {
+    private class FixtureRepository(private val rows: List<HistoricalSession>, private val activity: List<SessionActivity> = emptyList()) : RehabilitationRepository {
         override suspend fun loadHistory(query: HistoryQuery, cursor: HistoryCursor?) = HistoryPage(rows, null)
+        override suspend fun loadSessionActivity(patientId: String, since: java.time.Instant) = activity
         override suspend fun loadWorkspace() = RehabWorkspace()
         override suspend fun invitePatient(email: String) = error("unused")
         override suspend fun acceptInvitation(code: String) = error("unused")

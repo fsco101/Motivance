@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.motivance.domain.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -15,6 +18,8 @@ data class HistoryState(
     val owner: String = "", val query: HistoryQuery? = null,
     val rows: List<HistoricalSession> = emptyList(), val next: HistoryCursor? = null,
     val loading: Boolean = false, val failed: Boolean = false, val loaded: Boolean = false,
+    /** The last four weeks of session starts. Null if they could not be read: the history never waits on them. */
+    val activity: List<SessionActivity>? = null,
 )
 
 @HiltViewModel
@@ -52,10 +57,17 @@ class HistoryViewModel @Inject constructor(private val repository: Rehabilitatio
             else HistoryState(owner = current.owner, query = query, loading = true)
         request = viewModelScope.launch {
             try {
+                val recent = if (append) null else async {
+                    val since = LocalDate.now().minusDays(ACTIVITY_DAYS - 1L).atStartOfDay(ZoneId.systemDefault()).toInstant()
+                    try { repository.loadSessionActivity(query.patientId, since) }
+                    catch (e: CancellationException) { throw e }
+                    catch (_: Exception) { null }
+                }
                 val page = repository.loadHistory(query, if (append) current.next else null)
+                val activity = if (append) current.activity else recent?.await()
                 if (generation == ticket) mutable.value = mutable.value.copy(
                     rows = ((if (append) current.rows else emptyList()) + page.sessions).distinctBy { it.id },
-                    next = page.next, loading = false, loaded = true)
+                    next = page.next, loading = false, loaded = true, activity = activity)
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) {
                 if (generation == ticket) mutable.value = HistoryState(owner = current.owner, query = query, failed = true)

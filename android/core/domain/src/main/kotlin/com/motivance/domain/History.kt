@@ -2,9 +2,10 @@ package com.motivance.domain
 
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 
-/** Date boundaries are inclusive calendar dates in UTC, independent of the phone time zone. */
+/** Date boundaries are inclusive calendar dates where the reader is, as on the web, so filters agree with the times on screen. */
 data class HistoryQuery(
     val patientId: String,
     val exerciseVersionId: String? = null,
@@ -85,3 +86,53 @@ fun rehabilitationProgress(sessions: List<HistoricalSession>): List<ProgressSeri
         }
     }.sortedWith(compareBy<ProgressSeries> { it.prescription.exerciseName }.thenBy { it.key.side }
         .thenBy { it.prescription.assignmentId }.thenBy { it.prescription.version }.thenBy { it.key.metric })
+
+/** What one series says at a glance. A change needs two measured sessions, and never crosses a prescription version. */
+data class SeriesOutcome(val first: Double?, val latest: Double?, val best: Double?, val change: Double?, val measured: Int)
+
+/** Mirrors seriesOutcome on the web, including its one decimal place. */
+fun ProgressSeries.outcome(): SeriesOutcome {
+    val values = points.mapNotNull { it.rom }
+    val change = if (values.size > 1) Math.round((values.last() - values.first()) * 10) / 10.0 else null
+    return SeriesOutcome(values.firstOrNull(), values.lastOrNull(), values.maxOrNull(), change, values.size)
+}
+
+const val TRACKING_WINDOW = 10
+const val TRACKING_CONCERN = 3
+data class TrackingConcern(val unusable: Int, val of: Int)
+
+/** Repeated sessions with nothing to measure usually mean the camera setup needs help. [sessions] must be newest first. */
+fun trackingConcern(sessions: List<HistoricalSession>): TrackingConcern? {
+    val recent = sessions.filter { it.status != "interrupted" }.take(TRACKING_WINDOW)
+    val unusable = recent.count { it.resultStatus == HistoryStatus.INVALID || it.resultStatus == HistoryStatus.EMPTY }
+    return if (unusable >= TRACKING_CONCERN) TrackingConcern(unusable, recent.size) else null
+}
+
+const val ACTIVITY_DAYS = 28
+data class SessionActivity(val startedAt: String, val status: String)
+data class ActivityDay(val date: LocalDate, val sessions: Int)
+
+/** Completed sessions by calendar day over the last four weeks. [days] runs oldest first and ends today. */
+data class ActivitySummary(
+    val week: Int, val previousWeek: Int, val activeDays: Int, val streak: Int,
+    val lastAt: String?, val daysSinceLast: Int?, val days: List<ActivityDay>,
+)
+
+/**
+ * Mirrors activitySummary on the web. Days are calendar days where the reader is, as everywhere else on screen.
+ * An interrupted session is not counted: it is an attempt, not a finished exercise.
+ */
+fun activitySummary(entries: List<SessionActivity>, today: LocalDate, zone: ZoneId): ActivitySummary {
+    val completed = entries.filter { it.status == "completed" }
+    val counts = completed.groupingBy { Instant.parse(it.startedAt).atZone(zone).toLocalDate() }.eachCount()
+    val days = (ACTIVITY_DAYS - 1 downTo 0).map { today.minusDays(it.toLong()) }.map { ActivityDay(it, counts[it] ?: 0) }
+    val newestFirst = days.reversed()
+    // Today not done yet does not break a streak that ran through yesterday.
+    val run = if (newestFirst.first().sessions > 0) newestFirst else newestFirst.drop(1)
+    val sinceLast = newestFirst.indexOfFirst { it.sessions > 0 }.takeIf { it >= 0 }
+    return ActivitySummary(
+        week = days.takeLast(7).sumOf { it.sessions }, previousWeek = days.dropLast(7).takeLast(7).sumOf { it.sessions },
+        activeDays = days.count { it.sessions > 0 }, streak = run.takeWhile { it.sessions > 0 }.size,
+        lastAt = sinceLast?.let { completed.maxByOrNull { e -> Instant.parse(e.startedAt) }?.startedAt }, daysSinceLast = sinceLast, days = days,
+    )
+}

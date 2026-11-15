@@ -22,6 +22,8 @@ data class PrescriptionDraft(val assignmentId:String,val requestId:String,val pa
 interface RehabilitationRepository {
     suspend fun loadWorkspace():RehabWorkspace
     suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?=null):HistoryPage
+    /** Every session start since [since], whatever the history filters say, so the summary never depends on what is loaded. */
+    suspend fun loadSessionActivity(patientId:String,since:java.time.Instant):List<SessionActivity>
     suspend fun invitePatient(email:String):String
     suspend fun acceptInvitation(code:String)
     suspend fun revokeLink(patientId:String)

@@ -5,27 +5,43 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.motivance.R
 import com.motivance.designsystem.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Warning
 import com.motivance.domain.*
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
+/** A therapist is told once a patient has gone this long without finishing a session. */
+private const val QUIET_DAYS = 7
+
+/**
+ * One person's progress. [patientId] is null while a therapist still has to choose a patient. A patient reading their own
+ * record sees it in plain terms; a therapist also sees what they need to judge the data: tracking quality and versions.
+ */
 @Composable
 fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patientId: String?, vm: HistoryViewModel) {
+    val self = patientId == owner
+    val zone = remember { ZoneId.systemDefault() }
     var patient by rememberSaveable(owner, patientId) { mutableStateOf(patientId.orEmpty()) }
     var exercise by rememberSaveable(owner, patientId) { mutableStateOf("") }
     var side by rememberSaveable(owner, patientId) { mutableStateOf("") }
@@ -53,8 +69,9 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     if(filtersExpanded) {
     val exercises = (workspace.catalogue.map { it.id to it.name } + rows.mapNotNull { it.prescription }
         .map { it.exerciseVersionId to it.exerciseName }).distinctBy { it.first }
+    // A therapist may need to tell two versions of one exercise apart; a patient only needs its name.
     HistoryChoice(R.string.select_exercise, listOf("" to stringResource(R.string.history_all_exercises)) +
-        exercises.map { it.first to (it.second.ifBlank { stringResource(R.string.history_unknown_exercise) } + " · " + it.first.take(8)) }, exercise) { exercise = it }
+        exercises.map { it.first to (it.second.ifBlank { stringResource(R.string.history_unknown_exercise) } + if (self) "" else " · " + it.first.take(8)) }, exercise) { exercise = it }
     HistoryChoice(R.string.history_side, listOf("" to stringResource(R.string.history_all_sides),
         "left" to stringResource(R.string.left_side), "right" to stringResource(R.string.right_side),
         "bilateral" to stringResource(R.string.history_bilateral)), side) { side = it }
@@ -74,30 +91,36 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     ActionButton(R.string.history_refresh,{vm.refresh()},outlined=true,enabled=current && !state.loading)
     if (current && state.failed) FeedbackNotice(R.string.history_failed,error=true,retry={vm.refresh()})
     if (!current || !state.loaded) return
-    Text(stringResource(R.string.history_loaded, rows.size), style = MaterialTheme.typography.bodySmall)
+    val activity = state.activity
+    // Nothing recorded and nothing recent: the empty state below says it better than a card of zeroes.
+    if (activity != null && (rows.isNotEmpty() || activity.isNotEmpty())) {
+        ActivityCard(remember(activity) { activitySummary(activity, LocalDate.now(zone), zone) }, self, zone)
+    }
     if (rows.isEmpty()) EmptyState(R.string.no_sessions,R.string.history_empty)
     else {
-        Text(stringResource(R.string.history_comparability), style = MaterialTheme.typography.bodySmall)
+        trackingConcern(rows)?.let { CautionNotice(stringResource(if (self) R.string.history_tracking_self else R.string.history_tracking, it.unusable, it.of)) }
         rehabilitationProgress(rows).forEach { series ->
-            Surface(Modifier.fillMaxWidth(),color=MaterialTheme.colorScheme.surface,shape=MaterialTheme.shapes.large,border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ExerciseHeading(series.prescription)
-                    Text(stringResource(R.string.history_series, series.key.metric, series.key.model, series.key.algorithm),
-                        style = MaterialTheme.typography.bodySmall)
-                    if (series.points.none { it.rom != null }) Text(stringResource(R.string.history_no_chart))
-                    else {
-                        TrendChart(series.points.map { it.rom }, R.string.rom_progression, R.string.history_degrees)
-                        TrendChart(series.points.map { it.repetitions?.toDouble() }, R.string.history_rep_trend, R.string.history_repetitions)
-                        Text(stringResource(R.string.history_chart_dates, date(series.points.first().session.startedAt),
-                            date(series.points.last().session.startedAt)), style = MaterialTheme.typography.bodySmall)
-                    }
+            ClinicalCard {
+                ExerciseHeading(series.prescription, series.key.side)
+                if (!self) Text(stringResource(R.string.history_technical, series.key.metric, series.key.model),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (series.points.none { it.rom != null }) Text(stringResource(R.string.history_no_chart))
+                else {
+                    Outcome(series.outcome())
+                    val first = shortDate(series.points.first().session.startedAt, zone)
+                    val last = shortDate(series.points.last().session.startedAt, zone)
+                    TrendChart(series.points.map { it.rom }, R.string.rom_progression, R.string.history_degrees, "°", first, last)
+                    TrendChart(series.points.map { it.repetitions?.toDouble() }, R.string.history_rep_trend, R.string.history_repetitions, "", first, last)
+                    Text(stringResource(R.string.history_chart_order), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
-        Text(stringResource(R.string.synced_results), style = MaterialTheme.typography.titleLarge)
-        rows.forEach { SessionResult(it) }
+        Text(stringResource(R.string.synced_results), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+        Text(stringResource(R.string.history_loaded, rows.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        rows.forEach { SessionResult(it, self, zone) }
         if (state.next != null) ActionButton(R.string.history_older,{vm.loadOlder()},busy=state.loading,busyLabel=R.string.ui_loading_older)
         else Text(stringResource(R.string.history_end), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.history_comparability), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -114,71 +137,202 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     }
 }
 
-@Composable private fun ExerciseHeading(p: HistoricalPrescription) {
+/** A large figure under a quiet label, read as one phrase by a screen reader. */
+@Composable private fun Stat(label: String, value: String, detail: String?, modifier: Modifier = Modifier) {
+    Column(modifier.semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        if (detail != null) Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Amber is the design system's caution colour; the icon and the words carry the meaning without it. */
+@Composable private fun CautionNotice(text: String) {
+    Surface(color = Motion.Amber.copy(alpha = .16f), shape = MaterialTheme.shapes.medium) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(Icons.Default.Warning, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface)
+            Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
+}
+
+/**
+ * How regularly someone has exercised lately. A patient reads it as encouragement, so it shows their streak.
+ * A therapist reads it to decide who needs a call, so it shows how long ago the last session was.
+ */
+@Composable private fun ActivityCard(summary: ActivitySummary, self: Boolean, zone: ZoneId) {
+    val difference = summary.week - summary.previousWeek
+    val compared = when {
+        difference == 0 -> stringResource(R.string.activity_week_same)
+        difference > 0 -> stringResource(R.string.activity_week_more, difference)
+        else -> stringResource(R.string.activity_week_fewer, -difference)
+    }
+    val since = summary.daysSinceLast
+    val last = when (since) {
+        null -> stringResource(R.string.activity_none)
+        0 -> stringResource(R.string.activity_today)
+        1 -> stringResource(R.string.activity_yesterday)
+        else -> stringResource(R.string.activity_days_ago, since)
+    }
+    ClinicalCard {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(if (self) R.string.activity_title_self else R.string.activity_title), style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.semantics { heading() })
+            Text(stringResource(R.string.activity_detail), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Stat(stringResource(R.string.activity_week), summary.week.toString(), compared, Modifier.weight(1f))
+            Stat(stringResource(R.string.activity_active_days), summary.activeDays.toString(),
+                stringResource(R.string.activity_active_days_detail, ACTIVITY_DAYS), Modifier.weight(1f))
+        }
+        if (self) Stat(stringResource(R.string.activity_streak), summary.streak.toString(),
+            if (summary.lastAt != null) stringResource(R.string.activity_last_on, last) else stringResource(R.string.activity_streak_start))
+        else Stat(stringResource(R.string.activity_last), last, summary.lastAt?.let { date(it, zone) })
+        DayStrip(summary)
+        if (!self && (since == null || since >= QUIET_DAYS)) CautionNotice(
+            if (since == null) stringResource(R.string.activity_quiet_none) else stringResource(R.string.activity_quiet, since))
+    }
+}
+
+/** One bar a day, oldest first, in four weeks of seven. Height carries the count, so it reads without colour. */
+@Composable private fun DayStrip(summary: ActivitySummary) {
+    val bar = MaterialTheme.colorScheme.primary
+    val rest = MaterialTheme.colorScheme.outline
+    val description = stringResource(R.string.activity_strip, summary.activeDays, ACTIVITY_DAYS)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Canvas(Modifier.fillMaxWidth().height(44.dp).semantics { contentDescription = description }) {
+            val gap = 3.dp.toPx()
+            val weekGap = 8.dp.toPx()
+            val width = (size.width - weekGap * 3 - gap * 24) / ACTIVITY_DAYS
+            summary.days.forEachIndexed { index, day ->
+                val x = index * width + (index - index / 7) * gap + (index / 7) * weekGap
+                val height = if (day.sessions == 0) 5.dp.toPx() else size.height * (minOf(day.sessions, 3) + 1) / 4f
+                drawRoundRect(if (day.sessions == 0) rest else bar, Offset(x, size.height - height), Size(width, height), CornerRadius(2.dp.toPx()))
+            }
+        }
+        Row(Modifier.fillMaxWidth().clearAndSetSemantics {}, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(shortDate(summary.days.first().date), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.activity_today), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** The answer before the chart: where this plan stands now, at its best, and against where it started. */
+@Composable private fun Outcome(outcome: SeriesOutcome) {
+    val change = outcome.change
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Stat(stringResource(R.string.history_latest), number(outcome.latest) + "°", null, Modifier.weight(1f))
+        Stat(stringResource(R.string.history_best), number(outcome.best) + "°", null, Modifier.weight(1f))
+    }
+    // A real minus sign, and a plus so that a gain is not read as a bare measurement.
+    if (change == null) Stat(stringResource(R.string.history_change), "--", stringResource(R.string.history_change_none))
+    else Stat(stringResource(R.string.history_change), (if (change > 0) "+" else if (change < 0) "−" else "") + number(kotlin.math.abs(change)) + "°",
+        stringResource(R.string.history_change_help))
+}
+
+@Composable private fun ExerciseHeading(p: HistoricalPrescription, side: String = p.side) {
     val name = when (p.algorithm) {
         "elbow-flexion-v1" -> stringResource(R.string.elbow_flexion)
         "shoulder-abduction-v1" -> stringResource(R.string.shoulder_abduction)
         else -> p.exerciseName.ifBlank { stringResource(R.string.history_unknown_exercise) }
     }
-    Text(name + " · " + sideLabel(p.side), style = MaterialTheme.typography.titleMedium)
-    Text(stringResource(R.string.history_version, p.version, p.id.take(8)), style = MaterialTheme.typography.labelLarge)
-    Text(stringResource(R.string.history_targets, number(p.low), number(p.high), p.targetRepetitions))
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(name + " · " + sideLabel(side), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.history_version, p.version, p.id.take(8)), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.history_targets, number(p.low), number(p.high), p.targetRepetitions), style = MaterialTheme.typography.bodyMedium)
+    }
 }
 
-@Composable private fun SessionResult(s: HistoricalSession) {
-    Surface(Modifier.fillMaxWidth(),color=MaterialTheme.colorScheme.surface,shape=MaterialTheme.shapes.large,border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(date(s.startedAt), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(when (s.resultStatus) {
-                HistoryStatus.COMPLETED -> R.string.history_completed
-                HistoryStatus.PARTIAL -> R.string.history_partial
-                HistoryStatus.INTERRUPTED -> R.string.history_interrupted
-                HistoryStatus.EMPTY -> R.string.history_no_measurements
-                HistoryStatus.INVALID -> R.string.history_invalid
-            }))
-            s.prescription?.let { ExerciseHeading(it) } ?: Text(stringResource(R.string.history_missing_prescription))
-            s.measurements.forEach { m ->
-                HorizontalDivider()
-                Text(m.key + " · " + sideLabel(m.side), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(when (m.quality) { "valid" -> R.string.result_valid; "limited" -> R.string.result_limited; else -> R.string.result_invalid }))
-                val usable = m.quality in setOf("valid", "limited") && m.validFrames > 0 && m.rom != null
-                Text(stringResource(R.string.history_extrema, number(m.minimum.takeIf { usable }), number(m.maximum.takeIf { usable }), number(m.rom.takeIf { usable })))
-                Text(stringResource(R.string.history_counts, m.repetitions, m.incomplete))
-                Text(stringResource(R.string.history_frames, m.validFrames, m.invalidFrames), style = MaterialTheme.typography.bodySmall)
+@Composable private fun SessionResult(s: HistoricalSession, self: Boolean, zone: ZoneId) {
+    val status = s.resultStatus
+    ClinicalCard {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(date(s.startedAt, zone), style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (status == HistoryStatus.COMPLETED) StatusPill(stringResource(R.string.history_completed), PillTone.POSITIVE)
+                else Text(stringResource(when (status) {
+                    HistoryStatus.PARTIAL -> R.string.history_partial
+                    HistoryStatus.INTERRUPTED -> R.string.history_interrupted
+                    HistoryStatus.EMPTY -> R.string.history_no_measurements
+                    else -> R.string.history_invalid
+                }), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        s.prescription?.let { ExerciseHeading(it) } ?: Text(stringResource(R.string.history_missing_prescription))
+        s.measurements.forEach { m ->
+            HorizontalDivider()
+            val usable = m.quality in setOf("valid", "limited") && m.validFrames > 0 && m.rom != null
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(if (self) sideLabel(m.side) else m.key + " · " + sideLabel(m.side), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.history_rom_value, number(m.rom.takeIf { usable })), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.history_rep_value, m.repetitions, s.prescription?.targetRepetitions ?: 0))
+                // What a therapist needs to judge the number: where the joint started and stopped, and how well it was tracked.
+                if (!self) {
+                    Text(stringResource(R.string.history_extrema, number(m.minimum.takeIf { usable }), number(m.maximum.takeIf { usable }), number(m.rom.takeIf { usable })),
+                        style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(when (m.quality) { "valid" -> R.string.result_valid; "limited" -> R.string.result_limited; else -> R.string.result_invalid }),
+                        style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.history_counts, m.repetitions, m.incomplete) + "\n" + stringResource(R.string.history_frames, m.validFrames, m.invalidFrames),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }
 }
 
-@Composable private fun TrendChart(values: List<Double?>, title: Int, unit: Int) {
+/**
+ * A plain line of measured values. Gaps stay gaps; nothing is smoothed or filled in, and there is no target band, as on the web.
+ * The newest value is written out beside the title, and the axis is labelled, so the line never has to be read by eye alone.
+ */
+@Composable private fun TrendChart(values: List<Double?>, title: Int, unit: Int, suffix: String, first: String, last: String) {
     val maximum = maxOf(1.0, values.filterNotNull().maxOrNull() ?: 1.0)
-    val color = MaterialTheme.colorScheme.secondary
-    val axis = MaterialTheme.colorScheme.outline
-    val description = stringResource(R.string.history_chart_accessibility, stringResource(title), values.count { it != null }, stringResource(unit))
-    Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
-    Text(stringResource(R.string.history_chart_scale, number(maximum), stringResource(unit)), style = MaterialTheme.typography.bodySmall)
-    Canvas(Modifier.fillMaxWidth().height(130.dp).semantics { contentDescription = description }) {
-        val pad = 8.dp.toPx()
-        val width = (size.width - 2 * pad).coerceAtLeast(1f)
-        val height = (size.height - 2 * pad).coerceAtLeast(1f)
-        drawLine(axis, Offset(pad, pad), Offset(pad, height + pad))
-        drawLine(axis, Offset(pad, height + pad), Offset(width + pad, height + pad))
-        fun point(index: Int, value: Double) = Offset(pad + if (values.size == 1) width / 2 else width * index / (values.size - 1),
-            pad + height * (1 - value / maximum).toFloat())
-        values.forEachIndexed { i, value ->
-            if (value != null) {
-                val here = point(i, value)
-                if (i > 0) values[i - 1]?.let { drawLine(color, point(i - 1, it), here, 2.dp.toPx()) }
-                drawCircle(color, 4.dp.toPx(), here)
+    val color = MaterialTheme.colorScheme.primary
+    val grid = MaterialTheme.colorScheme.outlineVariant
+    val description = stringResource(R.string.history_chart_accessibility, stringResource(title), values.count { it != null }, stringResource(unit), first, last)
+    val labels = MaterialTheme.typography.labelSmall
+    val quiet = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(stringResource(title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            values.lastOrNull { it != null }?.let { Text(number(it) + suffix, style = MaterialTheme.typography.titleSmall, color = quiet) }
+        }
+        Row(Modifier.height(130.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.fillMaxHeight().clearAndSetSemantics {}, verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.End) {
+                Text(number(maximum), style = labels, color = quiet)
+                Text(number(maximum / 2), style = labels, color = quiet)
+                Text("0", style = labels, color = quiet)
+            }
+            Canvas(Modifier.weight(1f).fillMaxHeight().semantics { contentDescription = description }) {
+                val pad = 8.dp.toPx()
+                val width = (size.width - 2 * pad).coerceAtLeast(1f)
+                val height = (size.height - 2 * pad).coerceAtLeast(1f)
+                listOf(0f, .5f, 1f).forEach { drawLine(grid, Offset(0f, pad + height * it), Offset(size.width, pad + height * it)) }
+                fun point(index: Int, value: Double) = Offset(pad + if (values.size == 1) width / 2 else width * index / (values.size - 1),
+                    pad + height * (1 - value / maximum).toFloat())
+                val newest = values.indexOfLast { it != null }
+                values.forEachIndexed { i, value ->
+                    if (value != null) {
+                        val here = point(i, value)
+                        if (i > 0) values[i - 1]?.let { drawLine(color, point(i - 1, it), here, 2.5.dp.toPx()) }
+                        drawCircle(color, (if (i == newest) 6 else 4).dp.toPx(), here)
+                    }
+                }
             }
         }
+        Row(Modifier.fillMaxWidth().padding(start = 40.dp).clearAndSetSemantics {}, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(first, style = labels, color = quiet)
+            if (values.size > 1) Text(last, style = labels, color = quiet)
+        }
     }
-    Text(stringResource(R.string.history_chart_order), style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable private fun sideLabel(side: String) = stringResource(when (side) {
     "left" -> R.string.left_side; "right" -> R.string.right_side; else -> R.string.history_bilateral
 })
 private fun number(value: Double?) = value?.let { String.format(Locale.getDefault(), "%.1f", it) } ?: "--"
-private fun date(value: String): String = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-    .withLocale(Locale.getDefault()).withZone(ZoneOffset.UTC).format(Instant.parse(value)) + " UTC"
+/** The reader's own time, as on the web, so a session shows on the day they did it. */
+private fun date(value: String, zone: ZoneId): String = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+    .withLocale(Locale.getDefault()).withZone(zone).format(Instant.parse(value))
+private val SHORT_DATE get() = DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
+private fun shortDate(value: String, zone: ZoneId): String = SHORT_DATE.withZone(zone).format(Instant.parse(value))
+private fun shortDate(day: LocalDate): String = SHORT_DATE.format(day)

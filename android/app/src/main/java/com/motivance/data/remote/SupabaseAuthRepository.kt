@@ -261,6 +261,9 @@ import java.time.OffsetDateTime
     override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=authorized { token,_ ->
         HistoryJson.decode(call(HistoryJson.path(query,cursor),null,token,"GET"))
     }
+    override suspend fun loadSessionActivity(patientId:String,since:Instant)=authorized { token,_ ->
+        HistoryJson.decodeActivity(call(HistoryJson.activityPath(patientId,since),null,token,"GET"))
+    }
     override suspend fun invitePatient(email:String)=authorized { token,_ -> JSONObject(call("/rest/v1/rpc/invite_patient",JSONObject().put("p_email",email.trim()),token)).getString("code") }
     override suspend fun acceptInvitation(code:String) {authorized {token,_ -> call("/rest/v1/rpc/accept_patient_invitation",JSONObject().put("p_code",code.trim()),token)} }
     override suspend fun revokeLink(patientId:String) {authorized {token,_ -> call("/rest/v1/rpc/revoke_patient_link",JSONObject().put("p_patient",patientId),token)} }
