@@ -50,10 +50,10 @@ describe('care chat on the local backend', () => {
     const [staff, person] = await Promise.all([signedIn(therapist), signedIn(patient)])
     await expect(sendMessage(staff, randomUUID(), conversation, 'Hello')).rejects.toMatchObject({ message: 'chat_consent_required' })
     await expect(sendMessage(person, randomUUID(), conversation, 'Hello')).rejects.toMatchObject({ message: 'chat_consent_required' })
-    expect(await loadChatConsent(person)).toEqual({ version: 'care-chat-v1', granted: false, at: null })
+    expect(await loadChatConsent(person)).toEqual({ version: 'care-chat-v2', granted: false, media: false, accepted_version: null, at: null })
     // Only a patient answers for themselves.
     for (const other of [therapist, scheduler, admin]) await expect(setChatConsent(await signedIn(other), true)).rejects.toMatchObject({ code: '42501' })
-    expect(await setChatConsent(person, true)).toMatchObject({ version: 'care-chat-v1', granted: true })
+    expect(await setChatConsent(person, true)).toMatchObject({ version: 'care-chat-v2', granted: true, media: true })
     await setChatConsent(person, true)
     expect(sql(`select count(*) from public.consents where patient_id='${patient.id}' and consent_type='care-chat'`)).toBe('1')
     // It is audited like every other agreement.

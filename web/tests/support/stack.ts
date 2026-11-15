@@ -128,7 +128,12 @@ delete from public.prescription_versions where patient_id in (${ids}); delete fr
 delete from public.exercise_versions where exercise_id in (select id from public.exercises where owner_id in (${ids}));
 delete from public.exercises where owner_id in (${ids});
 delete from public.patient_invitations where therapist_id in (${ids});
-delete from public.chat_reads where user_id in (${ids}); delete from public.conversations where therapist_id in (${ids}) or patient_id in (${ids});
+insert into public.chat_media_trash(path) select unnest(array[a.media_path,a.preview_path]) from public.chat_attachments a join public.conversations c on c.id=a.conversation_id where (c.therapist_id in (${ids}) or c.patient_id in (${ids})) and a.removed_at is null on conflict do nothing;
+-- Foreign-key cascades do not run while triggers are off, so a conversation's rows are removed by hand.
+delete from public.chat_attachments where conversation_id in (select id from public.conversations where therapist_id in (${ids}) or patient_id in (${ids}));
+delete from public.chat_reads where user_id in (${ids}) or conversation_id in (select id from public.conversations where therapist_id in (${ids}) or patient_id in (${ids}));
+delete from public.chat_messages where conversation_id in (select id from public.conversations where therapist_id in (${ids}) or patient_id in (${ids}));
+delete from public.conversations where therapist_id in (${ids}) or patient_id in (${ids});
 delete from public.therapist_patients where therapist_id in (${ids}) or patient_id in (${ids});
 delete from public.center_closures where created_by in (${ids}); delete from public.center_holidays where created_by in (${ids});
 delete from public.therapist_time_off where therapist_id in (${ids}) or created_by in (${ids});

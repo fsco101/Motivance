@@ -236,7 +236,14 @@ export const profile: MyProfile = {
 
 const said = (id: string, senderId: string | null, createdAt: string, body: string, extra: Partial<ChatMessage> = {}): ChatMessage => ({ id, conversationId: 'c1', senderId, kind: 'text', body, data: {}, createdAt, deleted: false, ...extra })
 /** Newest first, as the server returns them. `me` is the reader in the gallery, whichever workspace is shown. */
+const media = (kind: 'image' | 'video', id: string, expiresAt: string) => ({
+  attachment_kind: kind, mime: kind === 'video' ? 'video/webm' : 'image/jpeg', width: kind === 'video' ? 852 : 1200, height: kind === 'video' ? 480 : 1600,
+  duration_ms: kind === 'video' ? 14_000 : null, bytes: 300_000, media_path: `c1/${id}/media`, preview_path: `c1/${id}/preview.jpg`, expires_at: expiresAt,
+})
 export const chatMessages: ChatMessage[] = [
+  said('m9', 'other', '2026-11-05T02:30:00Z', '', { kind: 'attachment', data: media('video', 'm9', '2099-01-01T00:00:00Z') }),
+  said('m8', 'me', '2026-11-05T02:25:00Z', 'Hold the band like this.', { kind: 'attachment', data: media('image', 'm8', '2099-01-01T00:00:00Z') }),
+  said('m7', 'other', '2026-11-04T08:30:00Z', '', { kind: 'attachment', data: media('image', 'm7', '2026-11-10T00:00:00Z') }),
   said('m6', 'me', '2026-11-05T02:20:00Z', 'Good. Keep the upper arm still, and stop if it hurts.'),
   said('m5', 'other', '2026-11-05T02:14:00Z', 'Did ten this morning. The last two were hard.'),
   said('m4', null, '2026-11-05T01:00:00Z', 'Daily practice reminder', { kind: 'system' }),
@@ -245,9 +252,9 @@ export const chatMessages: ChatMessage[] = [
   said('m1', 'other', '2026-11-04T08:40:00Z', 'Hello! Is it normal to feel stiff in the morning?'),
 ]
 export const conversations: Conversation[] = [
-  { id: 'c1', side: 'therapist', otherId: 'p1', otherName: 'Ana Dela Cruz', otherPhoto: null, open: true, consented: true, lastMessageAt: '2026-11-05T02:20:00Z', lastMessage: chatMessages[0]!, unread: 0 },
-  { id: 'c2', side: 'therapist', otherId: 'p2', otherName: 'Ramon Bautista', otherPhoto: null, open: true, consented: true, lastMessageAt: '2026-11-03T05:00:00Z', lastMessage: said('n1', 'other', '2026-11-03T05:00:00Z', 'Can we move Thursday?'), unread: 2 },
-  { id: 'c3', side: 'therapist', otherId: 'p3', otherName: 'Liza Santos', otherPhoto: null, open: false, consented: true, lastMessageAt: null, lastMessage: null, unread: 0 },
+  { id: 'c1', side: 'therapist', otherId: 'p1', otherName: 'Ana Dela Cruz', otherPhoto: null, open: true, consented: true, media: true, lastMessageAt: '2026-11-05T02:20:00Z', lastMessage: chatMessages[0]!, unread: 0 },
+  { id: 'c2', side: 'therapist', otherId: 'p2', otherName: 'Ramon Bautista', otherPhoto: null, open: true, consented: true, media: false, lastMessageAt: '2026-11-03T05:00:00Z', lastMessage: said('n1', 'other', '2026-11-03T05:00:00Z', 'Can we move Thursday?'), unread: 2 },
+  { id: 'c3', side: 'therapist', otherId: 'p3', otherName: 'Liza Santos', otherPhoto: null, open: false, consented: true, media: true, lastMessageAt: null, lastMessage: null, unread: 0 },
   // Linked, but has not turned messages on yet.
-  { id: 'c4', side: 'therapist', otherId: 'p4', otherName: 'Noel Ramos', otherPhoto: null, open: false, consented: false, lastMessageAt: null, lastMessage: null, unread: 0 },
+  { id: 'c4', side: 'therapist', otherId: 'p4', otherName: 'Noel Ramos', otherPhoto: null, open: false, consented: false, media: false, lastMessageAt: null, lastMessage: null, unread: 0 },
 ]

@@ -469,6 +469,93 @@ export type Database = {
           },
         ]
       }
+      chat_attachments: {
+        Row: {
+          bytes: number | null
+          conversation_id: string
+          created_at: string
+          duration_ms: number | null
+          expires_at: string | null
+          height: number
+          id: string
+          kind: string
+          media_path: string
+          mime: string
+          preview_bytes: number | null
+          preview_path: string
+          removed_at: string | null
+          sent_at: string | null
+          uploader_id: string
+          width: number
+        }
+        Insert: {
+          bytes?: number | null
+          conversation_id: string
+          created_at?: string
+          duration_ms?: number | null
+          expires_at?: string | null
+          height: number
+          id: string
+          kind: string
+          media_path: string
+          mime: string
+          preview_bytes?: number | null
+          preview_path: string
+          removed_at?: string | null
+          sent_at?: string | null
+          uploader_id: string
+          width: number
+        }
+        Update: {
+          bytes?: number | null
+          conversation_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          expires_at?: string | null
+          height?: number
+          id?: string
+          kind?: string
+          media_path?: string
+          mime?: string
+          preview_bytes?: number | null
+          preview_path?: string
+          removed_at?: string | null
+          sent_at?: string | null
+          uploader_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_attachments_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_attachments_uploader_id_fkey"
+            columns: ["uploader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_media_trash: {
+        Row: {
+          path: string
+          queued_at: string
+        }
+        Insert: {
+          path: string
+          queued_at?: string
+        }
+        Update: {
+          path?: string
+          queued_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           body: string
@@ -1637,11 +1724,51 @@ export type Database = {
         Args: { p_conversation: string }
         Returns: boolean
       }
+      chat_media_consented: {
+        Args: { p_patient: string }
+        Returns: boolean
+      }
+      chat_media_days: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      chat_media_due: {
+        Args: { p_limit?: number }
+        Returns: string[]
+      }
+      chat_media_extension: {
+        Args: { p_mime: string }
+        Returns: string
+      }
+      chat_media_limit: {
+        Args: { p_kind: string }
+        Returns: number
+      }
+      chat_media_readable: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
+      chat_media_removed: {
+        Args: { p_paths: string[] }
+        Returns: number
+      }
+      chat_media_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      chat_media_writable: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
       chat_message_json: {
         Args: { m: Database["public"]["Tables"]["chat_messages"]["Row"] }
         Returns: Json
       }
       chat_rate_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      chat_video_cap: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
@@ -2105,6 +2232,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      send_attachment: {
+        Args: { p_id: string; p_caption?: string }
+        Returns: Json
+      }
       send_message: {
         Args: { p_id: string; p_conversation: string; p_body: string }
         Returns: Json
@@ -2170,6 +2301,18 @@ export type Database = {
       slot_problem: {
         Args: { p_starts: string }
         Returns: string
+      }
+      start_attachment: {
+        Args: {
+          p_id: string
+          p_conversation: string
+          p_kind: string
+          p_mime: string
+          p_width: number
+          p_height: number
+          p_duration_ms?: number
+        }
+        Returns: Json
       }
       therapist_schedule: {
         Args: { p_from: string; p_to: string }
