@@ -41,6 +41,7 @@ class ConnectedPersistenceTest {
         }
         override suspend fun loadWorkspace()=RehabWorkspace()
         override suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?)=HistoryPage(emptyList(),null)
+        override suspend fun loadSessionActivity(patientId:String,since:java.time.Instant)=emptyList<SessionActivity>()
         override suspend fun invitePatient(email:String)=""
         override suspend fun acceptInvitation(code:String) { }
         override suspend fun revokeLink(patientId:String) { }

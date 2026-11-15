@@ -28,10 +28,10 @@ class HistoryRepositoryTest {
         {"metric_key":"second","side":"right","minimum_degrees":null,"maximum_degrees":null,
         "completed_repetitions":0,"incomplete_repetitions":0,"quality":"invalid","valid_frames":0,"invalid_frames":20}]}""")
 
-    @Test fun queryScopesPatientAndFiltersPrescriptionWithInclusiveUtcDateBoundaries() {
+    @Test fun queryScopesPatientAndFiltersPrescriptionWithInclusiveLocalDateBoundaries() {
         val q = HistoryQuery(owner, exercise, "left", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-01-31"))
         val cursor = HistoryCursor("2026-01-15T12:00:00+00:00", UUID.randomUUID().toString())
-        val url = ("https://fixture.invalid" + HistoryJson.path(q, cursor)).toHttpUrl()
+        val url = ("https://fixture.invalid" + HistoryJson.path(q, cursor, java.time.ZoneOffset.UTC)).toHttpUrl()
         assertEquals("eq.$owner", url.queryParameter("patient_id"))
         assertEquals("eq.$exercise", url.queryParameter("prescription.exercise_version_id"))
         // The side measured, so a both-sides plan's left sessions file under Left.
@@ -46,6 +46,20 @@ class HistoryRepositoryTest {
         assertEquals("51", url.queryParameter("limit"))
         assertTrue(url.queryParameter("or")!!.contains("id.lt.${cursor.id}"))
         assertTrue(url.queryParameter("select")!!.contains("!sessions_prescription_version_id_patient_id_fkey!inner"))
+        // A day starts at the reader's midnight, as on the web: 1 January in Manila begins at 16:00 UTC the day before.
+        val manila = ("https://fixture.invalid" + HistoryJson.path(q, null, java.time.ZoneId.of("Asia/Manila"))).toHttpUrl()
+        assertEquals(listOf("gte.2025-12-31T16:00:00Z", "lt.2026-01-31T16:00:00Z"), manila.queryParameterValues("started_at"))
+    }
+
+    @Test fun activityAsksOnlyForOnePatientsRecentSessionStarts() {
+        val url = ("https://fixture.invalid" + HistoryJson.activityPath(owner, java.time.Instant.parse("2026-01-01T16:00:00Z"))).toHttpUrl()
+        assertEquals("started_at,status", url.queryParameter("select"))
+        assertEquals("eq.$owner", url.queryParameter("patient_id"))
+        assertEquals("gte.2026-01-01T16:00:00Z", url.queryParameter("started_at"))
+        assertEquals(HistoryJson.ACTIVITY_LIMIT.toString(), url.queryParameter("limit"))
+        assertTrue(runCatching { HistoryJson.activityPath("x&patient_id=eq.other", java.time.Instant.EPOCH) }.isFailure)
+        assertEquals(listOf(SessionActivity("2026-01-02T01:00:00+00:00", "interrupted")),
+            HistoryJson.decodeActivity("""[{"started_at":"2026-01-02T01:00:00+00:00","status":"interrupted"}]"""))
     }
 
     @Test fun pagesKeepAllMeasurementsAndThePinnedHistoricalTargets() {

@@ -74,4 +74,41 @@ class HistoryTest {
         assertEquals(listOf(5, null, null, null, 5), elbow.map { it.repetitions })
         assertEquals(listOf(90.0, null, null, null, null), series.single { it.key.metric == "second" }.points.map { it.rom })
     }
+
+    @Test fun outcomeComparesLatestWithFirstAndNeedsTwoMeasuredSessions() {
+        fun at(id: String, day: String, maximum: Double?) = session(id, listOf(if (maximum == null) m.copy(quality = "limited") else m.copy(maximum = maximum)))
+            .copy(startedAt = "2026-01-${day}T10:00:00Z")
+        val outcome = rehabilitationProgress(listOf(at("a", "01", 80.0), at("b", "02", 120.0), at("c", "03", null), at("d", "04", 100.25))).single().outcome()
+        assertEquals(SeriesOutcome(70.0, 90.25, 110.0, 20.3, 3), outcome)
+        assertNull(rehabilitationProgress(listOf(at("a", "01", 80.0))).single().outcome().change)
+        assertEquals(SeriesOutcome(null, null, null, null, 0), rehabilitationProgress(listOf(at("a", "01", null))).single().outcome())
+    }
+
+    @Test fun trackingConcernNeedsThreeUnusableAmongTheNewestTenAndIgnoresInterrupted() {
+        val bad = session("bad", listOf(m.copy(quality = "invalid")))
+        assertNull(trackingConcern(listOf(bad, session(), bad)))
+        assertEquals(TrackingConcern(3, 4), trackingConcern(listOf(bad, session(), bad, session("empty", emptyList()))))
+        assertNull(trackingConcern(List(5) { session("i$it", emptyList()).copy(status = "interrupted") }))
+        assertNull(trackingConcern(List(10) { session("g$it") } + listOf(bad, bad, bad)))
+    }
+
+    @Test fun activityCountsCompletedSessionsByLocalDayOverFourWeeks() {
+        val zone = java.time.ZoneId.of("Asia/Manila")
+        val today = LocalDate.parse("2026-11-15")
+        fun on(daysAgo: Long, status: String = "completed", hour: Int = 9) =
+            SessionActivity(today.minusDays(daysAgo).atTime(hour, 0).atZone(zone).toInstant().toString(), status)
+        val summary = activitySummary(listOf(on(0), on(0, hour = 11), on(1), on(2, "interrupted"), on(8), on(27), on(28)), today, zone)
+        assertEquals(ACTIVITY_DAYS, summary.days.size)
+        assertEquals(ActivityDay(today, 2), summary.days.last())
+        assertEquals(ActivityDay(LocalDate.parse("2026-10-19"), 1), summary.days.first())
+        assertEquals(listOf(3, 1, 4, 2, 0), listOf(summary.week, summary.previousWeek, summary.activeDays, summary.streak, summary.daysSinceLast))
+        assertEquals(on(0, hour = 11).startedAt, summary.lastAt)
+        // 01:00 in Manila is still the day before in UTC: the reader's calendar decides.
+        assertEquals(1, activitySummary(listOf(on(0, hour = 1)), today, zone).days.last().sessions)
+        activitySummary(listOf(on(1), on(2), on(3)), today, zone).let { assertEquals(3 to 1, it.streak to it.daysSinceLast) }
+        activitySummary(listOf(on(2), on(3)), today, zone).let { assertEquals(0 to 2, it.streak to it.daysSinceLast) }
+        activitySummary(listOf(on(3, "interrupted"), on(40)), today, zone).let {
+            assertEquals(listOf(0, 0, 0, 0), listOf(it.week, it.previousWeek, it.activeDays, it.streak)); assertNull(it.lastAt); assertNull(it.daysSinceLast)
+        }
+    }
 }

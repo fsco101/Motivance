@@ -81,7 +81,7 @@ function Progress() {
   // Sample data stands in for the query, which applies these filters on the server.
   const sessions = data.sessions.filter((s) => (filters.exerciseVersionId === 'all' || s.prescription?.exerciseVersionId === filters.exerciseVersionId)
     && (filters.side === 'all' || s.prescription?.side === filters.side) && (!filters.from || s.startedAt.slice(0, 10) >= filters.from) && (!filters.through || s.startedAt.slice(0, 10) <= filters.through))
-  return <ProgressView choices={useDemo(base, base)} results={useDemo({ sessions, more: true }, { sessions: [], more: false })} filters={filters} onFilters={setFilters} onPatient={() => setFilters(NO_FILTERS)} onMore={said('Loaded older sessions')} />
+  return <ProgressView choices={useDemo(base, base)} results={useDemo({ sessions, more: true }, { sessions: [], more: false })} activity={data.exerciseActivity} filters={filters} onFilters={setFilters} onPatient={() => setFilters(NO_FILTERS)} onMore={said('Loaded older sessions')} />
 }
 function PatientHome() {
   const [open, setOpen] = useState(false)
@@ -104,7 +104,7 @@ const PatientBookings = () => <MyBookingsView base={PATIENT} load={useDemo(data.
 function PatientProgress() {
   const [filters, setFilters] = useState(NO_FILTERS)
   const base = { patients: [], patientId: 'p1', exercises: [{ id: 'v1', name: 'Elbow flexion' }] }
-  return <ProgressView self choices={useDemo(base, base)} results={useDemo({ sessions: data.sessions, more: false }, { sessions: [], more: false })} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={said('Loaded more')} />
+  return <ProgressView self choices={useDemo(base, base)} results={useDemo({ sessions: data.sessions, more: false }, { sessions: [], more: false })} activity={data.exerciseActivity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={said('Loaded more')} />
 }
 function PatientProfile() {
   return (

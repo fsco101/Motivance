@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { HISTORY_PAGE_SIZE, loadHistory, rehabilitationProgress } from '../../src/data/history'
+import { HISTORY_PAGE_SIZE, loadActivity, loadHistory, rehabilitationProgress } from '../../src/data/history'
 import { createCustomExercise, loadLatestSessions, publishPrescription, revokePatientLink } from '../../src/data/therapist'
 import { loadCatalogue, loadOverview, loadPatients, loadPlans } from '../../src/data/workspace'
 import { createUser, ingestSession, link, removeUsers, signedIn, sql, type TestUser } from '../support/stack'
@@ -171,6 +171,15 @@ describe('web queries on the local backend', () => {
     expect((await loadHistory(db, { patientId: patient.id, side: 'left', exerciseVersionId: ELBOW })).sessions).toHaveLength(1)
     expect((await loadHistory(db, { patientId: patient.id, side: 'right' })).sessions).toEqual([])
     expect((await loadHistory(db, { patientId: patient.id, from: '2020-01-01', through: '2099-01-01' })).sessions).toHaveLength(1)
+  })
+
+  it('reads recent session starts for the summary, only inside four weeks and only for a linked therapist', async () => {
+    const db = await signedIn(therapist)
+    const first = (await loadHistory(db, { patientId: patient.id })).sessions[0]!
+    const now = new Date(first.startedAt)
+    expect(await loadActivity(db, patient.id, now)).toEqual([{ startedAt: first.startedAt, status: first.status }])
+    expect(await loadActivity(db, patient.id, new Date(now.getTime() + 40 * 86_400_000))).toEqual([])
+    expect(await loadActivity(await signedIn(otherTherapist), patient.id, now)).toEqual([])
   })
 
   it('a both-sides plan files each session under the side measured', async () => {

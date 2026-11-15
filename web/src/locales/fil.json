@@ -95,7 +95,19 @@
     "status": { "completed": "Natapos", "partial": "Bahagya", "interrupted": "Naantala", "empty": "Walang resulta", "invalid": "Hindi magagamit" },
     "patient": "Pasyente", "allExercises": "Lahat ng ehersisyo", "bothSides": "Dalawang bahagi", "from": "Mula", "through": "Hanggang", "emptyTitle": "Wala pang sesyon", "emptyDetail": "Lalabas dito ang resulta kapag natapos ng pasyenteng ito ang isang ehersisyo.",
     "noMatch": "Walang sesyong tumutugma sa mga filter na ito.", "seriesLine": "{{side}}, bersiyon {{version}}, nireseta {{low}}° hanggang {{high}}°", "sessions": "Mga sesyon", "shown_one": "{{count}} sesyon", "shown_other": "{{count}} sesyon", "loadOlder": "Mag-load ng mas lumang sesyon",
-    "selfDescription": "Ang nasukat mong paggalaw sa paglipas ng panahon."
+    "selfDescription": "Ang nasukat mong paggalaw sa paglipas ng panahon.",
+    "latest": "Pinakabago", "best": "Pinakamalawak", "change": "Pagbabago mula sa unang sesyon", "changeNone": "Kailangan ng dalawang nasukat na sesyon", "changeHelp": "Sa loob ng bersiyong ito ng plano.",
+    "trackingSelf": "{{unusable}} sa huling {{of}} sesyon mo ang hindi nasukat. Siguraduhing kita ng camera ang buong katawan mo, sa maliwanag na silid.",
+    "tracking": "{{unusable}} sa huling {{of}} sesyon ang walang magagamit na sukat. Maaaring kailangan ng pasyenteng ito ng tulong sa pag-aayos ng camera.",
+    "activity": {
+      "title": "Huling 4 na linggo", "titleSelf": "Ang huling 4 na linggo mo", "description": "Mga natapos na sesyon, anuman ang filter sa ibaba.", "sample": "Halimbawang aktibidad, hindi datos ng pasyente.",
+      "week": "Mga sesyon, huling 7 araw", "weekSame": "Kapareho ng naunang 7 araw", "weekMore_one": "{{count}} na mas marami kaysa sa naunang 7 araw", "weekMore_other": "{{count}} na mas marami kaysa sa naunang 7 araw",
+      "weekFewer_one": "{{count}} na mas kaunti kaysa sa naunang 7 araw", "weekFewer_other": "{{count}} na mas kaunti kaysa sa naunang 7 araw",
+      "activeDays": "Mga araw na aktibo", "activeDaysDetail": "sa huling {{days}}", "streak": "Sunod-sunod na araw", "streakStart": "Magsisimula ang sunod-sunod sa sesyon ngayong araw", "lastOn": "Huling sesyon: {{when}}",
+      "last": "Huling sesyon", "today": "Ngayong araw", "yesterday": "Kahapon", "daysAgo_one": "{{count}} araw na ang nakalipas", "daysAgo_other": "{{count}} araw na ang nakalipas", "none": "Wala",
+      "quiet_one": "Walang natapos na sesyon sa loob ng {{count}} araw.", "quiet_other": "Walang natapos na sesyon sa loob ng {{count}} araw.", "quietNone": "Walang natapos na sesyon sa huling 4 na linggo.",
+      "stripLabel": "May natapos na sesyon sa {{active}} sa huling {{days}} araw", "dayTitle_one": "{{date}}: {{count}} sesyon", "dayTitle_other": "{{date}}: {{count}} sesyon"
+    }
   },
   "assign": {
     "editing": "Ine-edit ang bersyon {{version}}", "nextVersion": "Ang paglalathala ay gagawa ng bersyon {{version}}. Mananatili sa mga naunang sesyon ang target na ginamit noon.", "removed": "Inalis", "removedHint": "Inalis ang ehersisyong ito sa iyong listahan, kaya mailalathala lamang ang planong ito gamit ang ibang ehersisyo.",

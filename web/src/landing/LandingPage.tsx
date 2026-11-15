@@ -1,12 +1,17 @@
+import { CalendarCheckIcon, CheckCircleIcon, StethoscopeIcon, UserGearIcon, type Icon } from '@phosphor-icons/react'
+import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { AppQrCode, appUrl } from '@/components/AppQrCode'
 import { ButtonLink } from '@/components/Button'
-import { StatusPill } from '@/components/Display'
+import { Panel, StatusPill } from '@/components/Display'
+import { activitySummary } from '@/data/history'
+import { useFormat } from '@/features/shared'
+import { ActivityPanel } from '@/features/therapist/ActivityPanel'
+import { TrendChart } from '@/features/therapist/TrendChart'
 import { LanguageSwitch } from '@/layout/LanguageSwitch'
 import '@/locales/landing'
 import { RangeDial } from '@/motion/RangeDial'
-import type { ReactNode } from 'react'
 import { MovementDemo } from './MovementDemo'
 
 /** Booking starts with an account, so this keeps the wish to book through sign-up and sign-in. */
@@ -25,12 +30,48 @@ function Step({ number, title, detail, children }: { number: number; title: stri
   )
 }
 
-function Audience({ who, children }: { who: string; children: ReactNode }) {
+function Audience({ icon: Mark, who, children }: { icon: Icon; who: string; children: ReactNode }) {
   return (
-    <div className="grid gap-2 border-t border-line py-6 tablet:grid-cols-[14rem_minmax(0,1fr)] tablet:gap-8">
-      <h3 className="text-2xl font-bold">{who}</h3>
-      <p className="max-w-[58ch] text-lg text-slate">{children}</p>
+    <div className="border-t-2 border-ink py-6">
+      <Mark aria-hidden weight="duotone" className="text-4xl text-lagoon-deep" />
+      <h3 className="mt-3 text-2xl font-bold">{who}</h3>
+      <p className="mt-2 max-w-[44ch] text-lg text-slate">{children}</p>
     </div>
+  )
+}
+
+/** Sample practice days and reach, counted back from today so the strip always ends on "Today". */
+const SAMPLE_DAYS = [26, 23, 21, 19, 16, 14, 12, 9, 7, 5, 2, 1, 0]
+const SAMPLE_CHART_DAYS = [26, 23, 19, 16, 12, 9, 5, 2]
+const SAMPLE_REACH = [64, 71, 79, 76, 92, 98, 105, 112]
+
+/** The same two pieces a patient finds on their Progress page, on sample numbers and labelled as such. */
+function ProgressSection() {
+  const { t } = useTranslation()
+  const format = useFormat()
+  const { summary, points } = useMemo(() => {
+    const at = (daysAgo: number) => { const day = new Date(); day.setHours(9, 0, 0, 0); day.setDate(day.getDate() - daysAgo); return day.toISOString() }
+    const entries = SAMPLE_DAYS.map((daysAgo) => ({ startedAt: at(daysAgo), status: 'completed' }))
+    return { summary: activitySummary(entries), points: SAMPLE_CHART_DAYS.map((daysAgo, index) => ({ id: String(daysAgo), label: format.short(at(daysAgo)), value: SAMPLE_REACH[index]! })) }
+  }, [format])
+  return (
+    <section id="progress" className="mx-auto grid max-w-[90rem] scroll-mt-6 items-start gap-10 px-5 py-16 tablet:px-10 desk:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] desk:gap-16 desk:py-24">
+      <div>
+        <h2 className="text-4xl font-bold">{t('landing.progressTitle')}</h2>
+        <p className="mt-4 max-w-[52ch] text-lg">{t('landing.progressDetail')}</p>
+        <ul className="mt-6 grid max-w-[52ch] gap-3 text-lg text-slate">
+          {(['progressPoint1', 'progressPoint2', 'progressPoint3'] as const).map((key) => (
+            <li key={key} className="flex gap-3"><CheckCircleIcon aria-hidden weight="fill" className="mt-1 shrink-0 text-xl text-lagoon" /><span>{t(`landing.${key}`)}</span></li>
+          ))}
+        </ul>
+      </div>
+      <div className="grid min-w-0 gap-5">
+        <ActivityPanel self sample stacked summary={summary} />
+        <Panel title={t('progress.rom')} description={t('landing.progressChart')}>
+          <TrendChart plain title={t('assign.range')} unit="°" points={points} />
+        </Panel>
+      </div>
+    </section>
   )
 }
 
@@ -72,7 +113,7 @@ function AppSection() {
   const { t } = useTranslation()
   const url = appUrl()
   return (
-    <section id="app" className="bg-tide">
+    <section id="app" className="scroll-mt-6 bg-tide">
       <div className="mx-auto grid max-w-[90rem] items-center gap-10 px-5 py-16 tablet:px-10 desk:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] desk:gap-16">
         <div>
           <h2 className="text-4xl font-bold">{t('landing.appTitle')}</h2>
@@ -95,6 +136,8 @@ function AppSection() {
   )
 }
 
+const SECTIONS = [['how', 'landing.how'], ['app', 'landing.navApp'], ['progress', 'nav.progress'], ['privacy', 'landing.navPrivacy']] as const
+
 /** The public front door, for patients first. Every claim here is something the product does today, and nothing is a made-up number. */
 export function LandingPage() {
   const { t } = useTranslation()
@@ -107,6 +150,9 @@ export function LandingPage() {
               <img src="/logo-96.png" alt="" width={36} height={36} className="rounded-lg" />
               <span className="font-display text-2xl font-bold">Motivance</span>
             </Link>
+            <nav aria-label={t('landing.sections')} className="hidden items-center gap-1 desk:flex">
+              {SECTIONS.map(([id, key]) => <a key={id} href={`#${id}`} className="rounded-control px-3 py-2 font-semibold text-night-ink underline-offset-4 hover:text-paper hover:underline">{t(key)}</a>)}
+            </nav>
             <div className="flex items-center gap-2 tablet:gap-3">
               <div className="hidden tablet:block"><LanguageSwitch /></div>
               <Link to="/sign-in" className="whitespace-nowrap rounded-control px-2 py-2 font-semibold text-paper underline-offset-4 hover:underline">{t('auth.signIn')}</Link>
@@ -122,6 +168,11 @@ export function LandingPage() {
                 <ButtonLink to={BOOK} variant="bright" size="lg">{t('landing.bookSession')}</ButtonLink>
                 <a href="#how" className="rounded-control px-3 py-3 font-semibold text-paper underline-offset-4 hover:underline">{t('landing.how')}</a>
               </div>
+              <ul className="mt-8 grid gap-2 border-t border-night-line pt-6 text-night-ink tablet:grid-cols-3 tablet:gap-6">
+                {(['factPrivate', 'factLanguages', 'factBrowser'] as const).map((key) => (
+                  <li key={key} className="flex items-start gap-2"><CheckCircleIcon aria-hidden weight="fill" className="mt-0.5 shrink-0 text-xl text-sprout-bright" /><span>{t(`landing.${key}`)}</span></li>
+                ))}
+              </ul>
             </div>
             <MovementDemo />
           </div>
@@ -141,15 +192,24 @@ export function LandingPage() {
 
         <AppSection />
 
-        <section className="mx-auto max-w-[90rem] px-5 py-16 tablet:px-10 desk:py-24">
-          <h2 className="mb-6 text-4xl font-bold">{t('landing.forWhom')}</h2>
-          <Audience who={t('landing.therapists')}>{t('landing.therapistsDetail')}</Audience>
-          <Audience who={t('landing.schedulers')}>{t('landing.schedulersDetail')}</Audience>
-          <Audience who={t('landing.administrators')}>{t('landing.administratorsDetail')}</Audience>
+        <ProgressSection />
+
+        <section className="border-t border-line bg-paper">
+          <div className="mx-auto max-w-[90rem] px-5 py-16 tablet:px-10 desk:py-24">
+            <h2 className="text-4xl font-bold">{t('landing.forWhom')}</h2>
+            <p className="mb-8 mt-3 max-w-[58ch] text-lg text-slate">
+              {t('signup.staffNote')} <Link to="/sign-in" className="font-semibold text-lagoon-deep underline underline-offset-4">{t('landing.staffSignIn')}</Link>
+            </p>
+            <div className="grid gap-x-10 desk:grid-cols-3">
+              <Audience icon={StethoscopeIcon} who={t('landing.therapists')}>{t('landing.therapistsDetail')}</Audience>
+              <Audience icon={CalendarCheckIcon} who={t('landing.schedulers')}>{t('landing.schedulersDetail')}</Audience>
+              <Audience icon={UserGearIcon} who={t('landing.administrators')}>{t('landing.administratorsDetail')}</Audience>
+            </div>
+          </div>
         </section>
       </main>
 
-      <section className="bg-tide">
+      <section id="privacy" className="scroll-mt-6 bg-tide">
         <div className="mx-auto grid max-w-[90rem] gap-8 px-5 py-16 tablet:px-10 desk:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] desk:gap-16">
           <h2 className="text-4xl font-bold">{t('landing.privacyTitle')}</h2>
           <div className="max-w-[52ch] text-lg">
@@ -159,11 +219,28 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer className="on-dark bg-ink text-paper">
-        <div className="mx-auto flex max-w-[90rem] flex-wrap items-center justify-between gap-4 px-5 py-8 tablet:px-10">
-          <span className="font-display text-xl font-bold">Motivance</span>
-          <div className="flex flex-wrap items-center gap-4">
+      <section className="on-dark bg-ink text-paper">
+        <div className="mx-auto flex max-w-[90rem] flex-wrap items-center justify-between gap-x-12 gap-y-6 px-5 py-16 tablet:px-10">
+          <div>
+            <h2 className="text-4xl font-bold">{t('landing.closingTitle')}</h2>
+            <p className="mt-3 max-w-[46ch] text-lg text-night-ink">{t('landing.closingDetail')}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <ButtonLink to={BOOK} variant="bright" size="lg">{t('landing.bookSession')}</ButtonLink>
+            <Link to="/sign-in" className="rounded-control px-3 py-3 font-semibold text-paper underline-offset-4 hover:underline">{t('auth.signIn')}</Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="on-dark border-t border-night-line bg-night text-paper">
+        <div className="mx-auto grid max-w-[90rem] gap-6 px-5 py-8 tablet:px-10 desk:grid-cols-[minmax(0,1fr)_auto] desk:items-center">
+          <div>
+            <span className="font-display text-xl font-bold">Motivance</span>
+            <p className="mt-1 max-w-[58ch] text-sm text-night-ink">{t('landing.notValidated')}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
             <LanguageSwitch />
+            {SECTIONS.map(([id, key]) => <a key={id} href={`#${id}`} className="font-semibold underline-offset-4 hover:underline">{t(key)}</a>)}
             <Link to="/sign-in" className="font-semibold underline-offset-4 hover:underline">{t('auth.signIn')}</Link>
             <Link to="/sign-up" className="font-semibold underline-offset-4 hover:underline">{t('landing.createAccount')}</Link>
           </div>

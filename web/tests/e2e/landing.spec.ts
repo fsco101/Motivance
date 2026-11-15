@@ -21,6 +21,29 @@ test('it says what Motivance is, how booking works, and where to go next', async
   await expect(page.getByRole('heading', { name: 'Your exercises, on your phone' })).toBeVisible()
 })
 
+test('it shows what progress looks like on sample numbers, and says they are a sample', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/')
+  const progress = page.locator('#progress')
+  await expect(progress.getByRole('heading', { name: 'See how you are doing' })).toBeVisible()
+  await expect(progress.getByText('Sample activity, not patient data.')).toBeVisible()
+  await expect(progress.getByRole('img', { name: 'Completed sessions on 13 of the last 28 days' })).toBeVisible()
+  await expect(progress.getByRole('img', { name: /chart with 8 sessions/ })).toBeVisible()
+})
+
+test('the header leads to each section, and the page ends with a way to book', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/')
+  const sections = page.getByRole('navigation', { name: 'Sections of this page' })
+  for (const [name, id] of [['How booking works', 'how'], ['The app', 'app'], ['Progress', 'progress'], ['Privacy', 'privacy']] as const) {
+    await sections.getByRole('link', { name }).click()
+    await expect(page).toHaveURL(new RegExp(`#${id}$`))
+    await expect(page.locator(`#${id}`)).toBeInViewport()
+  }
+  await expect(page.getByRole('heading', { name: 'Ready when you are.' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Staff sign-in' })).toHaveAttribute('href', '/sign-in')
+})
+
 test('with no app address it says so, and offers no dead link', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByText('The app is not in a store yet. Ask your center how to install it.')).toBeVisible()
@@ -51,7 +74,7 @@ test('everything works by keyboard, with visible focus', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   const reached: string[] = []
-  for (let press = 0; press < 12; press += 1) {
+  for (let press = 0; press < 16; press += 1) {
     await page.keyboard.press('Tab')
     const focus = await page.evaluate(() => {
       const element = document.activeElement as HTMLElement

@@ -1,9 +1,10 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from '@/components/Toast'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
-import { loadHistory, type HistoryCursor } from '@/data/history'
+import { activitySummary, loadActivity, loadHistory, type HistoryCursor } from '@/data/history'
 import { ready, type Load } from '@/features/shared'
 import type { ProgressFilters, ProgressResults } from './ProgressView'
 
@@ -26,4 +27,10 @@ export function useProgressResults(patientId: string, filters: ProgressFilters) 
     : history.isError ? { status: 'error', retry: () => void history.refetch() } : { status: 'loading' }
   const onMore = () => void history.fetchNextPage().then((page) => { if (page.isError) toast.show(t(failureKey(page.error)), 'error') })
   return { results, onMore }
+}
+
+/** One person's last four weeks. It fails quietly: the summary is a help, and the sessions must not wait on it. */
+export function useActivity(patientId: string) {
+  const query = useQuery({ queryKey: ['history', patientId, 'activity'], enabled: Boolean(patientId), queryFn: () => loadActivity(supabase(), patientId) })
+  return useMemo(() => (query.data ? activitySummary(query.data) : null), [query.data])
 }

@@ -239,6 +239,19 @@ Engineering evidence is in [AVATARS-AND-NOTIFICATIONS.md](AVATARS-AND-NOTIFICATI
 - [ ] Have a Filipino speaker review `notification_*`, `push_channel_*` and `notification_settings_*` in `values-fil/strings.xml`, the new `notifications.*` lines in `web/src/locales/booking.fil.json`, and the Filipino lines in `supabase/functions/_shared/push_text.ts`.
 - [ ] Have a therapist review whether 3 quiet days is the right inactivity threshold, and whether a push per finished session is useful or too frequent.
 
+## Progress summary and landing page (2026-11-15)
+
+Engineering evidence is in [PROGRESS-SUMMARY-AND-LANDING.md](PROGRESS-SUMMARY-AND-LANDING.md). None of these checks has been run.
+
+- [ ] Start Docker and the local backend, then run `npm run test:contract` and the signed-in browser tests (`therapist.spec.ts`, `therapist-caseload.spec.ts`, `patient.spec.ts`) with one worker. These were not run when the change was made.
+- [ ] On an emulator or phone, run `ResultsDashboardTest`, then open Progress as a patient and as a therapist. Confirm the four-week card, the day strip, each plan's latest, best and change, and the labelled charts read well at the largest font size and with TalkBack.
+- [ ] On a phone set to Philippine time, finish a session before 8:00 AM. Confirm both apps show it on the same day, and that a date filter for that day finds it in both.
+- [ ] Compare one patient's four-week card on Android and on the web. The sessions, active days, days in a row and last session must match.
+- [ ] Have a therapist review whether 7 quiet days is the right point for the caution, whether 3 unusable sessions in 10 is the right point for the camera prompt, and whether "change since the first session" could be read as clinical improvement.
+- [ ] Have a patient read the "Your last 4 weeks" card and say what each number means to them.
+- [ ] Have a Filipino speaker review `activity_*`, `history_latest`, `history_best`, `history_change*`, `history_tracking*`, `history_rom_value` and `history_rep_value` in `values-fil/strings.xml`, the new `progress.*` lines in `web/src/locales/fil.json`, and the new `landing.*` lines in `web/src/locales/landing.fil.json`.
+- [ ] Redeploy the web app so the hosted landing page and Progress pages pick this up. No database change is needed.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

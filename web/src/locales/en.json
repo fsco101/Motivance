@@ -95,7 +95,19 @@
     "status": { "completed": "Completed", "partial": "Partial", "interrupted": "Interrupted", "empty": "No result", "invalid": "Not usable" },
     "patient": "Patient", "allExercises": "All exercises", "bothSides": "Both sides", "from": "From", "through": "Through", "emptyTitle": "No sessions yet", "emptyDetail": "Results appear here after this patient finishes an exercise.",
     "noMatch": "No sessions match these filters.", "seriesLine": "{{side}}, version {{version}}, prescribed {{low}}° to {{high}}°", "sessions": "Sessions", "shown_one": "{{count}} session", "shown_other": "{{count}} sessions", "loadOlder": "Load older sessions",
-    "selfDescription": "Your measured movement over time."
+    "selfDescription": "Your measured movement over time.",
+    "latest": "Latest", "best": "Best", "change": "Change since the first session", "changeNone": "Needs two measured sessions", "changeHelp": "Within this version of the plan.",
+    "trackingSelf": "{{unusable}} of your last {{of}} sessions could not be measured. Keep your whole body in view of the camera, in a well-lit room.",
+    "tracking": "{{unusable}} of the last {{of}} sessions gave no usable measurement. This patient may need help setting up the camera.",
+    "activity": {
+      "title": "Last 4 weeks", "titleSelf": "Your last 4 weeks", "description": "Completed sessions, whatever the filters below say.", "sample": "Sample activity, not patient data.",
+      "week": "Sessions, last 7 days", "weekSame": "Same as the 7 days before", "weekMore_one": "{{count}} more than the 7 days before", "weekMore_other": "{{count}} more than the 7 days before",
+      "weekFewer_one": "{{count}} fewer than the 7 days before", "weekFewer_other": "{{count}} fewer than the 7 days before",
+      "activeDays": "Active days", "activeDaysDetail": "of the last {{days}}", "streak": "Days in a row", "streakStart": "A session today starts a streak", "lastOn": "Last session: {{when}}",
+      "last": "Last session", "today": "Today", "yesterday": "Yesterday", "daysAgo_one": "{{count}} day ago", "daysAgo_other": "{{count}} days ago", "none": "None",
+      "quiet_one": "No completed session for {{count}} day.", "quiet_other": "No completed session for {{count}} days.", "quietNone": "No completed session in the last 4 weeks.",
+      "stripLabel": "Completed sessions on {{active}} of the last {{days}} days", "dayTitle_one": "{{date}}: {{count}} session", "dayTitle_other": "{{date}}: {{count}} sessions"
+    }
   },
   "assign": {
     "editing": "Editing version {{version}}", "nextVersion": "Publishing creates version {{version}}. Earlier sessions keep the targets they were recorded with.", "removed": "Removed", "removedHint": "This exercise was removed from your list, so this plan can only be published with another exercise.",

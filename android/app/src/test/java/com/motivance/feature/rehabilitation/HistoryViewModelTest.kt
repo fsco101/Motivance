@@ -60,6 +60,23 @@ class HistoryViewModelTest {
         assertTrue(vm.state.value.loaded)
     }
 
+    @Test fun activityArrivesWithTheFirstPageSurvivesOlderPagesAndNeverBlocksHistory() = runTest(dispatcher) {
+        val vm = HistoryViewModel(remote)
+        val cursor = HistoryCursor("2026-01-01T10:00:00Z", owner)
+        remote.activity = listOf(SessionActivity("2026-01-01T10:00:00Z", "completed"))
+        remote.page = HistoryPage(listOf(row()), cursor)
+        vm.configure(owner); vm.show(query); advanceUntilIdle()
+        assertEquals(remote.activity, vm.state.value.activity)
+        remote.activity = emptyList()
+        vm.loadOlder(); advanceUntilIdle()
+        assertEquals(1, vm.state.value.activity!!.size)
+        remote.activityFails = true
+        vm.refresh(); advanceUntilIdle()
+        assertTrue(vm.state.value.loaded)
+        assertFalse(vm.state.value.failed)
+        assertNull(vm.state.value.activity)
+    }
+
     private fun row() = HistoricalSession(owner, owner, "2026-01-01T10:00:00Z", "2026-01-01T10:01:00Z", "completed", "model", "algorithm", null, emptyList())
 
     private class FakeHistory : RehabilitationRepository {
@@ -67,11 +84,17 @@ class HistoryViewModelTest {
         var page = HistoryPage(emptyList(), null)
         var fail = false
         val cursors = mutableListOf<HistoryCursor?>()
+        var activity: List<SessionActivity> = emptyList()
+        var activityFails = false
         override suspend fun loadHistory(query: HistoryQuery, cursor: HistoryCursor?): HistoryPage {
             cursors += cursor
             if (fail) throw RemoteFailure(403)
             val wait = gate
             return if (wait != null) withContext(NonCancellable) { wait.await() } else page
+        }
+        override suspend fun loadSessionActivity(patientId: String, since: java.time.Instant): List<SessionActivity> {
+            if (activityFails) throw RemoteFailure(500)
+            return activity
         }
         override suspend fun loadWorkspace() = RehabWorkspace()
         override suspend fun invitePatient(email: String) = error("unused")

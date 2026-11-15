@@ -77,6 +77,68 @@ export function rehabilitationProgress(sessions: readonly HistoricalSession[]): 
     || a.prescription.assignmentId.localeCompare(b.prescription.assignmentId) || a.prescription.version - b.prescription.version || a.metric.localeCompare(b.metric))
 }
 
+/** What one series says at a glance. A change needs two measured sessions, and never crosses a prescription version. */
+export type SeriesOutcome = { first: number | null; latest: number | null; best: number | null; change: number | null; measured: number }
+
+/** Mirrors seriesOutcome on Android. */
+export function seriesOutcome(series: Pick<ProgressSeries, 'points'>): SeriesOutcome {
+  const values = series.points.flatMap((point) => (point.rom === null ? [] : [point.rom]))
+  const first = values[0] ?? null
+  const latest = values.at(-1) ?? null
+  return {
+    first, latest, best: values.length ? Math.max(...values) : null, measured: values.length,
+    change: values.length > 1 ? roundDegrees(latest! - first!) : null,
+  }
+}
+
+/** How many of the newest sessions gave nothing to measure. Repeated failures usually mean the camera setup needs help. */
+export const TRACKING_WINDOW = 10
+export const TRACKING_CONCERN = 3
+/** `sessions` must be newest first. Mirrors trackingConcern on Android. */
+export function trackingConcern(sessions: readonly HistoricalSession[]) {
+  const recent = sessions.filter((s) => s.status !== 'interrupted').slice(0, TRACKING_WINDOW)
+  const unusable = recent.filter((s) => { const status = resultStatus(s); return status === 'invalid' || status === 'empty' }).length
+  return unusable >= TRACKING_CONCERN ? { unusable, of: recent.length } : null
+}
+
+export const ACTIVITY_DAYS = 28
+export type ActivityEntry = { startedAt: string; status: string }
+export type ActivityDay = { date: string; sessions: number }
+/** Completed sessions by calendar day over the last four weeks. `days` runs oldest first and ends today. */
+export type ActivitySummary = { week: number; previousWeek: number; activeDays: number; streak: number; lastAt: string | null; daysSinceLast: number | null; days: ActivityDay[] }
+
+const dayKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+/**
+ * Mirrors activitySummary on Android. Days are calendar days where the reader is, as everywhere else on screen.
+ * An interrupted session is not counted: it is an attempt, not a finished exercise.
+ */
+export function activitySummary(entries: readonly ActivityEntry[], now = new Date()): ActivitySummary {
+  const counts = new Map<string, number>()
+  let lastAt: string | null = null
+  for (const entry of entries) {
+    if (entry.status !== 'completed') continue
+    const key = dayKey(new Date(entry.startedAt))
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+    if (lastAt === null || Date.parse(entry.startedAt) > Date.parse(lastAt)) lastAt = entry.startedAt
+  }
+  const days = Array.from({ length: ACTIVITY_DAYS }, (_, index): ActivityDay => {
+    const date = dayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - (ACTIVITY_DAYS - 1 - index)))
+    return { date, sessions: counts.get(date) ?? 0 }
+  })
+  const sum = (from: number, to: number) => days.slice(from, to).reduce((total, day) => total + day.sessions, 0)
+  const newestFirst = [...days].reverse()
+  // Today not done yet does not break a streak that ran through yesterday.
+  const run = newestFirst[0]!.sessions > 0 ? newestFirst : newestFirst.slice(1)
+  const gap = run.findIndex((day) => day.sessions === 0)
+  const sinceLast = newestFirst.findIndex((day) => day.sessions > 0)
+  return {
+    week: sum(ACTIVITY_DAYS - 7, ACTIVITY_DAYS), previousWeek: sum(ACTIVITY_DAYS - 14, ACTIVITY_DAYS - 7),
+    activeDays: days.filter((day) => day.sessions > 0).length, streak: gap === -1 ? run.length : gap,
+    lastAt: sinceLast === -1 ? null : lastAt, daysSinceLast: sinceLast === -1 ? null : sinceLast, days,
+  }
+}
+
 type RawMeasurement = {
   metric_key: string; side: string; minimum_degrees: number | null; maximum_degrees: number | null; completed_repetitions: number
   incomplete_repetitions: number; quality: string; valid_frames: number; invalid_frames: number
@@ -135,4 +197,16 @@ export async function loadHistory(db: SupabaseClient<Database>, query: HistoryQu
   const { data, error } = await request
   if (error) throw error
   return decodeHistory(data as unknown as RawSession[])
+}
+
+/** A patient exercising three times a day for four weeks stays well inside this. */
+const ACTIVITY_LIMIT = 500
+
+/** Every session start in the last four weeks, whatever the page's filters say, so the summary never depends on what is loaded. */
+export async function loadActivity(db: SupabaseClient<Database>, patientId: string, now = new Date()): Promise<ActivityEntry[]> {
+  const since = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (ACTIVITY_DAYS - 1)).toISOString()
+  const { data, error } = await db.from('sessions').select('started_at,status').eq('patient_id', patientId).gte('started_at', since)
+    .order('started_at', { ascending: false }).limit(ACTIVITY_LIMIT)
+  if (error) throw error
+  return data.map((row) => ({ startedAt: row.started_at, status: row.status }))
 }

@@ -14,7 +14,7 @@ import {
 import { SchedulePage } from '@/features/booking/SchedulePage'
 import { asLoad, Loadable, ready, SkeletonCards, type Load } from '@/features/shared'
 import { ProfilePage } from '@/features/profile/pages'
-import { useProgressResults } from '@/features/therapist/history'
+import { useActivity, useProgressResults } from '@/features/therapist/history'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from '@/features/therapist/ProgressView'
 import '@/locales/booking'
 import { BookSessionView } from './BookSessionView'
@@ -200,11 +200,12 @@ export function PatientProgressPage() {
   const exercises = useMyExercises()
   const [filters, setFilters] = useState(NO_FILTERS)
   const { results, onMore } = useProgressResults(userId, filters)
+  const activity = useActivity(userId)
   const state = asLoad(exercises)
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state : ready({
     patients: [], patientId: userId, exercises: [...new Map(state.data.map((item) => [item.exerciseVersionId, { id: item.exerciseVersionId, name: item.name }])).values()],
   })
-  return <ProgressView self choices={choices} results={results} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} />
+  return <ProgressView self choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} />
 }
 
 export function PatientProfilePage() {
