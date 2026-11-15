@@ -34,8 +34,9 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 
 **Found while building.** Realtime reports a channel as joined before it is listening to the database, so a message sent in that gap is not delivered live. `subscribeToChat` therefore reports the connection as live only on Realtime's own "listening" notice, and both apps must fetch again after any drop.
 
+**Hosted.** On the owner's instruction on 2026-11-15, `202611150001_care_chat.sql` was applied to the hosted project with `supabase db push` after a dry run that listed only this migration, and read back with `migration list --linked`. No chat test has been run against the hosted project, and live delivery there has not been observed.
+
 **Not run / not done**
 
-- The migration is applied to the local database only. The hosted project is unchanged and needs the owner's approval.
 - Android has no chat code yet, so nothing was run there.
 - No load check yet (#112).
