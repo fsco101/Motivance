@@ -8,7 +8,20 @@ Before creating a prescribed session checkpoint the app records an owner-scoped 
 
 Withdrawal stops new collection under the prior grant. A new session needs a new explicit grant; server ingestion rejects sessions extending past a withdrawal under the old grant. Records completed before withdrawal remain available to their patient. The UI offers export/deletion requests independently of camera permission and consent withdrawal.
 
-No app feature stores raw camera frames, video, or per-frame pose sequences. SQLite holds aggregate results, versioned targets, instructions and consent/outbox state. Device backup/transfer is excluded. Sign-out deletes the encrypted token file and prescription cache, interrupts drafts and retains owner-scoped results/outbox so an unsent result is not silently lost. A different account cannot upload those records. Keystore protects tokens; Room aggregate data is app-private but not encrypted by Room.
+No app feature stores raw camera frames or per-frame pose sequences, and nothing records video unless the patient turns on Record this session (below). SQLite holds aggregate results, versioned targets, instructions and consent/outbox state. Device backup/transfer is excluded. Sign-out deletes the encrypted token file and prescription cache, interrupts drafts and retains owner-scoped results/outbox so an unsent result is not silently lost. A different account cannot upload those records. Keystore protects tokens; Room aggregate data is app-private but not encrypted by Room.
+
+## Session videos (#114)
+
+A patient can turn on **Record this session** before an exercise. It is off for every session until they turn it on. The first time, the app asks for its own agreement, `session-video-v1`, separate from the movement-summary consent and kept on the phone only (`SessionVideoStore`, per account). The agreement says what the video shows, that it is saved only on the phone, that a phone which backs up its gallery to a cloud photo service may back it up too, that it reaches the therapist only if the patient sends it in chat, and that signing out does not remove it.
+
+| Data | Where | How long it stays |
+| --- | --- | --- |
+| The video: the camera picture with the skeleton and the measured angle drawn on it, as the patient saw it | The phone's gallery, in a Motivance album (`Movies/Motivance`) | Until the patient deletes it, from the session's result or from the gallery. Signing out leaves it, because it is the patient's own file. Motivance never uploads it on its own |
+| The working copy while recording | The app's cache, `session-video/` | Removed once the video is in the gallery, or at once when nothing was recorded |
+| Which video belongs to which sessions, and the agreement | The app's own preferences, per account | Kept across sign-out; a pointer only, never the video |
+| A copy the patient sends in a conversation | As for any chat video: made smaller first, `chat-media`, removed 15 days after sending | The phone's gallery copy is not affected |
+
+Before Android 10 the gallery is a shared folder, so the app asks for the storage permission (declared only up to Android 9) when recording is turned on there.
 
 ## Retention policy
 
@@ -64,7 +77,7 @@ The patient can turn messages off and on again from Profile at any time; each ch
 | How far each person has read | `chat_reads` | The same |
 | The patient's answers to the agreement | `consents` | Kept, like every consent event |
 | Photos and videos | Private Storage bucket `chat-media`, with a row in `chat_attachments` | 15 days from sending, or until the sender takes the message back. After that no link is issued, and `scripts/cleanup_chat_media.py` removes the file. The message stays and says the file has expired |
-| The phone's copies of photos and videos it has shown or sent | The Android app's own storage, per account | Until sign-out on that phone, including after the server's copy is removed. They are not in the phone's gallery |
+| The phone's copies of photos and videos it has shown or sent | The Android app's own storage, per account | Until sign-out on that phone, including after the server's copy is removed. They are not in the phone's gallery; a recorded session video is, and stays (see Session videos) |
 | A message written on an Android phone and not yet sent | Room `chat_outbox` on that phone | Until it is sent, discarded, or the account signs out on that phone. Unlike an unsent exercise result, it is not kept for the next sign-in: its words should not stay on a phone someone else may use |
 | Messages on screen | The browser's memory, and the Android app's memory | Until the page or app closes. Neither keeps a copy of the conversation on disk |
 

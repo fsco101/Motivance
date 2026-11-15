@@ -285,6 +285,45 @@ Engineering evidence for the care chat epic (#113), added to as each issue is bu
 
 **Not run.** The Android cards, sharing and scheduling have not been seen on a device.
 
+## #114 Session video in the phone's gallery
+
+**Built.** Android only, as exercises run only there. `feature/exercise/SessionVideo.kt`:
+- `SessionRecorder` encodes H.264 MP4 with `MediaCodec` and `MediaMuxer` on its own thread, from the same upright frame the screen shows.
+- `VideoOverlay` draws the skeleton, the focus joint and the protractor with its angle, mirrored for the front camera as on screen, plus a caption of exercise, angle and count.
+- `GalleryVideos` saves into `Movies/Motivance` through MediaStore, and `SessionVideoStore` keeps the agreement and which sessions each video shows.
+
+`CameraPrototype.kt` adds the Record this session switch, the agreement dialog and a Recording pill. `SessionVideoCard.kt` shows the video on the result with Watch, Send in chat and Delete. Send goes through the chat attach path, so it is resized and removed from the server after 15 days. The privacy wording is changed on Android (camera, both consent lines and the sign-up agreement) and on the web landing page (privacy line and agreement point 4), in English and Filipino.
+
+**Calls made while building**
+
+- Each frame is handed over only after the screen has shown it, because shown frames are never recycled. If the encoder is still busy, the frame is skipped, so tracking and counting never wait.
+- Recording starts with the session, not when the screen opens. Both sides of a set go into one video, which is finished when the set is saved, the screen is left, or New session is pressed.
+- The agreement is local, versioned `session-video-v1`, because the video never leaves the phone by itself.
+- A video the app no longer owns, as after a reinstall, is deleted through the phone's own confirmation (`createDeleteRequest`, Android 11 and later).
+
+**Tests run on 2026-11-15**
+
+| Check | Result |
+|---|---|
+| `SessionVideoTest` (JVM): size, bitrate, name, the stored list | 4 passed |
+| `SessionRecorderTest` on the Pixel 6 emulator, API 35, software graphics | 4 passed: frames become a playable MP4 with the overlay's colours in a decoded frame; handing a frame over takes under 5 ms however busy the encoder is; no frames writes no file; the video lands in `Movies/Motivance/` and deleting removes it; the agreement and the list are kept per person. The emulator encoded about 11 frames a second and skipped the rest, as designed |
+| Android unit tests (app, domain, assessment) | 430 passed, 1 skipped (the live-stack test without its variables) |
+| Every Android device test on the emulator | 134 of 135 passed. `CameraLifecycleTest` waits 30 s for live inference and fails the same way with this change removed (`git stash`), because the headless emulator gives no camera frames; it is an emulator limit, not this change |
+| Web unit tests; `landing` and `design` browser tests | 293 passed; 94 passed |
+
+| Acceptance criterion | Evidence |
+|---|---|
+| With recording off, behaviour is as today and no file is written | No recorder exists unless the switch is on and a session has started (`CameraPrototype.kt`); a recorder given no frames writes nothing (device test) |
+| With recording on and consent given, one playable video per session is saved and listed with that session's result | Device test for the file; the result card reads it from the session's state. The on-screen flow is not yet run on a phone |
+| Not uploaded unless the patient sends it in chat | Nothing in the recording path calls the network; Send in chat hands it to the existing chat attach |
+| Deleting it from the result removes the file | Device test for `GalleryVideos.delete` |
+| Counting and frame rate stay within the performance policy while recording | The hand-over is measured under 5 ms and never blocks; the camera thread itself on a phone is not yet measured |
+| The video includes the overlay and appears in a Motivance album | Device test: overlay colours in a decoded frame, `RELATIVE_PATH` `Movies/Motivance/` |
+| Signing out leaves gallery videos; documented and in the agreement | `DATA-LIFECYCLE.md` Session videos; agreement point 5 |
+| Reworded privacy text in English and Filipino | Android `camera_privacy`, `local_metrics_consent`, `sync_metrics_consent`, `signup_privacy_point_4`; web `landing.privacyDetail` and agreement `point4` |
+
+**Not run.** A real session recorded on a phone with its camera, frame rate and counting measured while recording; playing, sending and deleting from the result on a phone; Android 9 and older with the storage permission.
+
 ## Not run / not done (whole epic)
 
 - Chat has not been exercised on the hosted project, and the web app has not been redeployed, so the live site has no Messages page yet.

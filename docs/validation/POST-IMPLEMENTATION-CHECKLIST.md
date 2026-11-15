@@ -280,6 +280,15 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] Have a Filipino speaker review `chat_cards_*`, `chat_lines_*` and `chat_schedule_*` on Android and `chat.cards.*`, `chat.lines.*` and `chat.schedule.*` on the web.
 - [ ] Have a Filipino speaker review the `chat_*`, `nav_messages` and `messages_unread_count` strings and the two `chat_*` plurals in `values-fil/strings.xml`.
 
+## Session video (#114, 2026-11-15)
+
+- [ ] On a phone, turn on Record this session, accept the agreement, and do a both-sides set. Confirm one video appears in the gallery's Motivance album with the skeleton, angle and caption drawn on it, mirrored like the screen for the front camera.
+- [ ] With recording on, compare the frame rate and the repetition count with a session with recording off; both must stay within the performance policy.
+- [ ] From the result, Watch, Send in chat (check the therapist receives a resized video), and Delete (check it leaves the gallery). After a reinstall, delete an older video and confirm the phone asks first.
+- [ ] With recording off, confirm no file appears anywhere. Sign out and confirm the gallery video stays.
+- [ ] On Android 9 or older, confirm the storage permission is asked and the video is saved.
+- [ ] Have a therapist and the owner review the agreement wording; have a Filipino speaker review `video_*` and the reworded privacy lines on Android and the landing page.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
