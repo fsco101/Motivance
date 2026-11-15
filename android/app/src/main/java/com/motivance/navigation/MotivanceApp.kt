@@ -198,7 +198,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     // Only a patient and their therapist talk. The live connection stays open while the app is in front, and closes behind it.
     val chatOwner=auth.session?.userId?.takeIf {actualRole==UserRole.PATIENT || actualRole==UserRole.THERAPIST}
-    LaunchedEffect(chatOwner) {chat.configure(chatOwner)}
+    LaunchedEffect(chatOwner,actualRole) {chat.configure(chatOwner,actualRole==UserRole.PATIENT)}
     LaunchedEffect(chatOwner,lifecycle) {
         if(chatOwner!=null) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {chat.stayLive()}
     }
@@ -306,6 +306,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                         ClinicalCard {others.forEach {allowed -> ActionButton(allowed.title(),{selectedRole=allowed.name;route="HOME"},outlined=true)}}
                     }
                     ClinicalCard {LanguagePicker()}
+                    if(chatOwner!=null && actualRole==UserRole.PATIENT) ChatConsentCard(chatState) {chat.setConsent(it)}
                     // The phone's own settings always work, even after the permission prompt has been dismissed twice.
                     if(inboxOwner!=null) NotificationSettingsCard(auth.session?.roles.orEmpty(),notificationSettingsState,notificationSettings,PushSetup.enabled,pushAllowed) {
                         context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))
@@ -355,7 +356,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
                     else PatientManagement(connected,rehabilitation) {selectedPatient=it; route="PATIENT_DETAIL"}
                 }
-                "MESSAGES" -> if(chatOwner!=null) MessagesScreen(chatState,chatOwner,actualRole==UserRole.PATIENT,{chat.refreshList()}) {selectedConversation=it; route="CONVERSATION"}
+                "MESSAGES" -> if(chatOwner!=null) MessagesScreen(chatState,chatOwner,actualRole==UserRole.PATIENT,{chat.refreshList()},{chat.setConsent(true)}) {selectedConversation=it; route="CONVERSATION"}
                 "PATIENT_DETAIL" -> {
                     val patient=connected.workspace.patients.firstOrNull {it.id==patientId}
                     val plans=connected.workspace.prescriptions.filter {it.patientId==patientId}

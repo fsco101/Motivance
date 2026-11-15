@@ -20,15 +20,17 @@ internal object ChatJson {
         return (0 until rows.length()).map {index ->
             val j=rows.getJSONObject(index)
             Conversation(j.getString("id"),j.getString("side")=="patient",j.getString("other_id"),j.optString("other_name"),j.text("other_photo"),
-                j.getBoolean("open"),j.text("last_message_at"),j.optJSONObject("last_message")?.let(::message),j.optInt("unread"))
+                j.getBoolean("open"),j.text("last_message_at"),j.optJSONObject("last_message")?.let(::message),j.optInt("unread"),j.optBoolean("consented",true))
         }
     }
 
     fun page(raw:String):MessagePage {
         val j=JSONObject(raw)
         val rows=j.getJSONArray("messages")
-        return MessagePage((0 until rows.length()).map {message(rows.getJSONObject(it))},j.optBoolean("more"),j.optBoolean("open"),j.text("other_read_at"))
+        return MessagePage((0 until rows.length()).map {message(rows.getJSONObject(it))},j.optBoolean("more"),j.optBoolean("open"),j.text("other_read_at"),j.optBoolean("consented",true))
     }
+
+    fun consent(raw:String)=JSONObject(raw).let {ChatConsent(it.getString("version"),it.getBoolean("granted"),it.text("at"))}
 
     fun read(j:JSONObject)=ReadMark(j.getString("conversation_id"),j.getString("user_id"),j.getString("read_at"))
 }

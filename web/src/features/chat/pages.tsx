@@ -5,7 +5,7 @@ import { Navigate, useParams, useSearchParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { toast } from '@/components/Toast'
 import {
-  deleteMessage, loadConversations, loadMessages, markConversationRead, mergeMessage, sendMessage, subscribeToChat,
+  deleteMessage, loadChatConsent, loadConversations, setChatConsent, loadMessages, markConversationRead, mergeMessage, sendMessage, subscribeToChat,
   type ChatMessage, type Conversation, type MessagePage,
 } from '@/data/chat'
 import { supabase } from '@/data/client'
@@ -114,7 +114,7 @@ function useThread(conversation: Conversation | undefined) {
   const first = pages.data?.pages[0]
   const messages = pages.data?.pages.flatMap((page) => page.messages)
   const thread: Load<Thread> | null = !id ? null : messages && first
-    ? ready({ messages, more: pages.hasNextPage, loadingOlder: pages.isFetchingNextPage, otherReadAt: first.otherReadAt, open: first.open })
+    ? ready({ messages, more: pages.hasNextPage, loadingOlder: pages.isFetchingNextPage, otherReadAt: first.otherReadAt, open: first.open, consented: first.consented })
     : pages.isError ? { status: 'error', retry: () => void pages.refetch() } : { status: 'loading' }
 
   // Reading is told to the server once for each new message from the other person, and only while the page is in front of the reader.
@@ -163,6 +163,27 @@ function useThread(conversation: Conversation | undefined) {
   }
 }
 
+/** A patient's answer to the messages agreement, and the way to change it. Everything chat shows is read again after a change. */
+export function useChatAgreement(enabled: boolean) {
+  const { t } = useTranslation()
+  const client = useQueryClient()
+  const consent = useQuery({ queryKey: ['chat', 'consent'], enabled, queryFn: () => loadChatConsent(supabase()) })
+  const [busy, setBusy] = useState(false)
+  const change = async (granted: boolean) => {
+    setBusy(true)
+    try {
+      await setChatConsent(supabase(), granted)
+      toast.show(t(granted ? 'chat.agreement.turnedOn' : 'chat.agreement.turnedOff'))
+      await client.invalidateQueries({ queryKey: ['chat'] })
+    } catch (failure) {
+      toast.show(t(failureKey(failure)), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return { consent: consent.data, load: consent, busy, change }
+}
+
 /** Messages for a patient or a therapist. `?with=` opens the conversation with one person, for links from their record. */
 export function MessagesPage({ base, self }: { base: string; self?: boolean }) {
   const { userId } = useSignedIn()
@@ -173,10 +194,12 @@ export function MessagesPage({ base, self }: { base: string; self?: boolean }) {
   const list = conversations.data
   const selected = list?.find((conversation) => conversation.id === id)
   const { thread, outgoing, actions } = useThread(selected)
+  const agreement = useChatAgreement(Boolean(self))
   const wanted = params.get('with')
   if (!id && list) {
     const target = wanted ? list.find((conversation) => conversation.otherId === wanted) : self && list.length === 1 ? list[0] : undefined
     if (target) return <Navigate to={`${base}/messages/${target.id}`} replace />
   }
-  return <MessagesView base={base} me={userId} self={self} conversations={asLoad(conversations)} selected={id ?? null} thread={thread} outgoing={outgoing} connected={connected} actions={actions} />
+  return <MessagesView base={base} me={userId} self={self} conversations={asLoad(conversations)} selected={id ?? null} thread={thread} outgoing={outgoing} connected={connected} actions={actions}
+    agreement={agreement.consent ? { granted: agreement.consent.granted, busy: agreement.busy, onAccept: () => void agreement.change(true) } : undefined} />
 }

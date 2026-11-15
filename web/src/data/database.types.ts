@@ -1625,6 +1625,18 @@ export type Database = {
         Args: { p_conversation: string }
         Returns: boolean
       }
+      chat_consent_version: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      chat_consented: {
+        Args: { p_patient: string }
+        Returns: boolean
+      }
+      chat_link_open: {
+        Args: { p_conversation: string }
+        Returns: boolean
+      }
       chat_message_json: {
         Args: { m: Database["public"]["Tables"]["chat_messages"]["Row"] }
         Returns: Json
@@ -1699,9 +1711,17 @@ export type Database = {
         Args: { p_now?: string }
         Returns: number
       }
+      erase_patient_chat: {
+        Args: { p_patient: string }
+        Returns: number
+      }
       expire_stale_bookings: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      export_patient_chat: {
+        Args: { p_patient: string }
+        Returns: Json
       }
       finish_notification_delivery: {
         Args: { p_id: string; p_sent: boolean; p_error?: string }
@@ -1748,6 +1768,10 @@ export type Database = {
         Returns: Json
       }
       my_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      my_chat_consent: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
@@ -2109,6 +2133,10 @@ export type Database = {
       }
       series_view: {
         Args: { p_series: string }
+        Returns: Json
+      }
+      set_chat_consent: {
+        Args: { p_granted: boolean }
         Returns: Json
       }
       set_my_language: {

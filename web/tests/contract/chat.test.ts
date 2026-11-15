@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { deleteMessage, loadConversations, loadMessages, loadUnreadMessages, markConversationRead, sendMessage, subscribeToChat, type ChatMessage, type ReadMark } from '../../src/data/chat'
-import { createUser, link, removeUsers, signedIn, sql, type TestUser } from '../support/stack'
+import { createClient } from '@supabase/supabase-js'
+import { deleteMessage, loadChatConsent, loadConversations, loadMessages, loadUnreadMessages, markConversationRead, sendMessage, setChatConsent, subscribeToChat, type ChatMessage, type ReadMark } from '../../src/data/chat'
+import type { Database } from '../../src/data/database.types'
+import { createUser, link, removeUsers, signedIn, sql, stack, type TestUser } from '../support/stack'
 
 /** Care chat against the real schema: who may read and send, safe retries, unread counts and live delivery. */
 describe('care chat on the local backend', () => {
@@ -35,13 +37,28 @@ describe('care chat on the local backend', () => {
     removeUsers(users)
   })
 
-  it('gives a linked pair one conversation each can open, and nobody else any', async () => {
+  it('gives a linked pair one conversation each can see, and nobody else any', async () => {
     const [mine] = await loadConversations(await signedIn(therapist))
-    expect(mine).toMatchObject({ side: 'therapist', otherId: patient.id, otherName: 'Chat Patient', open: true, unread: 0, lastMessage: null })
+    expect(mine).toMatchObject({ side: 'therapist', otherId: patient.id, otherName: 'Chat Patient', open: false, consented: false, unread: 0, lastMessage: null })
     conversation = mine!.id
     const [theirs] = await loadConversations(await signedIn(patient))
-    expect(theirs).toMatchObject({ id: conversation, side: 'patient', otherId: therapist.id, otherName: 'Chat Therapist', open: true })
+    expect(theirs).toMatchObject({ id: conversation, side: 'patient', otherId: therapist.id, otherName: 'Chat Therapist', open: false, consented: false })
     for (const outsider of [otherTherapist, scheduler, admin]) expect(await loadConversations(await signedIn(outsider))).toEqual([])
+  })
+
+  it('lets nobody write until the patient turns messages on, and records the answer once', async () => {
+    const [staff, person] = await Promise.all([signedIn(therapist), signedIn(patient)])
+    await expect(sendMessage(staff, randomUUID(), conversation, 'Hello')).rejects.toMatchObject({ message: 'chat_consent_required' })
+    await expect(sendMessage(person, randomUUID(), conversation, 'Hello')).rejects.toMatchObject({ message: 'chat_consent_required' })
+    expect(await loadChatConsent(person)).toEqual({ version: 'care-chat-v1', granted: false, at: null })
+    // Only a patient answers for themselves.
+    for (const other of [therapist, scheduler, admin]) await expect(setChatConsent(await signedIn(other), true)).rejects.toMatchObject({ code: '42501' })
+    expect(await setChatConsent(person, true)).toMatchObject({ version: 'care-chat-v1', granted: true })
+    await setChatConsent(person, true)
+    expect(sql(`select count(*) from public.consents where patient_id='${patient.id}' and consent_type='care-chat'`)).toBe('1')
+    // It is audited like every other agreement.
+    expect(Number(sql(`select count(*) from public.audit_events where target_type='consents' and actor_id='${patient.id}'`))).toBeGreaterThanOrEqual(1)
+    expect(await loadConversations(staff)).toMatchObject([{ id: conversation, open: true, consented: true }])
   })
 
   it('sends once however often the same message is retried, and counts what is unread', async () => {
@@ -165,6 +182,60 @@ describe('care chat on the local backend', () => {
     sql(`update public.therapist_patients set active=true where therapist_id='${therapist.id}' and patient_id='${patient.id}';`)
     expect(await loadConversations(staff)).toMatchObject([{ id: conversation, open: true }])
     await expect(sendMessage(person, randomUUID(), conversation, 'Welcome back')).resolves.toMatchObject({ body: 'Welcome back' })
+  })
+
+  it('turning messages off stops new ones both ways, and keeps what was said readable', async () => {
+    const [staff, person] = await Promise.all([signedIn(therapist), signedIn(patient)])
+    const said = await sendMessage(staff, randomUUID(), conversation, 'Before messages were turned off')
+    await setChatConsent(person, false)
+    await expect(sendMessage(staff, randomUUID(), conversation, 'After')).rejects.toMatchObject({ message: 'chat_consent_required' })
+    await expect(sendMessage(person, randomUUID(), conversation, 'After')).rejects.toMatchObject({ message: 'chat_consent_required' })
+    for (const db of [staff, person]) {
+      const page = await loadMessages(db, conversation)
+      expect(page).toMatchObject({ open: false, consented: false })
+      expect(page.messages.map((message) => message.id)).toContain(said.id)
+    }
+    await setChatConsent(person, true)
+    await expect(sendMessage(person, randomUUID(), conversation, 'Back on')).resolves.toMatchObject({ body: 'Back on' })
+  })
+
+  it('gives the trusted operator, and nobody else, an export of the patient’s messages', async () => {
+    const operator = createClient<Database>(stack().API_URL, stack().SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+    const taken = await sendMessage(await signedIn(therapist), randomUUID(), conversation, 'Taken back before export')
+    await deleteMessage(await signedIn(therapist), taken.id)
+    for (const person of [patient, therapist, admin, scheduler]) {
+      const { error } = await (await signedIn(person)).rpc('export_patient_chat', { p_patient: patient.id })
+      expect(error?.code).toBe('42501')
+    }
+    const { data, error } = await operator.rpc('export_patient_chat', { p_patient: patient.id })
+    expect(error).toBeNull()
+    const exported = data as { patient_id: string; agreement: Array<{ event: string }>; conversations: Array<{ therapist_name: string; messages: Array<{ from: string; text: string; deleted: boolean }> }> }
+    expect(exported.patient_id).toBe(patient.id)
+    expect(exported.agreement.map((answer) => answer.event)).toEqual(['granted', 'withdrawn', 'granted'])
+    const [only] = exported.conversations
+    expect(only!.therapist_name).toBe('Chat Therapist')
+    expect(only!.messages).toContainEqual(expect.objectContaining({ from: 'patient', text: 'Back on', deleted: false }))
+    expect(only!.messages).toContainEqual(expect.objectContaining({ from: 'therapist', text: '', deleted: true }))
+    expect(JSON.stringify(exported)).not.toContain('Taken back before export')
+  })
+
+  it('erases the patient’s messages only for an open deletion request, and says so in the audit trail', async () => {
+    const operator = createClient<Database>(stack().API_URL, stack().SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+    const before = Number(sql(`select count(*) from public.chat_messages where conversation_id='${conversation}'`))
+    expect(before).toBeGreaterThan(0)
+    expect((await operator.rpc('erase_patient_chat', { p_patient: patient.id })).error?.message).toBe('No open deletion request for this patient')
+    const { error: asked } = await (await signedIn(patient)).rpc('request_patient_data', { p_id: randomUUID(), p_kind: 'delete' })
+    expect(asked).toBeNull()
+    expect((await (await signedIn(admin)).rpc('erase_patient_chat', { p_patient: patient.id })).error?.code).toBe('42501')
+    const { data, error } = await operator.rpc('erase_patient_chat', { p_patient: patient.id })
+    expect(error).toBeNull()
+    expect(data).toBe(before)
+    expect(sql(`select count(*) from public.chat_messages m join public.conversations c on c.id=m.conversation_id where c.patient_id='${patient.id}'`)).toBe('0')
+    expect(sql(`select count(*) from public.audit_events where action='erase' and target_type='chat_messages' and target_id='${patient.id}'`)).toBe('1')
+    // The link is still active, so an empty conversation is there to carry on in.
+    const [fresh] = await loadConversations(await signedIn(patient))
+    expect(fresh).toMatchObject({ otherId: therapist.id, lastMessage: null, open: true })
+    conversation = fresh!.id
   })
 
   it('stops a disabled account from reading or sending', async () => {

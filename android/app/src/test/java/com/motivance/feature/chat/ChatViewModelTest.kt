@@ -164,6 +164,31 @@ class ChatViewModelTest {
         assertEquals("",vm.state.value.owner)
     }
 
+    @Test fun aPatientReadsTheirAnswerAndTurningMessagesOnReadsEverythingAgain() = runTest(dispatcher) {
+        val vm=ChatViewModel(remote,box,live,Toaster())
+        vm.configure(me,patient=true); advanceUntilIdle()
+        assertEquals(false,vm.state.value.consent?.granted)
+        val reads=remote.listReads
+        vm.setConsent(true); advanceUntilIdle()
+        assertEquals(listOf(true),remote.answers)
+        assertEquals(true,vm.state.value.consent?.granted)
+        assertFalse(vm.state.value.consentBusy)
+        assertTrue(remote.listReads>reads)
+    }
+
+    @Test fun aTherapistNeverAsksForTheAgreement() = runTest(dispatcher) {
+        val vm=ChatViewModel(remote,box,live,Toaster())
+        vm.configure(me,patient=false); advanceUntilIdle()
+        assertNull(vm.state.value.consent)
+    }
+
+    @Test fun aConversationWaitingForTheAgreementSaysSo() = runTest(dispatcher) {
+        remote.waitingForAgreement=true
+        val vm=started()
+        assertFalse(vm.state.value.threadOpen)
+        assertFalse(vm.state.value.consented)
+    }
+
     private class FakeLive:ChatLive {
         private val events=MutableSharedFlow<LiveEvent>(extraBufferCapacity=16)
         suspend fun emit(event:LiveEvent)=events.emit(event)
@@ -186,20 +211,21 @@ class ChatViewModelTest {
         var pageSize=50
         var listReads=0
         var gate:CompletableDeferred<Unit>?=null
+        var waitingForAgreement=false
         private var clock=0L
         fun message(id:String,sender:String,body:String,at:String="2026-11-15T07:00:${(clock++).toString().padStart(2,'0')}Z")=ChatMessage(id,"c",sender,MessageKind.TEXT,body,at)
         override suspend fun loadConversations():List<Conversation> {
             listReads++
             gate?.let {withContext(NonCancellable) {it.await()}}
             if(offline) throw IOException("offline")
-            return listOf(Conversation("c",true,other,"Dana Reyes",null,true,null,stored.maxByOrNull {it.at},0))
+            return listOf(Conversation("c",true,other,"Dana Reyes",null,!waitingForAgreement,null,stored.maxByOrNull {it.at},0,!waitingForAgreement))
         }
         override suspend fun loadMessages(conversationId:String,before:ChatMessage?):MessagePage {
             gate?.let {withContext(NonCancellable) {it.await()}}
             if(offline) throw IOException("offline")
             val ordered=stored.filter {it.conversationId==conversationId}.sortedWith(compareByDescending<ChatMessage> {it.at}.thenByDescending {it.id})
                 .filter {before==null || it.at<before.at || (it.at==before.at && it.id<before.id)}
-            return MessagePage(ordered.take(pageSize),ordered.size>pageSize,true,null)
+            return MessagePage(ordered.take(pageSize),ordered.size>pageSize,!waitingForAgreement,null,!waitingForAgreement)
         }
         override suspend fun sendMessage(id:String,conversationId:String,body:String):ChatMessage {
             if(offline) throw IOException("offline")
@@ -211,5 +237,9 @@ class ChatViewModelTest {
         override suspend fun markConversationRead(conversationId:String) {}
         override suspend fun deleteMessage(id:String)=stored.first {it.id==id}.copy(deleted=true,body="")
         override suspend fun liveAccess()=LiveAccess("http://localhost:54321","key","token")
+        var consent=ChatConsent("care-chat-v1",false,null)
+        val answers=mutableListOf<Boolean>()
+        override suspend fun loadChatConsent()=consent
+        override suspend fun setChatConsent(granted:Boolean):ChatConsent {answers+=granted; consent=consent.copy(granted=granted,at="2026-11-15T07:00:00Z"); return consent}
     }
 }

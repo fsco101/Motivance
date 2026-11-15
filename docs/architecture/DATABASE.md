@@ -26,7 +26,9 @@ Migration `202611150001_care_chat.sql` adds a direct conversation between a ther
 
 **Live delivery.** `chat_messages` and `chat_reads` are in the `supabase_realtime` publication. Supabase Realtime sends each change over a websocket only to connections whose user passes the row rule, so live delivery and reading can never disagree. A client must treat the connection as live only after Realtime reports that it is listening to the database, and must fetch again after any drop.
 
-Photos and video (#106), shared progress and system notes (#109), notifications (#110) and the consent, export and deletion rules (#111) are not built yet.
+**The patient's agreement (#111).** Migration `202611150002_chat_consent.sql` adds the messages agreement, `care-chat-v1`, recorded in `consents` with `consent_type='care-chat'`. `chat_consented(patient)` reads the patient's latest answer to the current version. `chat_link_open` holds what `chat_can_send` used to; `chat_can_send` now also needs the patient's agreement, and `chat_can_read` uses `chat_link_open` for the therapist, so turning messages off stops sending both ways and leaves reading as it was. `my_conversations` and `conversation_messages` add `consented`. `send_message` refuses with `chat_consent_required` when only the agreement is missing. `my_chat_consent()` and `set_chat_consent(granted)` are for patients only; the same answer twice records nothing. `export_patient_chat(patient)` and `erase_patient_chat(patient)` are granted to `service_role` only, for the trusted operator answering privacy requests ([DATA-LIFECYCLE.md](../operations/DATA-LIFECYCLE.md#care-chat)); the second refuses without an open deletion request and writes an `erase` audit event.
+
+Photos and video (#106), shared progress and system notes (#109) and notifications (#110) are not built yet.
 
 ## Both-sides sets and a time per side
 

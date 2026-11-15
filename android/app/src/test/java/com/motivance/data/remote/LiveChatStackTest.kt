@@ -94,6 +94,14 @@ delete from public.profiles where id in ($ids); delete from auth.users where id 
         assertEquals("Android Patient",conversation.otherName)
         assertEquals(conversation.id,patient.loadConversations().single().id)
         assertTrue(outsider.loadConversations().isEmpty())
+        // Nobody writes until the patient turns messages on, and only the patient can.
+        assertFalse(conversation.open)
+        assertFalse(conversation.consented)
+        assertEquals("chat_consent_required",(runCatching {therapist.sendMessage(UUID.randomUUID().toString(),conversation.id,"Hello")}.exceptionOrNull() as RemoteFailure).code)
+        assertEquals(403,(runCatching {therapist.setChatConsent(true)}.exceptionOrNull() as RemoteFailure).status)
+        assertEquals(ChatConsent("care-chat-v1",false,null),patient.loadChatConsent())
+        assertTrue(patient.setChatConsent(true).granted)
+        assertTrue(therapist.loadConversations().single().let {it.open && it.consented})
 
         coroutineScope {
             val patientLive=Listener(this,patient)

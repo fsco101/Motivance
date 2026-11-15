@@ -41,13 +41,43 @@ Exported schedules are built in the browser and saved on the Scheduler's own com
 
 A deletion request has to consider these tables too. Do not delete `bookings` or `booking_events` rows to answer one without the same review as other historical records, because the audit trigger exists to prevent exactly that. Retention for all of this awaits the owner's approval, like the rest, and the follow-up is in `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md`.
 
+## Care chat
+
+Patients and their linked therapist can write to each other in both apps (issues #105 to #111). Messages are personal health information, so they are handled as part of the patient's record.
+
+**The agreement.** Nobody can write in a conversation until the patient turns messages on. That is a separate agreement, `care-chat-v1`, recorded in `consents` with `consent_type='care-chat'` and audited like the others. It tells the patient four things, in English and Filipino, in the same words on both apps:
+
+1. Messages go only to the therapist they are linked with. Administrators and Schedulers cannot read them.
+2. Messages are kept in their rehabilitation record, and they can ask for a copy or deletion from Profile.
+3. The therapist does not read messages around the clock; for anything urgent, call the local emergency number or go to the nearest hospital.
+4. Turning messages off stops new messages both ways. What was already said stays in the record, and the therapist can still read it.
+
+The patient can turn messages off and on again from Profile at any time; each change is a new audited row. A therapist agrees to nothing here, because a conversation only opens with a patient who chose it. This version covers words only. Photos and video (#106) need a new version, accepted before either can be sent, because they change what is stored.
+
+**What is kept, and where.**
+
+| Data | Where | How long it stays |
+| --- | --- | --- |
+| Conversations, one per therapist and patient pair | `conversations` | With the patient's record, under `development-v1`: no automatic deletion |
+| Messages | `chat_messages` | The same. A message its sender took back within 15 minutes keeps its place but loses its words at once |
+| How far each person has read | `chat_reads` | The same |
+| The patient's answers to the agreement | `consents` | Kept, like every consent event |
+| A message written on an Android phone and not yet sent | Room `chat_outbox` on that phone | Until it is sent, discarded, or the account signs out on that phone. Unlike an unsent exercise result, it is not kept for the next sign-in: its words should not stay on a phone someone else may use |
+| Messages on screen | The browser's memory, and the Android app's memory | Until the page or app closes. Neither keeps a copy of the conversation on disk |
+
+Messages travel over Supabase Realtime only to the two people in the conversation; the server checks each row against the same rule as reading. Nothing about a message is sent to email or push yet; new-message notifications are #110.
+
+**When the link ends.** Nobody can send. The patient keeps reading the conversation. The therapist loses it, exactly as they lose the patient's other records, until the link is restored. Disabling either account stops both reading and sending for that account; both are already audited (`therapist_patients` and account changes), and their effect on chat follows from these rules rather than from separate events.
+
+**Abuse limits.** One person can send at most 30 messages a minute, and a message is at most 2,000 characters; both are enforced by the server. Muting one conversation's notifications comes with those notifications in #110, since there is nothing to mute yet.
+
 ## Export or deletion request workflow
 
 1. The signed-in patient submits `request_patient_data` with a stable request UUID and `export` or `delete`. RLS exposes only the patient's own requests and trusted administrators' permitted view. Repeating an identical UUID is idempotent.
 2. The app displays **recorded; awaiting administrator review**. It never reports that an export exists or that records/backups were erased simply because the request was queued.
 3. A trusted operator reviews the queue in the protected Supabase administrative environment, verifies the requester and confirms scope, retention obligations and identity-handling requirements. Therapist access alone does not authorize fulfilling privacy requests.
-4. For export, gather the verified patient's profile, relevant prescription versions, sessions/measurements and consent history through a trusted controlled export. Deliver it through the deployment owner's approved channel. The app does not email exports or attach credentials to a request.
-5. For deletion, assess active prescriptions, immutable references, audit/identity records and backup expiry together. An audited production purge/account-deletion procedure must be reviewed during release preparation. Do not disable historical-integrity triggers ad hoc on live data; the disposable integration-test cleanup is not a production deletion implementation.
+4. For export, gather the verified patient's profile, relevant prescription versions, sessions/measurements and consent history through a trusted controlled export. Include their messages: `select public.export_patient_chat('<patient id>')` with the service key returns every conversation, with whom, every message in order and their messages-agreement history. A message taken back appears only as deleted, without its words. Deliver it through the deployment owner's approved channel. The app does not email exports or attach credentials to a request.
+5. For deletion, assess active prescriptions, immutable references, audit/identity records and backup expiry together. Messages can be removed on their own once the request is reviewed: `select public.erase_patient_chat('<patient id>')` with the service key removes every message and read mark in the patient's conversations, refuses unless the patient has an open deletion request, records an `erase` event against `chat_messages` in the audit trail, and returns how many messages it removed. Both people's words in those conversations go, because each conversation is about the patient's care. Database backups still hold them until the backups expire. An audited production purge/account-deletion procedure must be reviewed during release preparation. Do not disable historical-integrity triggers ad hoc on live data; the disposable integration-test cleanup is not a production deletion implementation.
 6. Only after fulfillment or a documented decision should the trusted operator set the request to `fulfilled` or `declined`, with `resolved_at`. The audit trigger records the status change. Keep sensitive justification in the protected operational case system, not a public issue or raw app logs.
 
 Automated export delivery, an automatic historical purge and administrator-facing request fulfillment are outside S3's patient request queue; release operations must complete them according to the selected policy. They are not presented as implemented background deletions.

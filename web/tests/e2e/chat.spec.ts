@@ -27,6 +27,7 @@ const noViolations = (page: Page) => expect.poll(async () => {
 }, { timeout: 8_000 }).toEqual([])
 
 const log = (page: Page) => page.getByRole('log')
+const panelTitled = (page: Page, title: string) => page.locator('section', { has: page.getByRole('heading', { name: title, exact: true, level: 2 }) })
 const write = async (page: Page, words: string) => {
   await page.getByRole('textbox', { name: /^Message to / }).fill(words)
   await page.getByRole('button', { name: 'Send' }).click()
@@ -54,17 +55,29 @@ test('a therapist finds a conversation for each patient, and a patient with one 
   const list = staff.getByRole('navigation', { name: 'Conversations' })
   await expect(list.getByRole('link')).toHaveCount(2)
   await expect(list).toContainText('Ana Dela Cruz')
-  await expect(list).toContainText('No messages yet')
+  // Nobody has turned messages on yet, so there is nothing to write in.
+  await expect(list).toContainText('Has not turned on messages yet')
+  await list.getByRole('link', { name: /Ana Dela Cruz/ }).click()
+  await expect(staff.getByText('Ana Dela Cruz has not turned on messages yet. You can write once they do.')).toBeVisible()
+  await expect(staff.getByRole('textbox', { name: /^Message to / })).toHaveCount(0)
 
   await person.getByRole('link', { name: 'Messages', exact: true }).first().click()
   await expect(person).toHaveURL(/\/patient\/messages\/[0-9a-f-]{36}$/)
   await expect(person.getByRole('heading', { name: 'Dana Reyes' })).toBeVisible()
-  await expect(person.getByText('Your therapist does not read messages around the clock.', { exact: false })).toBeVisible()
+  await expect(person.getByText('If something is urgent, call your local emergency number', { exact: false })).toBeVisible()
+  // The agreement comes first, with the same four points as Android.
+  const agreement = panelTitled(person, 'Messages with your therapist')
+  await expect(agreement).toContainText('Administrators and schedulers cannot read them.')
+  await expect(person.getByText('Turn on messages above to write to Dana Reyes.')).toBeVisible()
   await noViolations(person)
+  await agreement.getByRole('button', { name: 'Turn on messages' }).click()
+  await expect(panelTitled(person, 'Messages with your therapist')).toHaveCount(0)
+  await expect(person.getByRole('textbox', { name: 'Message to Dana Reyes' })).toBeVisible()
+  await staff.reload()
+  await expect(staff.getByRole('textbox', { name: 'Message to Ana Dela Cruz' })).toBeVisible()
 })
 
 test('a message appears for the other person without a refresh, and is marked seen', async () => {
-  await staff.getByRole('navigation', { name: 'Conversations' }).getByRole('link', { name: /Ana Dela Cruz/ }).click()
   await expect(staff.getByRole('heading', { name: 'Ana Dela Cruz' })).toBeVisible()
   // Live rows only flow once the server is listening, which the page shows by dropping "Reconnecting".
   await expect(staff.getByText('Reconnecting…')).toHaveCount(0, { timeout: 15_000 })
@@ -150,6 +163,23 @@ test('older messages load on request and keep their order', async () => {
   await expect(person.getByRole('button', { name: 'Load older messages' })).toHaveCount(0)
 })
 
+test('a patient can turn messages off and on again from Profile, and the therapist sees it', async () => {
+  await person.goto('/patient/profile')
+  const panel = panelTitled(person, 'Messages')
+  await expect(panel.getByText('On', { exact: true })).toBeVisible()
+  await panel.getByRole('button', { name: 'Turn off messages' }).click()
+  await person.getByRole('alertdialog').getByRole('button', { name: 'Turn off messages' }).click()
+  await expect(panel.getByText('Off', { exact: true })).toBeVisible()
+  await staff.reload()
+  await expect(staff.getByText('Ana Dela Cruz has not turned on messages yet. You can write once they do.')).toBeVisible()
+  await expect(log(staff)).toContainText('Better, thank you.')
+  await panel.getByRole('button', { name: 'Turn on messages' }).click()
+  await expect(panel.getByText('On', { exact: true })).toBeVisible()
+  await staff.reload()
+  await expect(staff.getByRole('textbox', { name: 'Message to Ana Dela Cruz' })).toBeVisible()
+  await person.goto('/patient/messages')
+})
+
 test('when the link ends the patient can still read but not write, and the therapist loses the conversation', async () => {
   sql(`update public.therapist_patients set active=false where therapist_id='${therapist.id}' and patient_id='${patient.id}';`)
   await person.reload()
@@ -170,6 +200,7 @@ test('the patient record leads straight to that patient’s conversation, and it
   // The record is still fading out behind it, so the heading is looked for inside the conversation.
   await expect(staff.getByRole('region', { name: 'Conversation with Ben Santos' }).getByRole('heading', { name: 'Ben Santos' })).toBeVisible()
   await expect(staff.getByText('No messages yet. Write the first one to Ben Santos.')).toBeVisible()
+  await expect(staff.getByText('Ben Santos has not turned on messages yet. You can write once they do.')).toBeVisible()
 
   await person.setViewportSize({ width: 360, height: 760 })
   await person.reload()
