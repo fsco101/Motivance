@@ -1,6 +1,8 @@
 # Profile photo uploads (Cloudinary)
 
-Engineering review: Claude Code, 2026-11-04. Profile photos replace the bundled person/star/heart avatar choice. Operations and setup are described in [CLOUDINARY.md](../operations/CLOUDINARY.md). No live Cloudinary account was used. Cloudinary responses were simulated, so a live upload remains a [checklist](POST-IMPLEMENTATION-CHECKLIST.md) item.
+> Superseded on 2026-11-17: photos moved from Cloudinary to Supabase Storage, with a crop step. See [PROFILE-PHOTO-STORAGE.md](PROFILE-PHOTO-STORAGE.md) and [PROFILE-PHOTOS.md](../operations/PROFILE-PHOTOS.md). This record is kept as the history of the Cloudinary version; `profile-photo-backend-results.json` now holds the Storage results.
+
+Engineering review: Claude Code, 2026-11-04. Profile photos replace the bundled person/star/heart avatar choice. Operations and setup were described in `CLOUDINARY.md`, since removed. No live Cloudinary account was used. Cloudinary responses were simulated, so a live upload remains a [checklist](POST-IMPLEMENTATION-CHECKLIST.md) item.
 
 ## Delivered behavior
 

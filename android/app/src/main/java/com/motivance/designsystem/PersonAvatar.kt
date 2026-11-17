@@ -1,6 +1,7 @@
 package com.motivance.designsystem
 
 import android.graphics.BitmapFactory
+import com.motivance.BuildConfig
 import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -30,19 +30,18 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-private val PHOTO=Regex("^(https://res\\.cloudinary\\.com/[A-Za-z0-9_-]+/image/upload/)(v[0-9]+/motivance/avatars/[0-9a-f-]{36}/[0-9a-f]{32})$")
+private val PHOTO=Regex("[0-9a-f-]{36}/[0-9a-f]{32}\\.(webp|jpg)")
 
 /**
- * Cloudinary delivery URL for a square, face-centred JPEG thumbnail of [pixels] size. Returns null for anything
- * that is not a Motivance profile photo, so the app never fetches an arbitrary stored URL.
+ * The address of a stored profile photo. The database keeps only the file's path in the public `avatars` bucket, because the
+ * same file is reached through different hosts (an emulator, a phone, the hosted project); this joins it to the backend the
+ * app talks to. Returns null for anything that is not a Motivance photo path, so the app never fetches an arbitrary stored
+ * value.
  */
-fun avatarThumbnail(url:String?,pixels:Int):String? {
-    val match=PHOTO.matchEntire(url ?: return null) ?: return null
-    return match.groupValues[1]+"c_fill,g_face,w_$pixels,h_$pixels,q_auto,f_jpg/"+match.groupValues[2]
+fun avatarAddress(path:String?,base:String=BuildConfig.SUPABASE_URL):String? {
+    if(path==null || base.isBlank() || !PHOTO.matches(path)) return null
+    return base.trimEnd('/')+"/storage/v1/object/public/avatars/"+path
 }
-
-/** Thumbnail sizes are rounded up to a few buckets so one download serves several avatar sizes. */
-internal fun thumbnailBucket(pixels:Int)=listOf(96,192,384).firstOrNull {it>=pixels} ?: 384
 
 /** Up to two initials; for an email address only the part before "@" is used. */
 fun initials(name:String):String {
@@ -50,7 +49,7 @@ fun initials(name:String):String {
     return when {words.isEmpty() -> "?";words.size==1 -> words[0].take(2);else -> "${words.first().first()}${words.last().first()}"}.uppercase()
 }
 
-/** Small in-memory cache over the app's HTTP stack, sized for avatar lists. */
+/** Small in-memory cache over the app's HTTP stack, sized for avatar lists. Each photo is one small file, whatever its drawn size. */
 private object AvatarImages {
     private val client by lazy {OkHttpClient()}
     private val cache=LruCache<String,ImageBitmap>(64)
@@ -71,8 +70,7 @@ private object AvatarImages {
 @Composable fun PersonAvatar(photoUrl:String?,name:String,size:Dp=48.dp,modifier:Modifier=Modifier,
     container:Color=MaterialTheme.colorScheme.primaryContainer,content:Color=MaterialTheme.colorScheme.onPrimaryContainer,
     description:String?=null) {
-    val pixels=with(LocalDensity.current) {size.roundToPx()}
-    val url=avatarThumbnail(photoUrl,thumbnailBucket(pixels))
+    val url=avatarAddress(photoUrl)
     val image by produceState(url?.let {AvatarImages.cached(it)},url) {value=url?.let {AvatarImages.load(it)}}
     val semantics=if(description!=null) Modifier.semantics {contentDescription=description} else Modifier
     Surface(modifier.size(size).then(semantics),shape=CircleShape,color=container,contentColor=content) {

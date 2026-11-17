@@ -16,8 +16,8 @@ data class PatientProfile(val username:String="",val name:String="",val gender:S
     }
 }
 
-/** Profile photos are JPEG uploads of at most this size, prepared on the device before upload. */
-const val MAX_PHOTO_BYTES=2_000_000
+/** The server's limit for a profile photo, from profile_photo_limit(). A cropped 384 px WebP is normally a small part of it. */
+const val MAX_PHOTO_BYTES=102_400
 
 fun validBirthdate(value:String)=runCatching {val date=LocalDate.parse(value);date<=LocalDate.now() && date>=LocalDate.now().minusYears(120)}.getOrDefault(false)
 fun validAddress(value:String)=value.trim().length in 5..500

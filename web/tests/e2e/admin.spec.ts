@@ -7,7 +7,7 @@ import { createUser, removeUsers, signedIn, sql, type TestUser } from '../suppor
 test.describe.configure({ mode: 'serial' })
 
 const tag = randomUUID().slice(0, 8)
-const PHOTO = 'https://res.cloudinary.com/demo/image/upload/v1/motivance/avatars/00000000-0000-0000-0000-000000000000/0123456789abcdef0123456789abcdef'
+const PHOTO = '00000000-0000-0000-0000-000000000000/0123456789abcdef0123456789abcdef.webp'
 const exercise = randomUUID()
 
 let admin: TestUser

@@ -174,7 +174,6 @@ data class ProfileState(val owner:String="",val profile:PatientProfile?=null,val
     val photoBusy:Boolean=false,val photoError:Int?=null)
 /** Photo errors name the cause where the server or device makes it known. */
 internal fun photoFailure(e:Exception)=when {
-    e is RemoteFailure && e.status==503 -> R.string.profile_photo_unconfigured
     e is RemoteFailure && e.status==429 -> R.string.profile_photo_limit
     e is UnreadablePhoto || e is IllegalArgumentException -> R.string.profile_photo_unreadable
     else -> R.string.profile_photo_failed
@@ -188,7 +187,7 @@ internal fun photoFailure(e:Exception)=when {
     fun refresh()=perform {repository.loadProfile()}
     fun save(p:PatientProfile)=perform(R.string.profile_saved) {repository.saveProfile(p);repository.loadProfile()}
     fun password(old:String,new:String)=perform(R.string.profile_password_saved) {repository.changePassword(old,new);repository.loadProfile()}
-    fun uploadPhoto(jpeg:ByteArray)=perform(R.string.profile_photo_saved,photo=true) {repository.uploadProfilePhoto(jpeg);repository.loadProfile()}
+    fun uploadPhoto(webp:ByteArray)=perform(R.string.profile_photo_saved,photo=true) {repository.uploadProfilePhoto(webp);repository.loadProfile()}
     fun removePhoto()=perform(R.string.profile_photo_removed,photo=true) {repository.removeProfilePhoto();repository.loadProfile()}
     /** The picked file could not be decoded on the device; nothing was uploaded. */
     fun photoUnreadable() {mutable.value=mutable.value.copy(photoError=R.string.profile_photo_unreadable,message=null);toasts.show(R.string.profile_photo_unreadable,ToastTone.ERROR)}
@@ -234,18 +233,30 @@ internal fun photoFailure(e:Exception)=when {
 }
 
 /**
- * Who is signed in, and their photo. The system photo picker needs no storage permission. The picked image is prepared on the
- * device (see [preparePhoto]) and then uploaded through a server-signed Cloudinary request.
+ * Who is signed in, and their photo. The system photo picker needs no storage permission. The person crops the picked image
+ * ([PhotoCropDialog]); it is shrunk on the device ([encodePhoto]) and then stored in the place the server names for it.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable private fun ProfileIdentityCard(p:PatientProfile,fallbackName:String,badge:(@Composable ()->Unit)?,state:ProfileState,vm:PatientProfileViewModel) {
     val resolver=LocalContext.current.contentResolver
     val scope=rememberCoroutineScope()
     var confirmRemove by remember {mutableStateOf(false)}
+    var cropping by remember {mutableStateOf<android.graphics.Bitmap?>(null)}
+    var preparing by remember {mutableStateOf(false)}
     val picker=rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) {uri ->
         if(uri!=null) scope.launch {
-            val jpeg=withContext(Dispatchers.Default) {runCatching {preparePhoto(resolver,uri)}.getOrNull()}
-            if(jpeg==null) vm.photoUnreadable() else vm.uploadPhoto(jpeg)
+            val photo=withContext(Dispatchers.Default) {runCatching {loadPhoto(resolver,uri)}.getOrNull()}
+            if(photo==null) vm.photoUnreadable() else cropping=photo
+        }
+    }
+    cropping?.let {photo ->
+        PhotoCropDialog(photo,preparing,onCancel={cropping=null}) {crop ->
+            preparing=true
+            scope.launch {
+                val webp=withContext(Dispatchers.Default) {runCatching {encodePhoto(photo,crop)}.getOrNull()}
+                preparing=false;cropping=null
+                if(webp==null) vm.photoUnreadable() else vm.uploadPhoto(webp)
+            }
         }
     }
     ClinicalCard {

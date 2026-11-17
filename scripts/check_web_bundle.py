@@ -12,7 +12,6 @@ SECRETS = {
     'service-role JWT': re.compile(r'eyJ[\w-]+\.[\w-]*c2VydmljZV9yb2xl[\w-]*\.[\w-]+'),
     'Supabase secret key': re.compile(r'sb_secret_[A-Za-z0-9_-]{8,}'),
     'service-role name': re.compile(r'SERVICE_ROLE_KEY'),
-    'Cloudinary secret name': re.compile(r'CLOUDINARY_API_SECRET'),
 }
 # Sample people must never reach production.
 GALLERY = ['Ana Dela Cruz', 'motivance web design review']

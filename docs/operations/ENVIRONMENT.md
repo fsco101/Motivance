@@ -21,7 +21,7 @@ For the emulator, change only `ANDROID_SUPABASE_URL` to `http://10.0.2.2:54321`.
 
 Gradle resolves process environment before `android/local.properties`, then `android/.env`. `ANDROID_SUPABASE_URL` overrides `SUPABASE_URL` for the Android build. Remove obsolete URL/key entries from `local.properties` if they override the environment file unintentionally. A published APK's public key is not a secret; authorization is enforced by authenticated RPC checks and PostgreSQL RLS. See [Supabase API keys](https://supabase.com/docs/guides/api/api-keys).
 
-Cloudinary profile-photo credentials are backend configuration, not Android configuration. Keep them in ignored `supabase/.env` and store them in Supabase Vault with `scripts/configure_cloudinary.py` (see [CLOUDINARY.md](CLOUDINARY.md)). The APK needs no Cloudinary value.
+Profile photos are stored in Supabase Storage and need no configuration in either app (see [PROFILE-PHOTOS.md](PROFILE-PHOTOS.md)). Only the hosted cleanup needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, in the environment or in ignored `supabase/.env`; the service key never goes in `android/.env` or `web/.env`. Earlier `CLOUDINARY_*` values in `supabase/.env` are no longer read and can be deleted.
 
 ## Optional values
 

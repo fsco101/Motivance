@@ -10,61 +10,67 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ProfilePhotoRepositoryTest {
-    private val pid="motivance/avatars/0f8fad5b-d9cb-469f-a165-70867728950e/"+"b".repeat(32)
-    private val delivered="https://res.cloudinary.com/demo/image/upload/v17/$pid"
-    private val requests=mutableListOf<Pair<Request,String>>()
+    private val path="0f8fad5b-d9cb-469f-a165-70867728950e/"+"b".repeat(32)+".webp"
+    private val requests=mutableListOf<Pair<Request,ByteArray>>()
     private var ticketStatus=200
-    private var uploadedId=pid
+    private var issuedPath=path
+    private var issuedBucket="avatars"
+    private var storageStatus=200
 
     private fun repository():SupabaseAuthRepository {
         val client=OkHttpClient.Builder().addInterceptor {chain ->
             val request=chain.request()
-            val body=request.body?.let {val b=okio.Buffer();it.writeTo(b);b.readUtf8()}.orEmpty()
+            val body=request.body?.let {val b=okio.Buffer();it.writeTo(b);b.readByteArray()} ?: ByteArray(0)
             requests+=request to body
-            val path=request.url.encodedPath
-            val (code,text)=when {
-                request.url.host=="cloudinary.fixture.invalid" -> 200 to """{"public_id":"$uploadedId","version":17,"signature":"response-signature"}"""
-                path=="/rest/v1/user_roles" -> 200 to """[{"role":"patient"}]"""
-                path=="/rest/v1/rpc/profile_photo_upload" -> ticketStatus to """{"cloud_name":"demo","api_key":"123456789012345","timestamp":1730700000,"public_id":"$pid","signature":"request-signature"}"""
-                path=="/rest/v1/rpc/set_my_profile_photo" -> 200 to "\"$delivered\""
-                path=="/auth/v1/user" -> 200 to """{"email":"p@example.test"}"""
-                path=="/rest/v1/patient_profiles" -> 200 to "[]"
-                path=="/rest/v1/profiles" -> 200 to """[{"photo_url":"$delivered"}]"""
+            val (code,text)=when(request.url.encodedPath) {
+                "/rest/v1/user_roles" -> 200 to """[{"role":"patient"}]"""
+                "/rest/v1/rpc/start_profile_photo" -> ticketStatus to """{"bucket":"$issuedBucket","path":"$issuedPath","limit":102400}"""
+                "/storage/v1/object/avatars/$issuedPath" -> storageStatus to """{"Key":"avatars/$issuedPath"}"""
+                "/rest/v1/rpc/set_my_profile_photo" -> 200 to "\"$path\""
+                "/auth/v1/user" -> 200 to """{"email":"p@example.test"}"""
+                "/rest/v1/patient_profiles" -> 200 to "[]"
+                "/rest/v1/profiles" -> 200 to """[{"photo_url":"$path"}]"""
                 else -> 200 to """{"access_token":"fixture-access","refresh_token":"fixture-refresh","user":{"id":"fixture-owner"}}"""
             }
             Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(code).message("fixture").body(text.toResponseBody("application/json".toMediaType())).build()
         }.build()
-        return SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture",cloudinaryApi="https://cloudinary.fixture.invalid")
+        return SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture")
             .also {runBlocking {it.signIn("p@example.test","fixture-password")}}
     }
 
-    @Test fun signedUploadGoesToCloudinaryAndIsVerifiedByTheServer()=runBlocking {
+    @Test fun thePhotoIsStoredWhereTheServerSaidAndThenCheckedByTheServer()=runBlocking {
         val repo=repository();requests.clear()
-        val jpeg=ByteArray(64) {it.toByte()}
-        assertEquals(delivered,repo.uploadProfilePhoto(jpeg))
-        val (upload,form)=requests.single {it.first.url.host=="cloudinary.fixture.invalid"}
-        assertEquals("/v1_1/demo/image/upload",upload.url.encodedPath)
-        assertNull("Cloudinary must not receive the Supabase session",upload.header("Authorization"))
-        listOf("name=\"file\"","name=\"api_key\"","123456789012345","name=\"timestamp\"","1730700000","name=\"public_id\"",pid,"name=\"signature\"","request-signature").forEach {
-            assertTrue(it,form.contains(it))
-        }
-        assertFalse(form.contains("secret"))
-        val finalize=JSONObject(requests.single {it.first.url.encodedPath.endsWith("set_my_profile_photo")}.second)
-        assertEquals(pid,finalize.getString("p_public_id"));assertEquals(17,finalize.getLong("p_version"));assertEquals("response-signature",finalize.getString("p_signature"))
-        assertEquals(listOf("profile_photo_upload","image/upload","set_my_profile_photo"),
-            requests.map {it.first.url.encodedPath.substringAfterLast("rpc/").removePrefix("/v1_1/demo/")})
+        val webp=ByteArray(64) {it.toByte()}
+        assertEquals(path,repo.uploadProfilePhoto(webp))
+        assertEquals(listOf("/rest/v1/rpc/start_profile_photo","/storage/v1/object/avatars/$path","/rest/v1/rpc/set_my_profile_photo"),
+            requests.map {it.first.url.encodedPath})
+        assertEquals("image/webp",JSONObject(String(requests[0].second)).getString("p_mime"))
+        val (upload,bytes)=requests[1]
+        assertEquals("Bearer fixture-access",upload.header("Authorization"))
+        assertEquals("false",upload.header("x-upsert"))
+        assertEquals("image/webp",upload.body?.contentType()?.toString())
+        assertArrayEquals(webp,bytes)
+        assertEquals(path,JSONObject(String(requests[2].second)).getString("p_path"))
     }
-    @Test fun unconfiguredBackendStopsBeforeContactingCloudinary()=runBlocking {
-        ticketStatus=503
+    @Test fun theHourlyLimitStopsBeforeAnythingIsStored()=runBlocking {
+        ticketStatus=429
         val repo=repository();requests.clear()
         val failure=runCatching {repo.uploadProfilePhoto(ByteArray(8))}.exceptionOrNull()
-        assertEquals(503,(failure as RemoteFailure).status)
-        assertTrue(requests.none {it.first.url.host=="cloudinary.fixture.invalid"})
+        assertEquals(429,(failure as RemoteFailure).status)
+        assertTrue(requests.none {it.first.url.encodedPath.startsWith("/storage/")})
     }
-    @Test fun aMismatchedCloudinaryResponseIsNeverSaved()=runBlocking {
-        uploadedId=pid.dropLast(1)+"c"
+    @Test fun anUnexpectedPlaceIsNeverUsed()=runBlocking {
+        for((bucket,place) in listOf("chat-media" to path,"avatars" to "../$path","avatars" to path.replace(".webp",".jpg"))) {
+            issuedBucket=bucket;issuedPath=place
+            val repo=repository();requests.clear()
+            assertTrue(runCatching {repo.uploadProfilePhoto(ByteArray(8))}.isFailure)
+            assertTrue(requests.none {it.first.url.encodedPath.startsWith("/storage/") || it.first.url.encodedPath.endsWith("set_my_profile_photo")})
+        }
+    }
+    @Test fun aRefusedFileIsNeverSaved()=runBlocking {
+        storageStatus=413
         val repo=repository();requests.clear()
-        assertTrue(runCatching {repo.uploadProfilePhoto(ByteArray(8))}.isFailure)
+        assertEquals(413,(runCatching {repo.uploadProfilePhoto(ByteArray(8))}.exceptionOrNull() as RemoteFailure).status)
         assertTrue(requests.none {it.first.url.encodedPath.endsWith("set_my_profile_photo")})
     }
     @Test fun emptyOrOversizedPhotosAreRejectedLocally()=runBlocking {
@@ -74,6 +80,6 @@ class ProfilePhotoRepositoryTest {
         assertTrue(requests.isEmpty())
     }
     @Test fun loadedProfileIncludesTheAccountPhoto()=runBlocking {
-        assertEquals(delivered,repository().loadProfile().photoUrl)
+        assertEquals(path,repository().loadProfile().photoUrl)
     }
 }

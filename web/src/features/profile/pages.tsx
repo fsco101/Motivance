@@ -5,7 +5,6 @@ import { toast } from '@/components/Toast'
 import { supabase } from '@/data/client'
 import { changePassword, loadMyProfile, removeMyPhoto, saveMyProfile, uploadPhoto } from '@/data/profile'
 import { asLoad } from '@/features/shared'
-import { preparePhoto } from './photo'
 import { ProfileView } from './ProfileView'
 
 export function ProfilePage() {
@@ -22,8 +21,8 @@ export function ProfilePage() {
         await refresh()
         toast.show(t('profile.saved'))
       },
-      onPhoto: async (file) => {
-        await uploadPhoto(supabase(), await preparePhoto(file))
+      onPhoto: async (photo) => {
+        await uploadPhoto(supabase(), photo)
         await refresh()
         toast.show(t('profile.photoSaved'))
       },

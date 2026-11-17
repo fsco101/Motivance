@@ -3,6 +3,7 @@ import { m as motion } from 'motion/react'
 import { Avatar as RadixAvatar, Tooltip as RadixTooltip } from 'radix-ui'
 import { useId, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { photoAddress } from '@/data/photos'
 import { cn } from '@/lib/cn'
 import { MotionArc } from '@/motion/MotionArc'
 import { spring } from '@/motion/tokens'
@@ -10,10 +11,11 @@ import { Button } from './Button'
 
 export function Avatar({ name, photo, size = 40, className }: { name: string; photo?: string | null; size?: number; className?: string }) {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?'
+  const source = photoAddress(photo)
   return (
     <RadixAvatar.Root style={{ width: size, height: size, fontSize: size * 0.38 }} className={cn('inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-tide font-display font-bold text-lagoon-deep', className)}>
-      {photo && <RadixAvatar.Image src={photo} alt="" className="size-full object-cover" />}
-      <RadixAvatar.Fallback aria-hidden delayMs={photo ? 300 : 0} data-initials={initials} className="before:content-[attr(data-initials)]" />
+      {source && <RadixAvatar.Image src={source} alt="" className="size-full object-cover" />}
+      <RadixAvatar.Fallback aria-hidden delayMs={source ? 300 : 0} data-initials={initials} className="before:content-[attr(data-initials)]" />
     </RadixAvatar.Root>
   )
 }

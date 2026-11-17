@@ -3,9 +3,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ACTIVITY_PAGE, clearPhoto, loadAccounts, loadActivity, loadAdminCatalogue, loadLinks, loadSummary, publishExercise, setAccount, setExercise, setLink, setRole } from '../../src/data/admin'
 import { loadMyProfile, PhotoFailure, saveMyProfile, uploadPhoto, type ProfileDetails } from '../../src/data/profile'
 import { createCustomExercise } from '../../src/data/therapist'
-import { createUser, removeUsers, signedIn, sql, type TestUser } from '../support/stack'
+import { createUser, removePhotos, removeUsers, signedIn, sql, stack, type TestUser } from '../support/stack'
 
-const PHOTO = 'https://res.cloudinary.com/demo/image/upload/v1/motivance/avatars/00000000-0000-0000-0000-000000000000/0123456789abcdef0123456789abcdef'
+const PHOTO = '00000000-0000-0000-0000-000000000000/0123456789abcdef0123456789abcdef.webp'
 
 describe('administration on the local backend', () => {
   const users: TestUser[] = []
@@ -162,15 +162,24 @@ describe('staff profiles on the local backend', () => {
     await expect(saveMyProfile(db, { ...details, username: 'tanga99' })).rejects.toThrow('Username contains prohibited wording')
   })
 
-  it('says when photo uploads are not set up', async () => {
-    const staff = await createUser(['therapist'], 'No Photos')
+  it('stores a photo in the caller’s own folder and saves only that file', async () => {
+    const staff = await createUser(['therapist'], 'Photo Owner')
     users.push(staff)
-    await expect(uploadPhoto(await signedIn(staff), new Blob(['x'], { type: 'image/jpeg' }))).rejects.toEqual(new PhotoFailure('unconfigured'))
+    const db = await signedIn(staff)
+    await uploadPhoto(db, new Blob([new Uint8Array(2_000)], { type: 'image/webp' }))
+    const path = sql(`select photo_url from public.profiles where id='${staff.id}'`)
+    expect(path).toMatch(new RegExp(`^${staff.id}/[0-9a-f]{32}\\.webp$`))
+    expect(sql(`select (metadata->>'size')||' '||(metadata->>'mimetype') from storage.objects where bucket_id='avatars' and name='${path}'`)).toBe('2000 image/webp')
+    expect((await fetch(`${stack().API_URL}/storage/v1/object/public/avatars/${path}`)).status).toBe(200)
+    await removePhotos([staff])
   })
 
-  it('stops a photo over the Android limit before anything is sent', async () => {
+  it('stops a photo over the server limit, or of another type, before anything is sent', async () => {
     const staff = await createUser(['therapist'], 'Big Photo')
     users.push(staff)
-    await expect(uploadPhoto(await signedIn(staff), new Blob([new Uint8Array(2_000_001)]))).rejects.toEqual(new PhotoFailure('unreadable'))
+    const db = await signedIn(staff)
+    await expect(uploadPhoto(db, new Blob([new Uint8Array(102_401)], { type: 'image/webp' }))).rejects.toEqual(new PhotoFailure('unreadable'))
+    await expect(uploadPhoto(db, new Blob([new Uint8Array(100)], { type: 'image/png' }))).rejects.toEqual(new PhotoFailure('unreadable'))
+    expect(sql(`select count(*) from public.profile_photo_uploads where user_id='${staff.id}'`)).toBe('0')
   })
 })

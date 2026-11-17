@@ -1,6 +1,6 @@
 # Avatars everywhere, and exercise and care-team notifications
 
-Engineering review: Claude Code, 2026-11-13. Design: [2026-11-13-avatars-and-notifications-design.md](../superpowers/specs/2026-11-13-avatars-and-notifications-design.md). Operations: [NOTIFICATIONS.md](../operations/NOTIFICATIONS.md) and [CLOUDINARY.md](../operations/CLOUDINARY.md).
+Engineering review: Claude Code, 2026-11-13. Design: [2026-11-13-avatars-and-notifications-design.md](../superpowers/specs/2026-11-13-avatars-and-notifications-design.md). Operations: [NOTIFICATIONS.md](../operations/NOTIFICATIONS.md) and [PROFILE-PHOTOS.md](../operations/PROFILE-PHOTOS.md) (photos moved from Cloudinary to Supabase Storage on 2026-11-17).
 
 No Firebase project and no Cloudinary account were used. Push was proven against the local FCM stub and on an emulator, and photos with fixture URLs. A real push to a real phone, and a real photo in the new places, are [follow-up checks](POST-IMPLEMENTATION-CHECKLIST.md#avatars-and-notifications-2026-11-13).
 

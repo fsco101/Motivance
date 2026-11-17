@@ -8,10 +8,12 @@ import { PasswordField, SelectField, TextArea, TextField } from '@/components/Fi
 import { failureKey } from '@/data/errors'
 import { ageOn, GENDERS, PhotoFailure, usernameBlocked, validAddress, validBirthdate, validContact, validDetails, validName, validUsername, type MyProfile, type ProfileDetails } from '@/data/profile'
 import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
+import { PhotoCropper } from './PhotoCropper'
 
 export type ProfileActions = {
   onSave: (details: ProfileDetails) => Promise<void>
-  onPhoto: (file: File) => Promise<void>
+  /** Receives the cropped photo, already shrunk for upload. */
+  onPhoto: (photo: Blob) => Promise<void>
   onRemovePhoto: () => Promise<void>
   onPassword: (current: string, next: string) => Promise<void>
 }
@@ -24,6 +26,7 @@ function PhotoPanel({ profile, actions }: { profile: MyProfile; actions: Profile
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [removing, setRemoving] = useState(false)
+  const [picked, setPicked] = useState<File | null>(null)
   const attempt = async (work: () => Promise<void>) => {
     setBusy(true)
     setProblem(null)
@@ -51,7 +54,10 @@ function PhotoPanel({ profile, actions }: { profile: MyProfile; actions: Profile
           onChange={(event) => {
             const file = event.target.files?.[0]
             event.target.value = ''
-            if (file) void attempt(() => actions.onPhoto(file))
+            if (file) {
+              setProblem(null)
+              setPicked(file)
+            }
           }} />
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" size="sm" busy={busy} busyLabel={t('profile.photoUploading')} leading={<CameraIcon aria-hidden />} onClick={() => input.current?.click()}>
@@ -61,6 +67,9 @@ function PhotoPanel({ profile, actions }: { profile: MyProfile; actions: Profile
         </div>
         <p className="mt-3 text-sm text-slate">{t('profile.photoNotice')}</p>
       </div>
+      <PhotoCropper file={picked} onCancel={() => setPicked(null)}
+        onUnreadable={() => { setPicked(null); setProblem(t('profile.photoProblem.unreadable')) }}
+        onConfirm={(photo) => { setPicked(null); void attempt(() => actions.onPhoto(photo)) }} />
       <ConfirmDialog open={removing} onOpenChange={setRemoving} destructive title={t('profile.photoRemove')} message={t('profile.photoRemoveConfirm')} confirmLabel={t('profile.photoRemove')}
         onConfirm={() => void attempt(actions.onRemovePhoto)} />
     </aside>

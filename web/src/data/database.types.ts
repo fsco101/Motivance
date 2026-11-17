@@ -1316,25 +1316,31 @@ export type Database = {
       }
       profile_photo_uploads: {
         Row: {
+          bytes: number | null
           deleted_at: string | null
           issued_at: string
-          public_id: string
+          mime: string
+          path: string
           retired_at: string | null
           used_at: string | null
           user_id: string
         }
         Insert: {
+          bytes?: number | null
           deleted_at?: string | null
           issued_at?: string
-          public_id: string
+          mime: string
+          path: string
           retired_at?: string | null
           used_at?: string | null
           user_id: string
         }
         Update: {
+          bytes?: number | null
           deleted_at?: string | null
           issued_at?: string
-          public_id?: string
+          mime?: string
+          path?: string
           retired_at?: string | null
           used_at?: string | null
           user_id?: string
@@ -1914,14 +1920,6 @@ export type Database = {
         Args: { p_user: string }
         Returns: undefined
       }
-      cloudinary_setting: {
-        Args: { p_name: string }
-        Returns: string
-      }
-      cloudinary_sign: {
-        Args: { p_payload: string; p_secret: string; p_algorithm?: string }
-        Returns: string
-      }
       conversation_messages: {
         Args: {
           p_conversation: string
@@ -2096,9 +2094,25 @@ export type Database = {
         Args: { p_person: string }
         Returns: string
       }
-      profile_photo_upload: {
+      profile_photo_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      profile_photo_usage: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      profile_photo_writable: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
+      profile_photos_due: {
+        Args: { p_limit?: number }
+        Returns: string[]
+      }
+      profile_photos_removed: {
+        Args: { p_paths: string[] }
+        Returns: number
       }
       provision_account: {
         Args: { p_user: string; p_metadata: Json }
@@ -2423,7 +2437,7 @@ export type Database = {
         Returns: undefined
       }
       set_my_profile_photo: {
-        Args: { p_public_id: string; p_version: number; p_signature: string }
+        Args: { p_path: string }
         Returns: string
       }
       share_exercise: {
@@ -2478,6 +2492,10 @@ export type Database = {
           p_height: number
           p_duration_ms?: number
         }
+        Returns: Json
+      }
+      start_profile_photo: {
+        Args: { p_mime?: string }
         Returns: Json
       }
       therapist_schedule: {

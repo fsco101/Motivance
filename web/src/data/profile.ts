@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { recoveryClient } from './client'
 import type { Database } from './database.types'
+import { PHOTO_PATH } from './photos'
 import { must } from './workspace'
 
 type Db = SupabaseClient<Database>
@@ -73,39 +74,33 @@ export async function saveMyProfile(db: Db, details: ProfileDetails) {
   }))
 }
 
-export type PhotoProblem = 'unconfigured' | 'limit' | 'unreadable' | 'failed'
+export type PhotoProblem = 'limit' | 'unreadable' | 'failed'
 export class PhotoFailure extends Error {
   constructor(readonly problem: PhotoProblem) { super(problem) }
 }
 
-export const MAX_PHOTO_BYTES = 2_000_000
-const CLOUD = /^[A-Za-z0-9_-]{1,64}$/
-const PUBLIC_ID = /^motivance\/avatars\/[0-9a-f-]{36}\/[0-9a-f]{32}$/
+/** The server's limit, from profile_photo_limit(). A cropped 384 px photo is normally a small part of it. */
+export const MAX_PHOTO_BYTES = 102_400
+const PHOTO_TYPES = ['image/webp', 'image/jpeg'] as const
+const BUCKET = 'avatars'
 
-type Ticket = { cloud_name: string; api_key: string; timestamp: number; public_id: string; signature: string }
+type Ticket = { bucket: string; path: string; limit: number }
 
 /**
- * The same three steps as Android. The database signs a request bound to a server-chosen ID, the browser uploads straight to
- * Cloudinary, and the database verifies Cloudinary's signature before saving. The API secret stays in Supabase Vault.
+ * The same three steps as Android. The database names a place in the caller's own folder, the browser stores the file there
+ * under the signed-in session, and the database checks the stored file before saving it as the photo.
  */
-export async function uploadPhoto(db: Db, jpeg: Blob) {
-  if (jpeg.size === 0 || jpeg.size > MAX_PHOTO_BYTES) throw new PhotoFailure('unreadable')
-  const issued = await db.rpc('profile_photo_upload')
-  if (issued.status === 503) throw new PhotoFailure('unconfigured')
+export async function uploadPhoto(db: Db, photo: Blob) {
+  const type = PHOTO_TYPES.find((allowed) => allowed === photo.type)
+  if (!type || photo.size === 0 || photo.size > MAX_PHOTO_BYTES) throw new PhotoFailure('unreadable')
+  const issued = await db.rpc('start_profile_photo', { p_mime: type })
   if (issued.status === 429) throw new PhotoFailure('limit')
   const ticket = must(issued) as unknown as Ticket
-  if (!CLOUD.test(ticket.cloud_name) || !PUBLIC_ID.test(ticket.public_id)) throw new PhotoFailure('failed')
-  const form = new FormData()
-  form.set('file', jpeg, 'profile.jpg')
-  form.set('api_key', ticket.api_key)
-  form.set('timestamp', String(ticket.timestamp))
-  form.set('public_id', ticket.public_id)
-  form.set('signature', ticket.signature)
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${ticket.cloud_name}/image/upload`, { method: 'POST', body: form })
-  if (!response.ok) throw new PhotoFailure('failed')
-  const uploaded = await response.json() as { public_id: string; version: number; signature: string }
-  if (uploaded.public_id !== ticket.public_id) throw new PhotoFailure('failed')
-  must(await db.rpc('set_my_profile_photo', { p_public_id: uploaded.public_id, p_version: uploaded.version, p_signature: uploaded.signature }))
+  if (ticket.bucket !== BUCKET || !PHOTO_PATH.test(ticket.path)) throw new PhotoFailure('failed')
+  if (photo.size > ticket.limit) throw new PhotoFailure('unreadable')
+  const stored = await db.storage.from(BUCKET).upload(ticket.path, photo, { contentType: type, upsert: false, cacheControl: '31536000' })
+  if (stored.error) throw new PhotoFailure('failed')
+  must(await db.rpc('set_my_profile_photo', { p_path: ticket.path }))
 }
 
 export async function removeMyPhoto(db: Db) {
