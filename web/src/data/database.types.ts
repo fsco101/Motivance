@@ -891,6 +891,7 @@ export type Database = {
           created_at: string
           id: string
           patient_id: string
+          schedule_id: string | null
           therapist_id: string
         }
         Insert: {
@@ -898,6 +899,7 @@ export type Database = {
           created_at?: string
           id?: string
           patient_id: string
+          schedule_id?: string | null
           therapist_id: string
         }
         Update: {
@@ -905,6 +907,7 @@ export type Database = {
           created_at?: string
           id?: string
           patient_id?: string
+          schedule_id?: string | null
           therapist_id?: string
         }
         Relationships: [
@@ -916,6 +919,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "exercise_assignments_schedule_fkey"
+            columns: ["schedule_id", "patient_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_schedules"
+            referencedColumns: ["id", "patient_id"]
+          },
+          {
             foreignKeyName: "exercise_assignments_therapist_id_fkey"
             columns: ["therapist_id"]
             isOneToOne: false
@@ -924,6 +934,67 @@ export type Database = {
           },
           {
             foreignKeyName: "exercise_assignments_therapist_id_patient_id_fkey"
+            columns: ["therapist_id", "patient_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_patients"
+            referencedColumns: ["therapist_id", "patient_id"]
+          },
+        ]
+      }
+      exercise_schedules: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          ends_on: string
+          id: string
+          patient_id: string
+          rest_dates: string[]
+          rest_weekdays: number[]
+          starts_on: string
+          therapist_id: string
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          ends_on: string
+          id: string
+          patient_id: string
+          rest_dates?: string[]
+          rest_weekdays?: number[]
+          starts_on: string
+          therapist_id: string
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          ends_on?: string
+          id?: string
+          patient_id?: string
+          rest_dates?: string[]
+          rest_weekdays?: number[]
+          starts_on?: string
+          therapist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_schedules_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_schedules_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_schedules_therapist_id_patient_id_fkey"
             columns: ["therapist_id", "patient_id"]
             isOneToOne: false
             referencedRelation: "therapist_patients"
@@ -1726,6 +1797,15 @@ export type Database = {
         Args: { p_exercise: string }
         Returns: undefined
       }
+      assignment_done_between: {
+        Args: {
+          p_assignment: string
+          p_patient: string
+          p_from: string
+          p_to: string
+        }
+        Returns: boolean
+      }
       booking_availability: {
         Args: { p_from: string; p_to: string }
         Returns: Json
@@ -1824,6 +1904,10 @@ export type Database = {
       center_availability: {
         Args: { p_from: string; p_to: string; p_staff: boolean }
         Returns: Json
+      }
+      center_date: {
+        Args: { p_at?: string }
+        Returns: string
       }
       center_day_start: {
         Args: { p_day: string }
@@ -1982,6 +2066,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      end_exercise_schedule: {
+        Args: { p_schedule: string }
+        Returns: Json
+      }
       enqueue_booking_reminders: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1997,6 +2085,10 @@ export type Database = {
       erase_patient_chat: {
         Args: { p_patient: string }
         Returns: number
+      }
+      exercise_day: {
+        Args: { p_patient: string; p_day?: string }
+        Returns: Json
       }
       expire_stale_bookings: {
         Args: Record<PropertyKey, never>
@@ -2164,6 +2256,21 @@ export type Database = {
         }
         Returns: string
       }
+      publish_scheduled_prescription: {
+        Args: {
+          p_schedule: string
+          p_assignment: string
+          p_version: string
+          p_patient: string
+          p_exercise: string
+          p_side: string
+          p_low: number
+          p_high: number
+          p_repetitions: number
+          p_parameters?: Json
+        }
+        Returns: string
+      }
       record_consent: {
         Args: {
           p_id: string
@@ -2209,6 +2316,17 @@ export type Database = {
         Args: { p_patient: string }
         Returns: undefined
       }
+      save_exercise_schedule: {
+        Args: {
+          p_id: string
+          p_patient: string
+          p_starts_on: string
+          p_ends_on: string
+          p_rest_weekdays?: number[]
+          p_rest_dates?: string[]
+        }
+        Returns: Json
+      }
       save_my_profile: {
         Args: { p_details: Json }
         Returns: undefined
@@ -2223,6 +2341,24 @@ export type Database = {
           p_reminder_time?: string
           p_messages?: boolean
         }
+        Returns: Json
+      }
+      schedule_day_count: {
+        Args: {
+          s: Database["public"]["Tables"]["exercise_schedules"]["Row"]
+          p_from: string
+        }
+        Returns: number
+      }
+      schedule_has_day: {
+        Args: {
+          s: Database["public"]["Tables"]["exercise_schedules"]["Row"]
+          p_day: string
+        }
+        Returns: boolean
+      }
+      schedule_json: {
+        Args: { s: Database["public"]["Tables"]["exercise_schedules"]["Row"] }
         Returns: Json
       }
       schedule_layout: {
@@ -2530,6 +2666,10 @@ export type Database = {
       start_profile_photo: {
         Args: { p_mime?: string }
         Returns: Json
+      }
+      stop_exercise: {
+        Args: { p_assignment: string }
+        Returns: undefined
       }
       therapist_schedule: {
         Args: { p_from: string; p_to: string }
