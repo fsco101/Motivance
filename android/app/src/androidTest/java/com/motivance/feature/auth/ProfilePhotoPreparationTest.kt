@@ -29,15 +29,17 @@ class ProfilePhotoPreparationTest {
         return file
     }
     private fun red(pixel:Int)=Color.red(pixel)>180 && Color.green(pixel)<90 && Color.blue(pixel)<90
+    /** The app's two steps since photos moved to Supabase Storage (39bdb88): open upright, then encode the centred square. */
+    private fun preparePhoto(resolver:android.content.ContentResolver,uri:Uri)=loadPhoto(resolver,uri).let {encodePhoto(it,initialCrop(it.width,it.height))}
 
-    @Test fun preparedPhotoIsAnUprightSquareJpegWithoutLocation() {
+    @Test fun preparedPhotoIsAnUprightSquareWithoutLocation() {
         val jpeg=preparePhoto(context.contentResolver,Uri.fromFile(source(ExifInterface.ORIENTATION_ROTATE_90)))
         val image=BitmapFactory.decodeByteArray(jpeg,0,jpeg.size)
         assertEquals(PHOTO_EDGE,image.width);assertEquals(PHOTO_EDGE,image.height)
         // Rotating 90 degrees clockwise moves the top-centre marker to the right edge, vertically centred.
-        assertTrue("marker should be on the right after rotation",red(image.getPixel(495,256)))
-        assertFalse(red(image.getPixel(256,15)));assertFalse(red(image.getPixel(15,256)))
-        val output=File(context.cacheDir,"photo-output.jpg").apply {writeBytes(jpeg)}
+        assertTrue("marker should be on the right after rotation",red(image.getPixel(370,192)))
+        assertFalse(red(image.getPixel(192,15)));assertFalse(red(image.getPixel(15,192)))
+        val output=File(context.cacheDir,"photo-output.webp").apply {writeBytes(jpeg)}
         val exif=ExifInterface(output.absolutePath)
         assertNull("GPS must be stripped",exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE))
         assertTrue(exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,ExifInterface.ORIENTATION_NORMAL) in setOf(ExifInterface.ORIENTATION_NORMAL,ExifInterface.ORIENTATION_UNDEFINED))
@@ -46,7 +48,7 @@ class ProfilePhotoPreparationTest {
     @Test fun unrotatedPhotoKeepsTheMarkerAtTheTop() {
         val jpeg=preparePhoto(context.contentResolver,Uri.fromFile(source(ExifInterface.ORIENTATION_NORMAL)))
         val image=BitmapFactory.decodeByteArray(jpeg,0,jpeg.size)
-        assertTrue(red(image.getPixel(256,15)));assertFalse(red(image.getPixel(495,256)))
+        assertTrue(red(image.getPixel(192,15)));assertFalse(red(image.getPixel(370,192)))
     }
     @Test fun nonImageInputIsRejected() {
         val file=File(context.cacheDir,"not-an-image.jpg").apply {writeText("plain text")}

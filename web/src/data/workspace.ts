@@ -46,6 +46,8 @@ export async function loadCatalogue(db: Db, account: string) {
 
 export type PlanSummary = {
   assignmentId: string; versionId: string; patientId: string; therapistId: string; exerciseId: string; version: number
+  /** The schedule it belongs to, or null for an exercise due every day. */
+  scheduleId: string | null
   side: string; low: number; high: number; repetitions: number; parameters: Record<string, unknown>
   /** The time for each side, or null without one. */
   sideSeconds: number | null
@@ -54,13 +56,13 @@ export type PlanSummary = {
 /** Each assignment's newest version, the one patients are working to. */
 export async function loadPlans(db: Db, account: string): Promise<PlanSummary[]> {
   const rows = must(await db.from('exercise_assignments')
-    .select(`id,patient_id,therapist_id,${LINKED},prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)`)
+    .select(`id,patient_id,therapist_id,schedule_id,${LINKED},prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)`)
     .eq('active', true).match(linkedTo(account)))
   return rows.flatMap((row) => {
     const latest = [...row.prescription_versions].sort((a, b) => b.version - a.version)[0]
     const parameters = (latest?.parameters ?? {}) as Record<string, unknown>
     return latest ? [{
-      assignmentId: row.id, versionId: latest.id, patientId: row.patient_id, therapistId: row.therapist_id, exerciseId: latest.exercise_version_id, version: latest.version, side: latest.side,
+      assignmentId: row.id, scheduleId: row.schedule_id, versionId: latest.id, patientId: row.patient_id, therapistId: row.therapist_id, exerciseId: latest.exercise_version_id, version: latest.version, side: latest.side,
       low: latest.minimum_degrees, high: latest.maximum_degrees, repetitions: latest.target_repetitions, parameters,
       sideSeconds: typeof parameters.side_seconds === 'number' ? parameters.side_seconds : null,
     }] : []

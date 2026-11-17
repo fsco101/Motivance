@@ -71,7 +71,7 @@ test('progress opens with the last four weeks and where each plan stands, worded
 })
 
 for (const [path, empty] of [
-  ['/design/therapist', 'Invite your first patient'], ['/design/therapist/patients', 'No patients yet'], ['/design/therapist/patients/p1', 'No exercise assigned yet'], ['/design/therapist/progress', 'No sessions yet'],
+  ['/design/therapist', 'Invite your first patient'], ['/design/therapist/patients', 'No patients yet'], ['/design/therapist/patients/p1', 'No exercise schedule yet'], ['/design/therapist/progress', 'No sessions yet'],
 ]) {
   test(`${path} tells loading, failure and an empty list apart`, async ({ page }) => {
     const retry = page.getByRole('button', { name: 'Try again' })

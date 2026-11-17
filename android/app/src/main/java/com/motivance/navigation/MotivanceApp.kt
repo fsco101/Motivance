@@ -135,6 +135,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     var selectedRole by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedPatient by rememberSaveable {mutableStateOf<String?>(null)}
     var editingAssignment by rememberSaveable {mutableStateOf<String?>(null)}
+    // The schedule being changed (null for a new one), and the one a new exercise goes into.
+    var editingSchedule by rememberSaveable {mutableStateOf<String?>(null)}
+    var assignSchedule by rememberSaveable {mutableStateOf<String?>(null)}
     var selectedConversation by rememberSaveable {mutableStateOf<String?>(null)}
     var sharing by remember {mutableStateOf<Pair<String,com.motivance.domain.ChatCard.Progress>?>(null)}
     var sendingVideo by remember {mutableStateOf<Pair<com.motivance.feature.exercise.SessionVideo,List<com.motivance.domain.Conversation>>?>(null)}
@@ -241,7 +244,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PROFILE","ADMIN")+(if(therapistRole) setOf("SCHEDULE") else emptySet())
     val activeTab=when(route) {
-        "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
+        "PATIENT_DETAIL","ASSIGN","PLAN_SCHEDULE" -> "PATIENTS"
         "LOCAL_HISTORY" -> "PROFILE"
         "BOOK","MOVE" -> "BOOKINGS"
         "SCHEDULE" -> if(therapistRole) "SCHEDULE" else "BOOKINGS"
@@ -395,23 +398,19 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "MESSAGES" -> if(chatOwner!=null) MessagesScreen(chatState,chatOwner,actualRole==UserRole.PATIENT,{chat.refreshList()},{chat.setConsent(true)}) {selectedConversation=it; route="CONVERSATION"}
                 "PATIENT_DETAIL" -> {
                     val patient=connected.workspace.patients.firstOrNull {it.id==patientId}
-                    val plans=connected.workspace.prescriptions.filter {it.patientId==patientId}
                     PageHeader(R.string.patient_management,eyebrow=patient?.name?.ifBlank {null} ?: patientId?.take(8))
                     if(chatOwner!=null && patientId!=null) OutlinedButton({openConversationWith(patientId)},Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {
                         Icon(Icons.Default.Email,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.chat_message_patient))
                     }
                     patient?.profile?.let {PatientProfileSummary(it)}
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
-                    SectionHeading(R.string.ui_exercise_plan) {
-                        FilledTonalButton({editingAssignment=null; route="ASSIGN"},enabled=!connected.busy,modifier=Modifier.heightIn(min=48.dp)) {
-                            Icon(Icons.Default.Add,null,Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.assign_exercise))
-                        }
-                    }
-                    if(plans.isEmpty() && !connected.busy) EmptyState(R.string.no_assignments,R.string.ui_plan_empty_detail)
-                    plans.forEach {p -> AssignedPrescriptionCard(p,connected.workspace.catalogue.firstOrNull {it.id==p.exerciseId},!connected.busy) {
-                        editingAssignment=p.assignmentId; route="ASSIGN"
-                    }
-                        if(chatOwner!=null && patientId!=null) TextButton({chat.shareExercise(patientId,p.assignmentId)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.chat_cards_send_exercise))}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview(); patientId?.let(rehabilitation::loadDay)}
+                    if(patientId!=null) {
+                        LaunchedEffect(patientId) {rehabilitation.loadDay(patientId)}
+                        PatientSchedules(connected,patientId,patient?.name?.ifBlank {null} ?: patientId.take(8),{rehabilitation.endSchedule(patientId,it)},{rehabilitation.stopExercise(patientId,it)},
+                            newSchedule={editingSchedule=null; route="PLAN_SCHEDULE"},editSchedule={editingSchedule=it.id; route="PLAN_SCHEDULE"},
+                            addExercise={editingAssignment=null; assignSchedule=it.id; route="ASSIGN"},assignEveryDay={editingAssignment=null; assignSchedule=null; route="ASSIGN"},
+                            editPlan={editingAssignment=it; assignSchedule=null; route="ASSIGN"},
+                            share=if(chatOwner!=null) ({chat.shareExercise(patientId,it)}) else null)
                     }
                     SectionHeading(R.string.recovery_progress)
                     ResultsDashboard(connected.workspace,connected.owner,patientId,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}})
@@ -422,7 +421,23 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
                     // Leaving on success also retires the form's assignment ID: reusing it would turn the next exercise into a new
                     // version of this one and replace it on the patient's phone.
-                    key(existing?.versionId ?: "new") {PrescriptionForm(connected,rehabilitation,patientId,existing) {if(route=="ASSIGN") route="PATIENT_DETAIL"}}
+                    val schedule=assignSchedule?.let {id -> connected.days[patientId]?.schedules?.firstOrNull {it.id==id}}
+                    key(existing?.versionId ?: "new") {
+                        PrescriptionForm(connected,rehabilitation,patientId,existing,scheduleId=assignSchedule.takeIf {existing==null},scheduleLabel=schedule?.let {scheduleRange(it)}) {
+                            patientId?.let(rehabilitation::loadDay)
+                            if(route=="ASSIGN") route="PATIENT_DETAIL"
+                        }
+                    }
+                }
+                "PLAN_SCHEDULE" -> if(patientId!=null) {
+                    val day=connected.days[patientId]
+                    val existing=editingSchedule?.let {id -> day?.schedules?.firstOrNull {it.id==id}}
+                    PageHeader(if(existing!=null) R.string.exercise_schedule_form_edit else R.string.exercise_schedule_form_new,eyebrow=connected.workspace.patients.firstOrNull {it.id==patientId}?.name)
+                    key(existing?.id ?: "new") {
+                        ScheduleForm(connected,patientId,existing,centerToday(day),cancel={route="PATIENT_DETAIL"}) {draft ->
+                            rehabilitation.saveSchedule(draft) {if(route=="PLAN_SCHEDULE") route="PATIENT_DETAIL"}
+                        }
+                    }
                 }
                 "EXERCISES" -> {
                     PageHeader(R.string.your_exercises,R.string.professional_targets)
@@ -519,7 +534,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
 
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
 private fun depth(route:String,therapist:Boolean)=when(route) {
-    "ASSIGN" -> 2
+    "ASSIGN","PLAN_SCHEDULE" -> 2
     "CONVERSATION" -> 2
     "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","MOVE","NOTIFICATIONS","MESSAGES" -> 1
     "SCHEDULE" -> if(therapist) 0 else 1
@@ -529,7 +544,7 @@ private fun depth(route:String,therapist:Boolean)=when(route) {
 internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=when(route) {
     "AUTH" -> "LANDING"
     "CAMERA" -> "SETUP"
-    "ASSIGN" -> "PATIENT_DETAIL"
+    "ASSIGN","PLAN_SCHEDULE" -> "PATIENT_DETAIL"
     "PATIENT_DETAIL" -> "PATIENTS"
     "CONVERSATION" -> "MESSAGES"
     "BOOK","MOVE" -> "BOOKINGS"

@@ -18,21 +18,26 @@ fun displayDate(value:String):String=runCatching {
     LocalDate.parse(value).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))
 }.getOrDefault(value)
 
+/** [allowed] limits the days the picker offers; [help] replaces the usual hint below the field. */
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun DateInput(label:Int,value:String,enabled:Boolean=true,birthdate:Boolean=false,onChange:(String)->Unit) {
+@Composable fun DateInput(label:Int,value:String,enabled:Boolean=true,birthdate:Boolean=false,allowed:ClosedRange<LocalDate>?=null,help:String?=null,onChange:(String)->Unit) {
     var open by remember {mutableStateOf(false)}
     val title=stringResource(label)
     OutlinedTextField(displayDate(value),{},readOnly=true,enabled=enabled,label={Text(title)},modifier=Modifier.fillMaxWidth(),
         placeholder={Text(stringResource(R.string.form_choose_date))},
         trailingIcon={IconButton({open=true},enabled=enabled) {Icon(Icons.Default.DateRange,title)}},
-        supportingText={Text(stringResource(if(birthdate) R.string.form_birthdate_help else R.string.history_date_help))})
+        supportingText={Text(help ?: stringResource(if(birthdate) R.string.form_birthdate_help else R.string.history_date_help))})
     if(open) {
         val today=LocalDate.now()
-        val state=rememberDatePickerState(initialSelectedDateMillis=runCatching {LocalDate.parse(value).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()}.getOrNull(),
+        val selected=runCatching {LocalDate.parse(value).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()}.getOrNull()
+        // With nothing chosen yet, open on the first day that can be chosen rather than on a month where none can.
+        val state=rememberDatePickerState(initialSelectedDateMillis=selected,
+            initialDisplayedMonthMillis=selected ?: allowed?.start?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
             yearRange=if(birthdate) (today.year-120)..today.year else 1900..(today.year+10),
             selectableDates=object:SelectableDates {
                 override fun isSelectableDate(utcTimeMillis:Long):Boolean {
                     val date=Instant.ofEpochMilli(utcTimeMillis).atZone(ZoneOffset.UTC).toLocalDate()
+                    if(allowed!=null && date !in allowed) return false
                     return !birthdate || (date<=today && date>=today.minusYears(120))
                 }
             })

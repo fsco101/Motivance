@@ -73,7 +73,7 @@ import java.time.OffsetDateTime
                 val failure=runCatching {JSONObject(response.body?.string().orEmpty())}.getOrNull()
                 // Only known codes pass: other server messages can name tables and columns.
                 val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
-                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_")}
+                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_") || it.startsWith("schedule_")}
                 throw RemoteFailure(response.code,code)
             }
             response.body?.string().orEmpty()
@@ -184,7 +184,7 @@ import java.time.OffsetDateTime
         val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))
         val profileById=(0 until details.length()).map {details.getJSONObject(it)}.associate {it.getString("user_id") to readProfile(it)}
         val catalogue=JSONArray(call("/rest/v1/exercise_versions?select=${CatalogueJson.SELECT}&published=eq.true",null,token,"GET"))
-        val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)&active=eq.true",null,token,"GET"))
+        val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,therapist_id,schedule_id,prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)&active=eq.true",null,token,"GET"))
         val requests=JSONArray(call("/rest/v1/data_requests?select=id,kind,status&order=created_at.desc",null,token,"GET"))
         fun <T> rows(a:JSONArray,convert:(JSONObject)->T)=(0 until a.length()).map {convert(a.getJSONObject(it))}
         RehabWorkspace(
@@ -193,7 +193,8 @@ import java.time.OffsetDateTime
             CatalogueJson.decode(catalogue,id),
             rows(assignments) {a -> val v=a.getJSONArray("prescription_versions"); if(v.length()==0) null else {
                 val p=(0 until v.length()).map {v.getJSONObject(it)}.maxBy {it.getInt("version")}
-                PrescriptionSummary(a.getString("id"),p.getString("id"),a.getString("patient_id"),p.getString("exercise_version_id"),p.getInt("version"),p.getString("side"),p.getDouble("minimum_degrees"),p.getDouble("maximum_degrees"),p.getInt("target_repetitions"),p.optJSONObject("parameters")?.toString() ?: "{}")
+                PrescriptionSummary(a.getString("id"),p.getString("id"),a.getString("patient_id"),p.getString("exercise_version_id"),p.getInt("version"),p.getString("side"),p.getDouble("minimum_degrees"),p.getDouble("maximum_degrees"),p.getInt("target_repetitions"),p.optJSONObject("parameters")?.toString() ?: "{}",
+                    a.text("schedule_id"),a.optString("therapist_id"))
             }}.filterNotNull(),
             rows(requests) {PrivacyRequest(it.getString("id"),it.getString("kind"),it.getString("status"))})
     }
@@ -326,8 +327,13 @@ import java.time.OffsetDateTime
     override suspend fun publishPrescription(draft:PrescriptionDraft) {authorized {token,_ ->
         val p=JSONObject().put("minimum_cycle_ms",draft.minimumCycleMs).put("maximum_cycle_ms",draft.maximumCycleMs).put("peak_hold_ms",draft.peakHoldMs).put("max_trunk_lean_degrees",draft.maxTrunkLean).put("confidence",draft.confidence).apply {draft.focusJoint?.let {put("focus_joint",it.name)}; draft.sideSeconds?.let {put("side_seconds",it)}}
         val body=JSONObject().put("p_assignment",draft.assignmentId).put("p_version",draft.requestId).put("p_patient",draft.patientId).put("p_exercise",draft.exerciseId).put("p_side",if(draft.bilateral) "bilateral" else draft.side.name.lowercase()).put("p_low",draft.low).put("p_high",draft.high).put("p_repetitions",draft.repetitions).put("p_parameters",p)
-        call("/rest/v1/rpc/publish_prescription",body,token)
+        if(draft.scheduleId!=null) call("/rest/v1/rpc/publish_scheduled_prescription",body.put("p_schedule",draft.scheduleId),token)
+        else call("/rest/v1/rpc/publish_prescription",body,token)
     }}
+    override suspend fun loadExerciseDay(patientId:String)=authorized {token,_ -> ScheduleJson.day(JSONObject(call("/rest/v1/rpc/exercise_day",JSONObject().put("p_patient",patientId),token)))}
+    override suspend fun saveSchedule(draft:ScheduleDraft)=authorized {token,_ -> ScheduleJson.schedule(JSONObject(call("/rest/v1/rpc/save_exercise_schedule",ScheduleJson.save(draft),token)))}
+    override suspend fun endSchedule(scheduleId:String) {authorized {token,_ -> call("/rest/v1/rpc/end_exercise_schedule",JSONObject().put("p_schedule",scheduleId),token)}}
+    override suspend fun stopExercise(assignmentId:String) {authorized {token,_ -> call("/rest/v1/rpc/stop_exercise",JSONObject().put("p_assignment",assignmentId),token)}}
     override suspend fun createCustomExercise(draft:CustomExerciseDraft)=authorized {token,_ ->
         val body=JSONObject().put("p_id",draft.id).put("p_name",draft.name.trim()).put("p_joint",draft.joint.name).put("p_english",draft.english.trim())
             .put("p_filipino",draft.filipino.trim().ifBlank {null} ?: JSONObject.NULL)

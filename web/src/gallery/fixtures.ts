@@ -40,10 +40,17 @@ const reach = [64, 71, 79, 76, 92, 98, 105, 112]
 
 export const record: PatientRecord = {
   id: 'p1', name: 'Ana Dela Cruz', username: 'ana.delacruz', gender: 'Female', birthdate: '1971-03-14', contact: '0917 555 0142', address: 'Quezon City',
-  plans: [
-    { id: 'a1', exercise: elbow, version: 3, side: 'right', low: 20, high: 120, repetitions: 10, instructions: 'Keep your upper arm against your side and bend the elbow slowly, then lower with control.', reached: [14, 112] },
-    { id: 'a2', exercise: knee, custom: true, version: 1, side: 'left', low: 15, high: 80, repetitions: 8, focus: 'Knee', instructions: 'Sit tall on a firm chair and straighten the knee, then lower it slowly.', reached: null },
-  ],
+  today: '2026-11-06',
+  schedules: [{
+    id: 's1', patientId: 'p1', therapistId: 't1', therapistName: 'Dana Reyes', startsOn: '2026-11-02', endsOn: '2026-11-29', restWeekdays: [7], restDates: ['2026-11-14'],
+    exerciseDays: 23, restDays: 5, exerciseCount: 2, state: 'exercise', daysLeft: 19, nextDay: '2026-11-07', mine: true,
+    plans: [
+      { id: 'a1', exercise: elbow, version: 3, side: 'right', low: 20, high: 120, repetitions: 10, instructions: 'Keep your upper arm against your side and bend the elbow slowly, then lower with control.', reached: [14, 112], today: 'done' },
+      { id: 'a2', exercise: knee, custom: true, version: 1, side: 'left', low: 15, high: 80, repetitions: 8, focus: 'Knee', instructions: 'Sit tall on a firm chair and straighten the knee, then lower it slowly.', reached: null, today: 'todo' },
+    ],
+  }],
+  everyDay: [],
+  ended: [],
   trend: {
     exercise: elbow, detail: 'Right side, version 3, prescribed 20° to 120°',
     points: days.map((day, index) => ({ id: day, label: new Date(day).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }), value: index === 3 ? null : reach[index]! - 14 })),

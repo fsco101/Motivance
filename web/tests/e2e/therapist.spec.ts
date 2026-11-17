@@ -61,12 +61,12 @@ test('inviting a patient gives a code, and they appear once they accept', async 
 
 test('the record shows the patient and offers an assignment', async () => {
   await openPatient()
-  await expect(page.getByRole('heading', { name: 'No exercise assigned yet' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Assign exercise' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'No exercise schedule yet' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Assign an exercise for every day' })).toBeVisible()
 })
 
 test('publishing needs an exercise, and offers each exercise once', async () => {
-  await page.getByRole('link', { name: 'Assign exercise' }).click()
+  await page.getByRole('link', { name: 'Assign an exercise for every day' }).click()
   await expect(page.getByRole('button', { name: 'Publish to patient' })).toBeDisabled()
   await expect(page.getByRole('radio', { name: new RegExp(`^${ELBOW}`) })).toHaveCount(1)
 })

@@ -48,7 +48,7 @@
   "toast": {
     "saving": "Saving…",
     "invitationCreated": "Invitation created. Share the code with your patient.", "accessRevoked": "Patient access revoked.", "published": "Prescription published. It reaches the patient’s phone automatically while they are online.",
-    "exerciseCreated": "Exercise saved", "exerciseRemoved": "Exercise removed"
+    "exerciseCreated": "Exercise saved", "exerciseRemoved": "Exercise removed", "scheduleSaved": "Schedule saved", "scheduleEnded": "Schedule ended", "planExerciseRemoved": "Exercise taken off the plan"
   },
   "genders": { "female": "Female", "male": "Male", "nonbinary": "Non-binary", "prefer_not_to_say": "Prefer not to say" },
   "profile": {
@@ -56,6 +56,9 @@
     "photoProblem": { "limit": "Too many uploads in the last hour. Try again later.", "unreadable": "That image could not be read. Choose a JPEG, PNG or WebP photo.", "failed": "The photo could not be uploaded. Check your connection and try again." }
   },
   "errors": {
+    "scheduleDates": "Check the dates. The end comes on or after the start, a new schedule starts today or later, and a schedule is at most 366 days long.",
+    "scheduleRestDays": "Check the rest days. Leave at least one day of the week free, keep rest dates inside the schedule, and leave past rest dates as they were.",
+    "scheduleNoDay": "This schedule has no exercise day left. Remove a rest day or move the end date.", "scheduleGone": "This schedule has already ended, so it cannot change.",
     "chatScheduleTime": "Choose a time at least a minute from now and within 60 days.", "chatScheduleGone": "That message was already sent or removed.",
     "chatMediaConsent": "Photos and videos are not allowed in this conversation yet, so it was not sent.", "chatMediaTooLarge": "That file is too large to send, even after making it smaller. Try a shorter video or another photo.", "chatMediaInvalid": "That kind of file cannot be sent. Send a photo or a video.", "chatVideoCap": "This conversation has reached its limit of 20 videos in 30 days. Photos and messages still work.", "chatMediaMissing": "The file did not finish uploading. Try again.", "chatMediaUnreadable": "This browser cannot open that file. Try a JPEG or PNG photo, or an MP4 video.", "chatMediaUnsupported": "This browser cannot prepare videos. Use the Android app, or another browser.",
     "chatConsentRequired": "Messages are not turned on in this conversation yet, so the message was not sent.",
@@ -94,6 +97,29 @@
     "version": "Version {{version}}", "custom": "Custom", "side": "Side", "focus": "Skeleton focus", "focusAutomatic": "Exercise joint (automatic)", "repetitions": "Repetitions", "edit": "Edit plan",
     "gender": "Gender", "birthdate": "Birthdate", "contact": "Contact", "address": "Address", "plans": "Exercise plan", "assign": "Assign exercise",
     "noPlansTitle": "No exercise assigned yet", "noPlansDetail": "Assign one to start measuring this patient’s movement.", "progress": "Progress", "allProgress": "All progress"
+  },
+  "schedule": {
+    "title": "Exercise schedules", "help": "A schedule gives exercises a start date, an end date and rest days. The patient sees only each day's exercises.",
+    "new": "New schedule", "edit": "Change dates", "end": "End schedule", "addExercise": "Add exercise", "range": "{{from}} to {{to}}",
+    "exerciseDays_one": "{{count}} exercise day", "exerciseDays_other": "{{count}} exercise days", "restDays_one": "{{count}} rest day", "restDays_other": "{{count}} rest days",
+    "summary": "{{exercise}} and {{rest}}", "daysLeft_one": "{{count}} exercise day left", "daysLeft_other": "{{count}} exercise days left",
+    "restLine": "Rest: {{days}}", "noRest": "No rest days", "everyWeekday": "every {{day}}",
+    "stateExercise": "Exercise day today", "stateRest": "Rest day today", "stateUpcoming": "Starts {{date}}", "setBy": "Set by {{name}}",
+    "empty": "No exercises in this schedule yet.", "noneTitle": "No exercise schedule yet", "noneDetail": "Create one to give exercises dates and rest days.",
+    "everyDay": "Every-day exercises", "everyDayHelp": "Due every day, with no end date.", "everyDayLink": "Assign an exercise for every day",
+    "ended": "From ended schedules", "endedHelp": "These schedules are over, so the patient no longer sees these exercises.",
+    "endTitle": "End this schedule?", "endStarted": "It ends today. From tomorrow {{name}} no longer sees its exercises. Their sessions stay in history.",
+    "endUpcoming": "It has not started, so it is cancelled and its exercises leave {{name}}’s plan.",
+    "formNew": "New exercise schedule", "formEdit": "Change the schedule", "formHelp": "The patient sees the exercises on each exercise day, from the start date to the end date.",
+    "startsOn": "Start date", "endsOn": "End date", "startedHint": "It has started, so the start date stays.", "restWeekdays": "Rest every week", "restDates": "Rest dates",
+    "restDateLabel": "Add a rest date", "addRestDate": "Add", "removeRestDate": "Remove {{date}}", "noRestDates": "No single rest dates.", "save": "Save schedule",
+    "todayDone": "Done today", "todayToDo": "To do today", "todayRest": "Not today",
+    "remove": "Remove", "removeTitle": "Remove this exercise?", "removeMessage": "{{exercise}} leaves {{name}}’s plan. Sessions already done stay in history.", "removeConfirm": "Remove exercise",
+    "inSchedule": "Schedule",
+    "problems": {
+      "dates": "Choose an end date on or after the start date.", "tooLong": "A schedule can be at most 366 days long.", "pastStart": "Start today or later.",
+      "pastEnd": "Choose an end date of today or later.", "allRest": "Leave at least one day of the week for exercise.", "noDay": "No exercise day is left. Remove a rest day or move the end date."
+    }
   },
   "progress": {
     "noPatientsTitle": "No patients yet", "noPatientsDetail": "Progress appears here once a patient is linked to you.",

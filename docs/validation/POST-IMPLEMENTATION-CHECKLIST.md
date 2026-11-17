@@ -307,6 +307,12 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] On a physical phone and a tablet, as an administrator, open the overview in both languages. Confirm the storage meters, health list and four daily charts read clearly at the default and largest text sizes, that TalkBack reads each meter and each chart's days, and that the section cards come after the charts.
 - [ ] On the hosted project, compare the overview's database and file storage figures with the Supabase dashboard's usage page. If the project is not on the Free plan, update `backend_plan` first (`docs/operations/BACKEND-STATUS.md`).
 
+## Exercise schedules (#124, started 2026-11-17)
+
+- [ ] With a therapist, on a physical phone and on the web, in both languages: create a schedule with a rest weekday and a rest date, add two exercises to it, change its end date, remove one exercise and end the schedule. Confirm the day counts, the "today" labels and the confirmations read clearly, and that the date pickers only offer days that can be chosen.
+- [ ] On phones of different widths and at the largest text size, check that the schedule cards, weekday chips and rest-date chips wrap without clipping, and that TalkBack reads each weekday chip by its full name and says whether it is chosen.
+- [ ] With a therapist, review whether "exercise day", "rest day" and "every-day exercise" match how the center talks about home programmes, in English and Filipino.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
