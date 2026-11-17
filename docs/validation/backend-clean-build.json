@@ -44,7 +44,8 @@
     "202611150004_chat_notifications.sql",
     "202611150005_chat_cards.sql",
     "202611150006_chat_list_speed.sql",
-    "202611170001_profile_photo_storage.sql"
+    "202611170001_profile_photo_storage.sql",
+    "202611170002_admin_backend_status.sql"
   ],
   "scheduled_jobs_resolved": [
     "booking-reminders",

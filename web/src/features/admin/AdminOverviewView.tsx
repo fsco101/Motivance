@@ -7,7 +7,8 @@ import { StatCard } from '@/components/StatCard'
 import { Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { MotionArc } from '@/motion/MotionArc'
 import { ActivityTable } from './ActivityView'
-import type { AdminSummary, AuditEvent } from './types'
+import { BackendStatusPanels } from './BackendStatus'
+import type { AdminSummary, AuditEvent, BackendStatus } from './types'
 
 export type AdminOverview = { summary: AdminSummary; recent: AuditEvent[] }
 
@@ -64,40 +65,47 @@ function Coverage({ summary }: { summary: AdminSummary }) {
   )
 }
 
-export function AdminOverviewView({ load, base }: { load: Load<AdminOverview>; base: string }) {
+/**
+ * The overview reads top to bottom as: how the backend is doing, how the people and care are spread, then the cards that open
+ * each section, then what happened last. Android keeps the same order.
+ */
+export function AdminOverviewView({ load, backend, base }: { load: Load<AdminOverview>; backend: Load<BackendStatus>; base: string }) {
   const { t } = useTranslation()
   return (
     <>
       <PageHeader title={t('admin.title')} description={t('admin.scope')} />
-      <Loadable load={load} skeleton={<div className="flex flex-col gap-5"><div className="grid gap-4 tablet:grid-cols-4">{[0, 1, 2, 3, 4, 5, 6, 7].map((index) => <Skeleton key={index} className="h-28 rounded-card" />)}</div><SkeletonLines rows={6} /></div>}>
-        {({ summary, recent }) => (
-          <div className="flex flex-col gap-5">
-            <div className="grid gap-4 tablet:grid-cols-4">
-              <StatCard icon={UsersThreeIcon} value={summary.accounts} label={t('admin.accounts')} detail={t('admin.disabledCount', { count: summary.disabled })} to={`${base}/accounts`} />
-              <StatCard icon={UserIcon} value={summary.patients} label={t('admin.patients')} detail={t('admin.unlinkedCount', { count: summary.unlinkedPatients })} to={`${base}/accounts?filter=patients`} />
-              <StatCard icon={StethoscopeIcon} value={summary.therapists} label={t('admin.therapists')} to={`${base}/accounts?filter=therapists`} />
-              <StatCard icon={CalendarCheckIcon} value={summary.schedulers} label={t('admin.schedulers')} to={`${base}/accounts?filter=schedulers`} />
-              <StatCard icon={ShieldCheckIcon} value={summary.admins} label={t('admin.admins')} to={`${base}/accounts?filter=admins`} />
-              <StatCard icon={LinkSimpleIcon} value={summary.activeLinks} label={t('admin.activeLinks')} to={`${base}/links`} />
-              <StatCard icon={BookOpenIcon} value={summary.activeExercises} label={t('admin.activeExercises')} detail={t('admin.exercisesTotal', { count: summary.exercises })} to={`${base}/catalogue`} />
-              <StatCard icon={PulseIcon} value={summary.sessionsWeek} label={t('admin.sessions')} detail={t('admin.sessionsWindow')} />
-            </div>
-            <div className="grid items-stretch gap-5 desk:grid-cols-3">
-              <Panel title={t('admin.attention')} flush><Attention summary={summary} base={base} /></Panel>
-              <Panel title={t('admin.accountsByRole')}>
-                <BarList items={[
-                  { label: t('admin.patients'), value: summary.patients }, { label: t('admin.therapists'), value: summary.therapists },
-                  { label: t('admin.schedulers'), value: summary.schedulers }, { label: t('admin.admins'), value: summary.admins }, { label: t('admin.filter.disabled'), value: summary.disabled },
-                ]} />
+      <div className="flex flex-col gap-5">
+        <BackendStatusPanels load={backend} />
+        <Loadable load={load} skeleton={<div className="flex flex-col gap-5"><div className="grid gap-4 tablet:grid-cols-4">{[0, 1, 2, 3, 4, 5, 6, 7].map((index) => <Skeleton key={index} className="h-28 rounded-card" />)}</div><SkeletonLines rows={6} /></div>}>
+          {({ summary, recent }) => (
+            <div className="flex flex-col gap-5">
+              <div className="grid items-stretch gap-5 desk:grid-cols-3">
+                <Panel title={t('admin.accountsByRole')}>
+                  <BarList items={[
+                    { label: t('admin.patients'), value: summary.patients }, { label: t('admin.therapists'), value: summary.therapists },
+                    { label: t('admin.schedulers'), value: summary.schedulers }, { label: t('admin.admins'), value: summary.admins }, { label: t('admin.filter.disabled'), value: summary.disabled },
+                  ]} />
+                </Panel>
+                <Panel title={t('admin.coverage')}><Coverage summary={summary} /></Panel>
+                <Panel title={t('admin.attention')} flush><Attention summary={summary} base={base} /></Panel>
+              </div>
+              <nav aria-label={t('admin.sections')} className="grid gap-4 tablet:grid-cols-4">
+                <StatCard icon={UsersThreeIcon} value={summary.accounts} label={t('admin.accounts')} detail={t('admin.disabledCount', { count: summary.disabled })} to={`${base}/accounts`} />
+                <StatCard icon={UserIcon} value={summary.patients} label={t('admin.patients')} detail={t('admin.unlinkedCount', { count: summary.unlinkedPatients })} to={`${base}/accounts?filter=patients`} />
+                <StatCard icon={StethoscopeIcon} value={summary.therapists} label={t('admin.therapists')} to={`${base}/accounts?filter=therapists`} />
+                <StatCard icon={CalendarCheckIcon} value={summary.schedulers} label={t('admin.schedulers')} to={`${base}/accounts?filter=schedulers`} />
+                <StatCard icon={ShieldCheckIcon} value={summary.admins} label={t('admin.admins')} to={`${base}/accounts?filter=admins`} />
+                <StatCard icon={LinkSimpleIcon} value={summary.activeLinks} label={t('admin.activeLinks')} to={`${base}/links`} />
+                <StatCard icon={BookOpenIcon} value={summary.activeExercises} label={t('admin.activeExercises')} detail={t('admin.exercisesTotal', { count: summary.exercises })} to={`${base}/catalogue`} />
+                <StatCard icon={PulseIcon} value={summary.sessionsWeek} label={t('admin.sessions')} detail={t('admin.sessionsWindow')} />
+              </nav>
+              <Panel title={t('admin.recentActivity')} flush action={<Link to={`${base}/activity`} className="text-sm font-semibold text-lagoon-deep hover:underline">{t('admin.viewAll')}</Link>}>
+                <ActivityTable events={recent} />
               </Panel>
-              <Panel title={t('admin.coverage')}><Coverage summary={summary} /></Panel>
             </div>
-            <Panel title={t('admin.recentActivity')} flush action={<Link to={`${base}/activity`} className="text-sm font-semibold text-lagoon-deep hover:underline">{t('admin.viewAll')}</Link>}>
-              <ActivityTable events={recent} />
-            </Panel>
-          </div>
-        )}
-      </Loadable>
+          )}
+        </Loadable>
+      </div>
     </>
   )
 }

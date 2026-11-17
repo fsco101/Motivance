@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { TFunction } from 'i18next'
-import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditCategory, AuditEvent } from '@/features/admin/types'
+import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditCategory, AuditEvent, BackendStatus } from '@/features/admin/types'
 import { CUSTOM_ALGORITHM } from './catalogue'
 import type { Database } from './database.types'
 import { must } from './workspace'
@@ -33,6 +33,32 @@ export async function loadSummary(db: Db): Promise<AdminSummary> {
     accounts: count('accounts'), disabled: count('disabled'), patients: count('patients'), therapists: count('therapists'), schedulers: count('schedulers'), admins: count('admins'),
     activeLinks: count('active_links'), unlinkedPatients: count('unlinked_patients'), exercises: count('exercises'), activeExercises: count('active_exercises'),
     sessionsWeek: count('sessions_week'), pendingRequests: count('pending_requests'),
+  }
+}
+
+type RawBackend = {
+  generated_at: string
+  plan: { name: string; database_bytes: number; storage_bytes: number }
+  database: { bytes: number; tables: Array<{ name: string; bytes: number }> | null }
+  storage: { bytes: number; files: number; buckets: Array<{ bucket: string; files: number; bytes: number }> | null }
+  deliveries: { waiting: number; oldest_waiting: string | null; failed_week: number; sent_day: number }
+  accounts: { signed_in_week: number; new_week: number; devices: number }
+  activity: Array<{ day: string; sessions: number; messages: number; bookings: number; accounts: number }> | null
+  jobs: Array<{ name: string; schedule: string; last_status: string | null; last_run: string | null; failures_day: number }> | null
+}
+
+/** Sizes, queues, scheduled jobs and the last 14 days, as Android reads them. */
+export async function loadBackend(db: Db): Promise<BackendStatus> {
+  const row = must(await db.rpc('admin_backend')) as unknown as RawBackend
+  return {
+    generatedAt: row.generated_at,
+    plan: { name: row.plan.name, databaseBytes: row.plan.database_bytes, storageBytes: row.plan.storage_bytes },
+    database: { bytes: row.database.bytes, tables: row.database.tables ?? [] },
+    storage: { bytes: row.storage.bytes, files: row.storage.files, buckets: row.storage.buckets ?? [] },
+    deliveries: { waiting: row.deliveries.waiting, oldestWaiting: row.deliveries.oldest_waiting, failedWeek: row.deliveries.failed_week, sentDay: row.deliveries.sent_day },
+    accounts: { signedInWeek: row.accounts.signed_in_week, newWeek: row.accounts.new_week, devices: row.accounts.devices },
+    activity: row.activity ?? [],
+    jobs: row.jobs?.map((job) => ({ name: job.name, schedule: job.schedule, lastStatus: job.last_status, lastRun: job.last_run, failuresDay: job.failures_day })) ?? null,
   }
 }
 

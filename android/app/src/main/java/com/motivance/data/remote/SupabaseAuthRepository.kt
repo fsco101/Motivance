@@ -204,6 +204,10 @@ import java.time.OffsetDateTime
         val exercises=JSONArray(call("/rest/v1/exercises?select=id,code,active,exercise_versions(version,algorithm_key,definition)&order=code&limit=500",null,token,"GET"))
         val summary=JSONObject(call("/rest/v1/rpc/admin_summary",JSONObject(),token))
         val activity=auditPage(JSONArray(call("/rest/v1/rpc/admin_activity",JSONObject(),token)))
+        // Backend status is extra: if it cannot be read, the overview says so and everything else still works.
+        val backend=try {BackendJson.status(JSONObject(call("/rest/v1/rpc/admin_backend",JSONObject(),token)))}
+            catch(e:RemoteFailure) {if(e.status==401) throw e else null}
+            catch(e:org.json.JSONException) {null}
         val rows=(0 until minOf(accounts.length(),ADMIN_PAGE)).map {val a=accounts.getJSONObject(it);val r=a.getJSONArray("roles")
             AdminAccount(a.getString("id"),a.optString("display_name"),a.getBoolean("active"),(0 until r.length()).map {r.getString(it)}.toSet(),
                 a.text("email").orEmpty(),a.text("username"),a.text("created_at"),a.text("last_sign_in_at"),a.text("photo_url"))}
@@ -216,7 +220,7 @@ import java.time.OffsetDateTime
             AdminSummary(summary.optInt("accounts"),summary.optInt("disabled"),summary.optInt("patients"),summary.optInt("therapists"),summary.optInt("admins"),
                 summary.optInt("active_links"),summary.optInt("unlinked_patients"),summary.optInt("exercises"),summary.optInt("active_exercises"),
                 summary.optInt("sessions_week"),summary.optInt("pending_requests"),summary.optInt("schedulers")),
-            activity.events,activity.next)
+            activity.events,activity.next,backend)
     }
     override suspend fun clearPhoto(user:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_clear_photo",JSONObject().put("p_user",user),t)}}
     override suspend fun loadActivity(before:Long)=authorized {token,_ -> auditPage(JSONArray(call("/rest/v1/rpc/admin_activity",JSONObject().put("p_before",before),token)))}

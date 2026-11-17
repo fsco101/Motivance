@@ -27,3 +27,16 @@ const ROLE_LABELS = { admin: 'admin.roleAdmin', scheduler: 'admin.roleScheduler'
 export const roleLabel = (role: AdminAccount['roles'][number]) => ROLE_LABELS[role]
 
 export const label = (account: AdminAccount) => account.name || account.email || account.id.slice(0, 8)
+
+/** How the backend is doing, from admin_backend(): sizes against the plan's limits, queues, jobs and daily activity. */
+export type BackendStatus = {
+  generatedAt: string
+  plan: { name: string; databaseBytes: number; storageBytes: number }
+  database: { bytes: number; tables: ReadonlyArray<{ name: string; bytes: number }> }
+  storage: { bytes: number; files: number; buckets: ReadonlyArray<{ bucket: string; files: number; bytes: number }> }
+  deliveries: { waiting: number; oldestWaiting: string | null; failedWeek: number; sentDay: number }
+  accounts: { signedInWeek: number; newWeek: number; devices: number }
+  activity: ReadonlyArray<{ day: string; sessions: number; messages: number; bookings: number; accounts: number }>
+  /** Null when the scheduler cannot be read, which the page says rather than showing no jobs. */
+  jobs: ReadonlyArray<{ name: string; schedule: string; lastStatus: string | null; lastRun: string | null; failuresDay: number }> | null
+}

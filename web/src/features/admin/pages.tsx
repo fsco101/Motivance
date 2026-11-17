@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { toast } from '@/components/Toast'
-import { clearPhoto, describeEvent, loadAccounts, loadActivity, loadAdminCatalogue, loadLinks, loadSummary, publishExercise, setAccount, setExercise, setLink, setRole } from '@/data/admin'
+import { clearPhoto, describeEvent, loadAccounts, loadActivity, loadAdminCatalogue, loadBackend, loadLinks, loadSummary, publishExercise, setAccount, setExercise, setLink, setRole } from '@/data/admin'
 import { supabase } from '@/data/client'
 import type { Database } from '@/data/database.types'
 import { asLoad, ready, type Load } from '@/features/shared'
@@ -69,9 +69,10 @@ function useActivity() {
 export function AdminOverviewPage() {
   const { t } = useTranslation()
   const summary = useQuery({ queryKey: ['admin', 'summary'], queryFn: () => loadSummary(supabase()) })
+  const backend = useQuery({ queryKey: ['admin', 'backend'], queryFn: () => loadBackend(supabase()) })
   const activity = useActivity()
   const recent = activity.data?.pages.flatMap((page) => page.events).slice(0, RECENT_EVENTS).map((row) => describeEvent(row, t))
-  return <AdminOverviewView base={BASE} load={adminLoad([summary, activity], summary.data && recent ? { summary: summary.data, recent } : undefined)} />
+  return <AdminOverviewView base={BASE} backend={asLoad(backend)} load={adminLoad([summary, activity], summary.data && recent ? { summary: summary.data, recent } : undefined)} />
 }
 
 export function AccountsPage() {

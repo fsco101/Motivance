@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { ACTIVITY_PAGE, clearPhoto, loadAccounts, loadActivity, loadAdminCatalogue, loadLinks, loadSummary, publishExercise, setAccount, setExercise, setLink, setRole } from '../../src/data/admin'
+import { ACTIVITY_PAGE, clearPhoto, loadAccounts, loadActivity, loadAdminCatalogue, loadBackend, loadLinks, loadSummary, publishExercise, setAccount, setExercise, setLink, setRole } from '../../src/data/admin'
 import { loadMyProfile, PhotoFailure, saveMyProfile, uploadPhoto, type ProfileDetails } from '../../src/data/profile'
 import { createCustomExercise } from '../../src/data/therapist'
 import { createUser, removePhotos, removeUsers, signedIn, sql, stack, type TestUser } from '../support/stack'
@@ -31,11 +31,11 @@ describe('administration on the local backend', () => {
       db.rpc('admin_accounts', {}), db.rpc('admin_summary'), db.rpc('admin_links'), db.rpc('admin_activity', {}), db.rpc('admin_set_account', { p_user: patient.id, p_active: false }),
       db.rpc('admin_set_role', { p_user: patient.id, p_role: 'admin', p_granted: true }), db.rpc('admin_set_link', { p_therapist: therapist.id, p_patient: patient.id, p_active: true }),
       db.rpc('admin_set_exercise', { p_exercise: randomUUID(), p_active: false }), db.rpc('admin_publish_exercise', { p_exercise: randomUUID(), p_name: 'x', p_english: 'x', p_filipino: 'x' }),
-      db.rpc('admin_clear_photo', { p_user: patient.id }),
+      db.rpc('admin_clear_photo', { p_user: patient.id }), db.rpc('admin_backend'),
     ]
     for (const person of [therapist, patient]) {
       const results = await Promise.all(calls(await signedIn(person)))
-      expect(results.map((result) => result.error?.code)).toEqual(Array(10).fill('42501'))
+      expect(results.map((result) => result.error?.code)).toEqual(Array(11).fill('42501'))
     }
     expect(sql(`select count(*) from public.user_roles where user_id='${patient.id}' and role='admin'`)).toBe('0')
   })
@@ -54,6 +54,23 @@ describe('administration on the local backend', () => {
     const [account] = (await loadAccounts(await signedIn(admin), therapist.email, null)).accounts
     expect(account).toMatchObject({ id: therapist.id, name: `Tess ${tag}`, email: therapist.email, active: true, roles: ['therapist'] })
     expect(account?.joined).toBeTruthy()
+  })
+
+  it('reports storage against the plan, the backend’s health and 14 days of activity', async () => {
+    const status = await loadBackend(await signedIn(admin))
+    expect(status.plan).toEqual({ name: sql('select name from public.backend_plan'), databaseBytes: Number(sql('select database_bytes from public.backend_plan')), storageBytes: Number(sql('select storage_bytes from public.backend_plan')) })
+    // The database grows while the suite runs, so the size is compared with a reading taken just after.
+    expect(status.database.bytes).toBeGreaterThan(1_000_000)
+    expect(status.database.bytes).toBeLessThanOrEqual(Number(sql('select pg_database_size(current_database())')) * 1.05)
+    expect(status.database.tables.length).toBeGreaterThan(0)
+    expect(status.database.tables.length).toBeLessThanOrEqual(6)
+    expect(status.storage.buckets.map((bucket) => bucket.bucket).sort()).toEqual(expect.arrayContaining(['avatars', 'chat-media']))
+    expect(status.storage.bytes).toBe(status.storage.buckets.reduce((sum, bucket) => sum + bucket.bytes, 0))
+    expect(status.activity).toHaveLength(14)
+    expect(status.activity.at(-1)!.day).toBe(sql("select (now() at time zone (select time_zone from public.center_settings))::date"))
+    expect(status.activity.at(-1)!.accounts).toBe(Number(sql("select count(*) from auth.users where (created_at at time zone (select time_zone from public.center_settings))::date=(now() at time zone (select time_zone from public.center_settings))::date")))
+    expect(status.jobs?.map((job) => job.name)).toEqual(expect.arrayContaining(['notification-dispatch']))
+    expect(status.accounts.newWeek).toBeGreaterThan(0)
   })
 
   it('counts the whole system, not one page', async () => {

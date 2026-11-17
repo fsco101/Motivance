@@ -44,6 +44,30 @@ export type Database = {
           },
         ]
       }
+      backend_plan: {
+        Row: {
+          database_bytes: number
+          id: boolean
+          name: string
+          storage_bytes: number
+          updated_at: string
+        }
+        Insert: {
+          database_bytes: number
+          id?: boolean
+          name: string
+          storage_bytes: number
+          updated_at?: string
+        }
+        Update: {
+          database_bytes?: number
+          id?: boolean
+          name?: string
+          storage_bytes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_events: {
         Row: {
           action: string
@@ -1652,6 +1676,10 @@ export type Database = {
       }
       admin_activity: {
         Args: { p_before?: number }
+        Returns: Json
+      }
+      admin_backend: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       admin_clear_photo: {

@@ -27,6 +27,9 @@ private const val RECENT_EVENTS=5
         if(!state.busy && !state.failed) EmptyState(R.string.admin_overview_empty,R.string.admin_overview_empty_detail)
         return
     }
+    // The same order as the web overview: backend charts, what needs attention, then the cards that open each section.
+    BackendSection(state.data.backend)
+    Attention(summary,open,accounts)
     SectionHeading(R.string.admin_people)
     MetricPair(
         {AdminMetric(R.string.admin_metric_accounts,summary.accounts.toString(),Icons.Default.AccountCircle,it,
@@ -45,7 +48,6 @@ private const val RECENT_EVENTS=5
     MetricPair(
         {AdminMetric(R.string.admin_metric_sessions,summary.sessionsWeek.toString(),Icons.Default.DateRange,it,stringResource(R.string.admin_metric_sessions_window))},
         {AdminMetric(R.string.admin_metric_requests,summary.pendingRequests.toString(),Icons.Default.Email,it,stringResource(R.string.admin_metric_requests_detail))})
-    Attention(summary,open,accounts)
     SectionHeading(R.string.admin_recent_activity) {
         if(state.data.activity.isNotEmpty()) TextButton({open(AdminSection.ACTIVITY)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.admin_view_all))}
     }
