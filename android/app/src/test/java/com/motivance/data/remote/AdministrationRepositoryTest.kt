@@ -11,6 +11,13 @@ import org.junit.Test
 
 class AdministrationRepositoryTest {
     private val bodies=mutableMapOf<String,MutableList<JSONObject>>()
+    private var backendStatus=200
+    private val backend="""{"generated_at":"2026-11-17T06:00:00+00:00","plan":{"name":"Supabase Free","database_bytes":524288000,"storage_bytes":1073741824},
+        "database":{"bytes":15000000,"tables":[{"name":"sessions","bytes":4000000}]},
+        "storage":{"bytes":2048,"files":2,"buckets":[{"bucket":"avatars","files":2,"bytes":2048},{"bucket":"chat-media","files":0,"bytes":0}]},
+        "deliveries":{"waiting":3,"oldest_waiting":null,"failed_week":1,"sent_day":12},"accounts":{"signed_in_week":5,"new_week":2,"devices":4},
+        "activity":[{"day":"2026-11-16","sessions":3,"messages":7,"bookings":1,"accounts":0},{"day":"2026-11-17","sessions":1,"messages":0,"bookings":0,"accounts":2}],
+        "jobs":[{"name":"notification-dispatch","schedule":"* * * * *","last_status":"failed","last_run":"2026-11-17T05:59:00+00:00","failures_day":4}]}"""
     private fun account(i:Int)=JSONObject().put("id","%08d-0000-0000-0000-000000000000".format(i)).put("display_name",if(i==0) "" else "Person $i")
         .put("active",i!=1).put("email","p$i@example.test").put("created_at","2026-11-01T08:00:00+00:00")
         .put("last_sign_in_at",if(i==0) JSONObject.NULL else "2026-11-03T09:30:00.123456+00:00")
@@ -29,9 +36,10 @@ class AdministrationRepositoryTest {
                 "/rest/v1/exercises" -> """[{"id":"e","code":"elbow","active":true,"exercise_versions":[{"version":1,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Old"}},{"version":2,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Elbow","instructions_en":"Bend","instructions_fil":"Baluktot"}}]}]"""
                 "/rest/v1/rpc/admin_summary" -> """{"accounts":51,"disabled":1,"patients":49,"therapists":1,"admins":1,"schedulers":4,"active_links":1,"unlinked_patients":48,"exercises":2,"active_exercises":1,"sessions_week":7,"pending_requests":2}"""
                 "/rest/v1/rpc/admin_activity" -> JSONArray((31L downTo 1L).map {event(it)}).toString()
+                "/rest/v1/rpc/admin_backend" -> if(backendStatus==200) backend else """{"message":"fixture failure"}"""
                 else -> """{"access_token":"fixture-access","refresh_token":"fixture-refresh","user":{"id":"fixture-admin"}}"""
             }
-            Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("fixture").body(body.toResponseBody("application/json".toMediaType())).build()
+            Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(if(path=="/rest/v1/rpc/admin_backend") backendStatus else 200).message("fixture").body(body.toResponseBody("application/json".toMediaType())).build()
         }.build()
         return SupabaseAuthRepository(client,"https://fixture.invalid","public-fixture").also {runBlocking {it.signIn("fixture@example.test","fixture-password")}}
     }
@@ -56,6 +64,22 @@ class AdministrationRepositoryTest {
         assertEquals("maria",bodies.getValue("/rest/v1/rpc/admin_accounts").single().getString("p_search"))
     }
 
+    @Test fun backendStatusIsReadWithTheWorkspace()=runBlocking {
+        val status=repository().loadAdministration(null,null).backend!!
+        assertEquals("Supabase Free",status.planName);assertEquals(524288000L,status.databaseLimit);assertEquals(1073741824L,status.storageLimit)
+        assertEquals(15000000L,status.databaseBytes);assertEquals("sessions",status.tables.single().name)
+        assertEquals(listOf("avatars","chat-media"),status.buckets.map {it.name});assertEquals(2L,status.buckets[0].files)
+        assertEquals(3,status.waiting);assertNull("JSON null must not become the text \"null\"",status.oldestWaiting);assertEquals(1,status.failedWeek)
+        assertEquals(5,status.signedInWeek);assertEquals(4,status.devices)
+        assertEquals(listOf(3,1),status.activity.map {it.sessions});assertEquals(2,status.activity.last().accounts)
+        assertTrue(status.jobs!!.single().failing)
+    }
+    @Test fun aFailedBackendStatusLeavesTheRestOfTheWorkspace()=runBlocking {
+        backendStatus=500
+        val workspace=repository().loadAdministration(null,null)
+        assertNull(workspace.backend)
+        assertEquals(50,workspace.accounts.size);assertNotNull(workspace.summary)
+    }
     @Test fun linksAndActivityCarryTheFacesOfThePeopleTheyName()=runBlocking {
         val workspace=repository().loadAdministration(null,null)
         assertEquals("00000000-0000-0000-0000-746865617468/74686561746865617468656174686561.webp",workspace.links.single().therapistPhoto)

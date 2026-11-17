@@ -296,6 +296,11 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] On hosted with real accounts, run the after-rollout checks in that file: live delivery on the web and a phone, a photo and a video, the cleanup, a push that opens its conversation, and a scheduled message.
 - [ ] With a therapist who has many patients, confirm the Messages list opens quickly on a phone over mobile data.
 
+## Administrator backend status (2026-11-17)
+
+- [ ] On a physical phone and a tablet, as an administrator, open the overview in both languages. Confirm the storage meters, health list and four daily charts read clearly at the default and largest text sizes, that TalkBack reads each meter and each chart's days, and that the section cards come after the charts.
+- [ ] On the hosted project, compare the overview's database and file storage figures with the Supabase dashboard's usage page. If the project is not on the Free plan, update `backend_plan` first (`docs/operations/BACKEND-STATUS.md`).
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

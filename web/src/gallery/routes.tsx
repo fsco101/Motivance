@@ -202,7 +202,7 @@ function SchedulerRequests() {
 }
 const Exercises = () => <ExercisesView load={useDemo(data.catalogue, data.catalogue.filter((item) => !item.custom))} onCreate={async () => toast.show('Exercise saved')} onRemove={said('Exercise removed')} />
 
-const Overview = () => <AdminOverviewView base={ADMIN} load={useDemo({ summary: data.summary, recent: data.activity.slice(0, 5) }, { summary: { ...data.summary, unlinkedPatients: 0, disabled: 0, pendingRequests: 0 }, recent: [] })} />
+const Overview = () => <AdminOverviewView base={ADMIN} backend={useDemo(data.backend, data.emptyBackend)} load={useDemo({ summary: data.summary, recent: data.activity.slice(0, 5) }, { summary: { ...data.summary, unlinkedPatients: 0, disabled: 0, pendingRequests: 0 }, recent: [] })} />
 const Accounts = () => (
   <AccountsView self={data.accounts[1]!.id} load={useDemo({ accounts: data.accounts, hasMore: true }, { accounts: [], hasMore: false })}
     actions={{ onSearch: () => undefined, onMore: said('Loaded more'), onActive: said('Account status updated.'), onRole: said('Access updated.'), onClearPhoto: said('Profile photo removed.') }} />

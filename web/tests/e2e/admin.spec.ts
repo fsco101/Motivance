@@ -78,6 +78,36 @@ test('the overview shows every count and leads to each section', async () => {
   await page.unroute('**/rpc/admin_summary')
 })
 
+test('the overview opens with storage, health and daily activity, and the section cards come after the charts', async () => {
+  await page.goto('/admin')
+  const main = page.getByRole('main')
+  await expect(main.getByRole('meter', { name: 'Database' })).toBeVisible()
+  await expect(main.getByRole('meter', { name: 'File storage' })).toBeVisible()
+  await expect(main.getByRole('meter', { name: 'Database' })).toHaveAttribute('aria-valuetext', /of 500 MB\. .* left \(\d+% used\)\./)
+  await expect(main.getByText('Scheduled jobs')).toBeVisible()
+  for (const name of ['Exercise sessions', 'Chat messages', 'Bookings made', 'New accounts']) await expect(main.getByRole('img', { name: new RegExp(`^${name}, \\d+ in total$`) })).toBeVisible()
+  // Moving along a chart with the keyboard names each day.
+  const sessions = main.getByRole('img', { name: /^Exercise sessions,/ })
+  await sessions.focus()
+  await page.keyboard.press('ArrowLeft')
+  await expect(main.locator('figure').filter({ has: page.getByRole('img', { name: /^Exercise sessions,/ }) }).locator('figcaption')).toContainText(/: \d+$/)
+  const chartsBottom = (await main.getByRole('heading', { name: 'Last 14 days' }).boundingBox())!.y
+  const cardsTop = (await main.getByRole('navigation', { name: 'Administration sections' }).boundingBox())!.y
+  expect(cardsTop).toBeGreaterThan(chartsBottom)
+  await main.getByText('Show as a table').click()
+  await expect(main.getByRole('table', { name: 'Last 14 days' }).getByRole('row')).toHaveCount(15)
+})
+
+test('the rest of the overview still works when backend status cannot be read', async () => {
+  await page.route('**/rpc/admin_backend', (route) => route.fulfill({ status: 500, json: { message: 'stopped' } }))
+  await page.goto('/admin')
+  const main = page.getByRole('main')
+  await expect(main.getByRole('link', { name: /^Accounts: / })).toBeVisible()
+  await expect(main.getByRole('meter')).toHaveCount(0)
+  await expect(main.getByRole('button', { name: /try again|retry/i }).first()).toBeVisible()
+  await page.unroute('**/rpc/admin_backend')
+})
+
 test('the directory searches the server, and each account shows its details', async () => {
   await page.goto('/admin/accounts')
   await search(patient.id)

@@ -30,7 +30,45 @@ data class AuditPage(val events:List<AuditEvent> = emptyList(),val next:Long?=nu
 data class AdminWorkspace(
     val accounts:List<AdminAccount> = emptyList(),val links:List<AdminLink> = emptyList(),val exercises:List<AdminExercise> = emptyList(),
     val next:String?=null,val summary:AdminSummary?=null,val activity:List<AuditEvent> = emptyList(),val activityNext:Long?=null,
+    /** Null when it could not be read; the rest of the workspace still loads, as the web overview does. */
+    val backend:BackendStatus?=null,
 )
+
+/** How the backend is doing, from admin_backend(): sizes against the plan's limits, queues, jobs and daily activity. */
+data class BackendStatus(
+    val generatedAt:String,val planName:String,val databaseLimit:Long,val storageLimit:Long,
+    val databaseBytes:Long,val tables:List<SizedItem>,
+    val storageBytes:Long,val storageFiles:Long,val buckets:List<SizedItem>,
+    val waiting:Int,val oldestWaiting:String?,val failedWeek:Int,val sentDay:Int,
+    val signedInWeek:Int,val newWeek:Int,val devices:Int,
+    val activity:List<BackendDay>,
+    /** Null when the job scheduler cannot be read, which the overview says rather than showing no jobs. */
+    val jobs:List<BackendJob>?,
+)
+data class SizedItem(val name:String,val bytes:Long,val files:Long=0)
+data class BackendDay(val day:String,val sessions:Int,val messages:Int,val bookings:Int,val accounts:Int)
+data class BackendJob(val name:String,val schedule:String,val lastStatus:String?,val lastRun:String?,val failuresDay:Int) {
+    /** Failing when its last run failed or any run failed in the last day; one that never ran is not yet known. */
+    val failing get()=lastStatus=="failed" || failuresDay>0
+}
+
+enum class MeterLevel { OK, HIGH, FULL }
+/** At three quarters a limit deserves a look; at nine tenths, action. The same thresholds as the web app. */
+fun meterLevel(used:Long,limit:Long):MeterLevel {
+    val share=if(limit>0) used.toDouble()/limit else 0.0
+    return when {share>=0.9 -> MeterLevel.FULL;share>=0.75 -> MeterLevel.HIGH;else -> MeterLevel.OK}
+}
+/** Notifications waiting longer than this mean the sender has stopped, not that it is busy. */
+const val STUCK_MINUTES=15L
+
+/** A size in binary units, as Supabase's dashboard counts them: 1 KB is 1,024 bytes. Matches formatBytes on the web. */
+fun formatBytes(bytes:Long,locale:java.util.Locale=java.util.Locale.getDefault()):String {
+    val units=listOf("B","KB","MB","GB","TB")
+    var value=maxOf(bytes,0L).toDouble();var unit=0
+    while(value>=1024 && unit<units.size-1) {value/=1024;unit++}
+    val format=java.text.NumberFormat.getNumberInstance(locale).apply {maximumFractionDigits=if(unit==0 || value>=100) 0 else 1;minimumFractionDigits=0}
+    return format.format(value)+" "+units[unit]
+}
 
 enum class AccountFilter { ALL, PATIENTS, THERAPISTS, SCHEDULERS, ADMINS, DISABLED }
 fun AccountFilter.accepts(account:AdminAccount)=when(this) {

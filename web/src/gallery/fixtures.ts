@@ -8,7 +8,7 @@ import { activitySummary, type HistoricalSession } from '@/data/history'
 import type { Inbox } from '@/data/notifications'
 import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
-import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent } from '@/features/admin/types'
+import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent, BackendStatus } from '@/features/admin/types'
 import type { PrivacyState } from '@/features/patient/PatientCareView'
 import type { PatientHome } from '@/features/patient/PatientHomeView'
 import type { PatientSummary } from '@/features/therapist/PatientTable'
@@ -262,3 +262,30 @@ export const conversations: Conversation[] = [
   // Linked, but has not turned messages on yet.
   { id: 'c4', side: 'therapist', otherId: 'p4', otherName: 'Noel Ramos', otherPhoto: null, open: false, consented: false, media: false, muted: false, lastMessageAt: null, lastMessage: null, unread: 0 },
 ]
+
+const MB = 1_048_576
+/** Two weeks to the same fixed day as the other samples, with a quiet weekend in each. */
+const backendDays = Array.from({ length: 14 }, (_, index) => {
+  const day = new Date(Date.UTC(2026, 10, 6 - 13 + index))
+  const weekend = [0, 6].includes(day.getUTCDay())
+  return { day: day.toISOString().slice(0, 10), sessions: weekend ? 9 + index : 48 + ((index * 7) % 19), messages: weekend ? 12 : 70 + ((index * 13) % 41), bookings: weekend ? 0 : 6 + (index % 5), accounts: index % 4 === 0 ? 3 : 1 }
+})
+export const backend: BackendStatus = {
+  generatedAt: '2026-11-06T04:00:00Z',
+  plan: { name: 'Supabase Free', databaseBytes: 500 * MB, storageBytes: 1024 * MB },
+  database: { bytes: 141 * MB, tables: [{ name: 'session_measurements', bytes: 52 * MB }, { name: 'sessions', bytes: 21 * MB }, { name: 'chat_messages', bytes: 14 * MB }, { name: 'audit_events', bytes: 9 * MB }, { name: 'notifications', bytes: 6 * MB }, { name: 'bookings', bytes: 3 * MB }] },
+  storage: { bytes: 812 * MB, files: 2_418, buckets: [{ bucket: 'chat-media', files: 2_204, bytes: 806 * MB }, { bucket: 'avatars', files: 214, bytes: 6 * MB }] },
+  deliveries: { waiting: 3, oldestWaiting: '2026-11-06T03:59:20Z', failedWeek: 2, sentDay: 386 },
+  accounts: { signedInWeek: 162, newWeek: 11, devices: 147 },
+  activity: backendDays,
+  jobs: [
+    { name: 'booking-reminders', schedule: '*/5 * * * *', lastStatus: 'succeeded', lastRun: '2026-11-06T03:55:00Z', failuresDay: 0 },
+    { name: 'notification-dispatch', schedule: '* * * * *', lastStatus: 'succeeded', lastRun: '2026-11-06T03:59:00Z', failuresDay: 0 },
+    { name: 'send-scheduled-messages', schedule: '* * * * *', lastStatus: 'succeeded', lastRun: '2026-11-06T03:59:00Z', failuresDay: 0 },
+  ],
+}
+export const emptyBackend: BackendStatus = {
+  ...backend, database: { bytes: 18 * MB, tables: [] }, storage: { bytes: 0, files: 0, buckets: [] },
+  deliveries: { waiting: 0, oldestWaiting: null, failedWeek: 0, sentDay: 0 }, accounts: { signedInWeek: 0, newWeek: 0, devices: 0 },
+  activity: backendDays.map((row) => ({ ...row, sessions: 0, messages: 0, bookings: 0, accounts: 0 })),
+}

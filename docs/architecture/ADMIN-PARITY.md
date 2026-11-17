@@ -13,6 +13,7 @@ Android paths are under `android/app/src/main/java/com/motivance/`. Web paths ar
 | Capability | Backend | Android | Web | Android tests | Web tests | State |
 | --- | --- | --- | --- | --- | --- | --- |
 | Whole-system counts | `admin_summary` | `feature/admin/AdminOverview.kt` | `features/admin/AdminOverviewView.tsx` | `AdministrationRepositoryTest`, `test_administration.py` | `admin.spec.ts`, contract `admin.test.ts` | Done |
+| Backend status: database and file storage against the plan's limits with what remains, largest tables, files by bucket, scheduled jobs, notification queue, sign-ins, push phones, and 14 days of sessions, messages, bookings and new accounts | `admin_backend` | `feature/admin/AdminBackend.kt`, `data/remote/BackendJson.kt` | `features/admin/BackendStatus.tsx`, `data/admin.ts` | `AdministrationRepositoryTest`, `BackendStatusTest` | `backend.test.ts`, contract `admin.test.ts` | Done |
 | Attention items that open their section | `admin_summary` | `feature/admin/AdminOverview.kt` | `features/admin/AdminOverviewView.tsx` | `AdministrationScreenTest` | `admin.spec.ts` | Done |
 | Directory, 50 accounts at a time, server search | `admin_accounts` | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx`, `data/admin.ts` | `AdministrationViewModelTest`, `test_administration.py` | `admin.spec.ts`, `admin.test.ts` | Done |
 | Filters: all, patients, therapists, Schedulers, administrators, disabled | Loaded accounts | `feature/admin/AdminAccounts.kt` | `features/admin/AccountsView.tsx` | `AdministrationScreenTest` | `admin.spec.ts` | Done |
@@ -42,6 +43,6 @@ The web app refreshes itself after every change and when you return to the tab, 
 
 ## Differences that are not capabilities
 
-- **Layout.** The web app shows account details beside the table, and the overview puts its counts in two rows.
+- **Layout.** The web app shows account details beside the table, and the overview puts its counts in two rows. Both overviews run in the same order: backend status, the attention items, then the cards that open each section, then recent activity. The web overview also draws the role counts and therapist coverage as charts; Android shows the same counts on its cards.
 - **After a failed change.** Android clears loaded records. The web app reports the failure, then reloads the lists, which keeps an unpublished catalogue edit on screen. A failed read still clears account and link lists on both.
 - **Changes in quick succession.** Android disables its buttons while saving. The web app runs them one after another, in order.
