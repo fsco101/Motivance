@@ -123,12 +123,12 @@ function Bubble({ item, actions, links }: { item: Extract<ThreadItem, { type: 'm
   return (
     <li className={cn('flex max-w-[85%] flex-col gap-1 tablet:max-w-[70%]', mine ? 'items-end self-end' : 'items-start self-start')}>
       {message.kind === 'attachment' && !message.deleted && (
-        <div className={cn(item.state === 'failed' && 'rounded-card outline-2 outline-offset-2 outline-dashed outline-alarm')}>
+        <div className={cn('max-w-full', item.state === 'failed' && 'rounded-card outline-2 outline-offset-2 outline-dashed outline-alarm')}>
           <span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span>
           <MediaBubble message={message} mine={mine} link={actions.onLink} />
         </div>
       )}
-      {card && <div><span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span><MessageCard message={message} mine={mine} links={links} /></div>}
+      {card && <div className="max-w-full"><span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span><MessageCard message={message} mine={mine} links={links} /></div>}
       {((message.kind !== 'attachment' && !card) || message.deleted || message.body) && (
         <p className={cn('whitespace-pre-wrap break-words rounded-card px-3.5 py-2', message.deleted ? 'border border-line italic text-slate' : item.state === 'failed' ? 'border border-dashed border-alarm bg-paper text-ink' : mine ? 'bg-lagoon-deep text-paper' : 'bg-tide text-ink')}>
           {message.kind !== 'attachment' && !card && <span className="sr-only">{mine ? t('chat.fromYou') : t('chat.fromThem')} </span>}
@@ -162,7 +162,7 @@ function Attach({ allowed, blocked, preparing, onAttach }: { allowed: boolean; b
     <>
       <input ref={input} type="file" accept="image/*,video/*" className="sr-only" tabIndex={-1} aria-hidden
         onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) onAttach(file) }} />
-      <Button type="button" variant="secondary" disabled={!allowed || preparing !== null} onClick={() => input.current?.click()} className="mb-5"
+      <Button type="button" variant="secondary" disabled={!allowed || preparing !== null} onClick={() => input.current?.click()} className="tablet:mb-5"
         leading={<PaperclipIcon aria-hidden />} aria-describedby={allowed ? undefined : 'chat-attach-blocked'}>{t('chat.media.attach')}</Button>
       {!allowed && <span id="chat-attach-blocked" className="sr-only">{blocked}</span>}
     </>
@@ -213,8 +213,8 @@ function Composer({ name, onSend, attach, schedule }: {
         <p className="w-full text-xs text-slate">{t('chat.schedule.hint')}</p>
       </form>
     )}
-    <form onSubmit={send} className="flex items-end gap-2 border-t border-line p-3">
-      <div className="min-w-0 flex-1">
+    <form onSubmit={send} className="flex flex-wrap items-end gap-2 border-t border-line p-3">
+      <div className="min-w-0 basis-full tablet:flex-1 tablet:basis-auto">
         <label htmlFor="chat-draft" className="sr-only">{t('chat.writeTo', { name })}</label>
         <textarea id="chat-draft" rows={2} value={draft} maxLength={CHAT_BODY_LIMIT} onChange={(event) => setDraft(event.target.value)} onKeyDown={keys} placeholder={t('chat.placeholder')}
           aria-describedby="chat-draft-help" className="block max-h-40 w-full resize-none rounded-control border border-line-strong bg-paper px-3 py-2 text-ink placeholder:text-slate hover:border-lagoon" />
@@ -224,8 +224,8 @@ function Composer({ name, onSend, attach, schedule }: {
         </p>
       </div>
       <Attach {...attach} />
-      {schedule && later === null && <Button type="button" variant="secondary" className="mb-5" onClick={() => { const now = Date.now(); setEarliest(localInput(new Date(now + 120_000))); setLater(localInput(new Date(now + 86_400_000))) }}>{t('chat.schedule.open')}</Button>}
-      <Button type="submit" disabled={!words} leading={<PaperPlaneRightIcon aria-hidden weight="fill" />} className="mb-5">{t('chat.send')}</Button>
+      {schedule && later === null && <Button type="button" variant="secondary" className="tablet:mb-5" onClick={() => { const now = Date.now(); setEarliest(localInput(new Date(now + 120_000))); setLater(localInput(new Date(now + 86_400_000))) }}>{t('chat.schedule.open')}</Button>}
+      <Button type="submit" disabled={!words} leading={<PaperPlaneRightIcon aria-hidden weight="fill" />} className="ml-auto tablet:mb-5 tablet:ml-0">{t('chat.send')}</Button>
     </form>
     </>
   )
@@ -239,7 +239,7 @@ function Waiting({ scheduled, onCancel }: { scheduled: readonly ScheduledMessage
   return (
     <section aria-label={t('chat.schedule.waiting')} className="border-t border-line bg-mist px-3 py-2">
       <p className="text-xs font-semibold text-slate">{t('chat.schedule.waiting')}</p>
-      <ul className="mt-1 grid gap-1">
+      <ul className="mt-1 grid grid-cols-[minmax(0,1fr)] gap-1">
         {scheduled.map((item) => (
           <li key={item.id} className="flex items-center gap-3 text-sm">
             <span className="numeric shrink-0 text-slate">{format.dateTime(item.sendAt)}</span>
@@ -286,7 +286,7 @@ function ThreadPanel({ conversation, thread, outgoing, me, self, base, connected
         <Button size="sm" variant="secondary" aria-pressed={conversation.muted} onClick={() => actions.onMute(!conversation.muted)}
           leading={conversation.muted ? <BellSimpleSlashIcon aria-hidden /> : <BellSimpleIcon aria-hidden />}>{t(conversation.muted ? 'chat.muted' : 'chat.mute')}</Button>
       </header>
-      <div ref={scroller} tabIndex={0} aria-label={t('chat.messages')} className="flex-1 overflow-y-auto px-4 py-4">
+      <div ref={scroller} tabIndex={0} aria-label={t('chat.messages')} className="relative flex-1 overflow-y-auto px-4 py-4">
         <Loadable load={thread} skeleton={<SkeletonLines rows={4} />}>
           {(found) => (
             <>
@@ -324,7 +324,7 @@ export function MessagesView({ base, me, self, conversations, selected, thread, 
             <>
               {agreement && !agreement.granted && <ChatAgreementPanel busy={agreement.busy} onAccept={agreement.onAccept} />}
               {agreement && agreement.granted && !agreement.media && <MediaAgreementPanel busy={agreement.busy} onAccept={agreement.onAccept} />}
-              <div className="grid items-start gap-5 desk:grid-cols-[20rem_minmax(0,1fr)]">
+              <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 desk:grid-cols-[20rem_minmax(0,1fr)]">
                 <ConversationList conversations={list} selected={selected} base={base} me={me} className={cn(conversation && 'hidden desk:block')} />
                 {conversation && thread
                   ? <ThreadPanel conversation={conversation} thread={thread} outgoing={outgoing} me={me} self={self} base={base} connected={connected} actions={actions} preparing={preparing} scheduled={scheduled} />
