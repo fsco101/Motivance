@@ -37,6 +37,8 @@ object PrescriptionCache {
         val instructions=if(filipino.isBlank()) english else "English:\n$english\n\nFilipino:\n$filipino"
         val parameters=version.optJSONObject("parameters") ?: org.json.JSONObject()
         val rules=runCatching {ExerciseRules(kind=kind,side=side,lowDegrees=version.getDouble("minimum_degrees"),highDegrees=version.getDouble("maximum_degrees"),targetRepetitions=version.getInt("target_repetitions"),confidence=parameters.optDouble("confidence",.7).toFloat(),minimumCycleMs=parameters.optLong("minimum_cycle_ms",600),maximumCycleMs=parameters.optLong("maximum_cycle_ms",30000),peakHoldMs=parameters.optLong("peak_hold_ms",100),maxTrunkLeanDegrees=parameters.optDouble("max_trunk_lean_degrees",20.0),version=exercise.getString("id"),prescriptionVersionId=version.getString("id"),demo=false,focusJoint=if(parameters.has("focus_joint")) BodyJoint.valueOf(parameters.getString("focus_joint")) else measured,measuredJoint=measured,exerciseName=customName,bilateral=version.getString("side")=="bilateral",sideSeconds=if(parameters.has("side_seconds")) parameters.getInt("side_seconds") else null)}.getOrNull() ?: return@mapNotNull null
-        CachedPrescription(owner,version.getString("id"),assignment.getString("id"),owner,ExerciseJson.rules(rules),instructions,now+24*60*60*1000,now)
+        // The schedule travels with the exercise, so the day's list is right without a connection. A cancelled one has no exercises left.
+        val schedule=assignment.optJSONObject("exercise_schedules")?.takeIf {it.isNull("cancelled_at")}?.toString()
+        CachedPrescription(owner,version.getString("id"),assignment.getString("id"),owner,ExerciseJson.rules(rules),instructions,now+24*60*60*1000,now,schedule)
     }
 }

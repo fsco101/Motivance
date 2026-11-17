@@ -48,7 +48,7 @@
   "toast": {
     "saving": "Sine-save…",
     "invitationCreated": "Nagawa ang imbitasyon. Ibahagi ang code sa iyong pasyente.", "accessRevoked": "Binawi ang access ng pasyente.", "published": "Nailathala ang reseta. Awtomatiko itong makakarating sa telepono ng pasyente kapag online siya.",
-    "exerciseCreated": "Nai-save ang ehersisyo", "exerciseRemoved": "Naalis ang ehersisyo"
+    "exerciseCreated": "Nai-save ang ehersisyo", "exerciseRemoved": "Naalis ang ehersisyo", "scheduleSaved": "Na-save ang iskedyul", "scheduleEnded": "Tapos na ang iskedyul", "planExerciseRemoved": "Inalis ang ehersisyo sa plano"
   },
   "genders": { "female": "Babae", "male": "Lalaki", "nonbinary": "Non-binary", "prefer_not_to_say": "Mas gustong hindi sabihin" },
   "profile": {
@@ -56,6 +56,9 @@
     "photoProblem": { "limit": "Masyadong maraming upload sa nakaraang oras. Subukang muli mamaya.", "unreadable": "Hindi mabasa ang larawang iyon. Pumili ng JPEG, PNG o WebP na larawan.", "failed": "Hindi na-upload ang larawan. Suriin ang koneksiyon at subukang muli." }
   },
   "errors": {
+    "scheduleDates": "Suriin ang mga petsa. Dapat kapareho o pagkatapos ng simula ang dulo, magsisimula ngayon o sa susunod na araw ang bagong iskedyul, at hanggang 366 araw lang ang haba nito.",
+    "scheduleRestDays": "Suriin ang mga araw ng pahinga. Mag-iwan ng kahit isang araw ng linggo, ilagay ang mga petsa ng pahinga sa loob ng iskedyul, at huwag baguhin ang mga lumipas na.",
+    "scheduleNoDay": "Wala nang araw ng ehersisyo ang iskedyul na ito. Mag-alis ng araw ng pahinga o ilipat ang petsa ng pagtatapos.", "scheduleGone": "Tapos na ang iskedyul na ito, kaya hindi na ito mababago.",
     "chatScheduleTime": "Pumili ng oras na hindi bababa sa isang minuto mula ngayon at sa loob ng 60 araw.", "chatScheduleGone": "Naipadala o naalis na ang mensaheng iyon.",
     "chatMediaConsent": "Hindi pa pinapayagan ang mga larawan at video sa usapang ito, kaya hindi ito naipadala.", "chatMediaTooLarge": "Masyadong malaki ang file para maipadala, kahit pinaliit na. Subukan ang mas maikling video o ibang larawan.", "chatMediaInvalid": "Hindi maipapadala ang ganitong file. Magpadala ng larawan o video.", "chatVideoCap": "Naabot na ng usapang ito ang limitasyong 20 video sa loob ng 30 araw. Gumagana pa rin ang mga larawan at mensahe.", "chatMediaMissing": "Hindi natapos ang pag-upload ng file. Subukan muli.", "chatMediaUnreadable": "Hindi mabuksan ng browser na ito ang file. Subukan ang JPEG o PNG na larawan, o MP4 na video.", "chatMediaUnsupported": "Hindi kayang ihanda ng browser na ito ang mga video. Gamitin ang Android app, o ibang browser.",
     "chatConsentRequired": "Hindi pa naka-on ang mga mensahe sa usapang ito, kaya hindi naipadala ang mensahe.",
@@ -94,6 +97,37 @@
     "version": "Bersiyon {{version}}", "custom": "Custom", "side": "Bahagi", "focus": "Pokus ng skeleton", "focusAutomatic": "Kasukasuan ng ehersisyo (awtomatiko)", "repetitions": "Mga ulit", "edit": "I-edit ang plano",
     "gender": "Kasarian", "birthdate": "Kaarawan", "contact": "Contact", "address": "Tirahan", "plans": "Plano ng ehersisyo", "assign": "Magtalaga ng ehersisyo",
     "noPlansTitle": "Wala pang nakatalagang ehersisyo", "noPlansDetail": "Magtalaga ng isa para simulang sukatin ang galaw ng pasyenteng ito.", "progress": "Pag-unlad", "allProgress": "Lahat ng pag-unlad"
+  },
+  "schedule": {
+    "title": "Mga iskedyul ng ehersisyo", "help": "May petsa ng simula, petsa ng pagtatapos at mga araw ng pahinga ang bawat iskedyul. Ang ehersisyo lang ng araw na iyon ang nakikita ng pasyente.",
+    "new": "Bagong iskedyul", "edit": "Baguhin ang petsa", "end": "Tapusin ang iskedyul", "addExercise": "Magdagdag ng ehersisyo", "range": "{{from}} hanggang {{to}}",
+    "exerciseDays_one": "{{count}} araw ng ehersisyo", "exerciseDays_other": "{{count}} araw ng ehersisyo", "restDays_one": "{{count}} araw ng pahinga", "restDays_other": "{{count}} araw ng pahinga",
+    "summary": "{{exercise}} at {{rest}}", "daysLeft_one": "{{count}} araw ng ehersisyo ang natitira", "daysLeft_other": "{{count}} araw ng ehersisyo ang natitira",
+    "restLine": "Pahinga: {{days}}", "noRest": "Walang araw ng pahinga", "everyWeekday": "tuwing {{day}}",
+    "stateExercise": "Araw ng ehersisyo ngayon", "stateRest": "Araw ng pahinga ngayon", "stateUpcoming": "Magsisimula sa {{date}}", "setBy": "Itinakda ni {{name}}",
+    "empty": "Wala pang ehersisyo sa iskedyul na ito.", "noneTitle": "Wala pang iskedyul ng ehersisyo", "noneDetail": "Gumawa ng isa para bigyan ng petsa at araw ng pahinga ang mga ehersisyo.",
+    "everyDay": "Mga ehersisyo araw-araw", "everyDayHelp": "Araw-araw, walang petsa ng pagtatapos.", "everyDayLink": "Magtakda ng ehersisyo para sa bawat araw",
+    "ended": "Mula sa mga tapos nang iskedyul", "endedHelp": "Tapos na ang mga iskedyul na ito, kaya hindi na nakikita ng pasyente ang mga ehersisyong ito.",
+    "endTitle": "Tapusin ang iskedyul na ito?", "endStarted": "Matatapos ito ngayong araw. Simula bukas, hindi na makikita ni {{name}} ang mga ehersisyo nito. Mananatili sa history ang mga session.",
+    "endUpcoming": "Hindi pa ito nagsisimula, kaya kakanselahin ito at aalisin ang mga ehersisyo nito sa plano ni {{name}}.",
+    "formNew": "Bagong iskedyul ng ehersisyo", "formEdit": "Baguhin ang iskedyul", "formHelp": "Makikita ng pasyente ang mga ehersisyo sa bawat araw ng ehersisyo, mula sa petsa ng simula hanggang sa petsa ng pagtatapos.",
+    "startsOn": "Petsa ng simula", "endsOn": "Petsa ng pagtatapos", "startedHint": "Nagsimula na ito, kaya hindi na mababago ang petsa ng simula.", "restWeekdays": "Pahinga bawat linggo", "restDates": "Mga petsa ng pahinga",
+    "restDateLabel": "Magdagdag ng petsa ng pahinga", "addRestDate": "Idagdag", "removeRestDate": "Alisin ang {{date}}", "noRestDates": "Walang hiwalay na petsa ng pahinga.", "save": "I-save ang iskedyul",
+    "todayDone": "Tapos na ngayon", "todayToDo": "Gagawin ngayon", "todayRest": "Hindi ngayon",
+    "remove": "Alisin", "removeTitle": "Alisin ang ehersisyong ito?", "removeMessage": "Aalisin ang {{exercise}} sa plano ni {{name}}. Mananatili sa history ang mga natapos na session.", "removeConfirm": "Alisin ang ehersisyo",
+    "missedTitle": "Mga araw na may hindi nagawang ehersisyo", "missedHelp": "Mga araw sa nakaraang 30 na may naka-iskedyul na ehersisyong hindi nagawa.", "missedItem": "{{day}}, nagawa: {{done}} sa {{due}}",
+    "inSchedule": "Iskedyul",
+    "problems": {
+      "dates": "Pumili ng petsa ng pagtatapos na kapareho o pagkatapos ng simula.", "tooLong": "Hanggang 366 araw lang ang haba ng iskedyul.", "pastStart": "Magsimula ngayon o sa susunod na araw.",
+      "pastEnd": "Pumili ng petsa ng pagtatapos na ngayon o sa susunod na araw.", "allRest": "Mag-iwan ng kahit isang araw ng linggo para sa ehersisyo.", "noDay": "Wala nang araw ng ehersisyo. Mag-alis ng araw ng pahinga o ilipat ang petsa ng pagtatapos."
+    }
+  },
+  "video": {
+    "watch": "Panoorin ang video", "column": "Video", "title": "Video ng session",
+    "therapistNote": "Ibinahagi ng pasyente. Buburahin ito sa server sa {{date}}.",
+    "selfNote": "Mapapanood ito ng iyong therapist hanggang {{date}}. Mananatili ang kopya sa iyong telepono.",
+    "stop": "Itigil ang pagbabahagi", "stopTitle": "Itigil ang pagbabahagi ng video na ito?", "stopMessage": "Hindi na ito mapapanood ng iyong therapist, at buburahin ito sa server. Mananatili ang kopya sa iyong telepono.",
+    "stopped": "Hindi na ibinabahagi ang video", "loadFailed": "Hindi mabuksan ang video. Subukan muli."
   },
   "progress": {
     "noPatientsTitle": "Wala pang pasyente", "noPatientsDetail": "Lalabas dito ang pag-unlad kapag may nakaugnay na pasyente sa iyo.",

@@ -8,7 +8,11 @@ data class CustomExerciseDraft(val id:String,val name:String,val joint:BodyJoint
     val valid get()=name.trim().length in 1..NAME_LIMIT && english.trim().length in 1..INSTRUCTIONS_LIMIT && filipino.trim().length<=INSTRUCTIONS_LIMIT
     companion object {const val NAME_LIMIT=120; const val INSTRUCTIONS_LIMIT=4000}
 }
-data class PrescriptionSummary(val assignmentId:String,val versionId:String,val patientId:String,val exerciseId:String,val version:Int,val side:String,val low:Double,val high:Double,val repetitions:Int,val parameters:String="{}")
+data class PrescriptionSummary(val assignmentId:String,val versionId:String,val patientId:String,val exerciseId:String,val version:Int,val side:String,val low:Double,val high:Double,val repetitions:Int,val parameters:String="{}",
+    /** The schedule it belongs to, or null for an exercise due every day. */
+    val scheduleId:String?=null,
+    /** Who assigned it: only they can change it. */
+    val therapistId:String="")
 data class PrivacyRequest(val id:String,val kind:String,val status:String)
 /** The newest consent event on the server. Patients can also withdraw on the web, which this phone would otherwise never hear about. */
 data class ServerConsent(val id:String,val event:String,val occurredAt:Long) {
@@ -18,7 +22,9 @@ data class ServerConsent(val id:String,val event:String,val occurredAt:Long) {
 data class RehabWorkspace(val patients:List<LinkedPatient> = emptyList(),val catalogue:List<CatalogueExercise> = emptyList(),val prescriptions:List<PrescriptionSummary> = emptyList(),val requests:List<PrivacyRequest> = emptyList())
 data class PrescriptionDraft(val assignmentId:String,val requestId:String,val patientId:String,val exerciseId:String,val side:BodySide,val low:Double,val high:Double,val repetitions:Int,val minimumCycleMs:Long=600,val maximumCycleMs:Long=30000,val peakHoldMs:Long=100,val maxTrunkLean:Double=20.0,val confidence:Double=.7,val focusJoint:BodyJoint?=null,
     /** Both sides, left first; [side] is then LEFT. */
-    val bilateral:Boolean=false,val sideSeconds:Int?=null)
+    val bilateral:Boolean=false,val sideSeconds:Int?=null,
+    /** A new exercise goes into this schedule. Editing an exercise keeps the schedule it already has. */
+    val scheduleId:String?=null)
 interface RehabilitationRepository {
     suspend fun loadWorkspace():RehabWorkspace
     suspend fun loadHistory(query:HistoryQuery,cursor:HistoryCursor?=null):HistoryPage
@@ -34,6 +40,12 @@ interface RehabilitationRepository {
     suspend fun requestPatientData(id:String,kind:String)
     suspend fun uploadConsent(owner:String,id:String,event:String,version:String,occurredAt:Long)
     suspend fun uploadSession(owner:String,payload:String)
+    /** A patient's exercise day at the center: which exercises are due and done, and each current or coming schedule. */
+    suspend fun loadExerciseDay(patientId:String):ExerciseDay=throw UnsupportedOperationException()
+    suspend fun saveSchedule(draft:ScheduleDraft):ExerciseSchedule=throw UnsupportedOperationException()
+    suspend fun endSchedule(scheduleId:String):Unit=throw UnsupportedOperationException()
+    /** Takes one exercise off the plan; its sessions stay in history. */
+    suspend fun stopExercise(assignmentId:String):Unit=throw UnsupportedOperationException()
 }
 
 /** HTTP status only; raw server payloads and credentials never reach screens/logs. */

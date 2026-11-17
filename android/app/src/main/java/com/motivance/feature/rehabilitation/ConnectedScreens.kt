@@ -59,6 +59,9 @@ internal fun RehabAction.loadingLabel()=when(this) {
     RehabAction.SYNC -> R.string.ui_preparing_sync
     RehabAction.WITHDRAW -> R.string.ui_withdrawing_consent
     RehabAction.EXPORT, RehabAction.DELETE -> R.string.ui_submitting_request
+    RehabAction.SAVE_SCHEDULE -> R.string.exercise_schedule_saving
+    RehabAction.END_SCHEDULE -> R.string.exercise_schedule_ending
+    RehabAction.STOP_EXERCISE -> R.string.exercise_schedule_removing
 }
 
 /** Workspace status notices plus a compact refresh action, so the page content stays the visual focus. */
@@ -181,7 +184,8 @@ internal fun RehabAction.loadingLabel()=when(this) {
 
 /** One assigned exercise on the therapist's patient page. */
 @OptIn(ExperimentalLayoutApi::class)
-@Composable fun AssignedPrescriptionCard(p:PrescriptionSummary,exercise:CatalogueExercise?,enabled:Boolean,onEdit:()->Unit) {
+/** [today] names where the exercise stands today; [onRemove] takes it off the plan. A plan another therapist assigned is [locked]. */
+@Composable fun AssignedPrescriptionCard(p:PrescriptionSummary,exercise:CatalogueExercise?,enabled:Boolean,today:Pair<Int,PillTone>?=null,locked:Boolean=false,onRemove:(()->Unit)?=null,onEdit:()->Unit) {
     val focus=runCatching {org.json.JSONObject(p.parameters).optString("focus_joint","")}.getOrDefault("").takeIf {it.isNotBlank()}
         ?.let {runCatching {BodyJoint.valueOf(it)}.getOrNull()}
     ClinicalCard {
@@ -199,9 +203,14 @@ internal fun RehabAction.loadingLabel()=when(this) {
             StatusPill(stringResource(R.string.ui_reps_value,p.repetitions),PillTone.POSITIVE)
             sideTimeText(runCatching {org.json.JSONObject(p.parameters).optInt("side_seconds",0)}.getOrDefault(0).takeIf {it>0},p.side=="bilateral")?.let {StatusPill(it,PillTone.POSITIVE)}
             StatusPill(stringResource(R.string.ui_focus_value,stringResource(focus?.label() ?: R.string.focus_automatic)))
+            today?.let {(label,tone) -> StatusPill(stringResource(label),tone)}
         }
-        OutlinedButton(onEdit,enabled=enabled,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {
+        if(locked) Text(stringResource(R.string.exercise_schedule_other_therapist),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        else OutlinedButton(onEdit,enabled=enabled,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {
             Icon(Icons.Default.Edit,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.edit_prescription))
+        }
+        if(onRemove!=null && !locked) TextButton(onRemove,enabled=enabled,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
+            Icon(Icons.Default.Delete,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.exercise_schedule_remove))
         }
     }
 }
@@ -272,8 +281,13 @@ internal fun RehabAction.loadingLabel()=when(this) {
 // Therapist: exercise assignment editor
 // ---------------------------------------------------------------------------------------------
 
-@Composable fun ColumnScope.PrescriptionForm(state:RehabilitationState,vm:RehabilitationViewModel,patientId:String?,existing:PrescriptionSummary?=null,published:()->Unit) {
-    PrescriptionEditor(state,patientId,existing,{draft,created -> vm.createExercise(draft,created)},{vm.archiveExercise(it)}) {vm.prescribe(it,published)}
+/** A new exercise goes into [scheduleId] when one is given, and [scheduleLabel] says which. An edited one keeps its own schedule. */
+@Composable fun ColumnScope.PrescriptionForm(state:RehabilitationState,vm:RehabilitationViewModel,patientId:String?,existing:PrescriptionSummary?=null,
+    scheduleId:String?=null,scheduleLabel:String?=null,published:()->Unit) {
+    if(existing==null && scheduleLabel!=null) StatusPill(stringResource(R.string.exercise_schedule_in_schedule,scheduleLabel),PillTone.PRIMARY,Icons.Default.DateRange)
+    PrescriptionEditor(state,patientId,existing,{draft,created -> vm.createExercise(draft,created)},{vm.archiveExercise(it)}) {
+        vm.prescribe(if(existing==null) it.copy(scheduleId=scheduleId) else it,published)
+    }
 }
 
 /**

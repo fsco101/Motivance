@@ -891,6 +891,7 @@ export type Database = {
           created_at: string
           id: string
           patient_id: string
+          schedule_id: string | null
           therapist_id: string
         }
         Insert: {
@@ -898,6 +899,7 @@ export type Database = {
           created_at?: string
           id?: string
           patient_id: string
+          schedule_id?: string | null
           therapist_id: string
         }
         Update: {
@@ -905,6 +907,7 @@ export type Database = {
           created_at?: string
           id?: string
           patient_id?: string
+          schedule_id?: string | null
           therapist_id?: string
         }
         Relationships: [
@@ -916,6 +919,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "exercise_assignments_schedule_fkey"
+            columns: ["schedule_id", "patient_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_schedules"
+            referencedColumns: ["id", "patient_id"]
+          },
+          {
             foreignKeyName: "exercise_assignments_therapist_id_fkey"
             columns: ["therapist_id"]
             isOneToOne: false
@@ -924,6 +934,115 @@ export type Database = {
           },
           {
             foreignKeyName: "exercise_assignments_therapist_id_patient_id_fkey"
+            columns: ["therapist_id", "patient_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_patients"
+            referencedColumns: ["therapist_id", "patient_id"]
+          },
+        ]
+      }
+      exercise_day_results: {
+        Row: {
+          day: string
+          done: number
+          due: number
+          missed: string[]
+          notified_at: string | null
+          patient_id: string
+          recorded_at: string
+          therapist_id: string
+        }
+        Insert: {
+          day: string
+          done: number
+          due: number
+          missed?: string[]
+          notified_at?: string | null
+          patient_id: string
+          recorded_at?: string
+          therapist_id: string
+        }
+        Update: {
+          day?: string
+          done?: number
+          due?: number
+          missed?: string[]
+          notified_at?: string | null
+          patient_id?: string
+          recorded_at?: string
+          therapist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_day_results_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_day_results_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_schedules: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          ends_on: string
+          id: string
+          patient_id: string
+          rest_dates: string[]
+          rest_weekdays: number[]
+          starts_on: string
+          therapist_id: string
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          ends_on: string
+          id: string
+          patient_id: string
+          rest_dates?: string[]
+          rest_weekdays?: number[]
+          starts_on: string
+          therapist_id: string
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          ends_on?: string
+          id?: string
+          patient_id?: string
+          rest_dates?: string[]
+          rest_weekdays?: number[]
+          starts_on?: string
+          therapist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_schedules_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_schedules_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_schedules_therapist_id_patient_id_fkey"
             columns: ["therapist_id", "patient_id"]
             isOneToOne: false
             referencedRelation: "therapist_patients"
@@ -1052,6 +1171,7 @@ export type Database = {
           exercise_plan: boolean
           inactivity: boolean
           messages: boolean
+          missed_days: boolean
           reminder_time: string | null
           session_results: boolean
           updated_at: string
@@ -1063,6 +1183,7 @@ export type Database = {
           exercise_plan?: boolean
           inactivity?: boolean
           messages?: boolean
+          missed_days?: boolean
           reminder_time?: string | null
           session_results?: boolean
           updated_at?: string
@@ -1074,6 +1195,7 @@ export type Database = {
           exercise_plan?: boolean
           inactivity?: boolean
           messages?: boolean
+          missed_days?: boolean
           reminder_time?: string | null
           session_results?: boolean
           updated_at?: string
@@ -1483,6 +1605,97 @@ export type Database = {
           },
         ]
       }
+      session_video_trash: {
+        Row: {
+          path: string
+          queued_at: string
+        }
+        Insert: {
+          path: string
+          queued_at?: string
+        }
+        Update: {
+          path?: string
+          queued_at?: string
+        }
+        Relationships: []
+      }
+      session_videos: {
+        Row: {
+          bytes: number | null
+          created_at: string
+          duration_ms: number
+          expires_at: string | null
+          height: number
+          id: string
+          media_path: string
+          patient_id: string
+          preview_bytes: number | null
+          preview_path: string
+          removed_at: string | null
+          session_id: string
+          shared_at: string | null
+          therapist_id: string
+          width: number
+        }
+        Insert: {
+          bytes?: number | null
+          created_at?: string
+          duration_ms: number
+          expires_at?: string | null
+          height: number
+          id: string
+          media_path: string
+          patient_id: string
+          preview_bytes?: number | null
+          preview_path: string
+          removed_at?: string | null
+          session_id: string
+          shared_at?: string | null
+          therapist_id: string
+          width: number
+        }
+        Update: {
+          bytes?: number | null
+          created_at?: string
+          duration_ms?: number
+          expires_at?: string | null
+          height?: number
+          id?: string
+          media_path?: string
+          patient_id?: string
+          preview_bytes?: number | null
+          preview_path?: string
+          removed_at?: string | null
+          session_id?: string
+          shared_at?: string | null
+          therapist_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_videos_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_videos_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_videos_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           algorithm_version: string
@@ -1726,6 +1939,15 @@ export type Database = {
         Args: { p_exercise: string }
         Returns: undefined
       }
+      assignment_done_between: {
+        Args: {
+          p_assignment: string
+          p_patient: string
+          p_from: string
+          p_to: string
+        }
+        Returns: boolean
+      }
       booking_availability: {
         Args: { p_from: string; p_to: string }
         Returns: Json
@@ -1824,6 +2046,10 @@ export type Database = {
       center_availability: {
         Args: { p_from: string; p_to: string; p_staff: boolean }
         Returns: Json
+      }
+      center_date: {
+        Args: { p_at?: string }
+        Returns: string
       }
       center_day_start: {
         Args: { p_day: string }
@@ -1982,6 +2208,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      end_exercise_schedule: {
+        Args: { p_schedule: string }
+        Returns: Json
+      }
       enqueue_booking_reminders: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1997,6 +2227,10 @@ export type Database = {
       erase_patient_chat: {
         Args: { p_patient: string }
         Returns: number
+      }
+      exercise_day: {
+        Args: { p_patient: string; p_day?: string }
+        Returns: Json
       }
       expire_stale_bookings: {
         Args: Record<PropertyKey, never>
@@ -2164,6 +2398,21 @@ export type Database = {
         }
         Returns: string
       }
+      publish_scheduled_prescription: {
+        Args: {
+          p_schedule: string
+          p_assignment: string
+          p_version: string
+          p_patient: string
+          p_exercise: string
+          p_side: string
+          p_low: number
+          p_high: number
+          p_repetitions: number
+          p_parameters?: Json
+        }
+        Returns: string
+      }
       record_consent: {
         Args: {
           p_id: string
@@ -2172,6 +2421,10 @@ export type Database = {
           p_occurred_at: string
         }
         Returns: string
+      }
+      record_exercise_days: {
+        Args: { p_now?: string }
+        Returns: number
       }
       register_device: {
         Args: { p_token: string; p_platform?: string }
@@ -2209,6 +2462,17 @@ export type Database = {
         Args: { p_patient: string }
         Returns: undefined
       }
+      save_exercise_schedule: {
+        Args: {
+          p_id: string
+          p_patient: string
+          p_starts_on: string
+          p_ends_on: string
+          p_rest_weekdays?: number[]
+          p_rest_dates?: string[]
+        }
+        Returns: Json
+      }
       save_my_profile: {
         Args: { p_details: Json }
         Returns: undefined
@@ -2222,7 +2486,26 @@ export type Database = {
           p_care_team: boolean
           p_reminder_time?: string
           p_messages?: boolean
+          p_missed_days?: boolean
         }
+        Returns: Json
+      }
+      schedule_day_count: {
+        Args: {
+          s: Database["public"]["Tables"]["exercise_schedules"]["Row"]
+          p_from: string
+        }
+        Returns: number
+      }
+      schedule_has_day: {
+        Args: {
+          s: Database["public"]["Tables"]["exercise_schedules"]["Row"]
+          p_day: string
+        }
+        Returns: boolean
+      }
+      schedule_json: {
+        Args: { s: Database["public"]["Tables"]["exercise_schedules"]["Row"] }
         Returns: Json
       }
       schedule_layout: {
@@ -2457,6 +2740,46 @@ export type Database = {
         Args: { p_series: string }
         Returns: Json
       }
+      session_video_days: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      session_video_due: {
+        Args: { p_limit?: number }
+        Returns: string[]
+      }
+      session_video_json: {
+        Args: { v: Database["public"]["Tables"]["session_videos"]["Row"] }
+        Returns: Json
+      }
+      session_video_limit: {
+        Args: { p_kind: string }
+        Returns: number
+      }
+      session_video_ms: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      session_video_readable: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
+      session_video_removed: {
+        Args: { p_paths: string[] }
+        Returns: number
+      }
+      session_video_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      session_video_viewer: {
+        Args: { v: Database["public"]["Tables"]["session_videos"]["Row"] }
+        Returns: boolean
+      }
+      session_video_writable: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
       set_chat_consent: {
         Args: { p_granted: boolean }
         Returns: Json
@@ -2489,6 +2812,10 @@ export type Database = {
           p_progress: Json
           p_caption?: string
         }
+        Returns: Json
+      }
+      share_session_video: {
+        Args: { p_id: string }
         Returns: Json
       }
       signup_code_lifetime: {
@@ -2530,6 +2857,24 @@ export type Database = {
       start_profile_photo: {
         Args: { p_mime?: string }
         Returns: Json
+      }
+      start_session_video: {
+        Args: {
+          p_id: string
+          p_session: string
+          p_width: number
+          p_height: number
+          p_duration_ms: number
+        }
+        Returns: Json
+      }
+      stop_exercise: {
+        Args: { p_assignment: string }
+        Returns: undefined
+      }
+      stop_sharing_session_video: {
+        Args: { p_id: string }
+        Returns: undefined
       }
       therapist_schedule: {
         Args: { p_from: string; p_to: string }

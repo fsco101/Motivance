@@ -183,7 +183,7 @@ test('the whole page works by keyboard, and a refresh keeps the list on screen',
 test('the record puts everything side by side on wide screens and stacks it on narrow ones', async () => {
   await page.goto(`/therapist/patients/${ana.id}`)
   const birthdate = page.getByText('Birthdate')
-  const plans = page.getByRole('heading', { name: 'Exercise plan' })
+  const plans = page.getByRole('heading', { name: 'Exercise schedules' })
   const progress = page.getByRole('heading', { name: 'Progress', exact: true })
   await expect(page.getByText('Mar 14, 1971')).toBeVisible()
   const wide = { profile: (await birthdate.boundingBox())!, plans: (await plans.boundingBox())!, progress: (await progress.boundingBox())! }

@@ -85,17 +85,21 @@ export function readTiming(text: { minimum: string; maximum: string; hold: strin
 export type PrescriptionRequest = PrescriptionDraft & { assignmentId: string; requestId: string; patientId: string }
 
 /** The same parameters Android sends, so a prescription behaves the same whichever app published it. */
-export async function publishPrescription(db: Db, request: PrescriptionRequest) {
+export function prescriptionArguments(request: PrescriptionRequest) {
   const parameters: Record<string, Json> = {
     minimum_cycle_ms: request.minimumCycleMs, maximum_cycle_ms: request.maximumCycleMs, peak_hold_ms: request.peakHoldMs,
     max_trunk_lean_degrees: request.maxTrunkLean, confidence: request.confidence,
   }
   if (request.focus) parameters.focus_joint = request.focus
   if (request.sideSeconds != null) parameters.side_seconds = request.sideSeconds
-  must(await db.rpc('publish_prescription', {
+  return {
     p_assignment: request.assignmentId, p_version: request.requestId, p_patient: request.patientId, p_exercise: request.exerciseId, p_side: request.side,
     p_low: request.low, p_high: request.high, p_repetitions: request.repetitions, p_parameters: parameters,
-  }))
+  }
+}
+
+export async function publishPrescription(db: Db, request: PrescriptionRequest) {
+  must(await db.rpc('publish_prescription', prescriptionArguments(request)))
 }
 
 export const NAME_LIMIT = 120

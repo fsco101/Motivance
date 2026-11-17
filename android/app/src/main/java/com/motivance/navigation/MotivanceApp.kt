@@ -1,6 +1,8 @@
 package com.motivance.navigation
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import androidx.core.net.toUri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -57,6 +59,7 @@ import com.motivance.domain.WorkspaceOverview
 import com.motivance.domain.nextSession
 import com.motivance.domain.NotificationDestination
 import com.motivance.domain.destination
+import com.motivance.domain.TodayState
 import com.motivance.feature.admin.*
 import com.motivance.feature.chat.*
 import com.motivance.feature.auth.*
@@ -65,6 +68,10 @@ import com.motivance.feature.notifications.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.SessionVideo
 import com.motivance.feature.exercise.SessionVideoCard
+import com.motivance.feature.exercise.SessionVideoStore
+import com.motivance.feature.exercise.SessionVideoViewModel
+import com.motivance.feature.exercise.VideoShareControls
+import com.motivance.feature.exercise.WatchSharedVideo
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.exercise.SideResult
 import com.motivance.feature.rehabilitation.*
@@ -120,6 +127,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     val notificationSettings:NotificationSettingsViewModel=viewModel()
     val notificationSettingsState by notificationSettings.state.collectAsStateWithLifecycle()
     val chat:ChatViewModel=viewModel()
+    // Session videos shared with the therapist (#129).
+    val videos:SessionVideoViewModel=viewModel()
+    val videoState by videos.state.collectAsStateWithLifecycle()
     val chatState by chat.state.collectAsStateWithLifecycle()
     val haptics=rememberHaptics()
     LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
@@ -135,6 +145,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     var selectedRole by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedPatient by rememberSaveable {mutableStateOf<String?>(null)}
     var editingAssignment by rememberSaveable {mutableStateOf<String?>(null)}
+    // The schedule being changed (null for a new one), and the one a new exercise goes into.
+    var editingSchedule by rememberSaveable {mutableStateOf<String?>(null)}
+    var assignSchedule by rememberSaveable {mutableStateOf<String?>(null)}
     var selectedConversation by rememberSaveable {mutableStateOf<String?>(null)}
     var sharing by remember {mutableStateOf<Pair<String,com.motivance.domain.ChatCard.Progress>?>(null)}
     var sendingVideo by remember {mutableStateOf<Pair<com.motivance.feature.exercise.SessionVideo,List<com.motivance.domain.Conversation>>?>(null)}
@@ -148,6 +161,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     // With no Firebase values this never asks and never registers, so the app behaves as if push did not exist.
     val context=LocalContext.current
+    val videoStore=remember {SessionVideoStore(context)}
     var pushAllowed by remember {mutableStateOf(notificationsAllowed(context))}
     val askForPush=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> pushAllowed=granted; if(granted) vm.registerPush()}
     LaunchedEffect(auth.session?.userId) {
@@ -164,7 +178,14 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     if(auth.restoring) { AuthLoadingScreen(); return }
     fun goBack() { route=parentRoute(route,auth.session!=null,auth.session?.workspace(role)==UserRole.THERAPIST) }
     BackHandler(enabled=route!="LANDING" && route!="HOME") { goBack() }
-    if(route=="CAMERA") { CameraPrototype(ownerId=auth.session?.userId ?: "local-demo") { route="CHECK_COMPLETE" }; return }
+    if(route=="CAMERA") {
+        // Whether the exercise just finished was the last one due today, for the celebration's words (#130).
+        CameraPrototype(ownerId=auth.session?.userId ?: "local-demo",lastOfDay={
+            val plan=patientToday(local.cached,local.history,connected.days[connected.owner],centerDate())
+            plan.due>0 && plan.todo.isEmpty()
+        }) { route="CHECK_COMPLETE" }
+        return
+    }
     if(route=="AUTH" && auth.session==null) {
         AuthScreen(vm,{route="SETUP"}) { route="LANDING" }; return
     }
@@ -241,7 +262,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     val rootRoutes=setOf("HOME","PATIENTS","EXERCISES","BOOKINGS","PROGRESS","PROFILE","ADMIN")+(if(therapistRole) setOf("SCHEDULE") else emptySet())
     val activeTab=when(route) {
-        "PATIENT_DETAIL","ASSIGN" -> "PATIENTS"
+        "PATIENT_DETAIL","ASSIGN","PLAN_SCHEDULE" -> "PATIENTS"
         "LOCAL_HISTORY" -> "PROFILE"
         "BOOK","MOVE" -> "BOOKINGS"
         "SCHEDULE" -> if(therapistRole) "SCHEDULE" else "BOOKINGS"
@@ -324,6 +345,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     local.metrics.incomplete,local.metrics.durationMs,connected.outbox.firstOrNull {it.sessionId==local.id}?.state,local.sides,
                     again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"}) {
                     val videoToaster=LocalToaster.current
+                    val ownVideo=local.video
                     SessionVideoCard(local.video,local.videoSaving,
                         send=if(chatOwner!=null && actualRole==UserRole.PATIENT) ({video:SessionVideo ->
                             // Only conversations that take videos are offered; the video then goes the way any attached one does.
@@ -332,7 +354,14 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                             else if(choices.size==1) {chat.open(choices.single().id); selectedConversation=choices.single().id; route="CONVERSATION"; chat.attach(video.uri,"video/mp4")}
                             else sendingVideo=video to choices
                         }) else null,
-                        gone={exercise.videoGone(it)})
+                        gone={exercise.videoGone(it)}) {
+                        // A signed-in patient can let the exercise's therapist see this one video (#129).
+                        if(ownVideo!=null && actualRole==UserRole.PATIENT && auth.session!=null) {
+                            LaunchedEffect(connected.owner) {videos.load(connected.owner)}
+                            VideoShareControls(ownVideo.sessions.firstNotNullOfOrNull {videoState.shared[it]},videoState.sending==ownVideo.uri,videoState.progress,
+                                onShare={videos.share(connected.owner,ownVideo)},onStop={ownVideo.sessions.firstNotNullOfOrNull {videoState.shared[it]}?.let(videos::stop)})
+                        }
+                    }
                 }
                 "PROFILE" -> {
                     PageHeader(R.string.nav_profile,R.string.account_and_access)
@@ -358,6 +387,10 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "LOCAL_HISTORY" -> {
                     PageHeader(R.string.local_history,R.string.local_history_detail)
+                    val videoOwner=auth.session?.userId ?: "local-demo"
+                    val canShare=auth.session!=null && actualRole==UserRole.PATIENT
+                    val toaster=LocalToaster.current
+                    if(canShare) LaunchedEffect(videoOwner) {videos.load(videoOwner)}
                     if(local.history.isEmpty()) EmptyState(R.string.no_sessions,R.string.no_sessions_detail)
                     local.history.forEach { row ->
                         val metrics=ExerciseJson.snapshot(row.snapshotJson)
@@ -382,6 +415,19 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                             Text(stringResource(if(rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall,
                                 color=MaterialTheme.colorScheme.onSurfaceVariant)
                             connected.outbox.firstOrNull {it.sessionId==row.id}?.let {StatusPill(syncLabel(it.state))}
+                            // This session's recording (#129): the phone's own copy when it has one, otherwise the copy shared with the therapist.
+                            val phoneVideo=remember(row.id,local.video) {videoStore.forSession(videoOwner,row.id)}
+                            val sharedVideo=phoneVideo?.sessions?.firstNotNullOfOrNull {videoState.shared[it]} ?: videoState.shared[row.id]
+                            if(phoneVideo!=null || sharedVideo!=null) {
+                                HorizontalDivider()
+                                if(phoneVideo!=null) OutlinedButton({
+                                    try {context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(phoneVideo.uri.toUri(),"video/mp4").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))}
+                                    catch(_:ActivityNotFoundException) {toaster.show(R.string.video_open_failed,ToastTone.ERROR)}
+                                },Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {Text(stringResource(R.string.video_watch))}
+                                else if(sharedVideo!=null) WatchSharedVideo(sharedVideo,videos::link)
+                                if(canShare) VideoShareControls(sharedVideo,phoneVideo!=null && videoState.sending==phoneVideo.uri,videoState.progress,
+                                    onShare=phoneVideo?.let {video -> {videos.share(videoOwner,video)}},onStop={sharedVideo?.let(videos::stop)})
+                            }
                         }
                     }
                 }
@@ -395,26 +441,24 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "MESSAGES" -> if(chatOwner!=null) MessagesScreen(chatState,chatOwner,actualRole==UserRole.PATIENT,{chat.refreshList()},{chat.setConsent(true)}) {selectedConversation=it; route="CONVERSATION"}
                 "PATIENT_DETAIL" -> {
                     val patient=connected.workspace.patients.firstOrNull {it.id==patientId}
-                    val plans=connected.workspace.prescriptions.filter {it.patientId==patientId}
                     PageHeader(R.string.patient_management,eyebrow=patient?.name?.ifBlank {null} ?: patientId?.take(8))
                     if(chatOwner!=null && patientId!=null) OutlinedButton({openConversationWith(patientId)},Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {
                         Icon(Icons.Default.Email,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.chat_message_patient))
                     }
                     patient?.profile?.let {PatientProfileSummary(it)}
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
-                    SectionHeading(R.string.ui_exercise_plan) {
-                        FilledTonalButton({editingAssignment=null; route="ASSIGN"},enabled=!connected.busy,modifier=Modifier.heightIn(min=48.dp)) {
-                            Icon(Icons.Default.Add,null,Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.assign_exercise))
-                        }
-                    }
-                    if(plans.isEmpty() && !connected.busy) EmptyState(R.string.no_assignments,R.string.ui_plan_empty_detail)
-                    plans.forEach {p -> AssignedPrescriptionCard(p,connected.workspace.catalogue.firstOrNull {it.id==p.exerciseId},!connected.busy) {
-                        editingAssignment=p.assignmentId; route="ASSIGN"
-                    }
-                        if(chatOwner!=null && patientId!=null) TextButton({chat.shareExercise(patientId,p.assignmentId)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.chat_cards_send_exercise))}
+                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview(); patientId?.let(rehabilitation::loadDay)}
+                    if(patientId!=null) {
+                        LaunchedEffect(patientId) {rehabilitation.loadDay(patientId)}
+                        PatientSchedules(connected,patientId,patient?.name?.ifBlank {null} ?: patientId.take(8),{rehabilitation.endSchedule(patientId,it)},{rehabilitation.stopExercise(patientId,it)},
+                            newSchedule={editingSchedule=null; route="PLAN_SCHEDULE"},editSchedule={editingSchedule=it.id; route="PLAN_SCHEDULE"},
+                            addExercise={editingAssignment=null; assignSchedule=it.id; route="ASSIGN"},assignEveryDay={editingAssignment=null; assignSchedule=null; route="ASSIGN"},
+                            editPlan={editingAssignment=it; assignSchedule=null; route="ASSIGN"},
+                            share=if(chatOwner!=null) ({chat.shareExercise(patientId,it)}) else null)
                     }
                     SectionHeading(R.string.recovery_progress)
-                    ResultsDashboard(connected.workspace,connected.owner,patientId,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}})
+                    patientId?.let {LaunchedEffect(it) {videos.load(it)}}
+                    ResultsDashboard(connected.workspace,connected.owner,patientId,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}},
+                        videoFor={videoState.shared[it]},link=videos::link)
                 }
                 "ASSIGN" -> {
                     val existing=connected.workspace.prescriptions.firstOrNull {it.assignmentId==editingAssignment}
@@ -422,12 +466,34 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
                     // Leaving on success also retires the form's assignment ID: reusing it would turn the next exercise into a new
                     // version of this one and replace it on the patient's phone.
-                    key(existing?.versionId ?: "new") {PrescriptionForm(connected,rehabilitation,patientId,existing) {if(route=="ASSIGN") route="PATIENT_DETAIL"}}
+                    val schedule=assignSchedule?.let {id -> connected.days[patientId]?.schedules?.firstOrNull {it.id==id}}
+                    key(existing?.versionId ?: "new") {
+                        PrescriptionForm(connected,rehabilitation,patientId,existing,scheduleId=assignSchedule.takeIf {existing==null},scheduleLabel=schedule?.let {scheduleRange(it)}) {
+                            patientId?.let(rehabilitation::loadDay)
+                            if(route=="ASSIGN") route="PATIENT_DETAIL"
+                        }
+                    }
+                }
+                "PLAN_SCHEDULE" -> if(patientId!=null) {
+                    val day=connected.days[patientId]
+                    val existing=editingSchedule?.let {id -> day?.schedules?.firstOrNull {it.id==id}}
+                    PageHeader(if(existing!=null) R.string.exercise_schedule_form_edit else R.string.exercise_schedule_form_new,eyebrow=connected.workspace.patients.firstOrNull {it.id==patientId}?.name)
+                    key(existing?.id ?: "new") {
+                        ScheduleForm(connected,patientId,existing,centerToday(day),cancel={route="PATIENT_DETAIL"}) {draft ->
+                            rehabilitation.saveSchedule(draft) {if(route=="PLAN_SCHEDULE") route="PATIENT_DETAIL"}
+                        }
+                    }
                 }
                 "EXERCISES" -> {
                     PageHeader(R.string.your_exercises,R.string.professional_targets)
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
-                    CachedAssignments(local.cached,connected.workspace.prescriptions.any {p -> p.patientId==connected.owner && local.cached.none {it.versionId==p.versionId}},loading=connected.busy || connected.failed) {exercise.newSession(); exercise.usePrescription(it); route="SETUP"}
+                    // Only today's exercises (#127): one finished today is gone until its next exercise day.
+                    LaunchedEffect(connected.owner) {if(connected.owner.isNotBlank()) rehabilitation.loadDay(connected.owner)}
+                    val today=patientToday(local.cached,local.history,connected.days[connected.owner],centerDate())
+                    if(today.state==TodayState.EXERCISE || today.state==TodayState.NONE) {
+                        TodayProgress(today)
+                        CachedAssignments(today.todo,connected.workspace.prescriptions.any {p -> p.patientId==connected.owner && local.cached.none {it.versionId==p.versionId}},loading=connected.busy || connected.failed) {exercise.newSession(); exercise.usePrescription(it); route="SETUP"}
+                    } else TodayNotice(today)
                     SectionHeading(R.string.ui_quick_actions)
                     QuickAction(Icons.Default.PlayArrow,R.string.camera_check,R.string.camera_preview_only) {route="SETUP"}
                     PatientInvitation(connected,rehabilitation)
@@ -467,7 +533,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); history.refresh()}
-                    ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}})
+                    if(actualRole==UserRole.PATIENT && connected.owner.isNotBlank()) LaunchedEffect(connected.owner) {videos.load(connected.owner)}
+                    ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}},
+                        videoFor={videoState.shared[it]},link=videos::link)
                 }
                 else -> if(actualRole==UserRole.SCHEDULER) SchedulerHome() else {
                     val patientRole=actualRole==UserRole.PATIENT
@@ -478,10 +546,13 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     when(actualRole) {
                         UserRole.PATIENT -> {
                             val now=System.currentTimeMillis()
-                            val ready=local.cached.filter {it.expiresAt>now && it.instructions.isNotBlank()}
-                            ready.firstOrNull()?.let {next ->
-                                TodayPlan(next,ready.size,{exercise.newSession(); exercise.usePrescription(next); route="SETUP"}) {route="EXERCISES"}
-                            } ?: WorkspaceHero(actualRole) {route="EXERCISES"}
+                            LaunchedEffect(connected.owner) {if(connected.owner.isNotBlank()) rehabilitation.loadDay(connected.owner)}
+                            val today=patientToday(local.cached.filter {it.expiresAt>now && it.instructions.isNotBlank()},local.history,connected.days[connected.owner],centerDate(now))
+                            when {
+                                today.todo.isNotEmpty() -> today.todo.first().let {next -> TodayPlan(next,today.todo.size,{exercise.newSession(); exercise.usePrescription(next); route="SETUP"}) {route="EXERCISES"}}
+                                today.state==TodayState.NONE -> WorkspaceHero(actualRole) {route="EXERCISES"}
+                                else -> TodayNotice(today)
+                            }
                             val days=remember(overview.data,local.history) {
                                 overview.data?.sessions.orEmpty().filter {it.status=="completed"}.mapNotNull {runCatching {LocalDate.parse(it.startedAt.take(10))}.getOrNull()}.toSet() +
                                     local.history.filter {it.status=="COMPLETED"}.map {Instant.ofEpochMilli(it.startedAt).atZone(ZoneId.systemDefault()).toLocalDate()}
@@ -519,7 +590,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
 
 /** Navigation depth decides the direction of the page transition: deeper slides in from the end edge. */
 private fun depth(route:String,therapist:Boolean)=when(route) {
-    "ASSIGN" -> 2
+    "ASSIGN","PLAN_SCHEDULE" -> 2
     "CONVERSATION" -> 2
     "PATIENT_DETAIL","LOCAL_HISTORY","SETUP","CHECK_COMPLETE","BOOK","MOVE","NOTIFICATIONS","MESSAGES" -> 1
     "SCHEDULE" -> if(therapist) 0 else 1
@@ -529,7 +600,7 @@ private fun depth(route:String,therapist:Boolean)=when(route) {
 internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=when(route) {
     "AUTH" -> "LANDING"
     "CAMERA" -> "SETUP"
-    "ASSIGN" -> "PATIENT_DETAIL"
+    "ASSIGN","PLAN_SCHEDULE" -> "PATIENT_DETAIL"
     "PATIENT_DETAIL" -> "PATIENTS"
     "CONVERSATION" -> "MESSAGES"
     "BOOK","MOVE" -> "BOOKINGS"

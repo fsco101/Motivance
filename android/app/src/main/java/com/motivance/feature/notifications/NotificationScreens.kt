@@ -63,6 +63,7 @@ import com.motivance.feature.booking.rememberSessionFormat
         NotificationKind.PATIENT_LINKED -> stringResource(R.string.notification_patient_linked,patient)
         NotificationKind.PATIENT_UNLINKED -> stringResource(R.string.notification_patient_unlinked,patient)
         NotificationKind.CHAT_MESSAGE -> stringResource(R.string.notification_chat_message,note.sender ?: note.subjectName ?: "")
+        NotificationKind.EXERCISE_MISSED -> stringResource(R.string.notification_exercise_missed,patient,note.day?.let {com.motivance.designsystem.displayDate(it)}.orEmpty(),note.done ?: 0,note.due ?: 0)
     }
 }
 

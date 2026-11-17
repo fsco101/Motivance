@@ -30,6 +30,8 @@ describe('reading a notification', () => {
     expect(decodeNotification({ id: 'n2', kind: 'session_finished', read_at: null, created_at: row.created_at, data: { patient_name: 'Ana', completed: 6, target: 5 } }))
       .toMatchObject({ kind: 'session_finished', startsAt: null, endsAt: null, reference: '', patient: 'Ana', completed: 6, target: 5, days: null })
     expect(decodeNotification({ id: 'n3', kind: 'patient_inactive', read_at: null, created_at: row.created_at, data: { patient_name: 'Ana', days: 4 } }).days).toBe(4)
+    expect(decodeNotification({ id: 'n4', kind: 'exercise_missed', read_at: null, created_at: row.created_at, data: { patient_name: 'Ana', day: '2026-11-17', due: 3, done: 1 } }))
+      .toMatchObject({ kind: 'exercise_missed', patient: 'Ana', day: '2026-11-17', due: 3, done: 1 })
   })
 
   it('leaves out a kind this version does not know, so a newer server never shows a blank row', () => {
@@ -52,6 +54,7 @@ describe('opening a notification', () => {
   it('goes to the patient\'s record for a therapist, or the list when there is none to open', () => {
     expect(notificationTarget(note('session_finished', 'p1'), 'therapist')).toBe('/therapist/patients/p1')
     expect(notificationTarget(note('patient_inactive', 'p1'), 'therapist')).toBe('/therapist/patients/p1')
+    expect(notificationTarget(note('exercise_missed', 'p1'), 'therapist')).toBe('/therapist/patients/p1')
     expect(notificationTarget(note('patient_linked', 'p1'), 'therapist')).toBe('/therapist/patients/p1')
     expect(notificationTarget(note('patient_linked'), 'therapist')).toBe('/therapist/patients')
     expect(notificationTarget(note('patient_unlinked', 'p1'), 'therapist')).toBe('/therapist/patients')

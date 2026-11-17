@@ -307,6 +307,29 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] On a physical phone and a tablet, as an administrator, open the overview in both languages. Confirm the storage meters, health list and four daily charts read clearly at the default and largest text sizes, that TalkBack reads each meter and each chart's days, and that the section cards come after the charts.
 - [ ] On the hosted project, compare the overview's database and file storage figures with the Supabase dashboard's usage page. If the project is not on the Free plan, update `backend_plan` first (`docs/operations/BACKEND-STATUS.md`).
 
+## Exercise schedules (#124, started 2026-11-17)
+
+- [ ] With a therapist, on a physical phone and on the web, in both languages: create a schedule with a rest weekday and a rest date, add two exercises to it, change its end date, remove one exercise and end the schedule. Confirm the day counts, the "today" labels and the confirmations read clearly, and that the date pickers only offer days that can be chosen.
+- [ ] On phones of different widths and at the largest text size, check that the schedule cards, weekday chips and rest-date chips wrap without clipping, and that TalkBack reads each weekday chip by its full name and says whether it is chosen.
+- [ ] With a therapist, review whether "exercise day", "rest day" and "every-day exercise" match how the center talks about home programmes, in English and Filipino.
+- [ ] On a physical phone as a patient: finish an exercise with the phone offline and confirm it leaves today's list straight away and does not come back once the upload goes through. Check a rest day, the day after the last exercise day, and a day just after midnight in Manila with the phone set to another time zone.
+- [ ] With a reminder time set, confirm the daily reminder arrives on an exercise day with something left to do, and not on a rest day or after everything is done.
+- [ ] On the hosted project with real push, leave a scheduled exercise undone and confirm the therapist's phone shows "Missed exercises" the next morning, in both languages, and that turning off "Missed exercise days" stops the push but keeps the bell row.
+- [ ] With a therapist, review whether one notification per patient and day is the right amount, and whether the record's list of missed days helps follow up.
+
+## Finish celebration (#130, 2026-11-17)
+
+- [ ] On physical phones, in both languages, finish a session at, above and below the target. Confirm the tune and the line are heard at a comfortable media volume, that nothing plays with "Finish sound" off or with the phone's media volume at zero, and that the result page follows after about 3.5 seconds or on a tap.
+- [ ] Finish the last exercise due today and confirm both the screen and the voice say so. Finish one that is not the last and confirm they do not.
+- [ ] With representative patients, ask whether the moment feels encouraging rather than in the way, and whether "Good effort" reads as kind when the target was not reached.
+
+## Session videos shared with the therapist (#129, 2026-11-18)
+
+- [ ] On a physical phone with a real recorded session of a few minutes, share it with the therapist. Time how long making it smaller and sending take on mobile data and on Wi-Fi, and confirm the therapist can watch it on Android and on the web, and the patient in their history on both.
+- [ ] Stop sharing from the history and confirm the therapist can no longer open it. Run `python scripts/cleanup_chat_media.py --target hosted` after 15 days, or after stopping, and confirm the file is gone from Storage while the phone's gallery copy remains.
+- [ ] Review the reworded consent, sign-up and landing text, and the sharing explanation, in English and Filipino, with the deployment owner, and decide whether the privacy agreement needs a new version for sharing.
+- [ ] Owner decision still open: one choice per video (built) or a standing setting that shares every recorded video.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

@@ -28,7 +28,8 @@ import kotlinx.coroutines.withContext
  * The session's recording on its result: watch it in the phone's player, send it in chat, or delete it from the gallery.
  * Shown only when the patient turned recording on.
  */
-@Composable fun SessionVideoCard(video:SessionVideo?,saving:Boolean,send:((SessionVideo)->Unit)?,gone:(String)->Unit) {
+/** [extra] goes under the actions: for a signed-in patient, sharing with the therapist (#129). */
+@Composable fun SessionVideoCard(video:SessionVideo?,saving:Boolean,send:((SessionVideo)->Unit)?,gone:(String)->Unit,extra:@Composable ColumnScope.()->Unit={}) {
     if(video==null && !saving) return
     val context=LocalContext.current
     val toaster=LocalToaster.current
@@ -47,6 +48,7 @@ import kotlinx.coroutines.withContext
             catch(_:ActivityNotFoundException) {toaster.show(R.string.video_open_failed,ToastTone.ERROR)}
         })
         send?.let {ActionButton(R.string.video_send,{it(video)},outlined=true)}
+        extra()
         TextButton({confirming=true},Modifier.fillMaxWidth().heightIn(min=48.dp)) {Text(stringResource(R.string.video_delete),color=MaterialTheme.colorScheme.error)}
     }
     if(confirming && video!=null) AlertDialog({confirming=false},title={Text(stringResource(R.string.video_delete_title))},

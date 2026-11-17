@@ -5,6 +5,7 @@ export type FailureKey =
   | 'errors.chatClosed' | 'errors.chatRateLimited' | 'errors.chatTooLate' | 'errors.chatConsentRequired'
   | 'errors.chatMediaConsent' | 'errors.chatMediaTooLarge' | 'errors.chatMediaInvalid' | 'errors.chatVideoCap' | 'errors.chatMediaMissing'
   | 'errors.chatMediaUnreadable' | 'errors.chatMediaUnsupported' | 'errors.chatScheduleTime' | 'errors.chatScheduleGone'
+  | 'errors.scheduleDates' | 'errors.scheduleRestDays' | 'errors.scheduleNoDay' | 'errors.scheduleGone'
 
 type Failure = { status?: number; code?: string; message?: string; name?: string }
 
@@ -25,6 +26,10 @@ export function failureKey(error: unknown): FailureKey {
   if (failure.message === 'chat_media_unsupported') return 'errors.chatMediaUnsupported'
   if (failure.message === 'chat_rate_limited') return 'errors.chatRateLimited'
   if (failure.message === 'chat_too_late') return 'errors.chatTooLate'
+  if (failure.message === 'schedule_dates') return 'errors.scheduleDates'
+  if (failure.message === 'schedule_rest_days') return 'errors.scheduleRestDays'
+  if (failure.message === 'schedule_no_day') return 'errors.scheduleNoDay'
+  if (failure.message === 'schedule_gone') return 'errors.scheduleGone'
   if (failure.status === 429 || code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') return 'errors.rateLimited'
   if (code === 'invalid_credentials') return 'errors.credentials'
   if (code === 'email_not_confirmed') return 'errors.unconfirmed'

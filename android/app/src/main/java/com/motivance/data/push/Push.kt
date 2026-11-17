@@ -114,6 +114,7 @@ fun pushChannel(kind:String?):Pair<String,Int> {
         NotificationGroup.CARE_TEAM -> "care_team" to R.string.push_channel_care_team
         NotificationGroup.PRACTICE -> "practice_reminders" to R.string.push_channel_practice
         NotificationGroup.MESSAGES -> "messages" to R.string.push_channel_messages
+        NotificationGroup.MISSED_DAYS -> "missed_days" to R.string.push_channel_missed_days
     }
 }
 

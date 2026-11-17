@@ -88,6 +88,7 @@ data class NotificationSettingsState(
     NotificationGroup.CARE_TEAM -> R.string.notification_settings_care_team
     NotificationGroup.PRACTICE -> R.string.notification_settings_practice
     NotificationGroup.MESSAGES -> R.string.notification_settings_messages
+    NotificationGroup.MISSED_DAYS -> R.string.notification_settings_missed_days
 })
 
 @Composable private fun groupDetail(group:NotificationGroup)=stringResource(when(group) {
@@ -98,6 +99,7 @@ data class NotificationSettingsState(
     NotificationGroup.CARE_TEAM -> R.string.notification_settings_care_team_detail
     NotificationGroup.PRACTICE -> R.string.notification_settings_practice_detail
     NotificationGroup.MESSAGES -> R.string.notification_settings_messages_detail
+    NotificationGroup.MISSED_DAYS -> R.string.notification_settings_missed_days_detail
 })
 
 /** "18:00" as this phone writes a time, such as 6:00 PM. */

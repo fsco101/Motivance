@@ -36,6 +36,8 @@ test.beforeAll(async ({ browser }) => {
   const versionId = randomUUID()
   await publishPrescription(await signedIn(therapist), { ...timing, assignmentId: randomUUID(), requestId: versionId, patientId: patient.id, exerciseId: ELBOW, side: 'left', low: 20, high: 90, repetitions: 8 })
   await ingestSession(patient, versionId, { kind: 'ELBOW_FLEXION', side: 'LEFT', low: 20, high: 90, target: 8, focusJoint: 'ELBOW', min: 22, max: 88, completed: 7 })
+  // That exercise is done for today, so it leaves today's list (#127). A second one, the same, is still to do.
+  await publishPrescription(await signedIn(therapist), { ...timing, assignmentId: randomUUID(), requestId: randomUUID(), patientId: patient.id, exerciseId: ELBOW, side: 'left', low: 20, high: 90, repetitions: 8 })
   // Axe needs a page from an explicit context.
   page = await (await browser.newContext()).newPage()
   // Records any attempt to open the camera, so the test can prove there were none.
@@ -58,6 +60,7 @@ test('a patient lands on their own home, with today\'s exercise and this week', 
   await page.goto('/patient')
   await expect(page.getByRole('heading', { name: 'Hello, Ana', level: 1 })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Elbow flexion' })).toBeVisible()
+  await expect(page.getByText('Done today: 1 of 2')).toBeVisible()
   await expect(page.getByText('Completed sessions on 1 of the 7 days this week').first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Recent sessions' })).toBeVisible()
   await noViolations()

@@ -75,7 +75,8 @@ function Frame({ workspace }: { workspace: Workspace }) {
 const Home = () => <TherapistHomeView base={THERAPIST} load={useDemo(data.therapistHome, { ...data.therapistHome, patients: 0, withoutPlan: 0, latest: [], recent: [] })} />
 const many = data.patients.flatMap((patient, index) => Array.from({ length: 9 }, (_, copy) => ({ ...patient, id: `${patient.id}-${copy}`, name: `${patient.name} ${index * 9 + copy}` })))
 const Patients = () => <PatientsView base={THERAPIST} load={useDemo(useSearchParams()[0].has('many') ? many : data.patients, [])} onInvite={async () => 'f3a9c1d27b6e4c0588a1d2e3f4a5b6c7d8e9f0a1b2c3d4e5'} onRevoke={said('Access revoked')} />
-const Record = () => <PatientRecordView base={THERAPIST} load={useDemo(data.record, { ...data.record, plans: [], trend: null })} />
+const Record = () => <PatientRecordView base={THERAPIST} load={useDemo(data.record, { ...data.record, schedules: [], everyDay: [], ended: [], missed: [], trend: null })}
+  actions={{ onSaveSchedule: async () => toast.show('Schedule saved'), onEndSchedule: async () => toast.show('Schedule ended'), onRemovePlan: async () => toast.show('Exercise removed'), onSendExercise: said('Sent to chat') }} />
 const Assign = () => <AssignmentEditorView load={useDemo({ patient: { id: 'p1', name: 'Ana Dela Cruz' }, catalogue: data.catalogue }, { patient: { id: 'p1', name: 'Ana Dela Cruz' }, catalogue: [] })} onPublish={said('Prescription published')} onCreateExercise={async () => 'v3'} />
 function Progress() {
   const [filters, setFilters] = useState(NO_FILTERS)
@@ -87,9 +88,9 @@ function Progress() {
 }
 function PatientHome() {
   const [open, setOpen] = useState(false)
-  return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, next: null, exerciseCount: 0, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.next?.name} /></>
+  return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, today: { ...data.restDay, state: 'none' }, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.today.todo[0]?.name} /></>
 }
-const PatientExercises = () => <PatientExercisesView base={PATIENT} load={useDemo(data.myExercises, [])} onStart={said('Suggested the phone')} onCamera={said('Suggested the phone')} />
+const PatientExercises = () => <PatientExercisesView base={PATIENT} load={useDemo(data.myToday, data.restDay)} onStart={said('Suggested the phone')} onCamera={said('Suggested the phone')} />
 function PatientBook() {
   const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
   const [chosen, setChosen] = useState<Slot | null>(null)

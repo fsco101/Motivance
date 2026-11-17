@@ -10,7 +10,7 @@ export const BOOKING_KINDS = [
   'series_booked', 'series_assigned', 'series_cancelled', 'session_series_cancelled',
 ] as const
 /** Not about one session, so these have no time of their own. */
-export const CARE_KINDS = ['plan_updated', 'session_finished', 'practice_reminder', 'patient_inactive', 'care_linked', 'care_unlinked', 'patient_linked', 'patient_unlinked', 'chat_message'] as const
+export const CARE_KINDS = ['plan_updated', 'session_finished', 'practice_reminder', 'patient_inactive', 'care_linked', 'care_unlinked', 'patient_linked', 'patient_unlinked', 'chat_message', 'exercise_missed'] as const
 export type NotificationKind = (typeof BOOKING_KINDS)[number] | (typeof CARE_KINDS)[number]
 const KNOWN = new Set<string>([...BOOKING_KINDS, ...CARE_KINDS])
 
@@ -26,6 +26,8 @@ export type AppNotification = {
   completed: number | null; target: number | null; days: number | null
   /** For a new message: which conversation, and who wrote. Never the words. */
   conversationId: string | null; sender: string | null
+  /** A missed exercise day: the calendar day, and how many of the exercises due were done. */
+  day: string | null; due: number | null; done: number | null
 }
 export type Inbox = { unread: number; rows: AppNotification[] }
 
@@ -34,6 +36,7 @@ type RawNotification = {
   data: {
     reference_no?: string; starts_at?: string; ends_at?: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null
     sessions?: number; last_starts_at?: string | null; completed?: number; target?: number; days?: number; conversation_id?: string; sender_name?: string | null
+    day?: string; due?: number; done?: number
   }
 }
 
@@ -44,6 +47,7 @@ export const decodeNotification = (row: RawNotification & { kind: NotificationKi
   subjectId: row.subject_id ?? null, subjectName: row.subject_name ?? null, subjectPhoto: row.subject_photo ?? null,
   completed: row.data.completed ?? null, target: row.data.target ?? null, days: row.data.days ?? null,
   conversationId: row.data.conversation_id ?? null, sender: row.data.sender_name ?? null,
+  day: row.data.day ?? null, due: row.data.due ?? null, done: row.data.done ?? null,
 })
 
 /** A kind this version does not know is left out, so a newer server never shows a blank row. */
@@ -58,7 +62,7 @@ export function notificationTarget(note: AppNotification, workspace: Notificatio
   switch (note.kind) {
     case 'plan_updated': case 'practice_reminder': return '/patient/exercises'
     case 'care_linked': case 'care_unlinked': return '/patient'
-    case 'session_finished': case 'patient_inactive': case 'patient_linked':
+    case 'session_finished': case 'patient_inactive': case 'patient_linked': case 'exercise_missed':
       return note.subjectId ? `/therapist/patients/${note.subjectId}` : '/therapist/patients'
     case 'patient_unlinked': return '/therapist/patients'
     case 'chat_message': {

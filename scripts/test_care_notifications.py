@@ -148,7 +148,8 @@ def run(stack):
 
     check(all(state == 'pending:' for state in push_states(patient, 'care_linked') + push_states(patient, 'plan_updated')), 'Pushes for the new kinds wait in the queue like booking pushes')
 
-    # The daily practice reminder: only for someone with a plan who has not exercised today, in the two hours after their time.
+    # The daily practice reminder: only for someone with an exercise still to do today, in the two hours after their time (#127).
+    # Exercise schedules, rest days and an exercise already done are covered in web/tests/contract/exercise-schedule.test.ts.
     admin_link(therapist, quiet, True)
     quiet_plan = publish(quiet)
     admin_link(therapist, late, True)
@@ -171,7 +172,7 @@ def run(stack):
     today = sql(f"select (now() at time zone '{zone}')::date;")
     check(count(quiet, 'practice_reminder') == 1, 'A patient with a plan who has not exercised today is reminded once, however often the job runs')
     check(json.loads(sql(f"select data from public.notifications where user_id='{quiet}' and kind='practice_reminder';")) == {'date': today}, 'The reminder is for today')
-    check(count(patient, 'practice_reminder') == 0, 'A patient who has exercised today is not reminded')
+    check(count(patient, 'practice_reminder') == 1, 'A patient who did one of their two exercises today is still reminded about the other')
     check(count(planless, 'practice_reminder') == 0, 'A patient with nothing to do is not reminded')
     check(push_states(quiet, 'practice_reminder') == ['pending:'], 'The reminder is pushed')
     if minutes >= 3 * 60 + 5:
@@ -220,7 +221,7 @@ update public.sessions set started_at=now()-interval '90 hours',ended_at=now()-i
 
     # Settings: defaults, validation and ownership.
     code, data = rpc('my_notification_settings', {}, ts)
-    check(code == 200 and data == {'bookings': True, 'exercise_plan': True, 'session_results': True, 'inactivity': True, 'care_team': True, 'reminder_time': None},
+    check(code == 200 and data == {'bookings': True, 'exercise_plan': True, 'session_results': True, 'inactivity': True, 'care_team': True, 'messages': True, 'missed_days': True, 'reminder_time': None},
           'Someone who never chose has every switch on and no reminder')
     for value in ('25:00', '7:30', '07:30:00', 'soon'):
         code, _ = rpc('save_notification_settings', {'p_bookings': True, 'p_exercise_plan': True, 'p_session_results': True, 'p_inactivity': True, 'p_care_team': True, 'p_reminder_time': value}, ts)

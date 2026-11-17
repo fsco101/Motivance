@@ -8,7 +8,9 @@ data class LocalSession(@PrimaryKey val id:String,val ownerId:String,val rulesJs
 @Entity(tableName="sync_outbox",foreignKeys=[ForeignKey(entity=LocalSession::class,parentColumns=["id"],childColumns=["sessionId"],onDelete=ForeignKey.CASCADE)],indices=[Index("ownerId")])
 data class OutboxEntry(@PrimaryKey val sessionId:String,val ownerId:String,val state:String,val payloadJson:String,@ColumnInfo(defaultValue="0") val attempts:Int=0,@ColumnInfo(defaultValue="NULL") val lastError:String?=null)
 @Entity(tableName="cached_prescriptions",primaryKeys=["ownerId","versionId"])
-data class CachedPrescription(val ownerId:String,val versionId:String,val assignmentId:String,val patientId:String,val rulesJson:String,val instructions:String,val expiresAt:Long,@ColumnInfo(defaultValue="0") val cachedAt:Long=0)
+data class CachedPrescription(val ownerId:String,val versionId:String,val assignmentId:String,val patientId:String,val rulesJson:String,val instructions:String,val expiresAt:Long,@ColumnInfo(defaultValue="0") val cachedAt:Long=0,
+    /** The exercise's schedule (#127): dates and rest days, so today's list works offline. Null is an every-day exercise. */
+    @ColumnInfo(defaultValue="NULL") val scheduleJson:String?=null)
 
 @Entity(tableName="consent_events",indices=[Index("ownerId")])
 data class LocalConsent(@PrimaryKey val id:String,val ownerId:String,val event:String,val version:String,val occurredAt:Long,val state:String="PENDING",val attempts:Int=0,val lastError:String?=null)
@@ -49,5 +51,5 @@ data class ChatOutboxEntry(@PrimaryKey val id:String,val ownerId:String,val conv
     @Query("SELECT COUNT(*) FROM sync_outbox o JOIN local_sessions s ON s.id=o.sessionId WHERE o.ownerId=:owner AND o.state<>'LOCAL_ONLY' AND s.startedAt>=:since")
     suspend fun prescribedSince(owner:String,since:Long):Int
 }
-@Database(entities=[LocalSession::class,OutboxEntry::class,CachedPrescription::class,LocalConsent::class,ChatOutboxEntry::class],version=4,exportSchema=true)
+@Database(entities=[LocalSession::class,OutboxEntry::class,CachedPrescription::class,LocalConsent::class,ChatOutboxEntry::class],version=5,exportSchema=true)
 abstract class SessionDatabase:RoomDatabase() { abstract fun sessions():SessionDao }

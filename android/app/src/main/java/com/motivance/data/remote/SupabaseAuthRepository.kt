@@ -28,7 +28,7 @@ import java.time.OffsetDateTime
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null,
-) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository, SessionVideoRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -73,7 +73,7 @@ import java.time.OffsetDateTime
                 val failure=runCatching {JSONObject(response.body?.string().orEmpty())}.getOrNull()
                 // Only known codes pass: other server messages can name tables and columns.
                 val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
-                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_")}
+                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_") || it.startsWith("schedule_") || it.startsWith("video_")}
                 throw RemoteFailure(response.code,code)
             }
             response.body?.string().orEmpty()
@@ -175,7 +175,7 @@ import java.time.OffsetDateTime
     override suspend fun loadWorkspace()=authorized { token,id ->
         // The patient's exercise list reads this cache, so it is downloaded first: nothing below can hold it back.
         if(cache!=null) {
-            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
+            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,exercise_schedules(id,starts_on,ends_on,rest_weekdays,rest_dates,cancelled_at),prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
             cache.replaceCache(id,PrescriptionCache.decode(id,details,System.currentTimeMillis()))
             val consent=JSONArray(call("/rest/v1/consents?select=client_event_id,event,occurred_at&patient_id=eq.$id&consent_type=eq.movement-summary&client_event_id=not.is.null&order=occurred_at.desc&limit=1",null,token,"GET"))
             if(consent.length()>0) cache.reconcileConsent(id,consent.getJSONObject(0).let {ServerConsent(it.getString("client_event_id"),it.getString("event"),OffsetDateTime.parse(it.getString("occurred_at")).toInstant().toEpochMilli())})
@@ -184,7 +184,7 @@ import java.time.OffsetDateTime
         val details=JSONArray(call("/rest/v1/patient_profiles?select=*",null,token,"GET"))
         val profileById=(0 until details.length()).map {details.getJSONObject(it)}.associate {it.getString("user_id") to readProfile(it)}
         val catalogue=JSONArray(call("/rest/v1/exercise_versions?select=${CatalogueJson.SELECT}&published=eq.true",null,token,"GET"))
-        val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)&active=eq.true",null,token,"GET"))
+        val assignments=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,therapist_id,schedule_id,prescription_versions(id,version,exercise_version_id,side,minimum_degrees,maximum_degrees,target_repetitions,parameters)&active=eq.true",null,token,"GET"))
         val requests=JSONArray(call("/rest/v1/data_requests?select=id,kind,status&order=created_at.desc",null,token,"GET"))
         fun <T> rows(a:JSONArray,convert:(JSONObject)->T)=(0 until a.length()).map {convert(a.getJSONObject(it))}
         RehabWorkspace(
@@ -193,7 +193,8 @@ import java.time.OffsetDateTime
             CatalogueJson.decode(catalogue,id),
             rows(assignments) {a -> val v=a.getJSONArray("prescription_versions"); if(v.length()==0) null else {
                 val p=(0 until v.length()).map {v.getJSONObject(it)}.maxBy {it.getInt("version")}
-                PrescriptionSummary(a.getString("id"),p.getString("id"),a.getString("patient_id"),p.getString("exercise_version_id"),p.getInt("version"),p.getString("side"),p.getDouble("minimum_degrees"),p.getDouble("maximum_degrees"),p.getInt("target_repetitions"),p.optJSONObject("parameters")?.toString() ?: "{}")
+                PrescriptionSummary(a.getString("id"),p.getString("id"),a.getString("patient_id"),p.getString("exercise_version_id"),p.getInt("version"),p.getString("side"),p.getDouble("minimum_degrees"),p.getDouble("maximum_degrees"),p.getInt("target_repetitions"),p.optJSONObject("parameters")?.toString() ?: "{}",
+                    a.text("schedule_id"),a.optString("therapist_id"))
             }}.filterNotNull(),
             rows(requests) {PrivacyRequest(it.getString("id"),it.getString("kind"),it.getString("status"))})
     }
@@ -285,6 +286,25 @@ import java.time.OffsetDateTime
         val signed=JSONObject(storage("/storage/v1/object/sign/$CHAT_BUCKET/$path",JSONObject().put("expiresIn",seconds).toString().toRequestBody("application/json".toMediaType()),token)).getString("signedURL")
         baseUrl.trimEnd('/')+"/storage/v1"+signed
     }
+    override suspend fun loadSharedVideos(patientId:String)=authorized {token,_ ->
+        SessionVideoJson.list(JSONArray(call("/rest/v1/session_videos?select=${SessionVideoJson.SELECT}&patient_id=eq.$patientId",null,token,"GET")))
+    }
+    override suspend fun startSessionVideo(id:String,sessionId:String,width:Int,height:Int,durationMs:Long)=authorized {token,_ ->
+        ChatJson.places(call("/rest/v1/rpc/start_session_video",JSONObject().put("p_id",id).put("p_session",sessionId).put("p_width",width).put("p_height",height)
+            .put("p_duration_ms",durationMs),token))
+    }
+    override suspend fun uploadSessionVideo(path:String,bytes:ByteArray,mime:String) {authorized {token,_ -> storage("/storage/v1/object/$VIDEO_BUCKET/$path",bytes.toRequestBody(mime.toMediaType()),token,upload=true)}}
+    override suspend fun shareSessionVideo(id:String)=authorized {token,_ ->
+        val result=JSONObject(call("/rest/v1/rpc/share_session_video",JSONObject().put("p_id",id),token))
+        // A file over its limit is refused and removed in the same step, so the answer says so rather than failing.
+        result.optString("refused").takeIf {it.isNotBlank()}?.let {throw RemoteFailure(400,it)}
+        SessionVideoJson.video(result)
+    }
+    override suspend fun stopSharingVideo(id:String) {authorized {token,_ -> call("/rest/v1/rpc/stop_sharing_session_video",JSONObject().put("p_id",id),token)}}
+    override suspend fun sessionVideoLink(path:String,seconds:Int)=authorized {token,_ ->
+        val signed=JSONObject(storage("/storage/v1/object/sign/$VIDEO_BUCKET/$path",JSONObject().put("expiresIn",seconds).toString().toRequestBody("application/json".toMediaType()),token)).getString("signedURL")
+        baseUrl.trimEnd('/')+"/storage/v1"+signed
+    }
     /** Storage takes raw files, so it has its own call. Paths come from the server and are checked before they are used. */
     private suspend fun storage(path:String,body:RequestBody,bearer:String,upload:Boolean=false,cacheControl:String?=null):String = withContext(Dispatchers.IO) {
         requireSafeBase()
@@ -326,8 +346,13 @@ import java.time.OffsetDateTime
     override suspend fun publishPrescription(draft:PrescriptionDraft) {authorized {token,_ ->
         val p=JSONObject().put("minimum_cycle_ms",draft.minimumCycleMs).put("maximum_cycle_ms",draft.maximumCycleMs).put("peak_hold_ms",draft.peakHoldMs).put("max_trunk_lean_degrees",draft.maxTrunkLean).put("confidence",draft.confidence).apply {draft.focusJoint?.let {put("focus_joint",it.name)}; draft.sideSeconds?.let {put("side_seconds",it)}}
         val body=JSONObject().put("p_assignment",draft.assignmentId).put("p_version",draft.requestId).put("p_patient",draft.patientId).put("p_exercise",draft.exerciseId).put("p_side",if(draft.bilateral) "bilateral" else draft.side.name.lowercase()).put("p_low",draft.low).put("p_high",draft.high).put("p_repetitions",draft.repetitions).put("p_parameters",p)
-        call("/rest/v1/rpc/publish_prescription",body,token)
+        if(draft.scheduleId!=null) call("/rest/v1/rpc/publish_scheduled_prescription",body.put("p_schedule",draft.scheduleId),token)
+        else call("/rest/v1/rpc/publish_prescription",body,token)
     }}
+    override suspend fun loadExerciseDay(patientId:String)=authorized {token,_ -> ScheduleJson.day(JSONObject(call("/rest/v1/rpc/exercise_day",JSONObject().put("p_patient",patientId),token)))}
+    override suspend fun saveSchedule(draft:ScheduleDraft)=authorized {token,_ -> ScheduleJson.schedule(JSONObject(call("/rest/v1/rpc/save_exercise_schedule",ScheduleJson.save(draft),token)))}
+    override suspend fun endSchedule(scheduleId:String) {authorized {token,_ -> call("/rest/v1/rpc/end_exercise_schedule",JSONObject().put("p_schedule",scheduleId),token)}}
+    override suspend fun stopExercise(assignmentId:String) {authorized {token,_ -> call("/rest/v1/rpc/stop_exercise",JSONObject().put("p_assignment",assignmentId),token)}}
     override suspend fun createCustomExercise(draft:CustomExerciseDraft)=authorized {token,_ ->
         val body=JSONObject().put("p_id",draft.id).put("p_name",draft.name.trim()).put("p_joint",draft.joint.name).put("p_english",draft.english.trim())
             .put("p_filipino",draft.filipino.trim().ifBlank {null} ?: JSONObject.NULL)
@@ -350,8 +375,12 @@ private const val ACTIVITY_PAGE=30
 private fun JSONObject.text(key:String):String?=if(isNull(key)) null else getString(key)
 
 private const val CHAT_BUCKET="chat-media"
-/** conversation/attachment/media.ext or preview.jpg, under the chat bucket, for upload or for a link; or a profile photo upload. */
-private val STORAGE_PATH=Regex("/storage/v1/object/((sign/)?chat-media/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.(jpg|webp|mp4|webm)|preview\\.jpg)|avatars/[0-9a-f-]{36}/[0-9a-f]{32}\\.webp)")
+private const val VIDEO_BUCKET="session-videos"
+/**
+ * conversation/attachment/media.ext or preview.jpg under the chat bucket, or patient/video/media.mp4 or preview.jpg under the session
+ * video bucket (#129), for upload or for a link; or a profile photo upload.
+ */
+private val STORAGE_PATH=Regex("/storage/v1/object/((sign/)?chat-media/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.(jpg|webp|mp4|webm)|preview\\.jpg)|(sign/)?session-videos/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.mp4|preview\\.jpg)|avatars/[0-9a-f-]{36}/[0-9a-f]{32}\\.webp)")
 private const val AVATAR_BUCKET="avatars"
 private const val PHOTO_MIME="image/webp"
 /** Every photo gets a new name, so a stored file never changes and can be cached for a year. */

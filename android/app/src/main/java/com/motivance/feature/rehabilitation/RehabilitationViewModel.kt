@@ -18,9 +18,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 
-enum class RehabAction { REFRESH, INVITE, ACCEPT, REVOKE, PRESCRIBE, CREATE_EXERCISE, ARCHIVE_EXERCISE, SYNC, WITHDRAW, EXPORT, DELETE }
+enum class RehabAction { REFRESH, INVITE, ACCEPT, REVOKE, PRESCRIBE, CREATE_EXERCISE, ARCHIVE_EXERCISE, SYNC, WITHDRAW, EXPORT, DELETE, SAVE_SCHEDULE, END_SCHEDULE, STOP_EXERCISE }
 
-data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=RehabWorkspace(),val busy:Boolean=false,val activeAction:RehabAction?=null,val failed:Boolean=false,val invitation:String?=null,val outbox:List<OutboxEntry> = emptyList(),val consents:List<LocalConsent> = emptyList())
+data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=RehabWorkspace(),val busy:Boolean=false,val activeAction:RehabAction?=null,val failed:Boolean=false,val invitation:String?=null,val outbox:List<OutboxEntry> = emptyList(),val consents:List<LocalConsent> = emptyList(),
+    /** Each patient's exercise day, read when their record opens. */
+    val days:Map<String,ExerciseDay> = emptyMap())
 
 private fun RehabAction.doneToast()=when(this) {
     RehabAction.REFRESH -> R.string.toast_workspace_updated to ToastTone.SUCCESS
@@ -33,6 +35,18 @@ private fun RehabAction.doneToast()=when(this) {
     RehabAction.SYNC -> R.string.ui_sync_queued to ToastTone.PENDING
     RehabAction.WITHDRAW -> R.string.consent_withdrawn to ToastTone.SUCCESS
     RehabAction.EXPORT, RehabAction.DELETE -> R.string.request_pending to ToastTone.PENDING
+    RehabAction.SAVE_SCHEDULE -> R.string.toast_schedule_saved to ToastTone.SUCCESS
+    RehabAction.END_SCHEDULE -> R.string.toast_schedule_ended to ToastTone.SUCCESS
+    RehabAction.STOP_EXERCISE -> R.string.toast_plan_exercise_removed to ToastTone.SUCCESS
+}
+
+/** The schedule refusals the server names, as the web app words them. */
+internal fun scheduleRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
+    "schedule_dates" -> R.string.exercise_schedule_error_dates
+    "schedule_rest_days" -> R.string.exercise_schedule_error_rest_days
+    "schedule_no_day" -> R.string.exercise_schedule_error_no_day
+    "schedule_gone" -> R.string.exercise_schedule_error_gone
+    else -> R.string.connected_failed
 }
 
 @HiltViewModel class RehabilitationViewModel @Inject constructor(private val repository:RehabilitationRepository,private val store:SessionStore,@ApplicationContext private val context:Context,private val toasts:Toaster=Toaster()):ViewModel() {
@@ -144,6 +158,46 @@ private fun RehabAction.doneToast()=when(this) {
         val owner=mutable.value.owner
         store.dao.retryFailed(owner); store.dao.retryConsents(owner); SyncScheduler.schedule(context,owner)
     }
+    /** Reads a patient's day quietly: the record shows what it has, and a failure leaves the rest of the page as it was. */
+    fun loadDay(patientId:String) {
+        val owner=mutable.value.owner
+        if(owner.isBlank()) return
+        viewModelScope.launch {
+            try {
+                val day=repository.loadExerciseDay(patientId)
+                if(mutable.value.owner==owner) mutable.value=mutable.value.copy(days=mutable.value.days+(patientId to day))
+            } catch(e:CancellationException) {throw e}
+            catch(_:Exception) {}
+        }
+    }
+    /**
+     * Schedule changes keep the page as it is when refused, and say why: the form stays open to correct, unlike [perform], which
+     * clears the workspace when a load fails. [done] runs once the record shows the change.
+     */
+    private fun changeSchedule(kind:RehabAction,patientId:String,done:()->Unit={},block:suspend ()->Unit) {
+        val owner=mutable.value.owner
+        if(owner.isBlank() || mutable.value.busy) return
+        toasts.show(kind.loadingLabel(),ToastTone.PENDING)
+        mutable.value=mutable.value.copy(busy=true,activeAction=kind)
+        action=viewModelScope.launch {
+            try {
+                block()
+                val data=repository.loadWorkspace()
+                val day=repository.loadExerciseDay(patientId)
+                if(mutable.value.owner==owner) {
+                    mutable.value=mutable.value.copy(workspace=data,days=mutable.value.days+(patientId to day),failed=false)
+                    val (message,tone)=kind.doneToast()
+                    toasts.show(message,tone)
+                    done()
+                }
+            } catch(e:CancellationException) {throw e}
+            catch(e:Exception) {if(mutable.value.owner==owner) toasts.show(scheduleRefusal(e),ToastTone.ERROR)}
+            finally {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(busy=false,activeAction=null)}
+        }
+    }
+    fun saveSchedule(draft:ScheduleDraft,saved:()->Unit={})=changeSchedule(RehabAction.SAVE_SCHEDULE,draft.patientId,saved) {repository.saveSchedule(draft)}
+    fun endSchedule(patientId:String,scheduleId:String)=changeSchedule(RehabAction.END_SCHEDULE,patientId) {repository.endSchedule(scheduleId)}
+    fun stopExercise(patientId:String,assignmentId:String)=changeSchedule(RehabAction.STOP_EXERCISE,patientId) {repository.stopExercise(assignmentId)}
     fun withdraw()=perform(RehabAction.WITHDRAW,false) {val owner=mutable.value.owner; store.recordConsent(owner,false); SyncScheduler.schedule(context,owner)}
     fun request(kind:String)=perform(if(kind=="export") RehabAction.EXPORT else RehabAction.DELETE) {
         require(kind in setOf("export","delete"))

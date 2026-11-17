@@ -10,6 +10,7 @@ import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent, BackendStatus } from '@/features/admin/types'
 import type { PrivacyState } from '@/features/patient/PatientCareView'
+import type { TodayPlan } from '@/data/exerciseSchedule'
 import type { PatientHome } from '@/features/patient/PatientHomeView'
 import type { PatientSummary } from '@/features/therapist/PatientTable'
 import type { PatientRecord } from '@/features/therapist/PatientRecordView'
@@ -40,10 +41,18 @@ const reach = [64, 71, 79, 76, 92, 98, 105, 112]
 
 export const record: PatientRecord = {
   id: 'p1', name: 'Ana Dela Cruz', username: 'ana.delacruz', gender: 'Female', birthdate: '1971-03-14', contact: '0917 555 0142', address: 'Quezon City',
-  plans: [
-    { id: 'a1', exercise: elbow, version: 3, side: 'right', low: 20, high: 120, repetitions: 10, instructions: 'Keep your upper arm against your side and bend the elbow slowly, then lower with control.', reached: [14, 112] },
-    { id: 'a2', exercise: knee, custom: true, version: 1, side: 'left', low: 15, high: 80, repetitions: 8, focus: 'Knee', instructions: 'Sit tall on a firm chair and straighten the knee, then lower it slowly.', reached: null },
-  ],
+  today: '2026-11-06',
+  schedules: [{
+    id: 's1', patientId: 'p1', therapistId: 't1', therapistName: 'Dana Reyes', startsOn: '2026-11-02', endsOn: '2026-11-29', restWeekdays: [7], restDates: ['2026-11-14'],
+    exerciseDays: 23, restDays: 5, exerciseCount: 2, state: 'exercise', daysLeft: 19, nextDay: '2026-11-07', mine: true,
+    plans: [
+      { id: 'a1', exercise: elbow, version: 3, side: 'right', low: 20, high: 120, repetitions: 10, instructions: 'Keep your upper arm against your side and bend the elbow slowly, then lower with control.', reached: [14, 112], today: 'done' },
+      { id: 'a2', exercise: knee, custom: true, version: 1, side: 'left', low: 15, high: 80, repetitions: 8, focus: 'Knee', instructions: 'Sit tall on a firm chair and straighten the knee, then lower it slowly.', reached: null, today: 'todo' },
+    ],
+  }],
+  everyDay: [],
+  ended: [],
+  missed: [{ day: '2026-11-05', therapistId: 't1', due: 2, done: 1 }, { day: '2026-11-03', therapistId: 't1', due: 2, done: 0 }],
   trend: {
     exercise: elbow, detail: 'Right side, version 3, prescribed 20° to 120°',
     points: days.map((day, index) => ({ id: day, label: new Date(day).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }), value: index === 3 ? null : reach[index]! - 14 })),
@@ -97,8 +106,12 @@ export const myBookings: Booking[] = [
   { id: 'k2', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, visitReason: 'Shoulder stiffness when reaching overhead.', patient: 'Ana Dela Cruz', patientPhoto: null, therapist: null, therapistPhoto: null, location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-13T02:00:00Z', canCancel: true, rescheduleUntil: '2026-12-13T02:00:00Z', canReschedule: true, reschedulesLeft: 2 },
   { id: 'k3', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', previousStartsAt: null, visitReason: null, patient: 'Ana Dela Cruz', patientPhoto: null, therapist: null, therapistPhoto: null, location: '12 Mabini Street, Quezon City', cancelUntil: null, canCancel: false, rescheduleUntil: null, canReschedule: false, reschedulesLeft: 0 },
 ]
+/** Two of three exercises still to do today; the empty state is a rest day. */
+export const myToday: TodayPlan<MyExercise> = { todo: myExercises, done: 1, due: 3, state: 'exercise', nextDay: '2026-11-19', startsOn: null }
+export const restDay: TodayPlan<MyExercise> = { todo: [], done: 0, due: 0, state: 'rest', nextDay: '2026-11-19', startsOn: null }
+
 export const patientHome: PatientHome = {
-  name: 'Ana Dela Cruz', next: myExercises[0]!, exerciseCount: 2,
+  name: 'Ana Dela Cruz', today: { todo: myExercises, done: 1, due: 3, state: 'exercise', nextDay: null, startsOn: null },
   week: Array.from({ length: 7 }, (_, index) => ({ day: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index), done: index < 2 })),
   session: myBookings[0]!,
   recent: [{ id: 'r1', startedAt: '2026-11-04T01:30:00Z', status: 'completed' }, { id: 'r2', startedAt: '2026-11-03T02:10:00Z', status: 'interrupted' }, { id: 'r3', startedAt: '2026-11-02T01:45:00Z', status: 'completed' }],
@@ -183,6 +196,7 @@ export const affected: AffectedBooking[] = [
 const noteFacts = {
   sessions: 0, lastStartsAt: null, reference: 'BK-2026-000158', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, patient: 'Ana Dela Cruz', therapist: 'Dana Reyes',
   reason: null, readAt: null, subjectId: 't1', subjectName: 'Dana Reyes', subjectPhoto: null, completed: null, target: null, days: null, conversationId: null, sender: null,
+  day: null, due: null, done: null,
 }
 export const inbox: Inbox = {
   unread: 3,

@@ -18,7 +18,11 @@ import { RangeDial } from '@/motion/RangeDial'
 import { duration, ease, spring } from '@/motion/tokens'
 import { CustomExerciseForm } from './CustomExerciseForm'
 
-export type AssignmentContext = { patient: { id: string; name: string; photo?: string | null }; catalogue: CatalogueExercise[] }
+export type AssignmentContext = {
+  patient: { id: string; name: string; photo?: string | null }; catalogue: CatalogueExercise[]
+  /** The dates of the schedule the exercise goes into. Null when that schedule has ended or gone; absent for an every-day exercise. */
+  schedule?: string | null
+}
 
 function Step({ number, title, help, done, children }: { number: number; title: string; help: string; done: boolean; children: ReactNode }) {
   const { t } = useTranslation()
@@ -176,6 +180,7 @@ function Editor({ context, existing, busy, onPublish, onCreateExercise }: Editor
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('assign.range')}</dt><dd className="numeric font-semibold">{low}° to {high}°</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('record.repetitions')}</dt><dd className="numeric font-semibold">{repetitions}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-night-ink">{timeLabel}</dt><dd className="numeric font-semibold">{sideSeconds === null ? t('assign.noTime') : clock(sideSeconds)}</dd></div>
+                  {context.schedule !== undefined && <div className="flex justify-between gap-4"><dt className="text-night-ink">{t('schedule.inSchedule')}</dt><dd className="text-right font-semibold">{context.schedule ?? t('schedule.everyDay')}</dd></div>}
                 </motion.dl>
                 {existing && <p className="mt-4 text-sm text-night-ink">{t('assign.nextVersion', { version: existing.version + 1 })}</p>}
                 <Button variant="bright" className="mt-5 w-full" disabled={!publishable} busy={busy} busyLabel={t('common.working')}

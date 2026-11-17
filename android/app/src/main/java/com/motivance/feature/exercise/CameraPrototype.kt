@@ -60,19 +60,22 @@ import com.motivance.feature.rehabilitation.sideText
 import com.motivance.BuildConfig
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.delay
 
 private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, val latency: Long)
 
 /** Deliberately renders the same upright bitmap used for inference: no independent preview crop. */
-@Composable fun CameraPrototype(ownerId:String="local-demo",onBack: () -> Unit) {
+/** [lastOfDay] says whether the exercise just finished was the last one due today, read once the session is saved. */
+@Composable fun CameraPrototype(ownerId:String="local-demo",lastOfDay:()->Boolean={false},onBack: () -> Unit) {
     val context=LocalContext.current; val lifecycle=LocalLifecycleOwner.current
     val session:ExerciseSessionViewModel=viewModel()
     val exercise by session.state.collectAsStateWithLifecycle()
     var consent by remember { mutableStateOf(false) }
     var exitRequested by remember { mutableStateOf(false) }
     LaunchedEffect(ownerId) { session.configure(ownerId) }
-    // A set that ends on its own time goes to the results too, as Finish does.
-    LaunchedEffect(exercise.saved) { if(exercise.saved && (exitRequested || exercise.sides.isNotEmpty())) onBack() }
+    // A set that ends on its own time goes to the results too, as Finish does, after a moment to celebrate it (#130).
+    var celebrating by remember { mutableStateOf(false) }
+    LaunchedEffect(exercise.saved) { if(exercise.saved && (exitRequested || exercise.sides.isNotEmpty())) celebrating=true }
     var permission by remember { mutableStateOf(ContextCompat.checkSelfPermission(context,Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED) }
     val launcher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { permission=it }
     var front by remember { mutableStateOf(false) }
@@ -210,14 +213,44 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
     val language=LocalConfiguration.current.locales[0].language.let {if(it=="fil" || it=="tl") "fil" else "en"}
     val exerciseName=exercise.rules.displayName()
     val spokenName by rememberUpdatedState(exerciseName)
+    // The finish tune and its line have their own switch. The player is made now, so its voice is ready at the finish.
+    val finishSetting=remember {FinishSoundSetting(context)}
+    var finishSound by remember {mutableStateOf(finishSetting.enabled)}
+    val finishPlayer=remember(language) {FinishPlayer(context,language)}
+    DisposableEffect(finishPlayer) {onDispose {finishPlayer.release()}}
+    val latestLastOfDay by rememberUpdatedState(lastOfDay)
     if(voice) {
         val player=remember(language) {RepCuePlayer(context,language)}
         DisposableEffect(player) {onDispose {player.release()}}
         LaunchedEffect(player) {session.results.collect {player.play(it)}}
-        LaunchedEffect(player) {session.cues.collect {player.announce(it,spokenName,session::announced)}}
+        // With the finish sound on, the celebration says the set is over instead.
+        LaunchedEffect(player) {session.cues.collect {if(!(it==SetCue.Complete && finishSound)) player.announce(it,spokenName,session::announced)}}
     } else {
         // Nothing to wait for: the countdown to the next side starts straight away.
         LaunchedEffect(exercise.switching?.stage) {if(exercise.switching?.stage==SwitchStage.ANNOUNCING) session.announced()}
+    }
+    if(celebrating) {
+        // Both sides of a set count together; a single side is one entry.
+        val sides=exercise.sides
+        val completed=if(sides.isEmpty()) exercise.metrics.completed else sides.sumOf {it.metrics.completed}
+        val target=if(sides.isEmpty()) exercise.rules.targetRepetitions else sides.sumOf {it.target}
+        val rom=if(sides.isEmpty()) exercise.metrics.romDegrees else sides.mapNotNull {it.metrics.romDegrees}.maxOrNull()
+        var left by remember {mutableStateOf(false)}
+        val leave={if(!left) {left=true; onBack()}}
+        var dayDone by remember {mutableStateOf(false)}
+        val still=rememberReducedMotion()
+        LaunchedEffect(Unit) {
+            if(finishSound) finishPlayer.chime()
+            // A moment for the saved session to reach today's list before asking whether it was the last.
+            delay(600)
+            dayDone=!exercise.rules.demo && latestLastOfDay()
+            if(finishSound) finishPlayer.say(completed,target,dayDone)
+            delay(2900)
+            leave()
+        }
+        DarkStage()
+        SessionTheme {FinishCelebration(completed,target,rom,dayDone,still,leave)}
+        return
     }
     DarkStage()
     SessionTheme {
@@ -274,6 +307,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         if(switching==null) MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
             {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
         RepSoundToggle(voice) {haptics.tick(); voice=it; voiceSetting.enabled=it}
+        FinishSoundToggle(finishSound) {haptics.tick(); finishSound=it; finishSetting.enabled=it}
         SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
         exercise.cached.firstOrNull { it.versionId==exercise.rules.prescriptionVersionId }?.let {
             Text(it.instructions,style=MaterialTheme.typography.bodyMedium,color=Color.White)

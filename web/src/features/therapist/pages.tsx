@@ -9,6 +9,7 @@ import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
 import { loadHistory, usable, type HistoricalSession } from '@/data/history'
 import { archiveCustomExercise, createCustomExercise, invitePatient, loadLatestSessions, loadPatientProfile, publishPrescription, revokePatientLink, type CustomExerciseDraft, type PrescriptionDraft } from '@/data/therapist'
+import { endSchedule, loadExerciseDay, publishScheduledPrescription, saveSchedule, stopExercise, type ExerciseDay } from '@/data/exerciseSchedule'
 import { loadCatalogue, loadOverview, loadPatients, loadPlans } from '@/data/workspace'
 import { SchedulePage } from '@/features/booking/SchedulePage'
 import { asLoad, ready, useFormat, type Load } from '@/features/shared'
@@ -19,6 +20,7 @@ import { useShareProgress } from '@/features/chat/ShareDialog'
 import { useActivity, useProgressResults } from './history'
 import { PatientRecordView, type PatientRecord, type PlanCard } from './PatientRecordView'
 import { PatientsView } from './PatientsView'
+import { useSessionVideos } from './SessionVideoDialog'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from './ProgressView'
 import { TherapistHomeView, type TherapistHome } from './TherapistHomeView'
 import { latestMovement, latestSeries, nameOf, reachedBy, recentFirst, romPoints, summarisePatients } from './summaries'
@@ -85,32 +87,37 @@ export function PatientsPage() {
   )
 }
 
-function usePlanCards(patientId: string, sessions: readonly HistoricalSession[]) {
+function usePlanCards(patientId: string, sessions: readonly HistoricalSession[], day: ExerciseDay | undefined) {
   const { t } = useTranslation()
   const { userId } = useSignedIn()
   const workspace = useWorkspace()
   return useMemo(() => {
     if (!workspace.data) return []
     const { plans, catalogue } = workspace.data
-    return plans.filter((plan) => plan.patientId === patientId).map((plan): PlanCard => {
+    return plans.filter((plan) => plan.patientId === patientId).map((plan): PlanCard & { scheduleId: string | null } => {
       const exercise = catalogue.find((item) => item.id === plan.exerciseId)
       const session = sessions.find((item) => item.prescription?.assignmentId === plan.assignmentId && item.measurements.some(usable))
       const measurement = session?.measurements.find(usable)
       const focus = plan.parameters.focus_joint
+      const today = day?.exercises.find((item) => item.assignmentId === plan.assignmentId)
       return {
-        id: plan.assignmentId, exercise: exercise?.name ?? t('progress.unknown'), custom: exercise?.custom, version: plan.version, side: plan.side === 'right' || plan.side === 'bilateral' ? plan.side : 'left', sideSeconds: plan.sideSeconds,
+        id: plan.assignmentId, scheduleId: plan.scheduleId, exercise: exercise?.name ?? t('progress.unknown'), custom: exercise?.custom, version: plan.version,
+        side: plan.side === 'right' || plan.side === 'bilateral' ? plan.side : 'left', sideSeconds: plan.sideSeconds,
         low: plan.low, high: plan.high, repetitions: plan.repetitions, focus: typeof focus === 'string' ? t(`joints.${focus}`) : null, instructions: exercise?.instructions ?? '',
         reached: measurement ? reachedBy(measurement) : null, locked: plan.therapistId !== userId,
+        today: today ? (today.done ? 'done' : today.due ? 'todo' : 'rest') : null,
       }
     })
-  }, [workspace.data, patientId, sessions, t, userId])
+  }, [workspace.data, patientId, sessions, day, t, userId])
 }
 
 export function PatientRecordPage() {
   const { t } = useTranslation()
   const { id = '' } = useParams()
+  const { userId } = useSignedIn()
   const format = useFormat()
   const workspace = useWorkspace()
+  const refresh = useRefresh()
   const details = useQuery({
     queryKey: ['record', id],
     queryFn: async () => {
@@ -119,22 +126,40 @@ export function PatientRecordPage() {
       return { profile, sessions: history.sessions }
     },
   })
+  const day = useQuery({ queryKey: ['exercise-day', id], queryFn: () => loadExerciseDay(supabase(), id), enabled: id !== '' })
   const sessions = useMemo(() => details.data?.sessions ?? [], [details.data])
-  const plans = usePlanCards(id, sessions)
+  const plans = usePlanCards(id, sessions, day.data)
   const patient = workspace.data?.patients.find((item) => item.id === id)
   if (workspace.data && !patient) return <EmptyState title={t('record.notFoundTitle')} detail={t('record.notFoundDetail')} />
   const shared = asLoad(details)
   const overall = asLoad(workspace)
+  const today = asLoad(day)
   const series = latestSeries(sessions)
-  const load: Load<PatientRecord> = overall.status === 'error' ? overall : shared.status !== 'ready' ? shared : !patient ? { status: 'loading' } : ready({
-    id, name: patient.name || shared.data.profile?.fullName || id.slice(0, 8), photo: patient.photoUrl, username: shared.data.profile?.username,
-    gender: shared.data.profile ? t(`genders.${shared.data.profile.gender}`, shared.data.profile.gender) : undefined, birthdate: shared.data.profile?.birthdate,
-    contact: shared.data.profile?.contact, address: shared.data.profile?.address, plans,
-    trend: series && {
-      exercise: series.prescription.exerciseName, points: romPoints(series, format.short),
-      detail: t('progress.seriesLine', { side: t(`common.${series.side}`, series.side), version: series.prescription.version, low: series.prescription.low, high: series.prescription.high }),
-    },
-  })
+  const load: Load<PatientRecord> = overall.status === 'error' ? overall : today.status === 'error' ? today : shared.status !== 'ready' ? shared
+    : !patient || today.status !== 'ready' ? { status: 'loading' } : ready({
+      id, name: patient.name || shared.data.profile?.fullName || id.slice(0, 8), photo: patient.photoUrl, username: shared.data.profile?.username,
+      gender: shared.data.profile ? t(`genders.${shared.data.profile.gender}`, shared.data.profile.gender) : undefined, birthdate: shared.data.profile?.birthdate,
+      contact: shared.data.profile?.contact, address: shared.data.profile?.address, today: today.data.day,
+      schedules: today.data.schedules.map((schedule) => ({ ...schedule, mine: schedule.therapistId === userId, plans: plans.filter((plan) => plan.scheduleId === schedule.id) })),
+      everyDay: plans.filter((plan) => plan.scheduleId === null),
+      ended: plans.filter((plan) => plan.scheduleId !== null && !today.data.schedules.some((schedule) => schedule.id === plan.scheduleId)),
+      missed: today.data.missed,
+      trend: series && {
+        exercise: series.prescription.exerciseName, points: romPoints(series, format.short),
+        detail: t('progress.seriesLine', { side: t(`common.${series.side}`, series.side), version: series.prescription.version, low: series.prescription.low, high: series.prescription.high }),
+      },
+    })
+  // Each change says so, and a failure is shown and passed on, so the dialog stays open to try again.
+  const act = (done: string) => async (work: Promise<unknown>) => {
+    try {
+      await work
+      await refresh()
+      toast.show(t(done))
+    } catch (failure) {
+      toast.show(t(failureKey(failure)), 'error')
+      throw failure
+    }
+  }
   // Sends the plan into this patient's conversation, written by the server from the plan itself.
   const sendExercise = async (planId: string) => {
     try {
@@ -146,7 +171,14 @@ export function PatientRecordPage() {
       toast.show(t(failureKey(failure)), 'error')
     }
   }
-  return <PatientRecordView load={load} base={BASE} onSendExercise={(planId) => void sendExercise(planId)} />
+  return (
+    <PatientRecordView load={load} base={BASE} actions={{
+      onSaveSchedule: (draft) => act('toast.scheduleSaved')(saveSchedule(supabase(), draft)),
+      onEndSchedule: (scheduleId) => act('toast.scheduleEnded')(endSchedule(supabase(), scheduleId)),
+      onRemovePlan: (planId) => act('toast.planExerciseRemoved')(stopExercise(supabase(), planId)),
+      onSendExercise: (planId) => void sendExercise(planId),
+    }} />
+  )
 }
 
 export function AssignExercisePage() {
@@ -159,6 +191,11 @@ export function AssignExercisePage() {
   const refresh = useRefresh()
   const editing = params.get('plan')
   const existing = workspace.data?.plans.find((plan) => plan.assignmentId === editing && plan.patientId === id && plan.therapistId === userId)
+  // A new exercise goes into the schedule it was added from. An edited one stays where it is.
+  const day = useQuery({ queryKey: ['exercise-day', id], queryFn: () => loadExerciseDay(supabase(), id), enabled: id !== '' })
+  const format = useFormat()
+  const scheduleId = existing ? existing.scheduleId : params.get('schedule')
+  const schedule = scheduleId ? day.data?.schedules.find((item) => item.id === scheduleId) : undefined
   // A new plan gets its own ID, so it can never replace one the patient already has.
   const [newAssignment] = useState(() => crypto.randomUUID())
   const request = useRef({ key: '', id: '' })
@@ -167,7 +204,8 @@ export function AssignExercisePage() {
       // The same contents keep the same ID, which makes a retry after a lost response safe.
       const key = JSON.stringify(draft)
       if (request.current.key !== key) request.current = { key, id: crypto.randomUUID() }
-      return publishPrescription(supabase(), { ...draft, assignmentId: existing?.assignmentId ?? newAssignment, requestId: request.current.id, patientId: id })
+      const prescription = { ...draft, assignmentId: existing?.assignmentId ?? newAssignment, requestId: request.current.id, patientId: id }
+      return !existing && scheduleId ? publishScheduledPrescription(supabase(), scheduleId, prescription) : publishPrescription(supabase(), prescription)
     },
     onSuccess: async () => {
       await refresh()
@@ -179,7 +217,9 @@ export function AssignExercisePage() {
   const state = asLoad(workspace)
   const patient = workspace.data?.patients.find((item) => item.id === id)
   if (workspace.data && !patient) return <EmptyState title={t('record.notFoundTitle')} detail={t('record.notFoundDetail')} />
-  const load = state.status !== 'ready' ? state : !patient ? { status: 'loading' as const } : ready({ patient: { id, name: nameOf(patient), photo: patient.photoUrl }, catalogue: state.data.catalogue })
+  const load = state.status !== 'ready' ? state : !patient || (scheduleId && day.isPending) ? { status: 'loading' as const }
+    : ready({ patient: { id, name: nameOf(patient), photo: patient.photoUrl }, catalogue: state.data.catalogue,
+      schedule: schedule ? t('schedule.range', { from: format.day(schedule.startsOn), to: format.day(schedule.endsOn) }) : scheduleId ? null : undefined })
   return (
     <AssignmentEditorView key={existing?.versionId ?? 'new'} load={load} existing={existing} busy={publish.isPending} onPublish={(draft) => publish.mutate(draft)}
       onCreateExercise={async (draft) => {
@@ -225,6 +265,7 @@ export function ProgressPage() {
   const { results, onMore } = useProgressResults(patientId, filters)
   const activity = useActivity(patientId)
   const sharing = useShareProgress(patientId, false)
+  const videos = useSessionVideos(patientId, false)
   if (workspace.data && patients.length === 0) {
     return <><PageHeader title={t('nav.progress')} description={t('progress.description')} /><EmptyState title={t('progress.noPatientsTitle')} detail={t('progress.noPatientsDetail')} /></>
   }
@@ -237,8 +278,9 @@ export function ProgressPage() {
   return (
     <>
       <ProgressView choices={choices} results={results} activity={activity} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
-        onPatient={(id) => setParams({ patient: id })} onMore={onMore} onShare={sharing.share} />
+        onPatient={(id) => setParams({ patient: id })} onMore={onMore} onShare={sharing.share} videoFor={videos.videoFor} onWatch={videos.onWatch} />
       {sharing.dialog}
+      {videos.dialog}
     </>
   )
 }

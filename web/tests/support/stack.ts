@@ -134,9 +134,10 @@ delete from public.bookings where patient_id in (${ids}) or therapist_id in (${i
 delete from public.booking_series where patient_id in (${ids}) or therapist_id in (${ids});
 delete from public.device_tokens where user_id in (${ids});
 delete from public.booking_waitlist where patient_id in (${ids});
+delete from public.session_videos where patient_id in (${ids}) or therapist_id in (${ids});
 delete from public.session_measurements where session_id in (select id from public.sessions where patient_id in (${ids}));
 delete from public.sessions where patient_id in (${ids}); delete from public.consents where patient_id in (${ids});
-delete from public.prescription_versions where patient_id in (${ids}); delete from public.exercise_assignments where patient_id in (${ids});
+delete from public.prescription_versions where patient_id in (${ids}); delete from public.exercise_assignments where patient_id in (${ids}); delete from public.exercise_day_results where patient_id in (${ids}) or therapist_id in (${ids}); delete from public.exercise_schedules where patient_id in (${ids}) or therapist_id in (${ids});
 delete from public.exercise_versions where exercise_id in (select id from public.exercises where owner_id in (${ids}));
 delete from public.exercises where owner_id in (${ids});
 delete from public.patient_invitations where therapist_id in (${ids});
