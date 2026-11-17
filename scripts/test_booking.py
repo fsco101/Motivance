@@ -152,7 +152,8 @@ def roles(stack):
 
     code, found = stack.rpc('scheduler_patients', {'p_search': 'findable patient'}, ts)
     stack.check(code == 200 and [row['id'] for row in found] == [patient], 'A Scheduler finds a patient by name')
-    stack.check(set(found[0]) == {'id', 'name'}, 'Patient search returns a name and an ID, nothing else')
+    # The photo shown beside a name since 202611130001_avatars_everywhere.sql; still nothing clinical.
+    stack.check(set(found[0]) == {'id', 'name', 'photo'}, 'Patient search returns a name, an ID and the face beside the name, nothing else')
     stack.check(stack.rpc('scheduler_patients', {'p_search': '%'}, ts)[1] == [], 'Patient search takes wildcards literally')
     stack.check(all(row['id'] != scheduler for row in stack.rpc('scheduler_patients', {'p_limit': 50}, ts)[1]), 'Patient search leaves out staff')
 

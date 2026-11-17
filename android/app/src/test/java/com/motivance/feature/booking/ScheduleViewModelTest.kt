@@ -34,7 +34,7 @@ class ScheduleViewModelTest {
             return waits.removeFirstOrNull()?.let {withContext(NonCancellable) {it.await()}} ?: result
         }
         override suspend fun loadAvailability(from:String,to:String)=BookingAvailability()
-        override suspend fun requestBooking(requestId:String,startsAt:String):Booking=throw AssertionError("A schedule requests nothing")
+        override suspend fun requestBooking(requestId:String,startsAt:String,reason:String):Booking=throw AssertionError("A schedule requests nothing")
         override suspend fun loadMyBookings()=emptyList<Booking>()
         override suspend fun cancelBooking(id:String) {}
         override suspend fun rescheduleBooking(id:String,startsAt:String) {}

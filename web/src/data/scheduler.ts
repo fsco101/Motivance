@@ -9,7 +9,7 @@ export const PAGE_SIZE = 25
 
 export type RequestRow = {
   id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; patientId: string; patient: string; patientPhoto: string | null
-  therapistId: string | null; therapist: string | null; therapistPhoto: string | null; attendance: Attendance | null; started: boolean; seriesId: string | null; createdAt: string
+  visitReason: string | null; therapistId: string | null; therapist: string | null; therapistPhoto: string | null; attendance: Attendance | null; started: boolean; seriesId: string | null; createdAt: string
 }
 
 export type RequestFilters = { search: string; status: BookingStatus | 'all'; from: string; to: string; therapist: string }
@@ -21,12 +21,12 @@ export type RequestSort = { key: SortKey; direction: 'asc' | 'desc' }
 type RawRow = {
   id: string; reference_no: string; status: BookingStatus; status_reason: string | null; starts_at: string; ends_at: string; patient_id: string; patient_name: string | null
   therapist_id: string | null; therapist_name: string | null; attendance: Attendance | null; started?: boolean; series_id?: string | null; created_at: string
-  patient_photo?: string | null; therapist_photo?: string | null
+  patient_photo?: string | null; therapist_photo?: string | null; visit_reason?: string | null
 }
 
 export const decodeRow = (row: RawRow): RequestRow => ({
   id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, startsAt: row.starts_at, endsAt: row.ends_at, patientId: row.patient_id, patient: row.patient_name ?? '',
-  patientPhoto: row.patient_photo ?? null, therapistId: row.therapist_id, therapist: row.therapist_name, therapistPhoto: row.therapist_photo ?? null, attendance: row.attendance, started: row.started ?? false, seriesId: row.series_id ?? null, createdAt: row.created_at,
+  patientPhoto: row.patient_photo ?? null, visitReason: row.visit_reason ?? null, therapistId: row.therapist_id, therapist: row.therapist_name, therapistPhoto: row.therapist_photo ?? null, attendance: row.attendance, started: row.started ?? false, seriesId: row.series_id ?? null, createdAt: row.created_at,
 })
 
 export type ScheduleFilters = { search: string; status: 'all' | 'confirmed' | 'rescheduled'; from: string; to: string; therapist: string; patient: string; attendance: 'all' | Attendance | 'unmarked' }
@@ -120,7 +120,7 @@ export async function loadSummary(db: Db): Promise<SchedulerSummary> {
 }
 
 /** The same weekly time for one patient and therapist. A date that fails names its problem, and is left out when the series is saved. */
-export type SeriesDraft = { patient: string; therapist: string; startsAt: string; weeks: number }
+export type SeriesDraft = { patient: string; therapist: string; startsAt: string; weeks: number; /** Given to every session of the course; optional. */ reason?: string }
 export type SeriesDate = { startsAt: string; endsAt: string; problem: string | null }
 
 const seriesArgs = (draft: SeriesDraft) => ({ p_patient: draft.patient, p_therapist: draft.therapist, p_starts: draft.startsAt, p_weeks: draft.weeks })
@@ -131,7 +131,7 @@ export async function previewSeries(db: Db, draft: SeriesDraft): Promise<SeriesD
 }
 
 /** `request` is chosen once per course, so retrying after a lost response returns the same bookings. */
-export const createSeries = async (db: Db, request: string, draft: SeriesDraft) => must(await db.rpc('scheduler_series_create', { p_request: request, ...seriesArgs(draft) })) as unknown as { id: string; weeks: number; booked: number }
+export const createSeries = async (db: Db, request: string, draft: SeriesDraft) => must(await db.rpc('scheduler_series_create', { p_request: request, ...seriesArgs(draft), p_reason: draft.reason?.trim() || undefined })) as unknown as { id: string; weeks: number; booked: number }
 export const cancelSeries = async (db: Db, series: string, reason: string) => must(await db.rpc('scheduler_series_cancel', { p_series: series, p_reason: reason })) as number
 export const searchPatients = async (db: Db, search: string) => must(await db.rpc('scheduler_patients', { p_search: search || undefined })) as unknown as PatientChoice[]
 

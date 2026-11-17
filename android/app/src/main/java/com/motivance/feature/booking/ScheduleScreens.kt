@@ -34,18 +34,13 @@ private const val MONTHS_EITHER_WAY=12L
         Row(verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 Text(format.range(session.startsAt,session.endsAt),style=MaterialTheme.typography.titleSmall,color=MaterialTheme.colorScheme.primary)
-                if(therapist) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                    PersonAvatar(session.patientPhoto,session.patient.orEmpty().ifBlank {"?"},32.dp)
-                    Text(session.patient.orEmpty(),style=MaterialTheme.typography.titleMedium)
-                } else Text(stringResource(R.string.schedule_session),style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.schedule_session),style=MaterialTheme.typography.titleMedium)
             }
             StatusPill(stringResource(session.status.label()),session.status.tone())
         }
-        if(!therapist) {
-            session.therapist?.let {PersonDetailRow(stringResource(R.string.booking_therapist),it,session.therapistPhoto)}
-                ?: DetailRow(stringResource(R.string.booking_therapist),stringResource(R.string.booking_no_therapist))
-            if(session.location.isNotBlank()) DetailRow(stringResource(R.string.booking_location),session.location)
-        }
+        SessionPeople(SessionPerson(session.patient,session.patientPhoto,you=!therapist),SessionPerson(session.therapist,session.therapistPhoto,you=therapist))
+        VisitReasonBox(session.visitReason)
+        if(session.location.isNotBlank()) DetailRow(stringResource(R.string.booking_location),session.location)
         DetailRow(stringResource(R.string.booking_reference),session.reference)
         if(therapist) {
             if(!session.linked) Text(stringResource(R.string.schedule_not_linked),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)

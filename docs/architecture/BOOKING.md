@@ -61,6 +61,10 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 - **The waitlist notifies everyone waiting** when a place opens, and the first to book gets it. Notifying in turn could stall on one person who never responds.
 - **Exports are built in the browser** from the same filtered query, and each export is written to the audit log.
 
+- **A patient says why they are coming.** Each request carries a reason for the visit, 3 to 500 characters, asked for on the booking form in both apps and again when booking a place that opened on the waitlist. A Scheduler may give a weekly course one reason, which every session in it carries. The reason stays with the booking through every move. Requests from older app versions, and bookings made before 2026-11-17, have none, so the server accepts a request without one. (`202611170003_booking_visit_reason.sql`)
+- **Only the people in the visit read its reason.** The patient, the therapist assigned to the session and Schedulers see it. It is kept out of notifications, emails, pushes, calendar files, booking history and the administrators' feed, because those can be read on a lock screen or by someone who is not part of the visit. A therapist who is not assigned sees nothing of the session, as before.
+- **A session reads as a card with both people.** Wherever a session is shown (My bookings, My Schedule for patients and therapists, and the Scheduler's request panel), the patient and the therapist appear side by side as small profile cards with their photos, then the reason for the visit, then the details. The reader's own card says "You". A therapist not yet chosen keeps an empty place, so the card always has the same shape. Every booking and schedule view returns both names and photos for this.
+
 ## Data model
 
 All times are `timestamptz` in UTC and are shown in the center's zone (Asia/Manila) whatever the device's zone. Clients get no direct writes; everything goes through the functions below.
@@ -74,7 +78,7 @@ All times are `timestamptz` in UTC and are shown in the center's zone (Asia/Mani
 | `center_closures` | Starts at, ends at, all day, required reason, created by | Full day or a time range |
 | `therapist_time_off` | Therapist, starts at, ends at, reason, created by | References `profiles`. The reason is visible to scheduling only |
 | `booking_series` | Patient, therapist, weeks (2 to 26), client request ID, created by, cancelled at and reason | Groups weekly repeats |
-| `bookings` | Reference no., patient, therapist (optional until confirmed), series (null unless part of a weekly course), starts at, ends at, status, status reason, previous start, attendance, marked by and at, self-reschedule count, client request ID, calendar token | Two exclusion constraints stop overlaps for one patient and for one therapist among active bookings |
+| `bookings` | Reference no., patient, therapist (optional until confirmed), series (null unless part of a weekly course), starts at, ends at, reason for the visit (optional, 3 to 500 characters), status, status reason, previous start, attendance, marked by and at, self-reschedule count, client request ID, calendar token | Two exclusion constraints stop overlaps for one patient and for one therapist among active bookings |
 | `booking_events` | Booking, actor, actor role, action, from and to status, time and therapist, reason, recorded at | Immutable, written by a trigger so it cannot be skipped. Also mirrored to `audit_events` for the admin feed |
 | `booking_waitlist` | Patient, starts at, ends at, status, notified at | One open entry per patient per slot |
 | `notifications` | User, kind, booking, subject (the other person it is about), data, read at, dedupe key | The owner reads their own, with the subject's current name and photo. Clients render the text, so it follows their language. Exercise and care-team kinds share this table; see [NOTIFICATIONS.md](../operations/NOTIFICATIONS.md) |
@@ -93,11 +97,11 @@ All are `security definer` functions that re-check the caller. A failed role che
 | Who | Functions |
 | --- | --- |
 | Any active account | `booking_availability(from, to)`, `my_notifications(limit)`, `mark_notifications_read(ids)`, `set_my_language(language)`, `register_device(token, platform)`, `unregister_device(token)`, `my_notification_settings()`, `save_notification_settings(...)` |
-| Patient | `request_booking`, `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist`, `my_waitlist` |
+| Patient | `request_booking` (with the reason for the visit), `my_bookings`, `my_schedule(from, to)`, `cancel_my_booking`, `reschedule_my_booking`, `join_waitlist`, `leave_waitlist`, `my_waitlist` |
 | Therapist | `therapist_schedule(from, to)`, `mark_attendance` (Scheduler too) |
 | Scheduler: requests | `scheduler_bookings` (search, filters, sort, page, total), `scheduler_booking_detail`, `scheduler_availability` (open slots without the patient notice window or horizon), `scheduler_confirm`, `scheduler_reject`, `scheduler_reschedule`, `scheduler_assign_therapist`, `scheduler_cancel`, `scheduler_bulk_reject`, `scheduler_therapists`, `scheduler_patients`, `scheduler_schedule_patients`, `scheduler_log_export` |
 | Scheduler: calendar | `scheduler_save_settings`, `scheduler_save_hours`, `scheduler_save_holiday`, `scheduler_delete_holiday`, `scheduler_calendar_impact`, `scheduler_save_closure` (takes the resolution for each affected booking, in one transaction), `scheduler_delete_closure`, `scheduler_time_off`, `scheduler_save_time_off`, `scheduler_delete_time_off` |
-| Scheduler: series and dashboard | `scheduler_series_preview` (each date with what would stop it), `scheduler_series_create`, `scheduler_series_cancel`, `scheduler_summary` |
+| Scheduler: series and dashboard | `scheduler_series_preview` (each date with what would stop it), `scheduler_series_create` (with an optional reason for the visit), `scheduler_series_cancel`, `scheduler_summary` |
 | Scheduled jobs (`pg_cron`) | `enqueue_booking_reminders`, `expire_stale_bookings`, `enqueue_practice_reminders`, `enqueue_inactivity_alerts`, and a call to `notification-dispatch` |
 
 Edge Functions in `supabase/functions/`, the first in this repository:

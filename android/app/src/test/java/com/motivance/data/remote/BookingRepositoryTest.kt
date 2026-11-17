@@ -13,7 +13,7 @@ class BookingRepositoryTest {
     private val bodies=mutableMapOf<String,JSONObject>()
     private var refusal:String?=null
     private val booking="""{"id":"b1","reference_no":"BK-2026-000001","status":"confirmed","status_reason":null,"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00",
-        "previous_starts_at":null,"therapist_id":"t","therapist_name":"Dana Reyes","attendance":null,"created_at":"2026-11-06T01:00:00+00:00","location":"Quezon City","cancel_until":"2026-12-06T01:00:00+00:00","can_cancel":true}"""
+        "previous_starts_at":null,"therapist_id":"t","therapist_name":"Dana Reyes","patient_name":"Ana Dela Cruz","patient_photo":null,"visit_reason":"Knee pain after walking","attendance":null,"created_at":"2026-11-06T01:00:00+00:00","location":"Quezon City","cancel_until":"2026-12-06T01:00:00+00:00","can_cancel":true}"""
     private fun repository():SupabaseAuthRepository {
         val client=OkHttpClient.Builder().addInterceptor {chain ->
             val request=chain.request();val path=request.url.encodedPath
@@ -51,7 +51,7 @@ class BookingRepositoryTest {
                 path=="/rest/v1/rpc/therapist_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"on_leave":true,"rows":[
                     {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null,"on_leave":true},
                     {"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","session":{"id":"b1","reference_no":"BK-2026-000001","status":"rescheduled",
-                    "starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","attendance":null,"location":"","patient_id":"p1","patient_name":"Ana Dela Cruz","linked":false}}]}]}"""
+                    "starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","attendance":null,"location":"","patient_id":"p1","patient_name":"Ana Dela Cruz","linked":false,"therapist_name":"Dana Reyes","visit_reason":"Shoulder stiffness"}}]}]}"""
                 path=="/rest/v1/rpc/request_booking" -> booking
                 path=="/rest/v1/rpc/cancel_my_booking" -> booking
                 else -> """{"access_token":"fixture-access","refresh_token":"fixture-refresh","user":{"id":"fixture-patient"}}"""
@@ -71,7 +71,7 @@ class BookingRepositoryTest {
         assertEquals("2026-12-07T02:00:00+00:00",session.endsAt)
         assertEquals("Dana Reyes",session.therapist)
         assertEquals("Quezon City",session.location)
-        assertNull(session.patient)
+        assertEquals("The patient's own card names them too","Ana Dela Cruz",session.patient)
         assertEquals(listOf(session),day.sessions)
         assertEquals(BookingDayStatus.HOLIDAY,result.days[1].status)
         assertEquals("Feast",result.days[1].holiday)
@@ -85,7 +85,7 @@ class BookingRepositoryTest {
         assertEquals("Ana Dela Cruz",session.patient)
         assertEquals("p1",session.patientId)
         assertFalse(session.linked)
-        assertNull(session.therapist)
+        assertEquals("The therapist's own card names them too","Dana Reyes",session.therapist)
     }
 
     @Test fun aTherapistsScheduleKeepsTheirLeaveOnTheDayAndTheHour()=runBlocking {
@@ -205,11 +205,23 @@ class BookingRepositoryTest {
     }
 
     @Test fun aRequestSendsItsIdAndTheChosenTime()=runBlocking {
-        val booking=repository().requestBooking("request-id","2026-12-07T01:00:00+00:00")
+        val booking=repository().requestBooking("request-id","2026-12-07T01:00:00+00:00","  Knee pain after walking ")
         val sent=bodies["/rest/v1/rpc/request_booking"]!!
         assertEquals("request-id",sent.getString("p_request"))
         assertEquals("2026-12-07T01:00:00+00:00",sent.getString("p_starts"))
+        assertEquals("The reason is sent as written, without the spaces around it","Knee pain after walking",sent.getString("p_reason"))
         assertEquals("BK-2026-000001",booking.reference)
+    }
+    @Test fun aRequestWithoutAReasonSendsNone()=runBlocking {
+        repository().requestBooking("request-id","2026-12-07T01:00:00+00:00")
+        assertTrue(bodies["/rest/v1/rpc/request_booking"]!!.isNull("p_reason"))
+    }
+    @Test fun bookingsAndSchedulesNameBothPeopleAndTheReasonForTheVisit()=runBlocking {
+        val booking=repository().loadMyBookings().single()
+        assertEquals("Ana Dela Cruz",booking.patient);assertNull(booking.patientPhoto);assertEquals("Knee pain after walking",booking.visitReason)
+        val session=repository().loadSchedule("2026-12-01","2026-12-31",true).days[0].sessions.single()
+        assertEquals("Dana Reyes",session.therapist);assertEquals("Shoulder stiffness",session.visitReason)
+        assertEquals("Knee pain after walking",repository().loadSchedule("2026-12-01","2026-12-31",false).days[0].sessions.single().visitReason)
     }
 
     @Test fun bookingsCarryWhatThePatientNeeds()=runBlocking {

@@ -5,9 +5,10 @@ import { Button } from '@/components/Button'
 import { Dialog } from '@/components/Dialog'
 import { Avatar, Notice, StatusPill } from '@/components/Display'
 import { SelectField, TextField } from '@/components/Field'
-import { CENTER_ZONE, shiftMonth, todayAt, type Availability, type Slot } from '@/data/booking'
+import { CENTER_ZONE, shiftMonth, todayAt, VISIT_REASON_MAX, VISIT_REASON_MIN, type Availability, type Slot } from '@/data/booking'
 import type { PatientChoice, SeriesDate, SeriesDraft, TherapistChoice } from '@/data/scheduler'
 import { useCenterFormat } from '@/features/booking/format'
+import { VisitReasonField } from '@/features/booking/SessionCard'
 import { SlotPicker } from '@/features/booking/SlotPicker'
 import { asLoad, Loadable, SkeletonLines } from '@/features/shared'
 import { cn } from '@/lib/cn'
@@ -71,6 +72,7 @@ export function WeeklySeriesDialog({ therapists, actions, onClose }: { therapist
   const [patient, setPatient] = useState<PatientChoice | null>(null)
   const [therapist, setTherapist] = useState('')
   const [weeks, setWeeks] = useState('8')
+  const [reason, setReason] = useState('')
   const [dates, setDates] = useState<readonly SeriesDate[] | null>(null)
   const [busy, setBusy] = useState(false)
   // One ID per course, so trying again after a lost response returns the same bookings instead of a second set.
@@ -79,7 +81,9 @@ export function WeeklySeriesDialog({ therapists, actions, onClose }: { therapist
 
   const count = Number(weeks)
   const weeksValid = Number.isInteger(count) && count >= MIN_WEEKS && count <= MAX_WEEKS
-  const draft: SeriesDraft | null = patient && therapist && slot && weeksValid ? { patient: patient.id, therapist, startsAt: slot.startsAt, weeks: count } : null
+  const reasonLength = reason.trim().length
+  const reasonValid = reasonLength === 0 || (reasonLength >= VISIT_REASON_MIN && reasonLength <= VISIT_REASON_MAX)
+  const draft: SeriesDraft | null = patient && therapist && slot && weeksValid && reasonValid ? { patient: patient.id, therapist, startsAt: slot.startsAt, weeks: count, reason } : null
   const free = dates?.filter((item) => !item.problem).length ?? 0
   const therapistName = therapists.find((item) => item.id === therapist)?.name ?? ''
 
@@ -127,6 +131,7 @@ export function WeeklySeriesDialog({ therapists, actions, onClose }: { therapist
           <SelectField label={t('booking.therapist')} value={therapist} placeholder={t('scheduler.seriesChooseTherapist')} onChange={setTherapist} options={therapists.map((item) => ({ value: item.id, label: item.name }))} />
           <TextField label={t('scheduler.seriesWeeks')} hint={t('scheduler.seriesWeeksHint')} type="number" inputMode="numeric" min={MIN_WEEKS} max={MAX_WEEKS} value={weeks} error={weeks && !weeksValid ? t('scheduler.seriesWeeksHint') : undefined} onChange={(event) => setWeeks(event.target.value)} />
         </div>
+        <VisitReasonField value={reason} onChange={setReason} showError={reasonLength > 0} required={false} label={t('scheduler.seriesReason')} hint={t('scheduler.seriesReasonHint')} />
         <div>
           <h3 className="mb-3 font-sans text-base font-bold">{t('scheduler.seriesFirst')}</h3>
           <SlotPicker load={asLoad(availability)} month={month} onMonth={(next) => { setMonth(next); setDate(null); setSlot(null) }} canGoBack={month > first} canGoForward={month < shiftMonth(first, 12)} today={today}

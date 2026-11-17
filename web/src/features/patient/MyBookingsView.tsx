@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ButtonLink, Button } from '@/components/Button'
-import { ConfirmDialog } from '@/components/Dialog'
-import { EmptyState, PageHeader, Panel, PersonName, StatusPill } from '@/components/Display'
-import { ACTIVE, isUpcoming, upcomingBookings, type Booking, type WaitlistEntry } from '@/data/booking'
+import { ConfirmDialog, Dialog } from '@/components/Dialog'
+import { EmptyState, PageHeader, Panel, StatusPill } from '@/components/Display'
+import { isUpcoming, upcomingBookings, validVisitReason, type Booking, type WaitlistEntry } from '@/data/booking'
 import { statusTone, useCenterFormat, useReasonText } from '@/features/booking/format'
+import { SessionCard, VisitReasonField } from '@/features/booking/SessionCard'
 import { Fact, Loadable, SkeletonCards, type Load } from '@/features/shared'
 
 function BookingCard({ booking, base, onCancel }: { booking: Booking; base: string; onCancel: (booking: Booking) => void }) {
@@ -21,11 +22,13 @@ function BookingCard({ booking, base, onCancel }: { booking: Booking; base: stri
         </div>
         <StatusPill tone={statusTone[booking.status]}>{t(`booking.status.${booking.status}`)}</StatusPill>
       </div>
-      <dl className="mt-3 grid gap-3 tablet:grid-cols-3">
-        {(booking.therapist || ACTIVE.includes(booking.status)) && <Fact term={t('booking.therapist')}>{booking.therapist ? <PersonName name={booking.therapist} photo={booking.therapistPhoto} /> : t('booking.noTherapist')}</Fact>}
-        {booking.location && <Fact term={t('booking.location')}>{booking.location}</Fact>}
-        <Fact term={t('booking.reference')}>{booking.reference}</Fact>
-      </dl>
+      <SessionCard className="mt-3" patient={{ name: booking.patient, photo: booking.patientPhoto, you: true }}
+        therapist={{ name: booking.therapist, photo: booking.therapistPhoto }} reason={booking.visitReason}>
+        <dl className="grid gap-3 tablet:grid-cols-2">
+          {booking.location && <Fact term={t('booking.location')}>{booking.location}</Fact>}
+          <Fact term={t('booking.reference')}>{booking.reference}</Fact>
+        </dl>
+      </SessionCard>
       {booking.previousStartsAt && <p className="mt-3 text-sm text-slate">{t('booking.movedFrom', { when: format.day(booking.previousStartsAt) })}</p>}
       {booking.reason && <p className="mt-3 text-sm"><span className="font-semibold">{t('booking.reason')}: </span>{reasonText(booking.reason)}</p>}
       {active && (
@@ -77,15 +80,44 @@ function Section({ title, bookings, base, onCancel }: { title: string; bookings:
   )
 }
 
+/** An opened place is booked like any other request, so it asks why the patient is coming first. */
+function BookPlaceDialog({ entry, onClose, onBook }: { entry: WaitlistEntry | null; onClose: () => void; onBook: Props['onBook'] }) {
+  const { t } = useTranslation()
+  const format = useCenterFormat()
+  const [reason, setReason] = useState('')
+  const [tried, setTried] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const close = () => { setReason(''); setTried(false); onClose() }
+  const send = async () => {
+    if (!entry) return
+    setTried(true)
+    if (!validVisitReason(reason)) return
+    setBusy(true)
+    try { await onBook(entry, reason) } finally { setBusy(false) }
+    close()
+  }
+  return (
+    <Dialog open={entry !== null} onOpenChange={(open) => { if (!open) close() }} title={t('booking.bookPlaceTitle')} description={t('booking.bookPlaceDetail')}>
+      {entry && <p className="mb-4 font-semibold">{format.when(entry.startsAt, entry.endsAt)}</p>}
+      <VisitReasonField value={reason} onChange={setReason} showError={tried} disabled={busy} />
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
+        <Button variant="secondary" disabled={busy} onClick={close}>{t('common.cancel')}</Button>
+        <Button busy={busy} busyLabel={t('booking.requesting')} onClick={() => void send()}>{t('booking.request')}</Button>
+      </div>
+    </Dialog>
+  )
+}
+
 type Props = {
   load: Load<readonly Booking[]>; waitlist: readonly WaitlistEntry[]; base: string; onCancel: (booking: Booking) => void
-  onBook: (entry: WaitlistEntry) => void; onLeave: (entry: WaitlistEntry) => void
+  onBook: (entry: WaitlistEntry, reason: string) => Promise<void>; onLeave: (entry: WaitlistEntry) => void
 }
 
 export function MyBookingsView({ load, waitlist, base, onCancel, onBook, onLeave }: Props) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const [confirming, setConfirming] = useState<Booking | null>(null)
+  const [booking, setBooking] = useState<WaitlistEntry | null>(null)
   const book = <ButtonLink to={`${base}/book`}>{t('booking.title')}</ButtonLink>
   return (
     <>
@@ -99,7 +131,7 @@ export function MyBookingsView({ load, waitlist, base, onCancel, onBook, onLeave
               {waitlist.length > 0 && (
                 <section aria-label={t('booking.waitlist')} className="mb-6">
                   <h2 className="mb-3 text-xl font-bold">{t('booking.waitlist')}</h2>
-                  <ul className="grid items-start gap-4 desk:grid-cols-2">{waitlist.map((entry) => <WaitlistCard key={entry.id} entry={entry} onBook={onBook} onLeave={onLeave} />)}</ul>
+                  <ul className="grid items-start gap-4 desk:grid-cols-2">{waitlist.map((entry) => <WaitlistCard key={entry.id} entry={entry} onBook={setBooking} onLeave={onLeave} />)}</ul>
                 </section>
               )}
               <Section title={t('booking.earlier')} bookings={bookings.filter((booking) => !isUpcoming(booking))} base={base} onCancel={setConfirming} />
@@ -107,6 +139,7 @@ export function MyBookingsView({ load, waitlist, base, onCancel, onBook, onLeave
           )
         }}
       </Loadable>
+      <BookPlaceDialog entry={booking} onClose={() => setBooking(null)} onBook={onBook} />
       <ConfirmDialog open={confirming !== null} onOpenChange={(open) => { if (!open) setConfirming(null) }} title={t('booking.cancel')}
         message={confirming ? t('booking.cancelMessage', { when: format.when(confirming.startsAt, confirming.endsAt) }) : ''} confirmLabel={t('booking.cancel')} cancelLabel={t('booking.keep')} destructive
         onConfirm={() => { if (confirming) onCancel(confirming) }} />

@@ -131,7 +131,9 @@
     "utilization": "Paggamit ngayong linggo",
     "utilizationCount": "{{booked}} sa {{places}} na puwesto",
     "noOpenSlots": "Walang bukas na oras ngayong linggo",
-    "utilizationMeaning": "Ang paggamit ay ang bahagi ng mga naka-book na session sa mga puwesto sa mga bukas na oras, mula {{from}} hanggang {{to}}. Ang naka-book ay kumpirmado o inilipat ng oras."
+    "utilizationMeaning": "Ang paggamit ay ang bahagi ng mga naka-book na session sa mga puwesto sa mga bukas na oras, mula {{from}} hanggang {{to}}. Ang naka-book ay kumpirmado o inilipat ng oras.",
+    "seriesReason": "Dahilan ng pagbisita (opsiyonal)",
+    "seriesReasonHint": "Ibibigay sa bawat sesyon ng kurso. Makikita ito ng pasyente at therapist."
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
@@ -273,7 +275,8 @@
       "reschedule_limit": "Hindi na muling maililipat online ang session na ito. Makipag-ugnayan sa center.",
       "not_started": "Hindi pa nagsisimula ang session na ito.",
       "series_empty": "Wala sa mga petsang iyon ang maaaring i-book ngayon. Suriin muli ang mga ito.",
-      "patient_unavailable": "Hindi maaaring i-book ang pasyenteng iyon."
+      "patient_unavailable": "Hindi maaaring i-book ang pasyenteng iyon.",
+      "visit_reason": "Dapat 3 hanggang 500 character ang dahilan ng pagbisita."
     },
     "keep": "Panatilihin ang booking",
     "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
@@ -319,7 +322,16 @@
     },
     "attendanceTitle": "Pagdalo",
     "attendanceFor": "Pagdalo ni {{patient}}",
-    "attendanceSaved": "Nai-save ang pagdalo."
+    "attendanceSaved": "Nai-save ang pagdalo.",
+    "visitReason": "Dahilan ng pagbisita",
+    "visitReasonHint": "Sabihin sa center kung ano ang kailangan mo ng tulong, gaya ng sakit, pinsala o follow-up. Makikita ito ng iyong therapist at ng Scheduler.",
+    "visitReasonError": "Sumulat ng 3 hanggang 500 character.",
+    "visitReasonCount": "{{count}} sa 500",
+    "patientRole": "Pasyente",
+    "therapistRole": "Therapist",
+    "youSuffix": "Ikaw",
+    "bookPlaceTitle": "I-book ang puwestong ito",
+    "bookPlaceDetail": "Sabihin kung bakit ka darating, saka ipapadala ang kahilingan sa Scheduler."
   },
   "calendar": {
     "title": "Kalendaryo ng center",

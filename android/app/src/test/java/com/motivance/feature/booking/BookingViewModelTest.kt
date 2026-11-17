@@ -9,6 +9,8 @@ import kotlinx.coroutines.test.*
 import org.junit.*
 import org.junit.Assert.*
 
+private const val REASON="Knee pain after walking"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookingViewModelTest {
     private val dispatcher=StandardTestDispatcher()
@@ -33,8 +35,10 @@ class BookingViewModelTest {
             availabilityLoads++
             return BookingAvailability(listOf(BookingDay("2026-12-07",BookingDayStatus.OPEN,slots=listOf(slot))))
         }
-        override suspend fun requestBooking(requestId:String,startsAt:String):Booking {
+        val reasons=mutableListOf<String>()
+        override suspend fun requestBooking(requestId:String,startsAt:String,reason:String):Booking {
             requests+=requestId to startsAt
+            reasons+=reason
             refusal?.let {throw it}
             return booking
         }
@@ -144,7 +148,7 @@ class BookingViewModelTest {
 
     @Test fun anOpenPlaceIsBookedInOneStep()=runTest {
         val remote=Remote();val vm=viewModel(remote)
-        vm.book(entry.copy(open=true));advanceUntilIdle()
+        vm.book(entry.copy(open=true),REASON);advanceUntilIdle()
         assertEquals(entry.startsAt,remote.requests.single().second)
         assertEquals(listOf(booking),vm.state.value.bookings)
     }
@@ -156,14 +160,29 @@ class BookingViewModelTest {
         vm.refresh();advanceUntilIdle()
         remote.refusal=RemoteFailure(400,"booking_full")
         remote.waitlist=listOf(entry)
-        vm.book(entry.copy(open=true));advanceUntilIdle()
+        vm.book(entry.copy(open=true),REASON);advanceUntilIdle()
         assertEquals(listOf(entry),vm.state.value.waitlist)
     }
 
+    @Test fun noRequestLeavesWithoutAReasonForTheVisit()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        vm.selectSlot(slot);vm.request {fail("A request without a reason must not finish")};advanceUntilIdle()
+        assertTrue(remote.requests.isEmpty());assertTrue("The form now shows why",vm.state.value.reasonTried)
+        vm.setReason("  a ");vm.request {fail("Two letters are not a reason")};advanceUntilIdle()
+        assertTrue(remote.requests.isEmpty())
+        vm.setReason("x".repeat(600))
+        assertEquals("The field stops at the server's limit",500,vm.state.value.reason.length)
+    }
+    @Test fun theReasonGoesWithTheRequestAndIsClearedAfter()=runTest {
+        val remote=Remote();val vm=viewModel(remote)
+        vm.selectSlot(slot);vm.setReason(REASON);vm.request {};advanceUntilIdle()
+        assertEquals(listOf(REASON),remote.reasons)
+        assertEquals("",vm.state.value.reason);assertFalse(vm.state.value.reasonTried)
+    }
     @Test fun requestingSendsTheChosenTimeAndReturnsToTheList()=runTest {
         val remote=Remote();val vm=viewModel(remote)
         var finished=false
-        vm.selectSlot(slot);vm.request {finished=true};advanceUntilIdle()
+        vm.selectSlot(slot);vm.setReason(REASON);vm.request {finished=true};advanceUntilIdle()
         assertEquals(slot.startsAt,remote.requests.single().second)
         assertTrue(finished)
         assertEquals(listOf(booking),vm.state.value.bookings)
@@ -174,24 +193,24 @@ class BookingViewModelTest {
     @Test fun retryingTheSameTimeReusesItsRequestId()=runTest {
         val remote=Remote();val vm=viewModel(remote)
         remote.refusal=RemoteFailure(503)
-        vm.selectSlot(slot);vm.request {};advanceUntilIdle()
+        vm.selectSlot(slot);vm.setReason(REASON);vm.request {};advanceUntilIdle()
         remote.refusal=null
-        vm.selectSlot(slot);vm.request {};advanceUntilIdle()
+        vm.selectSlot(slot);vm.setReason(REASON);vm.request {};advanceUntilIdle()
         assertEquals(2,remote.requests.size)
         assertEquals(remote.requests[0].first,remote.requests[1].first)
     }
 
     @Test fun aNewRequestAfterSuccessGetsANewId()=runTest {
         val remote=Remote();val vm=viewModel(remote)
-        vm.selectSlot(slot);vm.request {};advanceUntilIdle()
-        vm.selectSlot(slot);vm.request {};advanceUntilIdle()
+        vm.selectSlot(slot);vm.setReason(REASON);vm.request {};advanceUntilIdle()
+        vm.selectSlot(slot);vm.setReason(REASON);vm.request {};advanceUntilIdle()
         assertNotEquals(remote.requests[0].first,remote.requests[1].first)
     }
 
     @Test fun aRefusalExplainsWhyAndRefreshesTheTimes()=runTest {
         val remote=Remote();val toasts=Toaster();val vm=viewModel(remote,toasts)
         remote.refusal=RemoteFailure(400,"booking_full")
-        vm.selectSlot(slot);vm.request {fail("A refused request must not finish")};advanceUntilIdle()
+        vm.selectSlot(slot);vm.setReason(REASON);vm.request {fail("A refused request must not finish")};advanceUntilIdle()
         assertEquals(R.string.booking_error_full,toasts.current.value?.message)
         assertEquals(ToastTone.ERROR,toasts.current.value?.tone)
         assertNull("The time may be gone, so the choice must not stand",vm.state.value.slot)

@@ -885,6 +885,16 @@
     <string name="booking_location">Lokasyon</string>
     <string name="booking_reference">Reference</string>
     <string name="booking_reason">Dahilan</string>
+    <string name="booking_visit_reason">Dahilan ng pagbisita</string>
+    <string name="booking_visit_reason_hint">Sabihin sa center kung ano ang kailangan mo ng tulong, gaya ng sakit, pinsala o follow-up. Makikita ito ng iyong therapist at ng Scheduler.</string>
+    <string name="booking_visit_reason_error">Sumulat ng 3 hanggang 500 character.</string>
+    <string name="booking_visit_reason_count">%1$d sa 500</string>
+    <string name="booking_patient_role">Pasyente</string>
+    <string name="booking_therapist_role">Therapist</string>
+    <string name="booking_you">Ikaw</string>
+    <string name="booking_book_place_title">I-book ang puwestong ito</string>
+    <string name="booking_book_place_detail">Sabihin kung bakit ka darating, saka ipapadala ang kahilingan sa Scheduler.</string>
+    <string name="booking_error_visit_reason">Dapat 3 hanggang 500 character ang dahilan ng pagbisita.</string>
     <string name="booking_reason_therapist">Hindi na available ang iyong therapist. Magtatalaga ng iba ang Scheduler.</string>
     <string name="booking_moved_from">Inilipat mula %1$s</string>
     <string name="booking_cancel">Kanselahin ang booking</string>

@@ -17,7 +17,7 @@ object BookingJson {
     fun booking(json:JSONObject)=Booking(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.PENDING,json.text("status_reason"),
         json.getString("starts_at"),json.getString("ends_at"),json.text("previous_starts_at"),json.text("therapist_name"),
         json.text("location").orEmpty(),json.text("cancel_until"),json.optBoolean("can_cancel"),json.text("reschedule_until"),json.optBoolean("can_reschedule"),json.optInt("reschedules_left"),
-        json.text("therapist_photo"))
+        json.text("therapist_photo"),json.text("visit_reason"),json.text("patient_name"),json.text("patient_photo"))
 
     fun bookings(json:JSONArray)=json.objects().map {booking(it)}
 
@@ -46,7 +46,7 @@ object BookingJson {
 
     private fun session(json:JSONObject)=ScheduleSession(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.CONFIRMED,
         json.getString("starts_at"),json.getString("ends_at"),json.text("location").orEmpty(),json.text("therapist_name"),json.text("patient_id"),json.text("patient_name"),json.optBoolean("linked"),
-        json.text("attendance"),json.optBoolean("started"),json.text("therapist_photo"),json.text("patient_photo"))
+        json.text("attendance"),json.optBoolean("started"),json.text("therapist_photo"),json.text("patient_photo"),json.text("visit_reason"))
 
     fun schedule(json:JSONObject)=Schedule(json.getJSONArray("days").objects().map {day ->
         ScheduleDay(day.getString("date"),BookingDayStatus.of(day.getString("status")),day.text("holiday"),day.getJSONArray("rows").objects().map {row ->
