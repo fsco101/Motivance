@@ -23,4 +23,4 @@ Engineering review: Claude Code, 2026-11-17. Design: [BOOKING.md](../architectur
 ## Not executed
 
 - The Android cards and reason field were not seen on a screen (no emulator; too little free memory with the local stack running). See the [follow-up checklist](POST-IMPLEMENTATION-CHECKLIST.md).
-- The migration is not applied to the hosted project.
+- The migration was applied to the hosted project on 2026-11-17 (`db push` after a dry run, read back with `migration list --linked`). No hosted booking has been made with a reason yet, and the live web app has not been redeployed, so its booking form does not ask for one until it is.
