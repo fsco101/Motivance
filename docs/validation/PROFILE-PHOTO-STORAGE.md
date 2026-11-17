@@ -28,6 +28,6 @@ Engineering review: Claude Code, 2026-11-17. Operations: [PROFILE-PHOTOS.md](../
 ## Not executed
 
 - The Android crop dialog has not been seen on a screen: no emulator was started, because the machine had too little free memory with the local stack running. Its gestures, slider and TalkBack actions are listed in the [follow-up checklist](POST-IMPLEMENTATION-CHECKLIST.md), with the physical-phone upload.
-- The migration has not been applied to the hosted project, and no hosted cleanup has run.
+- The migration was applied to the hosted project on 2026-11-17 (`db push` after a dry run, read back with `migration list --linked`; the public `avatars` bucket answers). No hosted upload or hosted cleanup has run, and the live web app has not been redeployed.
 - Browsers other than Chromium were not tested. Safari's JPEG fallback is listed in the checklist.
 - `scripts/check_web_bundle.py` reports the initial JavaScript at 323 KB compressed, over its 300 KB budget. It was 322 KB before this change.
