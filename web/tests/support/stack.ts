@@ -109,6 +109,18 @@ export async function ingestSession(patient: TestUser, prescription: string, ses
   if (uploaded.error) throw uploaded.error
 }
 
+/** Profile photo files can only be removed through the Storage API, so a suite that stores photos calls this before removeUsers. */
+export async function removePhotos(users: readonly TestUser[]) {
+  if (users.length === 0) return
+  const folders = users.map((user) => `'${user.id}'`).join(',')
+  const paths = sql(`select name from storage.objects where bucket_id='avatars' and split_part(name,'/',1) in (${folders})`).split(/\r?\n/).filter(Boolean)
+  if (paths.length === 0) return
+  const { API_URL, SERVICE_ROLE_KEY } = stack()
+  const operator = createClient<Database>(API_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+  const { error } = await operator.storage.from('avatars').remove(paths)
+  if (error) throw error
+}
+
 export function removeUsers(users: readonly TestUser[]) {
   if (users.length === 0) return
   const ids = users.map((user) => `'${user.id}'`).join(',')
@@ -143,5 +155,6 @@ update public.center_settings set updated_by=null where updated_by in (${ids});
 delete from public.audit_events where actor_id in (${ids}) or target_id in (${ids});
 delete from public.patient_profiles where user_id in (${ids}); delete from public.patients where id in (${ids}); delete from public.user_roles where user_id in (${ids});
 delete from public.notification_settings where user_id in (${ids});
+delete from public.profile_photo_uploads where user_id in (${ids});
 delete from public.profiles where id in (${ids}); delete from auth.users where id in (${ids}); commit;`)
 }

@@ -21,8 +21,8 @@ describe('reading a notification', () => {
   })
 
   it('keeps who it is about, with their photo', () => {
-    expect(decodeNotification({ ...row, subject_id: 't1', subject_name: 'Dana', subject_photo: 'https://res.cloudinary.com/x/image/upload/v1/a' }))
-      .toMatchObject({ subjectId: 't1', subjectName: 'Dana', subjectPhoto: 'https://res.cloudinary.com/x/image/upload/v1/a' })
+    expect(decodeNotification({ ...row, subject_id: 't1', subject_name: 'Dana', subject_photo: '00000000-0000-0000-0000-000000000001/0123456789abcdef0123456789abcdef.webp' }))
+      .toMatchObject({ subjectId: 't1', subjectName: 'Dana', subjectPhoto: '00000000-0000-0000-0000-000000000001/0123456789abcdef0123456789abcdef.webp' })
     expect(decodeNotification(row)).toMatchObject({ subjectId: null, subjectName: null, subjectPhoto: null })
   })
 

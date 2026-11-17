@@ -23,6 +23,11 @@ def main():
         assert 'public.on_user_created()' not in auth and 'public.on_email_confirmed()' not in auth
         def execute(sql): return docker('psql','-U','postgres','-d',database,'-At','-v','ON_ERROR_STOP=1',sql='set search_path=public,extensions,auth;\n'+sql)
         execute('create schema extensions; create extension pgcrypto with schema extensions;\n'+auth+'\ngrant usage on schema auth,extensions to anon,authenticated;')
+        # Storage tables are infrastructure too: migrations add buckets and policies to them. Definitions only, never files,
+        # and without the policies the migrations themselves create.
+        storage=docker('pg_dump','-U','postgres','-d','postgres','--schema-only','--schema=storage','--no-owner','--no-privileges')
+        storage=re.sub(r'(?m)^CREATE POLICY [^;]*;\n','',storage)
+        execute(storage+'\ngrant usage on schema storage to anon,authenticated;')
         # pg_cron can only be created in the postgres database, so this one stands in for its schedule function and records the jobs.
         execute("""create schema cron; create table cron.job(jobid bigserial primary key,jobname text unique,schedule text not null,command text not null);
 create function cron.schedule(p_name text,p_schedule text,p_command text) returns bigint language sql as $$

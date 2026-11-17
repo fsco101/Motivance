@@ -55,6 +55,6 @@ class PatientProfileTest {
     @Test fun profilePhotoIsOptionalAndNotPartOfStepValidation() {
         val profile=PatientProfile("fixture_user","Fixture Person","female","1990-01-01","Fixture address","+639001234567",consent=true)
         assertTrue(profile.valid())
-        assertTrue(profile.copy(photoUrl="https://res.cloudinary.com/demo/image/upload/v1/x").valid())
+        assertTrue(profile.copy(photoUrl="00000000-0000-0000-0000-000000000000/0123456789abcdef0123456789abcdef.webp").valid())
     }
 }

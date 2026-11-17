@@ -16,8 +16,8 @@ Solved implementation issues and implemented sprint milestones may close while t
 ## Therapist-to-patient workflow
 
 - [ ] Review the detailed signup/privacy agreement and profile editing with representative users in both languages: age derived from birthdate, immutable email, profile photo upload, current-password verification and connected-therapist demographic visibility. Review privacy wording, consent comprehension and any minor/guardian procedures with the deployment owner before live enrollment. These human/physical checks remain unexecuted; automated profile checks are separate engineering evidence.
-- [ ] Configure a real Cloudinary account with `scripts/configure_cloudinary.py --check --apply`. Then, on a physical phone, upload, replace and remove a profile photo. Confirm a linked therapist and an administrator see it, an unrelated account does not, and an administrator can remove it. Run `scripts/cleanup_profile_photos.py --apply` and confirm the retired asset is gone from the Cloudinary Media Library. Engineering tests used simulated Cloudinary responses only (`PROFILE-PHOTOS.md`).
-- [ ] Have the deployment owner review whether the `system-purpose-v1` privacy agreement needs a new version that names profile photos and Cloudinary as an image processor. The app currently shows a just-in-time notice on the photo card and leaves the agreement text unchanged.
+- [ ] After `202611170001_profile_photo_storage.sql` is applied to the hosted project, on a physical phone, pick, crop (drag, pinch, slider and the TalkBack move actions), upload, replace and remove a profile photo. Confirm the crop is what was framed, a linked therapist and an administrator see it, an unrelated account does not, and an administrator can remove it. Run `scripts/cleanup_profile_photos.py --target hosted --apply` and confirm the retired file is gone from the `avatars` bucket. Engineering tests ran against local Storage and an emulator build only (`PROFILE-PHOTO-STORAGE.md`).
+- [ ] Have the deployment owner review whether the `system-purpose-v1` privacy agreement needs a new version that names profile photos and says that anyone with a photo's link can open it. The app currently shows a just-in-time notice on the photo card and leaves the agreement text unchanged. Photos are no longer sent to Cloudinary; if a Cloudinary account was ever configured, delete its `motivance/avatars` folder.
 - [ ] With representative patients on physical phones, in both languages, review the 4-step signup flow from `SIGNUP-STEPPED-FLOW.md`:
   - The step progress is understood, and Back/Edit return to the right place without losing entries.
   - The errors shown after Continue are clear.
@@ -142,7 +142,7 @@ Solved implementation issues and implemented sprint milestones may close while t
 ## Administrator workspace and staff profile follow-up (2026-11-05)
 
 - [ ] Perform every administrator task side by side in Android and the browser, and compare the results and audit records. Evidence scope: [administrator workspace](WEB-ADMIN-PROFILE.md).
-- [ ] With a real Cloudinary account configured, upload a staff photo from a browser and confirm it appears across the app. The automated test stands in for Cloudinary's endpoint.
+- [ ] On the hosted project, crop and upload a staff photo from desktop Chrome, Firefox and Safari (Safari may store JPEG instead of WebP), and from a phone browser with a touch pinch, and confirm it appears across the app. The automated test uses local Storage in Chromium.
 - [ ] Have an administrator try the workspace and confirm it fits how they work.
 - [ ] Have a Filipino speaker review the new administrator and profile text in `web/src/locales/fil.json`.
 
@@ -233,7 +233,7 @@ Engineering evidence is in [AVATARS-AND-NOTIFICATIONS.md](AVATARS-AND-NOTIFICATI
 - [ ] As a therapist, confirm a patient's finished session and a 3-day quiet stretch each push once, and that tapping opens that patient. Turn Finished sessions off on Profile and confirm the next one reaches the bell but not the phone.
 - [ ] Link and unlink a patient by invitation and as an administrator. Confirm each side hears only what they did not do themselves.
 - [ ] In the phone's settings for Motivance, confirm each group is its own channel, and that the lock screen shows only "You have an update" for the new kinds.
-- [ ] With Cloudinary configured, give a therapist, a patient and an administrator real photos. Confirm the photos appear in both apps on bookings, schedules, the Scheduler's requests and calendar, the bell, and the administrator links and activity, and that a removed photo goes from all of them.
+- [ ] On the hosted project, give a therapist, a patient and an administrator real photos. Confirm the photos appear in both apps on bookings, schedules, the Scheduler's requests and calendar, the bell, and the administrator links and activity, and that a removed photo goes from all of them.
 - [ ] Confirm a Scheduler still sees no clinical data, and a patient sees only their own therapist's photo.
 - [ ] At the largest font size on a small phone and with TalkBack, check the Notifications card, its time picker and the bell rows with faces.
 - [ ] Have a Filipino speaker review `notification_*`, `push_channel_*` and `notification_settings_*` in `values-fil/strings.xml`, the new `notifications.*` lines in `web/src/locales/booking.fil.json`, and the Filipino lines in `supabase/functions/_shared/push_text.ts`.

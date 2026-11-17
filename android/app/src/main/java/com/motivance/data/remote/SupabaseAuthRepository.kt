@@ -28,7 +28,6 @@ import java.time.OffsetDateTime
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null,
-    private val cloudinaryApi:String=CLOUDINARY_API,
 ) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
@@ -114,28 +113,18 @@ import java.time.OffsetDateTime
         (if(rows.length()>0) readProfile(rows.getJSONObject(0),user.getString("email")) else PatientProfile(email=user.getString("email"))).copy(photoUrl=photo)
     }
     override suspend fun saveProfile(profile:PatientProfile) {require(profile.valid());authorized {token,_ -> call("/rest/v1/rpc/save_my_profile",JSONObject().put("p_details",profileJson(profile)),token)} }
-    override suspend fun uploadProfilePhoto(jpeg:ByteArray):String {
-        require(jpeg.isNotEmpty() && jpeg.size<=MAX_PHOTO_BYTES)
-        // 1. The database issues a signature bound to a server-chosen public ID; the API secret never leaves Vault.
-        val ticket=authorized {token,_ -> JSONObject(call("/rest/v1/rpc/profile_photo_upload",JSONObject(),token))}
-        val cloud=ticket.getString("cloud_name");val publicId=ticket.getString("public_id")
-        check(cloud.matches(Regex("[A-Za-z0-9_-]{1,64}")) && publicId.matches(Regex("motivance/avatars/[0-9a-f-]{36}/[0-9a-f]{32}")))
-        // 2. Upload straight to Cloudinary, outside the session lock so other requests are not blocked.
-        val form=MultipartBody.Builder().setType(MultipartBody.FORM)
-            .addFormDataPart("file","profile.jpg",jpeg.toRequestBody("image/jpeg".toMediaType()))
-            .addFormDataPart("api_key",ticket.getString("api_key")).addFormDataPart("timestamp",ticket.getLong("timestamp").toString())
-            .addFormDataPart("public_id",publicId).addFormDataPart("signature",ticket.getString("signature")).build()
-        val uploaded=withContext(Dispatchers.IO) {
-            http.newCall(Request.Builder().url("${cloudinaryApi.trimEnd('/')}/v1_1/$cloud/image/upload").post(form).build()).execute().use {response ->
-                if(!response.isSuccessful) throw RemoteFailure(response.code,"photo_upload")
-                JSONObject(response.body?.string().orEmpty())
-            }
-        }
-        check(uploaded.getString("public_id")==publicId)
-        // 3. The database verifies Cloudinary's response signature before saving the photo.
+    override suspend fun uploadProfilePhoto(webp:ByteArray):String {
+        require(webp.isNotEmpty() && webp.size<=MAX_PHOTO_BYTES)
+        // 1. The database names a place in the caller's own folder and counts it against the hourly limit.
+        val ticket=authorized {token,_ -> JSONObject(call("/rest/v1/rpc/start_profile_photo",JSONObject().put("p_mime",PHOTO_MIME),token))}
+        val path=ticket.getString("path")
+        check(ticket.getString("bucket")==AVATAR_BUCKET && PHOTO_PATH.matches(path) && path.endsWith(".webp"))
+        require(webp.size<=ticket.optLong("limit",MAX_PHOTO_BYTES.toLong()))
+        // 2. Store the file there under the signed-in session; Storage refuses anything over the bucket's limits.
+        authorized {token,_ -> storage("/storage/v1/object/$AVATAR_BUCKET/$path",webp.toRequestBody(PHOTO_MIME.toMediaType()),token,upload=true,cacheControl=PHOTO_CACHE)}
+        // 3. The database checks the stored file before saving it as the photo.
         return authorized {token,_ ->
-            val raw=call("/rest/v1/rpc/set_my_profile_photo",JSONObject().put("p_public_id",publicId).put("p_version",uploaded.getLong("version"))
-                .put("p_signature",uploaded.getString("signature")),token)
+            val raw=call("/rest/v1/rpc/set_my_profile_photo",JSONObject().put("p_path",path),token)
             JSONArray("[$raw]").getString(0)
         }
     }
@@ -290,11 +279,11 @@ import java.time.OffsetDateTime
         baseUrl.trimEnd('/')+"/storage/v1"+signed
     }
     /** Storage takes raw files, so it has its own call. Paths come from the server and are checked before they are used. */
-    private suspend fun storage(path:String,body:RequestBody,bearer:String,upload:Boolean=false):String = withContext(Dispatchers.IO) {
+    private suspend fun storage(path:String,body:RequestBody,bearer:String,upload:Boolean=false,cacheControl:String?=null):String = withContext(Dispatchers.IO) {
         requireSafeBase()
         check(STORAGE_PATH.matches(path.substringBefore('?'))) {"Unexpected storage path"}
         val request=Request.Builder().url(baseUrl.trimEnd('/')+path).header("apikey",publicKey).header("Authorization","Bearer $bearer")
-            .apply {if(upload) header("x-upsert","false")}.post(body).build()
+            .apply {if(upload) header("x-upsert","false");cacheControl?.let {header("cache-control",it)}}.post(body).build()
         http.newCall(request).execute().use {response ->
             val text=response.body?.string().orEmpty()
             // A file stored by an earlier try cannot be replaced, and need not be.
@@ -348,12 +337,16 @@ import java.time.OffsetDateTime
     }}
 }
 
-private const val CLOUDINARY_API="https://api.cloudinary.com"
 private const val ADMIN_PAGE=50
 private const val ACTIVITY_PAGE=30
 /** JSON null and missing keys both read as null; org.json's optString would return the text "null". */
 private fun JSONObject.text(key:String):String?=if(isNull(key)) null else getString(key)
 
 private const val CHAT_BUCKET="chat-media"
-/** conversation/attachment/media.ext or preview.jpg, under the chat bucket, for upload or for a link. */
-private val STORAGE_PATH=Regex("/storage/v1/object/(sign/)?chat-media/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.(jpg|webp|mp4|webm)|preview\\.jpg)")
+/** conversation/attachment/media.ext or preview.jpg, under the chat bucket, for upload or for a link; or a profile photo upload. */
+private val STORAGE_PATH=Regex("/storage/v1/object/((sign/)?chat-media/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.(jpg|webp|mp4|webm)|preview\\.jpg)|avatars/[0-9a-f-]{36}/[0-9a-f]{32}\\.webp)")
+private const val AVATAR_BUCKET="avatars"
+private const val PHOTO_MIME="image/webp"
+/** Every photo gets a new name, so a stored file never changes and can be cached for a year. */
+private const val PHOTO_CACHE="max-age=31536000"
+private val PHOTO_PATH=Regex("[0-9a-f-]{36}/[0-9a-f]{32}\\.(webp|jpg)")

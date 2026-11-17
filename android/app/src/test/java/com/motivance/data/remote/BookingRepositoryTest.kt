@@ -262,7 +262,7 @@ class BookingRepositoryTest {
     /** These are not about one session, so they have no time, and that must not lose the rest of the inbox. */
     @Test fun notificationsThatAreNotAboutASessionAreRead() {
         val inbox=BookingJson.inbox(JSONObject("""{"unread":3,"rows":[
-            {"id":"n1","kind":"session_finished","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":"p1","subject_name":"Ana","subject_photo":"https://res.cloudinary.com/x/image/upload/v1/a",
+            {"id":"n1","kind":"session_finished","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":"p1","subject_name":"Ana","subject_photo":"00000000-0000-0000-0000-616161616161/61616161616161616161616161616161.webp",
              "data":{"patient_name":"Ana","completed":6,"target":5,"side":"left"}},
             {"id":"n2","kind":"patient_inactive","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":"p1","subject_name":"Ana","subject_photo":null,
              "data":{"patient_name":"Ana","days":4,"last_session_at":null}},
@@ -271,26 +271,26 @@ class BookingRepositoryTest {
         val finished=inbox.items[0]
         assertNull(finished.startsAt);assertNull(finished.endsAt);assertEquals("",finished.reference)
         assertEquals(6,finished.completed);assertEquals(5,finished.target)
-        assertEquals("p1",finished.subjectId);assertEquals("Ana",finished.subjectName);assertEquals("https://res.cloudinary.com/x/image/upload/v1/a",finished.subjectPhoto)
+        assertEquals("p1",finished.subjectId);assertEquals("Ana",finished.subjectName);assertEquals("00000000-0000-0000-0000-616161616161/61616161616161616161616161616161.webp",finished.subjectPhoto)
         assertEquals(4,inbox.items[1].days);assertNull(inbox.items[1].subjectPhoto)
         assertNull(inbox.items[2].subjectId);assertNull(inbox.items[2].days)
     }
 
     @Test fun aBookingNotificationIsAboutTheOtherPerson() {
         val note=BookingJson.inbox(JSONObject("""{"unread":1,"rows":[{"id":"n1","kind":"confirmed","booking_id":"b1","read_at":null,"created_at":"2026-12-01T02:00:00+00:00",
-            "subject_id":"t1","subject_name":"Dana","subject_photo":"https://res.cloudinary.com/x/image/upload/v1/d",
+            "subject_id":"t1","subject_name":"Dana","subject_photo":"00000000-0000-0000-0000-646464646464/64646464646464646464646464646464.webp",
             "data":{"reference_no":"BK-2026-000001","starts_at":"2026-12-14T02:00:00+00:00","ends_at":"2026-12-14T03:00:00+00:00","therapist_name":"Dana"}}]}""")).items.single()
         assertEquals("2026-12-14T02:00:00+00:00",note.startsAt)
-        assertEquals("t1",note.subjectId);assertEquals("https://res.cloudinary.com/x/image/upload/v1/d",note.subjectPhoto)
+        assertEquals("t1",note.subjectId);assertEquals("00000000-0000-0000-0000-646464646464/64646464646464646464646464646464.webp",note.subjectPhoto)
     }
 
     @Test fun bookingsAndSchedulesCarryPhotos() {
-        assertEquals("https://res.cloudinary.com/x/image/upload/v1/d",BookingJson.booking(JSONObject(booking).put("therapist_photo","https://res.cloudinary.com/x/image/upload/v1/d")).therapistPhoto)
+        assertEquals("00000000-0000-0000-0000-646464646464/64646464646464646464646464646464.webp",BookingJson.booking(JSONObject(booking).put("therapist_photo","00000000-0000-0000-0000-646464646464/64646464646464646464646464646464.webp")).therapistPhoto)
         assertNull("A booking from an older server has no photo",BookingJson.booking(JSONObject(booking)).therapistPhoto)
         val day=BookingJson.schedule(JSONObject("""{"days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[{"starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00",
             "session":{"id":"b1","reference_no":"BK","status":"confirmed","starts_at":"2026-12-07T01:00:00+00:00","ends_at":"2026-12-07T02:00:00+00:00","location":"","patient_id":"p1","patient_name":"Ana",
-            "patient_photo":"https://res.cloudinary.com/x/image/upload/v1/a","therapist_photo":null,"linked":true}}]}]}""")).days.single()
-        assertEquals("https://res.cloudinary.com/x/image/upload/v1/a",day.sessions.single().patientPhoto)
+            "patient_photo":"00000000-0000-0000-0000-616161616161/61616161616161616161616161616161.webp","therapist_photo":null,"linked":true}}]}]}""")).days.single()
+        assertEquals("00000000-0000-0000-0000-616161616161/61616161616161616161616161616161.webp",day.sessions.single().patientPhoto)
         assertNull(day.sessions.single().therapistPhoto)
     }
 }

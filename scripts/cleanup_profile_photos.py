@@ -1,73 +1,88 @@
-"""Delete replaced, removed or abandoned profile photos from Cloudinary. Dry run by default.
+"""Remove replaced, removed and abandoned profile photos from Supabase Storage. Dry run by default.
 
-The database records every upload ticket in public.profile_photo_uploads. The candidates are photos that were
-replaced or removed (retired_at set) and tickets issued more than two hours ago that were never completed. Each
-candidate is destroyed with CDN invalidation and then marked deleted. "Not found" also counts as deleted, because
-abandoned tickets may never have produced an asset. Run it after configure_cloudinary.py, using the same
-supabase/.env credentials, for example on a daily schedule.
+Due means: a photo that was replaced, removed by its owner or removed by an administrator; a place issued more than two
+hours ago that never became a photo; and, as a safety net, any file in the `avatars` bucket more than two hours old that is
+nobody's current photo. Each removed file is then marked in the database, so it is not tried again. A cleared photo leaves
+the profile at once, but its file stays reachable at its address until this runs, so run it on a schedule, for example
+daily, and as part of any deletion request. It needs the project's service key, which must never reach an app.
 
-  python scripts/cleanup_profile_photos.py --target local            # list candidate count
-  python scripts/cleanup_profile_photos.py --target local --apply    # delete and mark
+  python scripts/cleanup_profile_photos.py --target local            # count what is due
+  python scripts/cleanup_profile_photos.py --target local --apply    # remove it and mark it
+  python scripts/cleanup_profile_photos.py --target hosted --apply   # needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
+
+For hosted, put SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the environment or in supabase/.env (which is ignored by Git).
+`--usage` prints how many photos are stored and how much space they take.
 """
 import argparse
-import hashlib
-import json
 from pathlib import Path
 import re
 import sys
-import time
 import urllib.error
-import urllib.parse
-import urllib.request
 
-import configure_cloudinary as config
+from cleanup_chat_media import ConfigurationError, ROOT, call, hosted_settings, local_settings
 
-PUBLIC_ID=re.compile(r'motivance/avatars/[0-9a-f-]{36}/[0-9a-f]{32}')
-CANDIDATES="""select public_id from public.profile_photo_uploads where deleted_at is null
- and (retired_at is not null or (used_at is null and issued_at<now()-interval '2 hours')) order by issued_at limit {limit};"""
+BUCKET = 'avatars'
+# account/random.webp or .jpg: anything else is never sent to the delete call.
+PATH = re.compile(r'[0-9a-f-]{36}/[0-9a-f]{32}\.(webp|jpg)')
 
-def candidates(settings,target,limit):
-    result=config.execute(settings,target,CANDIDATES.format(limit=int(limit)))
-    rows=result.splitlines() if target=='local' else [r['public_id'] for r in result]
-    return [r.strip() for r in rows if PUBLIC_ID.fullmatch(r.strip())]
 
-def destroy(settings,values,public_id):
-    """Signed Upload API destroy call. Returns True once Cloudinary no longer holds the asset."""
-    timestamp=str(int(time.time()))
-    signature=hashlib.sha1(f'invalidate=true&public_id={public_id}&timestamp={timestamp}{values["api_secret"]}'.encode()).hexdigest()
-    body=urllib.parse.urlencode({'public_id':public_id,'timestamp':timestamp,'invalidate':'true','api_key':values['api_key'],'signature':signature}).encode()
-    request=urllib.request.Request(f"{config.api_base(settings)}/v1_1/{values['cloud_name']}/image/destroy",data=body,method='POST')
-    try:
-        with urllib.request.urlopen(request,timeout=30) as response:
-            return json.loads(response.read() or b'{}').get('result') in ('ok','not found')
-    except (urllib.error.HTTPError,urllib.error.URLError):
-        return False
+def due(url, key, limit):
+    paths = call(url, key, 'POST', '/rest/v1/rpc/profile_photos_due', {'p_limit': limit}) or []
+    return [p for p in paths if PATH.fullmatch(p)]
 
-def mark_deleted(settings,target,public_ids):
-    # Public IDs are validated against PUBLIC_ID, so they are safe inside quoted literals.
-    quoted=','.join("'"+p+"'" for p in public_ids if PUBLIC_ID.fullmatch(p))
-    if quoted: config.execute(settings,target,f'update public.profile_photo_uploads set deleted_at=now() where public_id in ({quoted});')
+
+def remove(url, key, paths):
+    """Asks Storage to remove the files. A file that is already gone is simply not mentioned in the answer."""
+    call(url, key, 'DELETE', f'/storage/v1/object/{BUCKET}', {'prefixes': paths})
+
+
+def remaining(url, key, paths):
+    """Which of these files Storage still holds, read folder by folder, so only what is really gone is marked."""
+    held = set()
+    for folder in sorted({p.rsplit('/', 1)[0] for p in paths}):
+        offset = 0
+        while True:
+            page = call(url, key, 'POST', f'/storage/v1/object/list/{BUCKET}', {'prefix': folder + '/', 'limit': 100, 'offset': offset}) or []
+            held.update(folder + '/' + item['name'] for item in page)
+            if len(page) < 100:
+                break
+            offset += 100
+    return [p for p in paths if p in held]
+
 
 def main(argv=None):
-    parser=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--target',choices=['local','hosted'],required=True)
-    parser.add_argument('--env-file',type=Path,default=config.ROOT/'supabase/.env')
-    parser.add_argument('--limit',type=int,default=100)
-    parser.add_argument('--apply',action='store_true')
-    args=parser.parse_args(argv)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--target', choices=['local', 'hosted'], required=True)
+    parser.add_argument('--env-file', type=Path, default=ROOT / 'supabase/.env')
+    parser.add_argument('--limit', type=int, default=200)
+    parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--usage', action='store_true')
+    args = parser.parse_args(argv)
     try:
-        settings=config.load_settings(args.env_file)
-        values=config.credentials(settings)
-        found=candidates(settings,args.target,max(1,min(args.limit,500)))
-        print(f'{len(found)} profile photo(s) awaiting Cloudinary deletion.')
+        url, key = local_settings() if args.target == 'local' else hosted_settings(args.env_file)
+        if args.usage:
+            usage = call(url, key, 'POST', '/rest/v1/rpc/profile_photo_usage', {})
+            print(f"{usage['files']} profile photo file(s) stored, {usage['bytes'] / 1024:.0f} KB.")
+        found = due(url, key, max(1, min(args.limit, 1000)))
+        print(f'{len(found)} profile photo file(s) due for removal.')
         if not args.apply or not found:
-            if found: print('Dry run: nothing deleted. Add --apply to delete them.')
+            if found:
+                print('Dry run: nothing removed. Add --apply to remove them.')
             return 0
-        done=[p for p in found if destroy(settings,values,p)]
-        mark_deleted(settings,args.target,done)
-        print(f'Deleted {len(done)} of {len(found)}; failures stay queued for the next run.')
-        return 0 if len(done)==len(found) else 1
-    except config.ConfigurationError as e:
-        print('Configuration error: '+str(e),file=sys.stderr);return 2
+        remove(url, key, found)
+        left = set(remaining(url, key, found))
+        gone = [p for p in found if p not in left]
+        if gone:
+            call(url, key, 'POST', '/rest/v1/rpc/profile_photos_removed', {'p_paths': gone})
+        print(f'Removed and marked {len(gone)} of {len(found)}; anything left stays due for the next run.')
+        return 0 if not left else 1
+    except ConfigurationError as error:
+        print('Configuration error: ' + str(error), file=sys.stderr)
+        return 2
+    except urllib.error.HTTPError as error:
+        print(f'Request failed: {error.code} {error.read().decode(errors="replace")[:300]}', file=sys.stderr)
+        return 1
 
-if __name__=='__main__': sys.exit(main())
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -22,7 +22,7 @@ NEW_KINDS = ('plan_updated', 'session_finished', 'practice_reminder', 'patient_i
 
 
 def photo(uid):
-    return f'https://res.cloudinary.com/motivance-test/image/upload/v1/motivance/avatars/{uid}/{uuid.uuid4().hex}'
+    return f'{uid}/{uuid.uuid4().hex}.webp'
 
 
 def run(stack):
