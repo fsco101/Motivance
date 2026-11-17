@@ -20,6 +20,9 @@ docs/operations/local-test-accounts.json
 graphify-out/
 stitch_galawgo_rehabilitation_system_prototype/
 
+# Capstone research manuscript, kept out of the repository
+research/
+
 # Web app
 node_modules/
 web/dist/

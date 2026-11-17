@@ -10,6 +10,7 @@
     "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling", "patient": "Your care" },
     "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
     "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here",
+    "footer": "Footer", "footerNote": "Development prototype. Movement measurements require professional validation.",
     "book": "Book",
     "bookings": "My bookings",
     "bookingsShort": "Bookings",

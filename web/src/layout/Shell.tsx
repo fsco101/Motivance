@@ -100,6 +100,17 @@ function BottomBar({ workspace, base }: { workspace: Workspace; base: string }) 
   )
 }
 
+/** A quiet line under every workspace page. The patient's bottom bar covers the last strip of the window, so the footer clears it. */
+function Footer({ clearBottomBar }: { clearBottomBar: boolean }) {
+  const { t } = useTranslation()
+  return (
+    <footer aria-label={t('nav.footer')} className={cn('flex flex-col gap-1 border-t border-line px-5 py-4 text-xs text-slate tablet:flex-row tablet:items-center tablet:justify-between tablet:gap-4 desk:px-7', clearBottomBar && 'max-tablet:pb-24')}>
+      <p>© {new Date().getFullYear()} Motivance</p>
+      <p>{t('nav.footerNote')}</p>
+    </footer>
+  )
+}
+
 export type Crumb = { crumb?: string | ((params: Record<string, string | undefined>) => string) }
 
 function Breadcrumbs() {
@@ -175,7 +186,8 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, chi
               <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
             </div>
           </div>
-          <main id="main" tabIndex={-1} className={cn('w-full max-w-[100rem] flex-1 px-5 pb-12 pt-5 outline-none desk:px-7', workspace === 'patient' && 'max-tablet:pb-24')}>{children}</main>
+          <main id="main" tabIndex={-1} className="w-full max-w-[100rem] flex-1 px-5 pb-12 pt-5 outline-none desk:px-7">{children}</main>
+          <Footer clearBottomBar={workspace === 'patient'} />
         </div>
       </div>
       {workspace === 'patient' && <BottomBar workspace={workspace} base={base} />}

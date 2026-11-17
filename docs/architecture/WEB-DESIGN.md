@@ -70,7 +70,7 @@ Both are self-hosted under the SIL Open Font License, with licences in `web/publ
 +-----------+------------------------------------------------+
 ```
 
-The sidebar and top bar stay in place while the page scrolls. Below 1024 px the sidebar folds to icons, with its labels kept for screen readers. Columns hide or stack before anything scrolls sideways. Content is left aligned, because staff scan down a left edge.
+The sidebar and top bar stay in place while the page scrolls. Below 1024 px the sidebar folds to icons, with its labels kept for screen readers. Columns hide or stack before anything scrolls sideways. Content is left aligned, because staff scan down a left edge. A quiet footer under every workspace page carries the copyright and the prototype disclaimer. On a patient's phone it leaves room for the bottom bar.
 
 **Building blocks.** `Panel` is the surface, with an optional title, toolbar and footer. `DataTable` lists records, with sorting, grouping and a selected row. `StatCard` shows one server count and opens the page that explains it. `BarList` compares a few counts, and `RangeBar` shows prescribed and measured range on the 0 to 180 degree scale.
 
