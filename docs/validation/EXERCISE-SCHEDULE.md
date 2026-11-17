@@ -55,3 +55,33 @@ Also covered: days already past are never rewritten ("never rewrites days alread
 `ProfilePhotoPreparationTest` had not compiled since photos moved to Supabase Storage (39bdb88), which stopped every Android device test from building. It now runs the app's current steps (`loadPhoto`, then `encodePhoto` on the centred square) with the marker positions recomputed for the 384 px picture.
 
 **Not done:** physical-phone and therapist checks, in the checklist.
+
+## #127: the patient sees today's exercises, and a finished one is gone until its next day (2026-11-17)
+
+- **Server.** Migration `202611170005_exercise_day_reminders.sql`: the daily practice reminder is sent only when an exercise due today is still to do. It is never sent on a rest day, before a schedule starts or after it ends, and it stops once everything due today is done.
+- **Web.** The patient's Exercises page and home list only today's exercises, with "Done today: 1 of 2" when there is more than one. When nothing is left, they say "All done for today" and name the next exercise day, or "Rest day", "Your schedule has not started", or "No exercises planned". The lists refresh when the page comes back into view (`planForToday`).
+- **Android.** Each cached exercise also stores its schedule (Room version 5, migration `FROM_4_TO_5`), so today's list works offline. An exercise is done when the server says so, or when this phone finished it today, counting sessions still waiting to upload; a both-sides exercise needs both sides. Days count in Manila whatever the phone's zone (`patientToday`, `TodayPlanner`).
+
+| Acceptance criterion | Evidence |
+| --- | --- |
+| On an exercise day the patient sees exactly that day's exercises; on a rest day none, with the rest-day message | Web: `tests/e2e/patient-today.spec.ts` ("today lists the exercises due…", "a rest day says so…"); `exerciseSchedule.test.ts`. Android: `PatientTodayTest`, `TodayPlannerTest`, `PatientTodayScreenTest` |
+| Finishing an exercise removes it from today's list on Android at once, and on the web at the next load | Web: "an exercise finished on the phone leaves the list at the next load". Android: `PatientTodayTest.aSessionFinishedHereTodayTakesTheExerciseOffTheList` (the list is built from the phone's own sessions as they are saved) |
+| On the next exercise day it appears again | Server: `exercise-schedule.test.ts` "marks an exercise done for today only…"; Android: `TodayPlannerTest`; web: "once every exercise is done, the page says so and names the next day" |
+| A session finished offline still removes the exercise from today's list | Android: `PatientTodayTest` (local sessions count whether or not they are uploaded; `theServerCountsSessionsFromOtherPhones` covers the other direction) |
+| No practice reminder on a rest day or after today's exercises are done | `exercise-schedule.test.ts` "sends the practice reminder only on a day with an exercise still to do"; `python scripts/test_care_notifications.py` (62 checks) |
+| Every new string exists in English and Filipino | `locales.test.ts`; `python scripts/check_resources.py` (1317 strings per language) |
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Server and contract | `npm run test:contract` | 23 files, 234 passed, 3 skipped by design (includes the schedule suite, 14) |
+| Care notification checks | `python scripts/test_care_notifications.py` | 62 passed |
+| Web patient flows | `npx playwright test tests/e2e/patient.spec.ts tests/e2e/patient-today.spec.ts --workers=1` | 17 passed |
+| Web gallery, patient pages | `npx playwright test tests/e2e/design.spec.ts --grep patient --workers=1` | 23 passed |
+| Web unit, types, lint | `npm test`, `npm run typecheck`, `npm run lint` | 316 passed; clean |
+| Android domain and app unit | `.\gradlew.bat :core:domain:test :app:testDebugUnitTest` | 123 and 291 tests, 0 failures |
+| Android lint | `.\gradlew.bat :app:lintDebug` | 0 errors, 147 warnings, as before |
+| Android device tests (emulator, Pixel 6, API 35) | `PatientTodayScreenTest`, `ConnectedPersistenceTest` (with the version 4 to 5 migration), `ExerciseScheduleTest` | 18 of 18 passed |
+
+Two older checks were brought up to date. `test_care_notifications.py` expected a patient who did one of two exercises not to be reminded, which #127 changes on purpose. It also left out the `messages` switch that care chat added on 2026-11-15, so it had been failing since then.
+
+**Not done:** physical-phone checks, in the checklist.

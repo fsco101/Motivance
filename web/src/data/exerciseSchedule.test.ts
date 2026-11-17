@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countDays, daysBetween, draftProblem, isExerciseDay, weekdayOf, type ScheduleDraft } from './exerciseSchedule'
+import { countDays, daysBetween, draftProblem, isExerciseDay, planForToday, weekdayOf, type ExerciseDay, type ScheduleDraft, type ScheduleOnDay } from './exerciseSchedule'
 
 const plan = (patch: Partial<ScheduleDraft> = {}): ScheduleDraft => ({ id: 'a', patientId: 'p', startsOn: '2026-11-18', endsOn: '2026-12-01', restWeekdays: [], restDates: [], ...patch })
 
@@ -49,5 +49,40 @@ describe('exercise schedule days', () => {
     expect(draftProblem({ ...started, endsOn: '2026-11-17' }, '2026-11-18', { startsOn: '2026-11-10' })).toBe('pastEnd')
     // Only the days from today on count towards "at least one exercise day".
     expect(draftProblem({ ...started, endsOn: '2026-11-18', restDates: ['2026-11-18'] }, '2026-11-18', { startsOn: '2026-11-10' })).toBe('noDay')
+  })
+})
+
+describe("a patient's plan for today", () => {
+  const exercises = [{ assignmentId: 'a1' }, { assignmentId: 'a2' }, { assignmentId: 'a3' }]
+  const schedule = (patch: Partial<ScheduleOnDay>): ScheduleOnDay => ({
+    id: 's1', patientId: 'p', therapistId: 't', therapistName: '', startsOn: '2026-11-16', endsOn: '2026-11-29', restWeekdays: [7], restDates: [],
+    exerciseDays: 12, restDays: 2, exerciseCount: 2, state: 'exercise', daysLeft: 10, nextDay: '2026-11-19', ...patch,
+  })
+  const day = (states: Array<[string, string | null, boolean, boolean]>, schedules: ScheduleOnDay[]): ExerciseDay => ({
+    day: '2026-11-18', schedules, exercises: states.map(([assignmentId, scheduleId, due, done]) => ({ assignmentId, scheduleId, therapistId: 't', due, done })),
+  })
+
+  it('lists only what is due and not yet done, and counts the rest', () => {
+    const plan = planForToday(exercises, day([['a1', 's1', true, true], ['a2', 's1', true, false], ['a3', 's2', false, false]], [schedule({})]))
+    expect(plan).toMatchObject({ todo: [{ assignmentId: 'a2' }], done: 1, due: 2, state: 'exercise' })
+  })
+
+  it('says all done, and names the next exercise day, once today is finished', () => {
+    const plan = planForToday(exercises.slice(0, 2), day([['a1', 's1', true, true], ['a2', 's1', true, true]], [schedule({})]))
+    expect(plan).toMatchObject({ todo: [], state: 'done', nextDay: '2026-11-19' })
+  })
+
+  it('brings an every-day exercise back tomorrow', () => {
+    const plan = planForToday(exercises.slice(0, 1), day([['a1', null, true, true]], []))
+    expect(plan).toMatchObject({ state: 'done', nextDay: '2026-11-19' })
+  })
+
+  it('tells a rest day from a schedule that has not started and from one that is over', () => {
+    expect(planForToday(exercises.slice(0, 1), day([['a1', 's1', false, false]], [schedule({ state: 'rest', nextDay: '2026-11-20' })])))
+      .toMatchObject({ state: 'rest', nextDay: '2026-11-20' })
+    expect(planForToday(exercises.slice(0, 1), day([['a1', 's1', false, false]], [schedule({ state: 'upcoming', startsOn: '2026-11-25', nextDay: '2026-11-25' })])))
+      .toMatchObject({ state: 'upcoming', startsOn: '2026-11-25' })
+    expect(planForToday(exercises.slice(0, 1), day([['a1', 's1', false, false]], []))).toMatchObject({ state: 'finished', nextDay: null })
+    expect(planForToday([], day([], []))).toMatchObject({ state: 'none' })
   })
 })

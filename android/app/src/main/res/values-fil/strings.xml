@@ -1358,4 +1358,15 @@
         <item quantity="one">%1$d araw ng ehersisyo ang natitira</item>
         <item quantity="other">%1$d araw ng ehersisyo ang natitira</item>
     </plurals>
+    <!-- A patient's day under a schedule (#127) -->
+    <string name="patient_today_done">Tapos ngayon: %1$d sa %2$d</string>
+    <string name="patient_all_done_title">Tapos na ang lahat para ngayon</string>
+    <string name="patient_all_done_next">Magaling. Ang susunod mong mga ehersisyo ay sa %1$s.</string>
+    <string name="patient_all_done_last">Magaling. Iyan na ang huling araw ng ehersisyo sa iyong iskedyul.</string>
+    <string name="patient_rest_title">Araw ng pahinga</string>
+    <string name="patient_rest_next">Walang ehersisyo ngayon. Ang susunod ay sa %1$s.</string>
+    <string name="patient_upcoming_title">Hindi pa nagsisimula ang iyong iskedyul</string>
+    <string name="patient_upcoming_detail">Magsisimula ang iyong mga ehersisyo sa %1$s.</string>
+    <string name="patient_finished_title">Walang nakaplanong ehersisyo</string>
+    <string name="patient_finished_detail">Tapos na ang iyong iskedyul. Ang iyong therapist ang magpaplano ng susunod.</string>
 </resources>

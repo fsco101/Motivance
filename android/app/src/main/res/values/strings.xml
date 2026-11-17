@@ -1358,4 +1358,15 @@
         <item quantity="one">%1$d exercise day left</item>
         <item quantity="other">%1$d exercise days left</item>
     </plurals>
+    <!-- A patient's day under a schedule (#127) -->
+    <string name="patient_today_done">Done today: %1$d of %2$d</string>
+    <string name="patient_all_done_title">All done for today</string>
+    <string name="patient_all_done_next">Well done. Your next exercises are on %1$s.</string>
+    <string name="patient_all_done_last">Well done. That was the last exercise day in your schedule.</string>
+    <string name="patient_rest_title">Rest day</string>
+    <string name="patient_rest_next">No exercises today. Your next ones are on %1$s.</string>
+    <string name="patient_upcoming_title">Your schedule has not started</string>
+    <string name="patient_upcoming_detail">Your exercises start on %1$s.</string>
+    <string name="patient_finished_title">No exercises planned</string>
+    <string name="patient_finished_detail">Your schedule is over. Your therapist will plan what comes next.</string>
 </resources>

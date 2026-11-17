@@ -5,20 +5,25 @@ import { Link } from 'react-router'
 import { Button, ButtonLink } from '@/components/Button'
 import { EmptyState, PageHeader, Panel, PersonName, Skeleton, StatusPill } from '@/components/Display'
 import type { Booking } from '@/data/booking'
+import type { TodayPlan } from '@/data/exerciseSchedule'
 import type { MyExercise, RecentSession } from '@/data/patient'
 import { statusTone, useCenterFormat } from '@/features/booking/format'
 import { cn } from '@/lib/cn'
 import { Loadable, useFormat, type Load } from '@/features/shared'
+import { TodayNotice } from './PatientExercisesView'
 
-export type PatientHome = { name: string; next: MyExercise | null; exerciseCount: number; week: ReadonlyArray<{ day: Date; done: boolean }>; recent: readonly RecentSession[]; session: Booking | null }
+export type PatientHome = { name: string; today: TodayPlan<MyExercise>; week: ReadonlyArray<{ day: Date; done: boolean }>; recent: readonly RecentSession[]; session: Booking | null }
 
 /** The next exercise is the page's one bold element. Starting it leads to the phone, because that is where it runs. */
-function NextExercise({ exercise, count, base, onStart }: { exercise: MyExercise | null; count: number; base: string; onStart: (exercise: MyExercise) => void }) {
+function NextExercise({ today, base, onStart }: { today: TodayPlan<MyExercise>; base: string; onStart: (exercise: MyExercise) => void }) {
   const { t } = useTranslation()
-  if (!exercise) return <Panel><EmptyState title={t('patient.noExercisesTitle')} detail={t('patient.noExercisesDetail')} /></Panel>
+  const exercise = today.todo[0]
+  const count = today.todo.length
+  if (today.state === 'none') return <Panel><EmptyState title={t('patient.noExercisesTitle')} detail={t('patient.noExercisesDetail')} /></Panel>
+  if (!exercise) return <Panel><TodayNotice plan={today} /></Panel>
   return (
     <section aria-labelledby="next-exercise" className="on-dark rounded-card bg-ink p-6 text-paper">
-      <p className="text-sm font-semibold text-night-ink">{t('patient.todayExercise')}</p>
+      <p className="text-sm font-semibold text-night-ink">{t('patient.todayExercise')}{today.due > 1 && <> · {t('patient.todayDone', { done: today.done, total: today.due })}</>}</p>
       <h2 id="next-exercise" className="mt-1 text-3xl font-bold">{exercise.name}</h2>
       <p className="mt-2 text-night-ink">{t('patient.exerciseLine', { side: t(`common.${exercise.side}`, exercise.side), low: exercise.low, high: exercise.high, count: exercise.repetitions })}</p>
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -102,7 +107,7 @@ export function PatientHomeView({ load, base, onStart }: { load: Load<PatientHom
           <PageHeader title={home.name ? t('patient.greeting', { name: home.name.split(' ')[0] }) : t('patient.greetingPlain')} description={t('patient.scope')} />
           <div className="grid items-start gap-5 desk:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <div className="flex min-w-0 flex-col gap-5">
-              <NextExercise exercise={home.next} count={home.exerciseCount} base={base} onStart={onStart} />
+              <NextExercise today={home.today} base={base} onStart={onStart} />
               <ThisWeek week={home.week} />
             </div>
             <div className="flex min-w-0 flex-col gap-5">

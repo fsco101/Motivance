@@ -110,6 +110,28 @@ class ConnectedPersistenceTest {
         assertEquals("COMPLETED",store.dao.get(owner,"legacy")!!.status)
         val entry=store.dao.outbox(owner).single();assertEquals("REVIEW_REQUIRED",entry.state);assertEquals(0,entry.attempts)
     }
+    /** Version 5 (#127) caches each exercise's schedule; exercises cached before it keep working as every-day ones. */
+    @Test fun versionFourMigrationKeepsCachedExercisesAsEveryDay()=runBlocking {
+        db.close();context.deleteDatabase(name)
+        context.getDatabasePath(name).parentFile?.mkdirs()
+        val assets=androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context.assets
+        val schema=JSONObject(assets.open("com.motivance.data.local.SessionDatabase/4.json").bufferedReader().use {it.readText()}).getJSONObject("database")
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name),null).use {old ->
+            val entities=schema.getJSONArray("entities")
+            for(i in 0 until entities.length()) {
+                val entity=entities.getJSONObject(i);val table=entity.getString("tableName")
+                old.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}",table))
+                val indexes=entity.optJSONArray("indices") ?: org.json.JSONArray()
+                for(j in 0 until indexes.length()) old.execSQL(indexes.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}",table))
+            }
+            old.execSQL("INSERT INTO cached_prescriptions(ownerId,versionId,assignmentId,patientId,rulesJson,instructions,expiresAt,cachedAt) VALUES(?,'version','assignment',?,'{}','Fixture',9,1)",arrayOf(owner,owner))
+            old.version=4
+        }
+        open()
+        val kept=store.dao.cached(owner,"version")!!
+        assertEquals("assignment",kept.assignmentId)
+        assertNull(kept.scheduleJson)
+    }
     @Test fun protectedSessionStoreUsesEncryptedBytesAndClearRemovesThem() {
         // Isolated ContextWrapper gives the test its own no-backup file directory.
         val folder=java.io.File(context.cacheDir,"vault-${UUID.randomUUID()}").apply {mkdirs()}

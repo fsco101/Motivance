@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-13T03:08:08.398842+00:00",
+  "generated_at": "2026-11-17T13:52:46.169765+00:00",
   "checks_passed": 62,
   "checks": [
     "An accepted invitation tells the therapist, about the patient",
@@ -29,7 +29,7 @@
     "A patient can choose a reminder time",
     "A patient with a plan who has not exercised today is reminded once, however often the job runs",
     "The reminder is for today",
-    "A patient who has exercised today is not reminded",
+    "A patient who did one of their two exercises today is still reminded about the other",
     "A patient with nothing to do is not reminded",
     "The reminder is pushed",
     "A reminder more than two hours late is not sent",

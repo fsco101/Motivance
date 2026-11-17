@@ -88,9 +88,9 @@ function Progress() {
 }
 function PatientHome() {
   const [open, setOpen] = useState(false)
-  return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, next: null, exerciseCount: 0, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.next?.name} /></>
+  return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, today: { ...data.restDay, state: 'none' }, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.today.todo[0]?.name} /></>
 }
-const PatientExercises = () => <PatientExercisesView base={PATIENT} load={useDemo(data.myExercises, [])} onStart={said('Suggested the phone')} onCamera={said('Suggested the phone')} />
+const PatientExercises = () => <PatientExercisesView base={PATIENT} load={useDemo(data.myToday, data.restDay)} onStart={said('Suggested the phone')} onCamera={said('Suggested the phone')} />
 function PatientBook() {
   const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
   const [chosen, setChosen] = useState<Slot | null>(null)

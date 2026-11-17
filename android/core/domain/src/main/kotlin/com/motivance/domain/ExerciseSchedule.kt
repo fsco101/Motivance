@@ -62,3 +62,43 @@ object ScheduleRules {
         return if(counts(draft,today).exercise==0) ScheduleProblem.NO_DAY else null
     }
 }
+
+/** A schedule's dates and rest days, as cached with each exercise on the phone so today's list works offline. */
+data class ScheduleWindow(val id:String,val startsOn:LocalDate,val endsOn:LocalDate,val restWeekdays:Set<Int> = emptySet(),val restDates:List<LocalDate> = emptyList()) {
+    fun isExerciseDay(day:LocalDate)=ScheduleRules.isExerciseDay(startsOn,endsOn,restWeekdays,restDates,day)
+    /** The first exercise day after [day], or null when none is left. */
+    fun nextDay(day:LocalDate):LocalDate?=generateSequence(maxOf(day.plusDays(1),startsOn)) {it.plusDays(1)}.takeWhile {!it.isAfter(endsOn)}.firstOrNull(::isExerciseDay)
+}
+
+/** One exercise for today's list: its schedule (null for every day) and whether it was finished today. */
+data class TodayItem<T>(val item:T,val window:ScheduleWindow?,val done:Boolean)
+
+enum class TodayState {EXERCISE,DONE,REST,UPCOMING,FINISHED,NONE}
+
+/** What a patient has to do today. Mirrors planForToday (TodayPlan) in web/src/data/exerciseSchedule.ts. */
+data class DailyPlan<T>(val todo:List<T>,val done:Int,val due:Int,val state:TodayState,val nextDay:LocalDate?,val startsOn:LocalDate?)
+
+object TodayPlanner {
+    /**
+     * Only the exercises due today and not yet done are listed: one finished today is gone until its next exercise day, and a
+     * missed day is never carried over. The next day is the soonest of each schedule's next exercise day, or tomorrow while an
+     * every-day exercise is on the plan.
+     */
+    fun <T> plan(items:List<TodayItem<T>>,today:LocalDate):DailyPlan<T> {
+        val due=items.filter {it.window?.isExerciseDay(today) ?: true}
+        val todo=due.filterNot {it.done}
+        val windows=items.mapNotNull {it.window}.distinctBy {it.id}
+        val nextDay=(windows.mapNotNull {it.nextDay(today)}+listOfNotNull(today.plusDays(1).takeIf {items.any {it.window==null}})).minOrNull()
+        val startsOn=windows.filter {today.isBefore(it.startsOn)}.minOfOrNull {it.startsOn}
+        val resting=windows.any {!today.isBefore(it.startsOn) && !today.isAfter(it.endsOn) && !it.isExerciseDay(today)}
+        val state=when {
+            items.isEmpty() -> TodayState.NONE
+            todo.isNotEmpty() -> TodayState.EXERCISE
+            due.isNotEmpty() -> TodayState.DONE
+            resting -> TodayState.REST
+            startsOn!=null -> TodayState.UPCOMING
+            else -> TodayState.FINISHED
+        }
+        return DailyPlan(todo.map {it.item},due.size-todo.size,due.size,state,nextDay,startsOn)
+    }
+}

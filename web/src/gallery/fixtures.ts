@@ -10,6 +10,7 @@ import type { MyExercise } from '@/data/patient'
 import type { MyProfile } from '@/data/profile'
 import type { AdminAccount, AdminExercise, AdminLink, AdminSummary, AuditEvent, BackendStatus } from '@/features/admin/types'
 import type { PrivacyState } from '@/features/patient/PatientCareView'
+import type { TodayPlan } from '@/data/exerciseSchedule'
 import type { PatientHome } from '@/features/patient/PatientHomeView'
 import type { PatientSummary } from '@/features/therapist/PatientTable'
 import type { PatientRecord } from '@/features/therapist/PatientRecordView'
@@ -104,8 +105,12 @@ export const myBookings: Booking[] = [
   { id: 'k2', reference: 'BK-2026-000158', status: 'pending', reason: null, startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, visitReason: 'Shoulder stiffness when reaching overhead.', patient: 'Ana Dela Cruz', patientPhoto: null, therapist: null, therapistPhoto: null, location: '12 Mabini Street, Quezon City', cancelUntil: '2026-12-13T02:00:00Z', canCancel: true, rescheduleUntil: '2026-12-13T02:00:00Z', canReschedule: true, reschedulesLeft: 2 },
   { id: 'k3', reference: 'BK-2026-000097', status: 'rejected', reason: 'No therapist available that week', startsAt: '2026-10-20T02:00:00Z', endsAt: '2026-10-20T03:00:00Z', previousStartsAt: null, visitReason: null, patient: 'Ana Dela Cruz', patientPhoto: null, therapist: null, therapistPhoto: null, location: '12 Mabini Street, Quezon City', cancelUntil: null, canCancel: false, rescheduleUntil: null, canReschedule: false, reschedulesLeft: 0 },
 ]
+/** Two of three exercises still to do today; the empty state is a rest day. */
+export const myToday: TodayPlan<MyExercise> = { todo: myExercises, done: 1, due: 3, state: 'exercise', nextDay: '2026-11-19', startsOn: null }
+export const restDay: TodayPlan<MyExercise> = { todo: [], done: 0, due: 0, state: 'rest', nextDay: '2026-11-19', startsOn: null }
+
 export const patientHome: PatientHome = {
-  name: 'Ana Dela Cruz', next: myExercises[0]!, exerciseCount: 2,
+  name: 'Ana Dela Cruz', today: { todo: myExercises, done: 1, due: 3, state: 'exercise', nextDay: null, startsOn: null },
   week: Array.from({ length: 7 }, (_, index) => ({ day: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index), done: index < 2 })),
   session: myBookings[0]!,
   recent: [{ id: 'r1', startedAt: '2026-11-04T01:30:00Z', status: 'completed' }, { id: 'r2', startedAt: '2026-11-03T02:10:00Z', status: 'interrupted' }, { id: 'r3', startedAt: '2026-11-02T01:45:00Z', status: 'completed' }],

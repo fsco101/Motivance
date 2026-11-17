@@ -57,6 +57,7 @@ import com.motivance.domain.WorkspaceOverview
 import com.motivance.domain.nextSession
 import com.motivance.domain.NotificationDestination
 import com.motivance.domain.destination
+import com.motivance.domain.TodayState
 import com.motivance.feature.admin.*
 import com.motivance.feature.chat.*
 import com.motivance.feature.auth.*
@@ -442,7 +443,13 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "EXERCISES" -> {
                     PageHeader(R.string.your_exercises,R.string.professional_targets)
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
-                    CachedAssignments(local.cached,connected.workspace.prescriptions.any {p -> p.patientId==connected.owner && local.cached.none {it.versionId==p.versionId}},loading=connected.busy || connected.failed) {exercise.newSession(); exercise.usePrescription(it); route="SETUP"}
+                    // Only today's exercises (#127): one finished today is gone until its next exercise day.
+                    LaunchedEffect(connected.owner) {if(connected.owner.isNotBlank()) rehabilitation.loadDay(connected.owner)}
+                    val today=patientToday(local.cached,local.history,connected.days[connected.owner],centerDate())
+                    if(today.state==TodayState.EXERCISE || today.state==TodayState.NONE) {
+                        TodayProgress(today)
+                        CachedAssignments(today.todo,connected.workspace.prescriptions.any {p -> p.patientId==connected.owner && local.cached.none {it.versionId==p.versionId}},loading=connected.busy || connected.failed) {exercise.newSession(); exercise.usePrescription(it); route="SETUP"}
+                    } else TodayNotice(today)
                     SectionHeading(R.string.ui_quick_actions)
                     QuickAction(Icons.Default.PlayArrow,R.string.camera_check,R.string.camera_preview_only) {route="SETUP"}
                     PatientInvitation(connected,rehabilitation)
@@ -493,10 +500,13 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     when(actualRole) {
                         UserRole.PATIENT -> {
                             val now=System.currentTimeMillis()
-                            val ready=local.cached.filter {it.expiresAt>now && it.instructions.isNotBlank()}
-                            ready.firstOrNull()?.let {next ->
-                                TodayPlan(next,ready.size,{exercise.newSession(); exercise.usePrescription(next); route="SETUP"}) {route="EXERCISES"}
-                            } ?: WorkspaceHero(actualRole) {route="EXERCISES"}
+                            LaunchedEffect(connected.owner) {if(connected.owner.isNotBlank()) rehabilitation.loadDay(connected.owner)}
+                            val today=patientToday(local.cached.filter {it.expiresAt>now && it.instructions.isNotBlank()},local.history,connected.days[connected.owner],centerDate(now))
+                            when {
+                                today.todo.isNotEmpty() -> today.todo.first().let {next -> TodayPlan(next,today.todo.size,{exercise.newSession(); exercise.usePrescription(next); route="SETUP"}) {route="EXERCISES"}}
+                                today.state==TodayState.NONE -> WorkspaceHero(actualRole) {route="EXERCISES"}
+                                else -> TodayNotice(today)
+                            }
                             val days=remember(overview.data,local.history) {
                                 overview.data?.sessions.orEmpty().filter {it.status=="completed"}.mapNotNull {runCatching {LocalDate.parse(it.startedAt.take(10))}.getOrNull()}.toSet() +
                                     local.history.filter {it.status=="COMPLETED"}.map {Instant.ofEpochMilli(it.startedAt).atZone(ZoneId.systemDefault()).toLocalDate()}

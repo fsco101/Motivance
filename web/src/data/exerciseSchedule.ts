@@ -108,3 +108,25 @@ export async function loadExerciseDay(db: Db, patientId: string, day?: string) {
 export async function publishScheduledPrescription(db: Db, scheduleId: string, request: PrescriptionRequest) {
   must(await db.rpc('publish_scheduled_prescription', { p_schedule: scheduleId, ...prescriptionArguments(request) }))
 }
+
+export type TodayState = 'exercise' | 'done' | 'rest' | 'upcoming' | 'finished' | 'none'
+/** What a patient has to do today: the exercises still to do, and when the next ones are if there are none. */
+export type TodayPlan<T> = { todo: T[]; done: number; due: number; state: TodayState; nextDay: string | null; startsOn: string | null }
+
+/**
+ * Today's plan from a patient's exercises and their exercise day. An exercise finished today leaves the list; a missed day is not
+ * carried over, because only today's are listed. The next day is the soonest of each schedule's next exercise day, or tomorrow
+ * while an every-day exercise is on the plan.
+ */
+export function planForToday<T extends { assignmentId: string }>(exercises: readonly T[], day: ExerciseDay): TodayPlan<T> {
+  const of = new Map(day.exercises.map((item) => [item.assignmentId, item]))
+  const due = exercises.filter((exercise) => of.get(exercise.assignmentId)?.due)
+  const todo = due.filter((exercise) => !of.get(exercise.assignmentId)?.done)
+  const everyDay = exercises.some((exercise) => of.get(exercise.assignmentId)?.scheduleId === null)
+  const withExercises = day.schedules.filter((schedule) => schedule.exerciseCount > 0)
+  const nextDay = [...withExercises.map((schedule) => schedule.nextDay), everyDay ? addDays(day.day, 1) : null].filter((date): date is string => date !== null).sort()[0] ?? null
+  const startsOn = withExercises.filter((schedule) => schedule.state === 'upcoming').map((schedule) => schedule.startsOn).sort()[0] ?? null
+  const state: TodayState = exercises.length === 0 ? 'none' : todo.length > 0 ? 'exercise' : due.length > 0 ? 'done'
+    : withExercises.some((schedule) => schedule.state === 'rest') ? 'rest' : startsOn ? 'upcoming' : 'finished'
+  return { todo, done: due.length - todo.length, due: due.length, state, nextDay, startsOn }
+}

@@ -172,6 +172,44 @@ describe('exercise schedules on the local backend', () => {
     expect((await dayOf()).schedules.some((item) => item.id === later.id)).toBe(false)
   })
 
+  it('sends the practice reminder only on a day with an exercise still to do (#127)', async () => {
+    // Three patients who all chose 11:59, asked about at noon today at the center.
+    const [resting, finished, waiting] = await Promise.all(['Resting', 'Finished', 'Waiting'].map((name) => createUser(['patient'], `${name} Patient`))) as [TestUser, TestUser, TestUser]
+    users.push(resting, finished, waiting)
+    const planFor = async (person: TestUser, patch: Partial<ScheduleDraft>) => {
+      await link(therapist, person)
+      const plan = { ...draft(patch), patientId: person.id }
+      await saveSchedule(await signedIn(therapist), plan)
+      const requestId = randomUUID()
+      await publishScheduledPrescription(await signedIn(therapist), plan.id, { ...timing, assignmentId: randomUUID(), requestId, patientId: person.id, exerciseId: ELBOW, side: 'left', low: 20, high: 90, repetitions: 8 })
+      sql(`insert into public.notification_settings(user_id,reminder_time) values('${person.id}','11:59')`)
+      return requestId
+    }
+    await planFor(resting, { restWeekdays: [weekdayOf(today)] })
+    const done = await planFor(finished, {})
+    await planFor(waiting, {})
+    await ingestSession(finished, done, { ...elbow, side: 'LEFT' })
+    sql(`select public.enqueue_practice_reminders(('${today} 12:00')::timestamp at time zone 'Asia/Manila')`)
+    const reminders = (person: TestUser) => sql(`select count(*) from public.notifications where user_id='${person.id}' and kind='practice_reminder'`)
+    expect(reminders(resting)).toBe('0')
+    expect(reminders(finished)).toBe('0')
+    expect(reminders(waiting)).toBe('1')
+  })
+
+  it('lets the patient read each exercise with its schedule, as the phone caches them', async () => {
+    const plan = draft({ restWeekdays: [7], restDates: [addDays(today, 2)] })
+    await saveSchedule(await signedIn(therapist), plan)
+    const { assignmentId } = await assign(plan.id)
+    const everyDay = (await assign(null)).assignmentId
+    // The same embedding SupabaseAuthRepository.loadWorkspace asks for.
+    const { data, error } = await (await signedIn(patient)).from('exercise_assignments')
+      .select('id,patient_id,exercise_schedules(id,starts_on,ends_on,rest_weekdays,rest_dates,cancelled_at)').eq('active', true).eq('patient_id', patient.id)
+    expect(error).toBeNull()
+    const rows = (data ?? []) as unknown as Array<{ id: string; exercise_schedules: { id: string; starts_on: string; rest_weekdays: number[]; rest_dates: string[]; cancelled_at: string | null } | null }>
+    expect(rows.find((row) => row.id === assignmentId)?.exercise_schedules).toMatchObject({ id: plan.id, starts_on: today, rest_weekdays: [7], rest_dates: [addDays(today, 2)], cancelled_at: null })
+    expect(rows.find((row) => row.id === everyDay)?.exercise_schedules).toBeNull()
+  })
+
   it('takes one exercise off the plan, for its own therapist only', async () => {
     const { assignmentId } = await assign(null)
     expect((await failure(stopExercise(await signedIn(stranger), assignmentId)))?.code).toBe('42501')

@@ -5,6 +5,7 @@ import com.motivance.domain.ExerciseDay
 import com.motivance.domain.ExerciseSchedule
 import com.motivance.domain.ScheduleDraft
 import com.motivance.domain.ScheduleState
+import com.motivance.domain.ScheduleWindow
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
@@ -27,6 +28,10 @@ object ScheduleJson {
         LocalDate.parse(j.getString("day")),
         j.optJSONArray("exercises").rows {DayExercise(it.getString("assignment_id"),it.text("schedule_id"),it.getString("therapist_id"),it.getBoolean("due"),it.getBoolean("done"))},
         j.optJSONArray("schedules").rows(::schedule))
+
+    /** The schedule cached with an exercise on the phone: its dates and rest days. */
+    fun window(j:JSONObject)=ScheduleWindow(j.getString("id"),LocalDate.parse(j.getString("starts_on")),LocalDate.parse(j.getString("ends_on")),
+        j.optJSONArray("rest_weekdays").ints(),j.optJSONArray("rest_dates").dates())
 
     /** The body save_exercise_schedule takes. Weekdays and dates go sorted and once each, as the web app sends them. */
     fun save(draft:ScheduleDraft):JSONObject=JSONObject().put("p_id",draft.id).put("p_patient",draft.patientId)

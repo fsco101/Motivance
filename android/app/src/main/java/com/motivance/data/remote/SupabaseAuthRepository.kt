@@ -175,7 +175,7 @@ import java.time.OffsetDateTime
     override suspend fun loadWorkspace()=authorized { token,id ->
         // The patient's exercise list reads this cache, so it is downloaded first: nothing below can hold it back.
         if(cache!=null) {
-            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
+            val details=JSONArray(call("/rest/v1/exercise_assignments?select=id,patient_id,exercise_schedules(id,starts_on,ends_on,rest_weekdays,rest_dates,cancelled_at),prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))&active=eq.true&patient_id=eq.$id",null,token,"GET"))
             cache.replaceCache(id,PrescriptionCache.decode(id,details,System.currentTimeMillis()))
             val consent=JSONArray(call("/rest/v1/consents?select=client_event_id,event,occurred_at&patient_id=eq.$id&consent_type=eq.movement-summary&client_event_id=not.is.null&order=occurred_at.desc&limit=1",null,token,"GET"))
             if(consent.length()>0) cache.reconcileConsent(id,consent.getJSONObject(0).let {ServerConsent(it.getString("client_event_id"),it.getString("event"),OffsetDateTime.parse(it.getString("occurred_at")).toInstant().toEpochMilli())})

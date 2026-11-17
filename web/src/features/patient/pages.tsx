@@ -8,6 +8,7 @@ import { toast } from '@/components/Toast'
 import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, joinWaitlist, leaveWaitlist, loadAvailability, loadHorizonDays, loadMyBookings, loadMyWaitlist, nextBooking, requestBooking, rescheduleMyBooking, todayAt, validVisitReason, type Booking, type Slot, type WaitlistEntry } from '@/data/booking'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
+import { loadExerciseDay, planForToday, type TodayPlan } from '@/data/exerciseSchedule'
 import {
   joinTherapist, loadConsent, loadDataRequests, loadMyExercises, loadMySessions, requestData, thisWeek, withdrawConsent, type DataRequestKind, type MyExercise,
 } from '@/data/patient'
@@ -36,6 +37,16 @@ function useMyExercises() {
   return useQuery({ queryKey: ['patient', 'exercises', userId, i18n.language], queryFn: () => loadMyExercises(supabase(), userId, i18n.language) })
 }
 
+/** Today's exercises at the center, read fresh whenever the page comes back, so one finished on the phone leaves the list. */
+function useMyToday() {
+  const { userId } = useSignedIn()
+  const exercises = useMyExercises()
+  const day = useQuery({ queryKey: ['patient', 'day', userId], queryFn: () => loadExerciseDay(supabase(), userId), refetchOnWindowFocus: 'always' })
+  const load: Load<TodayPlan<MyExercise>> = exercises.data && day.data ? ready(planForToday(exercises.data, day.data))
+    : exercises.isError || day.isError ? { status: 'error', retry: () => { void exercises.refetch(); void day.refetch() } } : { status: 'loading' }
+  return load
+}
+
 const useMyBookings = () => useQuery({ queryKey: ['booking', 'mine'], queryFn: () => loadMyBookings(supabase()) })
 
 /** Starting an exercise or the camera check opens the suggestion, with the exercise's name when there is one. */
@@ -50,7 +61,7 @@ function usePhonePrompt() {
 
 export function PatientHomePage() {
   const { userId } = useSignedIn()
-  const exercises = useMyExercises()
+  const today = useMyToday()
   const sessions = useQuery({ queryKey: ['patient', 'sessions', userId], queryFn: () => loadMySessions(supabase(), userId) })
   const bookings = useMyBookings()
   const name = useQuery({
@@ -58,16 +69,16 @@ export function PatientHomePage() {
     queryFn: async () => (await supabase().from('profiles').select('display_name').eq('id', userId).maybeSingle()).data?.display_name ?? '',
   })
   const phone = usePhonePrompt()
-  const load: Load<PatientHome> = exercises.data && sessions.data
-    ? ready({ name: name.data ?? '', next: exercises.data[0] ?? null, exerciseCount: exercises.data.length, week: thisWeek(sessions.data, new Date()), recent: sessions.data, session: nextBooking(bookings.data ?? []) })
-    : exercises.isError || sessions.isError ? { status: 'error', retry: () => { void exercises.refetch(); void sessions.refetch() } } : { status: 'loading' }
+  const load: Load<PatientHome> = today.status === 'ready' && sessions.data
+    ? ready({ name: name.data ?? '', today: today.data, week: thisWeek(sessions.data, new Date()), recent: sessions.data, session: nextBooking(bookings.data ?? []) })
+    : today.status === 'error' ? today : sessions.isError ? { status: 'error', retry: () => void sessions.refetch() } : { status: 'loading' }
   return <><PatientHomeView load={load} base={BASE} onStart={phone.start} />{phone.dialog}</>
 }
 
 export function PatientExercisesPage() {
-  const exercises = useMyExercises()
+  const today = useMyToday()
   const phone = usePhonePrompt()
-  return <><PatientExercisesView load={asLoad(exercises)} base={BASE} onStart={phone.start} onCamera={phone.camera} />{phone.dialog}</>
+  return <><PatientExercisesView load={today} base={BASE} onStart={phone.start} onCamera={phone.camera} />{phone.dialog}</>
 }
 
 export function PatientSchedulePage() {

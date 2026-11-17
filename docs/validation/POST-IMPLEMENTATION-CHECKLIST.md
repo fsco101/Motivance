@@ -312,6 +312,8 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] With a therapist, on a physical phone and on the web, in both languages: create a schedule with a rest weekday and a rest date, add two exercises to it, change its end date, remove one exercise and end the schedule. Confirm the day counts, the "today" labels and the confirmations read clearly, and that the date pickers only offer days that can be chosen.
 - [ ] On phones of different widths and at the largest text size, check that the schedule cards, weekday chips and rest-date chips wrap without clipping, and that TalkBack reads each weekday chip by its full name and says whether it is chosen.
 - [ ] With a therapist, review whether "exercise day", "rest day" and "every-day exercise" match how the center talks about home programmes, in English and Filipino.
+- [ ] On a physical phone as a patient: finish an exercise with the phone offline and confirm it leaves today's list straight away and does not come back once the upload goes through. Check a rest day, the day after the last exercise day, and a day just after midnight in Manila with the phone set to another time zone.
+- [ ] With a reminder time set, confirm the daily reminder arrives on an exercise day with something left to do, and not on a rest day or after everything is done.
 
 ## Recording results
 
