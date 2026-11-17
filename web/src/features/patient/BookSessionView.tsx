@@ -4,15 +4,17 @@ import { Button } from '@/components/Button'
 import { PageHeader, Panel } from '@/components/Display'
 import type { Availability, Slot } from '@/data/booking'
 import { useCenterFormat } from '@/features/booking/format'
+import { VisitReasonField } from '@/features/booking/SessionCard'
 import { SlotPicker } from '@/features/booking/SlotPicker'
 import type { Load } from '@/features/shared'
 
 type Props = {
   load: Load<Availability>; month: string; onMonth: (month: string) => void; canGoBack: boolean; canGoForward: boolean; today: string
   date: string | null; onDate: (date: string) => void; chosen: Slot | null; onChoose: (slot: Slot) => void; onRequest: () => void; onJoin: () => void; onLeave: () => void; busy: boolean
+  reason: string; onReason: (reason: string) => void; showReasonError: boolean
 }
 
-export function BookSessionView({ chosen, onRequest, onJoin, onLeave, busy, ...picker }: Props) {
+export function BookSessionView({ chosen, onRequest, onJoin, onLeave, busy, reason, onReason, showReasonError, ...picker }: Props) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const next = useRef<HTMLDivElement>(null)
@@ -26,6 +28,7 @@ export function BookSessionView({ chosen, onRequest, onJoin, onLeave, busy, ...p
       <PageHeader title={t('booking.title')} description={t('booking.detail')} />
       <Panel>
         <SlotPicker chosen={chosen} waitlist {...picker} />
+        {chosen && !full && <div className="mt-6 border-t border-line pt-5"><VisitReasonField value={reason} onChange={onReason} showError={showReasonError} disabled={busy} /></div>}
         {chosen && (
           <div ref={next} className="mt-6 flex scroll-mb-24 flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
             <p className="min-w-0">

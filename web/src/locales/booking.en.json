@@ -131,7 +131,9 @@
     "utilization": "Utilization this week",
     "utilizationCount": "{{booked}} of {{places}} places",
     "noOpenSlots": "No open slots this week",
-    "utilizationMeaning": "Utilization is booked sessions as a share of available places in open slots, from {{from}} to {{to}}. Booked means confirmed or rescheduled."
+    "utilizationMeaning": "Utilization is booked sessions as a share of available places in open slots, from {{from}} to {{to}}. Booked means confirmed or rescheduled.",
+    "seriesReason": "Reason for visit (optional)",
+    "seriesReasonHint": "Given to every session in the course. The patient and therapist will see it."
   },
   "patient": {
     "greeting": "Hello, {{name}}",
@@ -273,7 +275,8 @@
       "reschedule_limit": "This session cannot be moved again online. Contact the center.",
       "not_started": "This session has not started yet.",
       "series_empty": "None of those dates can be booked now. Check them again.",
-      "patient_unavailable": "That patient cannot be booked."
+      "patient_unavailable": "That patient cannot be booked.",
+      "visit_reason": "The reason for the visit must be 3 to 500 characters."
     },
     "keep": "Keep booking",
     "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
@@ -319,7 +322,16 @@
     },
     "attendanceTitle": "Attendance",
     "attendanceFor": "Attendance for {{patient}}",
-    "attendanceSaved": "Attendance saved."
+    "attendanceSaved": "Attendance saved.",
+    "visitReason": "Reason for visit",
+    "visitReasonHint": "Tell the center what you need help with, such as pain, an injury or a follow-up. Your therapist and the Scheduler will see this.",
+    "visitReasonError": "Write 3 to 500 characters.",
+    "visitReasonCount": "{{count}} of 500",
+    "patientRole": "Patient",
+    "therapistRole": "Therapist",
+    "youSuffix": "You",
+    "bookPlaceTitle": "Book this place",
+    "bookPlaceDetail": "Say why you are coming, then the request goes to the Scheduler."
   },
   "calendar": {
     "title": "Center calendar",

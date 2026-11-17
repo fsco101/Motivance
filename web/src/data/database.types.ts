@@ -256,6 +256,7 @@ export type Database = {
           status_reason: string | null
           therapist_id: string | null
           updated_at: string
+          visit_reason: string | null
         }
         Insert: {
           attendance?: string | null
@@ -276,6 +277,7 @@ export type Database = {
           status_reason?: string | null
           therapist_id?: string | null
           updated_at?: string
+          visit_reason?: string | null
         }
         Update: {
           attendance?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           status_reason?: string | null
           therapist_id?: string | null
           updated_at?: string
+          visit_reason?: string | null
         }
         Relationships: [
           {
@@ -1782,6 +1785,7 @@ export type Database = {
           status_reason: string | null
           therapist_id: string | null
           updated_at: string
+          visit_reason: string | null
         }[]
       }
       calendar_outside_hours: {
@@ -2182,7 +2186,7 @@ export type Database = {
         Returns: number
       }
       request_booking: {
-        Args: { p_request: string; p_starts: string }
+        Args: { p_request: string; p_starts: string; p_reason?: string }
         Returns: Json
       }
       request_patient_data: {
@@ -2390,6 +2394,7 @@ export type Database = {
           p_therapist: string
           p_starts: string
           p_weeks: number
+          p_reason?: string
         }
         Returns: Json
       }
@@ -2537,6 +2542,10 @@ export type Database = {
       username_allowed: {
         Args: { value: string }
         Returns: boolean
+      }
+      visit_reason: {
+        Args: { p_reason: string }
+        Returns: string
       }
       waitlist_release: {
         Args: { p_from: string; p_to: string }

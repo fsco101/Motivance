@@ -885,6 +885,16 @@
     <string name="booking_location">Location</string>
     <string name="booking_reference">Reference</string>
     <string name="booking_reason">Reason</string>
+    <string name="booking_visit_reason">Reason for visit</string>
+    <string name="booking_visit_reason_hint">Tell the center what you need help with, such as pain, an injury or a follow-up. Your therapist and the Scheduler will see this.</string>
+    <string name="booking_visit_reason_error">Write 3 to 500 characters.</string>
+    <string name="booking_visit_reason_count">%1$d of 500</string>
+    <string name="booking_patient_role">Patient</string>
+    <string name="booking_therapist_role">Therapist</string>
+    <string name="booking_you">You</string>
+    <string name="booking_book_place_title">Book this place</string>
+    <string name="booking_book_place_detail">Say why you are coming, then the request goes to the Scheduler.</string>
+    <string name="booking_error_visit_reason">The reason for the visit must be 3 to 500 characters.</string>
     <string name="booking_reason_therapist">Your therapist is no longer available. A Scheduler will assign another.</string>
     <string name="booking_moved_from">Moved from %1$s</string>
     <string name="booking_cancel">Cancel booking</string>

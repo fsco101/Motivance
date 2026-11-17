@@ -59,16 +59,20 @@ export const ACTIVE: readonly BookingStatus[] = ['pending', 'confirmed', 'resche
 
 export type Booking = {
   id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; previousStartsAt: string | null
+  /** Why the patient is coming, as they wrote it. `reason` is the Scheduler's reason for a cancellation or rejection. */
+  visitReason: string | null; patient: string | null; patientPhoto: string | null
   therapist: string | null; therapistPhoto: string | null; location: string; cancelUntil: string | null; canCancel: boolean; rescheduleUntil: string | null; canReschedule: boolean; reschedulesLeft: number
 }
 
 export type RawBooking = {
   id: string; reference_no: string; status: BookingStatus; status_reason: string | null; starts_at: string; ends_at: string; previous_starts_at: string | null
+  visit_reason?: string | null; patient_name?: string | null; patient_photo?: string | null
   therapist_name: string | null; therapist_photo?: string | null; location?: string; cancel_until?: string | null; can_cancel?: boolean; reschedule_until?: string | null; can_reschedule?: boolean; reschedules_left?: number
 }
 
 export const decodeBooking = (row: RawBooking): Booking => ({
   id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, startsAt: row.starts_at, endsAt: row.ends_at, previousStartsAt: row.previous_starts_at,
+  visitReason: row.visit_reason ?? null, patient: row.patient_name ?? null, patientPhoto: row.patient_photo ?? null,
   therapist: row.therapist_name, therapistPhoto: row.therapist_photo ?? null, location: row.location ?? '', cancelUntil: row.cancel_until ?? null, canCancel: row.can_cancel ?? false,
   rescheduleUntil: row.reschedule_until ?? null, canReschedule: row.can_reschedule ?? false, reschedulesLeft: row.reschedules_left ?? 0,
 })
@@ -77,9 +81,14 @@ export async function loadMyBookings(db: Db) {
   return (must(await db.rpc('my_bookings')) as unknown as RawBooking[]).map(decodeBooking)
 }
 
+/** The server's limits for a reason for visit: blank is refused by the forms, and these lengths by the server too. */
+export const VISIT_REASON_MIN = 3
+export const VISIT_REASON_MAX = 500
+export const validVisitReason = (reason: string) => { const length = reason.trim().length; return length >= VISIT_REASON_MIN && length <= VISIT_REASON_MAX }
+
 /** `request` is chosen once per attempt, so retrying after a lost response returns the same booking. */
-export async function requestBooking(db: Db, request: string, startsAt: string) {
-  return decodeBooking(must(await db.rpc('request_booking', { p_request: request, p_starts: startsAt })) as unknown as RawBooking)
+export async function requestBooking(db: Db, request: string, startsAt: string, reason?: string) {
+  return decodeBooking(must(await db.rpc('request_booking', { p_request: request, p_starts: startsAt, p_reason: reason?.trim() || undefined })) as unknown as RawBooking)
 }
 
 export async function rescheduleMyBooking(db: Db, booking: string, startsAt: string) {

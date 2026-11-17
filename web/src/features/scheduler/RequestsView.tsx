@@ -9,6 +9,7 @@ import { SelectField, TextField } from '@/components/Field'
 import { ACTIVE, type BookingStatus } from '@/data/booking'
 import { NO_FILTERS, type RequestDetail, type RequestFilters, type RequestRow, type RequestSort, type SortKey, type TherapistChoice } from '@/data/scheduler'
 import { statusTone, useCenterFormat, useReasonText } from '@/features/booking/format'
+import { SessionCard } from '@/features/booking/SessionCard'
 import { Fact, Loadable, SkeletonLines, type Load } from '@/features/shared'
 import { spring } from '@/motion/tokens'
 import { Pager } from './Pager'
@@ -69,9 +70,9 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
         <IconButton label={t('common.close')} onClick={onClose} className="-mr-2 -mt-2"><XIcon aria-hidden /></IconButton>
       </div>
       <div className="mt-3"><StatusPill tone={statusTone[row.status]}>{t(`booking.status.${row.status}`)}</StatusPill></div>
+      <SessionCard className="mt-4" patient={{ name: row.patient, photo: row.patientPhoto }} therapist={{ name: row.therapist, photo: row.therapistPhoto }} reason={row.visitReason} />
       <dl className="mt-4 grid gap-3">
         <Fact term={t('scheduler.when')}>{format.when(row.startsAt, row.endsAt)}</Fact>
-        {(row.therapist || active) && <Fact term={t('booking.therapist')}>{row.therapist ? <PersonName name={row.therapist} photo={row.therapistPhoto} /> : t('booking.noTherapist')}</Fact>}
         {row.reason && <Fact term={t('booking.reason')}>{reasonText(row.reason)}</Fact>}
         {remaining > 0 && <Fact term={t('scheduler.seriesRemaining')}>{remaining}</Fact>}
       </dl>

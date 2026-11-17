@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { ButtonLink } from '@/components/Button'
 import { toast } from '@/components/Toast'
-import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, joinWaitlist, leaveWaitlist, loadAvailability, loadHorizonDays, loadMyBookings, loadMyWaitlist, nextBooking, requestBooking, rescheduleMyBooking, todayAt, type Booking, type Slot, type WaitlistEntry } from '@/data/booking'
+import { addDays, bookingFailureKey, cancelMyBooking, CENTER_ZONE, joinWaitlist, leaveWaitlist, loadAvailability, loadHorizonDays, loadMyBookings, loadMyWaitlist, nextBooking, requestBooking, rescheduleMyBooking, todayAt, validVisitReason, type Booking, type Slot, type WaitlistEntry } from '@/data/booking'
 import { supabase } from '@/data/client'
 import { failureKey } from '@/data/errors'
 import {
@@ -100,14 +100,18 @@ export function PatientBookPage() {
   const navigate = useNavigate()
   const { chosen, setChosen, availability, picker } = useSlotChoice()
   const [busy, setBusy] = useState(false)
+  const [reason, setReason] = useState('')
+  const [reasonTried, setReasonTried] = useState(false)
   // One ID per chosen time, so trying again after a lost response returns the same booking instead of a second one.
   const attempt = useRef<{ startsAt: string; request: string } | null>(null)
   const request = async () => {
     if (!chosen) return
+    setReasonTried(true)
+    if (!validVisitReason(reason)) return
     if (attempt.current?.startsAt !== chosen.startsAt) attempt.current = { startsAt: chosen.startsAt, request: crypto.randomUUID() }
     setBusy(true)
     try {
-      await requestBooking(supabase(), attempt.current.request, chosen.startsAt)
+      await requestBooking(supabase(), attempt.current.request, chosen.startsAt, reason)
       await client.invalidateQueries({ queryKey: ['booking'] })
       toast.show(t('booking.requested'))
       void navigate(`${BASE}/bookings`)
@@ -136,7 +140,7 @@ export function PatientBookPage() {
     }
   }
   return (
-    <BookSessionView {...picker} busy={busy} onRequest={() => void request()}
+    <BookSessionView {...picker} busy={busy} onRequest={() => void request()} reason={reason} onReason={setReason} showReasonError={reasonTried}
       onJoin={() => void waitlist((startsAt) => joinWaitlist(supabase(), startsAt), 'booking.joinedWaitlist')} onLeave={() => void waitlist((startsAt) => leaveWaitlist(supabase(), startsAt), 'booking.leftWaitlist')} />
   )
 }
@@ -193,7 +197,7 @@ export function PatientBookingsPage() {
   }
   return (
     <MyBookingsView load={asLoad(bookings)} waitlist={waitlist.data ?? []} base={BASE} onCancel={(booking: Booking) => void act(() => cancelMyBooking(supabase(), booking.id), 'booking.cancelled')}
-      onBook={(entry: WaitlistEntry) => void act(() => requestBooking(supabase(), crypto.randomUUID(), entry.startsAt), 'booking.requested')}
+      onBook={(entry: WaitlistEntry, reason: string) => act(() => requestBooking(supabase(), crypto.randomUUID(), entry.startsAt, reason), 'booking.requested')}
       onLeave={(entry: WaitlistEntry) => void act(() => leaveWaitlist(supabase(), entry.startsAt), 'booking.leftWaitlist')} />
   )
 }

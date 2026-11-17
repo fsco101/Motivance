@@ -10,7 +10,7 @@ export type ScheduleDayStatus = 'open' | 'closed' | 'holiday' | 'closure'
 
 /** A patient's own session names the therapist. A therapist's names the patient, and says whether their record can be opened. */
 export type ScheduleSession = {
-  id: string; reference: string; status: BookingStatus; startsAt: string; endsAt: string; location: string
+  id: string; reference: string; status: BookingStatus; startsAt: string; endsAt: string; location: string; visitReason: string | null
   therapist: string | null; therapistPhoto: string | null; patientId: string | null; patient: string | null; patientPhoto: string | null; linked: boolean; attendance: Attendance | null; started: boolean
 }
 export type ScheduleRow = { startsAt: string; endsAt: string; session: ScheduleSession | null; onLeave: boolean }
@@ -19,12 +19,12 @@ export type Schedule = { days: ScheduleDay[] }
 
 type RawSession = {
   id: string; reference_no: string; status: BookingStatus; starts_at: string; ends_at: string; location: string | null
-  therapist_name?: string | null; therapist_photo?: string | null; patient_id?: string | null; patient_name?: string | null; patient_photo?: string | null; linked?: boolean; attendance?: Attendance | null; started?: boolean
+  visit_reason?: string | null; therapist_name?: string | null; therapist_photo?: string | null; patient_id?: string | null; patient_name?: string | null; patient_photo?: string | null; linked?: boolean; attendance?: Attendance | null; started?: boolean
 }
 type RawDay = { date: string; status: ScheduleDayStatus; holiday: string | null; on_leave?: boolean; rows: Array<{ starts_at: string; ends_at: string; session: RawSession | null; on_leave?: boolean }> }
 
 const decodeSession = (raw: RawSession): ScheduleSession => ({
-  id: raw.id, reference: raw.reference_no, status: raw.status, startsAt: raw.starts_at, endsAt: raw.ends_at, location: raw.location ?? '',
+  id: raw.id, reference: raw.reference_no, status: raw.status, startsAt: raw.starts_at, endsAt: raw.ends_at, location: raw.location ?? '', visitReason: raw.visit_reason ?? null,
   therapist: raw.therapist_name ?? null, therapistPhoto: raw.therapist_photo ?? null, patientId: raw.patient_id ?? null, patient: raw.patient_name ?? null,
   patientPhoto: raw.patient_photo ?? null, linked: raw.linked ?? false,
   attendance: raw.attendance ?? null, started: raw.started ?? false,

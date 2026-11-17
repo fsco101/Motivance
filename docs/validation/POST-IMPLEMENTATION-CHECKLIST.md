@@ -296,6 +296,12 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] On hosted with real accounts, run the after-rollout checks in that file: live delivery on the web and a phone, a photo and a video, the cleanup, a push that opens its conversation, and a scheduled message.
 - [ ] With a therapist who has many patients, confirm the Messages list opens quickly on a phone over mobile data.
 
+## Booking reasons and session cards (2026-11-17)
+
+- [ ] On a physical phone, in both languages, book a session as a patient: the request waits for a reason for the visit and says why, and the reason then shows on the booking card, on My Schedule once confirmed, and on the assigned therapist's schedule. Book an opened waitlist place the same way, through its dialog.
+- [ ] On phones of different widths and at the largest text size, check that the patient and therapist cards stack when narrow and sit side by side when there is room, that long names wrap, and that TalkBack reads each card as one item.
+- [ ] With representative patients, review the reason prompt's wording: it should invite a short description without asking for more health detail than the center needs. Review with the deployment owner whether it needs mention in the privacy agreement.
+
 ## Administrator backend status (2026-11-17)
 
 - [ ] On a physical phone and a tablet, as an administrator, open the overview in both languages. Confirm the storage meters, health list and four daily charts read clearly at the default and largest text sizes, that TalkBack reads each meter and each chart's days, and that the section cards come after the charts.

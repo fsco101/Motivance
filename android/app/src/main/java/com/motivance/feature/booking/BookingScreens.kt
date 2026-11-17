@@ -160,7 +160,10 @@ internal fun BookingStatus.tone()=when(this) {
             DetailRow(stringResource(if(slot.bookable) R.string.booking_your_choice else R.string.booking_full_choice),format.whenAt(slot.startsAt,slot.endsAt))
             val changing=state.activeAction==BookingAction.WAITLIST
             when {
-                slot.bookable -> ActionButton(R.string.booking_request,{vm.request(done)},busy=state.activeAction==BookingAction.REQUEST,busyLabel=R.string.booking_requesting)
+                slot.bookable -> {
+                    VisitReasonField(state.reason,vm::setReason,state.reasonTried,enabled=!state.busy)
+                    ActionButton(R.string.booking_request,{vm.request(done)},busy=state.activeAction==BookingAction.REQUEST,busyLabel=R.string.booking_requesting)
+                }
                 slot.waiting -> {
                     Text(stringResource(R.string.booking_waiting_detail),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                     ActionButton(R.string.booking_leave_waitlist,{vm.leaveWaitlist(slot.startsAt)},outlined=true,busy=changing,busyLabel=R.string.booking_leaving_waitlist)
@@ -201,9 +204,8 @@ internal fun BookingStatus.tone()=when(this) {
             }
             StatusPill(stringResource(booking.status.label()),booking.status.tone())
         }
-        val therapist=booking.therapist
-        if(therapist!=null) PersonDetailRow(stringResource(R.string.booking_therapist),therapist,booking.therapistPhoto)
-        else if(booking.status.active) DetailRow(stringResource(R.string.booking_therapist),stringResource(R.string.booking_no_therapist))
+        SessionPeople(SessionPerson(booking.patient,booking.patientPhoto,you=true),SessionPerson(booking.therapist,booking.therapistPhoto))
+        VisitReasonBox(booking.visitReason)
         if(booking.location.isNotBlank()) DetailRow(stringResource(R.string.booking_location),booking.location)
         DetailRow(stringResource(R.string.booking_reference),booking.reference)
         booking.previousStartsAt?.let {Text(stringResource(R.string.booking_moved_from,format.day(it)),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
@@ -241,6 +243,7 @@ internal fun BookingStatus.tone()=when(this) {
     val format=rememberSessionFormat()
     val now=remember(state.bookings) {Instant.now()}
     var confirming by remember {mutableStateOf<Booking?>(null)}
+    var placing by remember {mutableStateOf<WaitlistEntry?>(null)}
     ActionButton(R.string.booking_title,book)
     ActionButton(R.string.schedule_title,schedule,outlined=true)
     if(BookingAction.LOAD in state.loading) LoadingNotice(R.string.booking_loading)
@@ -250,9 +253,10 @@ internal fun BookingStatus.tone()=when(this) {
     if(upcoming.isNotEmpty()) SectionHeading(R.string.booking_upcoming)
     upcoming.sortedBy {bookingInstant(it.startsAt)}.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)}) {confirming=booking}}}
     if(state.waitlist.isNotEmpty()) SectionHeading(R.string.booking_waitlist)
-    state.waitlist.forEach {entry -> key(entry.id) {WaitlistCard(entry,!state.busy,{vm.book(entry)},{vm.leaveWaitlist(entry.startsAt)})}}
+    state.waitlist.forEach {entry -> key(entry.id) {WaitlistCard(entry,!state.busy,{placing=entry},{vm.leaveWaitlist(entry.startsAt)})}}
     if(earlier.isNotEmpty()) SectionHeading(R.string.booking_earlier)
     earlier.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)}) {confirming=booking}}}
+    placing?.let {entry -> BookPlaceDialog(entry,{placing=null}) {reason -> placing=null;vm.book(entry,reason)}}
     confirming?.let {booking ->
         AlertDialog({confirming=null},title={Text(stringResource(R.string.booking_cancel))},text={Text(stringResource(R.string.booking_cancel_message,format.whenAt(booking.startsAt,booking.endsAt)))},
             confirmButton={TextButton({confirming=null;vm.cancel(booking)},colors=ButtonDefaults.textButtonColors(contentColor=MaterialTheme.colorScheme.error)) {Text(stringResource(R.string.booking_cancel))}},
@@ -281,4 +285,21 @@ internal fun BookingStatus.tone()=when(this) {
             TextButton(open,Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.booking_view_all))}
         }
     }
+}
+
+/** An opened place is booked like any other request, so it asks why the patient is coming first. */
+@Composable private fun BookPlaceDialog(entry:WaitlistEntry,dismiss:()->Unit,book:(String)->Unit) {
+    val format=rememberSessionFormat()
+    var reason by remember {mutableStateOf("")}
+    var tried by remember {mutableStateOf(false)}
+    AlertDialog(dismiss,title={Text(stringResource(R.string.booking_book_place_title))},
+        text={
+            Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.booking_book_place_detail),style=MaterialTheme.typography.bodyMedium)
+                Text(format.whenAt(entry.startsAt,entry.endsAt),style=MaterialTheme.typography.titleSmall)
+                VisitReasonField(reason,{reason=it},tried)
+            }
+        },
+        confirmButton={TextButton({tried=true;if(validVisitReason(reason)) book(reason)},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.booking_request))}},
+        dismissButton={TextButton(dismiss,Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.cancel_action))}})
 }

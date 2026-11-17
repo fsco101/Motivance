@@ -20,11 +20,14 @@ data class BookingState(
     val owner:String="",val month:YearMonth=YearMonth.from(centerToday()),val availability:BookingAvailability=BookingAvailability(),val bookings:List<Booking> = emptyList(),val waitlist:List<WaitlistEntry> = emptyList(),val moving:Booking?=null,
     val date:String?=null,val slot:BookingSlot?=null,val busy:Boolean=false,val activeAction:BookingAction?=null,val loading:Set<BookingAction> = emptySet(),
     val failed:Boolean=false,val loaded:Boolean=false,
+    /** Why the patient is coming, kept while they choose a time. The error shows only after they try to send. */
+    val reason:String="",val reasonTried:Boolean=false,
 )
 
 /** The wording for a refusal. The server sends a stable booking_* code, so nothing it says reaches the screen unchecked. */
 internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.code) {
     "booking_past" -> R.string.booking_error_past
+    "booking_visit_reason" -> R.string.booking_error_visit_reason
     "booking_too_soon" -> R.string.booking_error_too_soon
     "booking_too_far" -> R.string.booking_error_too_far
     "booking_off_grid" -> R.string.booking_error_off_grid
@@ -90,7 +93,7 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
         job=viewModelScope.launch {
             try {
                 val next=work(current)
-                if(mutable.value.owner==current.owner) mutable.value=mutable.value.copy(availability=next.availability,bookings=next.bookings,waitlist=next.waitlist,moving=next.moving,date=next.date,slot=next.slot,busy=false,activeAction=null,failed=false,loaded=true)
+                if(mutable.value.owner==current.owner) mutable.value=mutable.value.copy(availability=next.availability,bookings=next.bookings,waitlist=next.waitlist,moving=next.moving,date=next.date,slot=next.slot,reason=next.reason,reasonTried=next.reasonTried,busy=false,activeAction=null,failed=false,loaded=true)
             } catch(e:CancellationException) {throw e}
             catch(e:Exception) {
                 if(mutable.value.owner==current.owner) {
@@ -136,17 +139,22 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
         return bookingFailure(error)
     }
 
+    fun setReason(reason:String) {mutable.value=mutable.value.copy(reason=reason.take(VISIT_REASON_MAX))}
+
     fun request(done:()->Unit) {
         val slot=mutable.value.slot ?: return
+        mutable.value=mutable.value.copy(reasonTried=true)
+        val reason=mutable.value.reason
+        if(!validVisitReason(reason)) return
         if(attempt?.first!=slot.startsAt) attempt=slot.startsAt to UUID.randomUUID().toString()
         val id=attempt!!.second
         perform(BookingAction.REQUEST,failure={refused(it)}) {
-            repository.requestBooking(id,slot.startsAt)
+            repository.requestBooking(id,slot.startsAt,reason)
             val bookings=repository.loadMyBookings()
             attempt=null
             toasts.show(R.string.booking_requested)
             done()
-            it.copy(bookings=bookings,slot=null,date=null)
+            it.copy(bookings=bookings,slot=null,date=null,reason="",reasonTried=false)
         }
     }
 
@@ -176,9 +184,9 @@ internal fun bookingFailure(error:Exception)=when((error as? RemoteFailure)?.cod
     }
     fun leaveWaitlist(startsAt:String)=changeWaitlist(R.string.booking_left_waitlist) {repository.leaveWaitlist(startsAt)}
 
-    /** The first to book gets a place, so it is booked from the list in one step. */
-    fun book(entry:WaitlistEntry)=perform(BookingAction.REQUEST,failure={refused(it)}) {
-        repository.requestBooking(UUID.randomUUID().toString(),entry.startsAt)
+    /** An opened place is booked like any other request, with the reason the patient gives in the dialog. */
+    fun book(entry:WaitlistEntry,reason:String)=perform(BookingAction.REQUEST,failure={refused(it)}) {
+        repository.requestBooking(UUID.randomUUID().toString(),entry.startsAt,reason)
         val bookings=repository.loadMyBookings()
         val waitlist=repository.loadWaitlist()
         toasts.show(R.string.booking_requested)

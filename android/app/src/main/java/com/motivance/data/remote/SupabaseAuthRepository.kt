@@ -236,7 +236,10 @@ import java.time.OffsetDateTime
     override suspend fun setExercise(exercise:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_exercise",JSONObject().put("p_exercise",exercise).put("p_active",active),t)}}
     override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_publish_exercise",JSONObject().put("p_exercise",exercise).put("p_name",name).put("p_english",english).put("p_filipino",filipino),t)}}
     override suspend fun loadAvailability(from:String,to:String)=authorized {token,_ -> BookingJson.availability(JSONObject(call("/rest/v1/rpc/booking_availability",JSONObject().put("p_from",from).put("p_to",to),token)))}
-    override suspend fun requestBooking(requestId:String,startsAt:String)=authorized {token,_ -> BookingJson.booking(JSONObject(call("/rest/v1/rpc/request_booking",JSONObject().put("p_request",requestId).put("p_starts",startsAt),token)))}
+    override suspend fun requestBooking(requestId:String,startsAt:String,reason:String)=authorized {token,_ ->
+        val body=JSONObject().put("p_request",requestId).put("p_starts",startsAt).put("p_reason",reason.trim().ifEmpty {null} ?: JSONObject.NULL)
+        BookingJson.booking(JSONObject(call("/rest/v1/rpc/request_booking",body,token)))
+    }
     override suspend fun loadMyBookings()=authorized {token,_ -> BookingJson.bookings(JSONArray(call("/rest/v1/rpc/my_bookings",JSONObject(),token)))}
     override suspend fun cancelBooking(id:String) {authorized {token,_ -> call("/rest/v1/rpc/cancel_my_booking",JSONObject().put("p_booking",id),token)}}
     override suspend fun rescheduleBooking(id:String,startsAt:String) {authorized {token,_ -> call("/rest/v1/rpc/reschedule_my_booking",JSONObject().put("p_booking",id).put("p_starts",startsAt),token)}}

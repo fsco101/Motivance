@@ -37,7 +37,7 @@ describe('schedules on the local backend', () => {
     const day = on(await loadSchedule(await signedIn(ana), 'patient', month))
     const [session] = sessionsOn(day)
     expect(sessionsOn(day)).toHaveLength(1)
-    expect(session).toMatchObject({ therapist: `Zed ${tag}`, status: 'confirmed', patient: null })
+    expect(session).toMatchObject({ therapist: `Zed ${tag}`, status: 'confirmed', patient: `Ana ${tag}` })
     expect(new Date(session!.startsAt).getTime()).toBe(new Date(manila(date, 9)).getTime())
     expect(new Date(session!.endsAt).getTime()).toBe(new Date(manila(date, 10)).getTime())
     expect(day!.rows.length).toBeGreaterThan(1)

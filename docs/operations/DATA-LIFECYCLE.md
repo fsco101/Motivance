@@ -37,7 +37,7 @@ Profile photos are optional. The person chooses the square to keep, and the app 
 
 ## Booking data
 
-Booking adds personal data of a different kind: when someone comes to the center, whether they came, and how to reach their phone. Schedulers read names, reference numbers and times through their own functions, and `can_read_patient` is not widened, so a booking opens no clinical record. No booking record holds a clinical measurement.
+Booking adds personal data of a different kind: when someone comes to the center, why, whether they came, and how to reach their phone. The reason for a visit (`bookings.visit_reason`) is the patient's own words about their health, so it is read only by the patient, the therapist assigned to that session and Schedulers, never appears in notifications, emails, pushes, calendar files or the administrators' feed, and belongs in any export or deletion review of the patient's bookings. Schedulers read names, reference numbers and times through their own functions, and `can_read_patient` is not widened, so a booking opens no clinical record. No booking record holds a clinical measurement.
 
 | Data | Where | How long it stays |
 | --- | --- | --- |

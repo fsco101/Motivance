@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
-import { Avatar, Notice, PageHeader, Panel, PersonName, Skeleton, StatusPill } from '@/components/Display'
+import { Notice, PageHeader, Panel, Skeleton, StatusPill } from '@/components/Display'
 import type { Attendance } from '@/data/booking'
 import { sessionsOn, type Schedule, type ScheduleAudience, type ScheduleDay, type ScheduleSession } from '@/data/schedule'
 import { Fact, Loadable, type Load } from '@/features/shared'
@@ -9,6 +8,7 @@ import { cn } from '@/lib/cn'
 import { AttendanceControl } from './AttendanceControl'
 import { statusTone, useCenterFormat } from './format'
 import { MonthCalendar, type CalendarDay } from './MonthCalendar'
+import { SessionCard } from './SessionCard'
 
 type Props = {
   audience: ScheduleAudience; load: Load<Schedule>; month: string; onMonth: (month: string) => void; canGoBack: boolean; canGoForward: boolean; today: string
@@ -26,31 +26,23 @@ function SessionDetails({ session, audience, recordPath, onMark, marking }: Deta
   const { t } = useTranslation()
   const record = session.linked && session.patientId && recordPath ? recordPath(session.patientId) : null
   return (
-    <div className="min-w-0 flex-1 basis-56 rounded-control bg-tide p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="min-w-0 font-semibold">
-          {audience === 'patient' ? t('booking.scheduleSession') : (
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <Avatar name={session.patient ?? '?'} photo={session.patientPhoto} size={24} />
-              {record ? <Link to={record} className="underline underline-offset-4">{session.patient}</Link> : session.patient}
-            </span>
-          )}
-        </p>
-        <StatusPill tone={statusTone[session.status]}>{t(`booking.status.${session.status}`)}</StatusPill>
-      </div>
-      <dl className="mt-2 grid gap-2 tablet:grid-cols-2">
-        {audience === 'patient' && <Fact term={t('booking.therapist')}>{session.therapist ? <PersonName name={session.therapist} photo={session.therapistPhoto} /> : t('booking.noTherapist')}</Fact>}
-        {audience === 'patient' && session.location && <Fact term={t('booking.location')}>{session.location}</Fact>}
+    <SessionCard className="min-w-0 flex-1 basis-64 rounded-card border border-line bg-tide/40 p-3" heading={<p className="font-semibold">{t('booking.scheduleSession')}</p>}
+      status={<StatusPill tone={statusTone[session.status]}>{t(`booking.status.${session.status}`)}</StatusPill>}
+      patient={{ name: session.patient, photo: session.patientPhoto, you: audience === 'patient', to: record }}
+      therapist={{ name: session.therapist, photo: session.therapistPhoto, you: audience === 'therapist' }}
+      reason={session.visitReason}>
+      <dl className="grid gap-2 tablet:grid-cols-2">
+        {session.location && <Fact term={t('booking.location')}>{session.location}</Fact>}
         <Fact term={t('booking.reference')}><span className="numeric">{session.reference}</span></Fact>
       </dl>
-      {audience === 'therapist' && !record && <p className="mt-2 text-sm text-slate">{t('booking.scheduleNotLinked')}</p>}
+      {audience === 'therapist' && !record && <p className="text-sm text-slate">{t('booking.scheduleNotLinked')}</p>}
       {onMark && session.started && (
-        <div className="mt-3">
+        <div>
           <p className="mb-1.5 text-sm font-semibold">{t('booking.attendanceTitle')}</p>
           <AttendanceControl value={session.attendance} label={t('booking.attendanceFor', { patient: session.patient ?? '' })} disabled={marking} onMark={(value) => onMark(session, value)} />
         </div>
       )}
-    </div>
+    </SessionCard>
   )
 }
 

@@ -34,6 +34,8 @@ data class Booking(
     val id:String,val reference:String,val status:BookingStatus,val reason:String?,val startsAt:String,val endsAt:String,val previousStartsAt:String?,
     val therapist:String?,val location:String="",val cancelUntil:String?=null,val canCancel:Boolean=false,
     val rescheduleUntil:String?=null,val canReschedule:Boolean=false,val reschedulesLeft:Int=0,val therapistPhoto:String?=null,
+    /** Why the patient is coming, as they wrote it. [reason] is the Scheduler's reason for a cancellation or rejection. */
+    val visitReason:String?=null,val patient:String?=null,val patientPhoto:String?=null,
 ) {
     fun upcoming(now:Instant)=status.active && bookingInstant(endsAt).isAfter(now)
 }
@@ -43,6 +45,7 @@ data class ScheduleSession(
     val id:String,val reference:String,val status:BookingStatus,val startsAt:String,val endsAt:String,val location:String="",
     val therapist:String?=null,val patientId:String?=null,val patient:String?=null,val linked:Boolean=false,
     val attendance:String?=null,val started:Boolean=false,val therapistPhoto:String?=null,val patientPhoto:String?=null,
+    val visitReason:String?=null,
 )
 data class ScheduleRow(val startsAt:String,val endsAt:String,val session:ScheduleSession?=null,val onLeave:Boolean=false)
 data class ScheduleDay(val date:String,val status:BookingDayStatus,val holiday:String?=null,val rows:List<ScheduleRow> = emptyList(),val onLeave:Boolean=false) {
@@ -73,10 +76,15 @@ fun YearMonth.calendarWeeks():List<List<LocalDate?>> {
     return cells.chunked(7).map {week -> week+List(7-week.size) {null}}
 }
 
+/** The server's limits for a reason for visit. The form asks for one; blank is sent as none. */
+const val VISIT_REASON_MIN=3
+const val VISIT_REASON_MAX=500
+fun validVisitReason(reason:String)=reason.trim().length in VISIT_REASON_MIN..VISIT_REASON_MAX
+
 interface BookingRepository {
     suspend fun loadAvailability(from:String,to:String):BookingAvailability
     /** [requestId] is chosen once per attempt, so retrying after a lost response returns the same booking. */
-    suspend fun requestBooking(requestId:String,startsAt:String):Booking
+    suspend fun requestBooking(requestId:String,startsAt:String,reason:String=""):Booking
     suspend fun loadMyBookings():List<Booking>
     suspend fun cancelBooking(id:String)
     suspend fun rescheduleBooking(id:String,startsAt:String)

@@ -167,6 +167,7 @@ test('the new patient can book a session straight away', async () => {
   for (let turn = 0; turn < (toYear! - year!) * 12 + toMonth! - month!; turn += 1) await page.getByRole('button', { name: 'Next month' }).click()
   await page.locator(`[data-date="${day}"]`).click()
   await page.getByRole('region', { name: 'Choose a time' }).getByRole('button', { name: /^10:00/ }).click()
+  await page.getByLabel('Reason for visit').fill('First visit for lower back pain')
   await page.getByRole('button', { name: 'Request this time' }).click()
   await expect(page).toHaveURL(/\/patient\/bookings$/)
   await expect(page.getByRole('region', { name: 'Upcoming' }).getByRole('listitem')).toContainText('Pending')
