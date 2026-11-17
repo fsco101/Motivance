@@ -13,8 +13,9 @@ Every kind shows in the bell on both apps. Push reaches Android only; the web ha
 | Booking kinds (`confirmed`, `rescheduled`, `request_received`, `reminder` and the rest) | Patient, therapist or Schedulers, as before | A booking changes, or 24 hours and 1 hour before a session | Yes | Bookings |
 | `plan_updated` | Patient | A therapist publishes an exercise or changes one. A quarter of an hour of publishing is one notification | No | Exercise plan |
 | `session_finished` | The plan's therapist, while the link is active | A patient's session uploads. It carries the repetitions and the target | No | Finished sessions |
-| `practice_reminder` | Patient who chose a reminder time and has an active plan | In the two hours after their time, if no session has started today at the center. Once a day | No | Daily practice reminder |
-| `patient_inactive` | The linked therapist | A patient with an active plan has not exercised for 3 days, counted from their last session or the plan, whichever is later. Once per quiet stretch, between 08:00 and 20:00 at the center | No | Inactive patients |
+| `practice_reminder` | Patient who chose a reminder time and has an active plan | In the two hours after their time, while an exercise due today is still to do: never on a rest day, before a schedule starts or after it ends, and not once today's exercises are done (#127). Once a day | No | Daily practice reminder |
+| `exercise_missed` | The therapist whose schedule it is, while the link is active | The morning after an exercise day with a scheduled exercise left undone, between 08:00 and 20:00 at the center. One per patient and day, with the day and how many of the exercises due were done (#128) | No | Missed exercise days |
+| `patient_inactive` | The linked therapist | A patient with an active every-day exercise has not exercised for 3 days (one whose exercises are all scheduled is followed day by day instead), counted from their last session or the plan, whichever is later. Once per quiet stretch, between 08:00 and 20:00 at the center | No | Inactive patients |
 | `care_linked`, `care_unlinked` | Patient | A link to a therapist is made, made again or ended | No | Care team |
 | `patient_linked`, `patient_unlinked` | Therapist | The same. Taking away the therapist role sends the former therapist nothing | No | Care team |
 | `chat_message` | The other person in a care chat | A message or a photo or video arrives, unless that person read the conversation in the last 2 minutes (they are reading along), or already has an unread notice for it from the last 10 minutes (a burst is one). It carries who wrote and which conversation, never the words. Reading the conversation reads its notices | No | Messages, and the conversation's mute |
@@ -156,8 +157,9 @@ A run that dies after Gmail accepts an email but before recording it will send t
 | `notification-dispatch` | Every minute | Calls the Edge Function, if there is anything to send |
 | `booking-reminders` | Every 5 minutes | Reminds patients and therapists 24 hours and 1 hour before a confirmed session |
 | `expire-booking-requests` | Every 15 minutes | Rejects pending requests whose time has passed, and tells the patient |
-| `practice-reminders` | Every 5 minutes | Reminds patients who chose a time and have not exercised today, once a day |
-| `inactivity-alerts` | Every 30 minutes, acting only from 08:00 to 20:00 at the center | Tells therapists about patients with a plan who have not exercised for 3 days, once per quiet stretch |
+| `practice-reminders` | Every 5 minutes | Reminds patients who chose a time and have an exercise still to do today, once a day |
+| `inactivity-alerts` | Every 30 minutes, acting only from 08:00 to 20:00 at the center | Tells therapists about patients with an every-day exercise who have not exercised for 3 days, once per quiet stretch |
+| `missed-exercise-days` | Every 30 minutes | Records each of the last three exercise days once (`exercise_day_results`), and from 08:00 to 20:00 tells each therapist about a day with something left undone |
 | `send-scheduled-messages` | Every minute | Sends each care-chat message a therapist scheduled, once, at its time, if the conversation is still open; otherwise drops it and records why |
 
 Reminders, expiry and the exercise checks run inside the database, so they keep working with no Edge secrets. Without the Vault secrets above, their notifications still appear in both apps, and only email and push wait.

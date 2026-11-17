@@ -59,7 +59,7 @@ describe("a patient's plan for today", () => {
     exerciseDays: 12, restDays: 2, exerciseCount: 2, state: 'exercise', daysLeft: 10, nextDay: '2026-11-19', ...patch,
   })
   const day = (states: Array<[string, string | null, boolean, boolean]>, schedules: ScheduleOnDay[]): ExerciseDay => ({
-    day: '2026-11-18', schedules, exercises: states.map(([assignmentId, scheduleId, due, done]) => ({ assignmentId, scheduleId, therapistId: 't', due, done })),
+    day: '2026-11-18', schedules, missed: [], exercises: states.map(([assignmentId, scheduleId, due, done]) => ({ assignmentId, scheduleId, therapistId: 't', due, done })),
   })
 
   it('lists only what is due and not yet done, and counts the rest', () => {

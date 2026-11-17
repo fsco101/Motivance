@@ -10,7 +10,7 @@ class NotificationsTest {
         val server=listOf("confirmed","rejected","cancelled","rescheduled","therapist_changed","returned_to_pending","session_assigned","session_moved","session_cancelled",
             "session_removed","request_received","patient_cancelled","needs_therapist","reminder","session_reminder","place_open","patient_rescheduled","series_booked",
             "series_assigned","series_cancelled","session_series_cancelled","plan_updated","session_finished","practice_reminder","patient_inactive","care_linked",
-            "care_unlinked","patient_linked","patient_unlinked","chat_message")
+            "care_unlinked","patient_linked","patient_unlinked","chat_message","exercise_missed")
         assertEquals(server.toSet(),NotificationKind.entries.map {it.key}.toSet())
         assertNull(NotificationKind.of("from_a_newer_server"))
     }
@@ -22,6 +22,8 @@ class NotificationsTest {
         assertEquals(NotificationGroup.SESSION_RESULTS,NotificationKind.SESSION_FINISHED.group)
         assertEquals(NotificationGroup.INACTIVITY,NotificationKind.PATIENT_INACTIVE.group)
         assertEquals(NotificationGroup.PRACTICE,NotificationKind.PRACTICE_REMINDER.group)
+        assertEquals(NotificationGroup.MISSED_DAYS,NotificationKind.EXERCISE_MISSED.group)
+        assertEquals(NotificationDestination.Patient("p1"),AppNotification("n",NotificationKind.EXERCISE_MISSED,subjectId="p1").destination(UserRole.THERAPIST))
         listOf(NotificationKind.CARE_LINKED,NotificationKind.CARE_UNLINKED,NotificationKind.PATIENT_LINKED,NotificationKind.PATIENT_UNLINKED).forEach {
             assertEquals(NotificationGroup.CARE_TEAM,it.group)
         }
@@ -78,7 +80,7 @@ class NotificationsTest {
         assertEquals(listOf(NotificationGroup.BOOKINGS,NotificationGroup.EXERCISE_PLAN,NotificationGroup.PRACTICE,NotificationGroup.CARE_TEAM,NotificationGroup.MESSAGES),
             notificationGroupsFor(setOf(UserRole.PATIENT)))
         assertEquals("A therapist also holds the patient role, and hears about their patients",
-            listOf(NotificationGroup.BOOKINGS,NotificationGroup.SESSION_RESULTS,NotificationGroup.INACTIVITY,NotificationGroup.CARE_TEAM,NotificationGroup.MESSAGES),
+            listOf(NotificationGroup.BOOKINGS,NotificationGroup.SESSION_RESULTS,NotificationGroup.INACTIVITY,NotificationGroup.MISSED_DAYS,NotificationGroup.CARE_TEAM,NotificationGroup.MESSAGES),
             notificationGroupsFor(setOf(UserRole.PATIENT,UserRole.THERAPIST)))
         assertEquals(listOf(NotificationGroup.BOOKINGS),notificationGroupsFor(setOf(UserRole.PATIENT,UserRole.SCHEDULER)))
         assertEquals("An administrator alone has no bell",emptyList<NotificationGroup>(),notificationGroupsFor(setOf(UserRole.PATIENT,UserRole.ADMIN)))

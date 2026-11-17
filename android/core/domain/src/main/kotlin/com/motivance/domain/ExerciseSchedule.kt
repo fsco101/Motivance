@@ -20,7 +20,12 @@ data class ExerciseSchedule(
 /** One active exercise on one day. An exercise without a schedule is due every day. */
 data class DayExercise(val assignmentId:String,val scheduleId:String?,val therapistId:String,val due:Boolean,val done:Boolean)
 
-data class ExerciseDay(val day:LocalDate,val exercises:List<DayExercise> = emptyList(),val schedules:List<ExerciseSchedule> = emptyList())
+/** A finished exercise day with something left undone (#128). */
+data class MissedDay(val day:LocalDate,val therapistId:String,val due:Int,val done:Int)
+
+data class ExerciseDay(val day:LocalDate,val exercises:List<DayExercise> = emptyList(),val schedules:List<ExerciseSchedule> = emptyList(),
+    /** The last 30 days' missed exercise days, newest first. */
+    val missed:List<MissedDay> = emptyList())
 
 data class ScheduleDraft(val id:String,val patientId:String,val startsOn:LocalDate,val endsOn:LocalDate,val restWeekdays:Set<Int> = emptySet(),val restDates:List<LocalDate> = emptyList())
 

@@ -1062,7 +1062,7 @@
     <string name="set_side_result">%1$s: %2$d sa %3$d ulit, %4$s saklaw, %5$s</string>
     <string name="notification_plan_updated">Binago ni %1$s ang iyong plano ng ehersisyo.</string>
     <string name="notification_session_finished">Natapos ni %1$s ang isang session: %2$d sa %3$d na pag-ulit.</string>
-    <string name="notification_practice_reminder">Hindi ka pa nag-eehersisyo ngayong araw. Handa na ang iyong plano.</string>
+    <string name="notification_practice_reminder">May natitira ka pang ehersisyo ngayong araw. Handa na ang iyong plano.</string>
     <string name="notification_patient_inactive">%2$d araw nang hindi nag-eehersisyo si %1$s.</string>
     <string name="notification_care_linked">Si %1$s na ang iyong therapist.</string>
     <string name="notification_care_unlinked">Hindi na naka-link si %1$s sa iyong account.</string>
@@ -1087,7 +1087,7 @@
     <string name="notification_settings_session_results">Mga natapos na session</string>
     <string name="notification_settings_session_results_detail">Kapag nag-upload ng session ang isa sa iyong mga pasyente.</string>
     <string name="notification_settings_inactivity">Mga hindi aktibong pasyente</string>
-    <string name="notification_settings_inactivity_detail">Kapag 3 araw nang hindi nag-eehersisyo ang pasyenteng may plano.</string>
+    <string name="notification_settings_inactivity_detail">Kapag 3 araw nang hindi nag-eehersisyo ang pasyenteng may araw-araw na ehersisyo.</string>
     <string name="notification_settings_care_team">Care team</string>
     <string name="notification_settings_care_team_detail">Kapag na-link o na-unlink ang therapist at pasyente.</string>
     <string name="notification_settings_unavailable">Hindi pa naka-set up ang push notification sa bersyong ito ng app. Makikita pa rin ang lahat sa bell.</string>
@@ -1369,4 +1369,12 @@
     <string name="patient_upcoming_detail">Magsisimula ang iyong mga ehersisyo sa %1$s.</string>
     <string name="patient_finished_title">Walang nakaplanong ehersisyo</string>
     <string name="patient_finished_detail">Tapos na ang iyong iskedyul. Ang iyong therapist ang magpaplano ng susunod.</string>
+    <!-- Missed exercise days (#128) -->
+    <string name="exercise_schedule_missed_title">Mga araw na may hindi nagawang ehersisyo</string>
+    <string name="exercise_schedule_missed_help">Mga araw sa nakaraang 30 na may naka-iskedyul na ehersisyong hindi nagawa.</string>
+    <string name="exercise_schedule_missed_item">%1$s, nagawa: %2$d sa %3$d</string>
+    <string name="notification_exercise_missed">May hindi nagawang ehersisyo si %1$s noong %2$s. Nagawa: %3$d sa %4$d.</string>
+    <string name="notification_settings_missed_days">Mga araw na may hindi nagawang ehersisyo</string>
+    <string name="notification_settings_missed_days_detail">Kinaumagahan, kapag may naka-iskedyul na ehersisyong hindi nagawa ang pasyente.</string>
+    <string name="push_channel_missed_days">Mga araw na may hindi nagawang ehersisyo</string>
 </resources>

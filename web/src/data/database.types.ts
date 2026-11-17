@@ -941,6 +941,54 @@ export type Database = {
           },
         ]
       }
+      exercise_day_results: {
+        Row: {
+          day: string
+          done: number
+          due: number
+          missed: string[]
+          notified_at: string | null
+          patient_id: string
+          recorded_at: string
+          therapist_id: string
+        }
+        Insert: {
+          day: string
+          done: number
+          due: number
+          missed?: string[]
+          notified_at?: string | null
+          patient_id: string
+          recorded_at?: string
+          therapist_id: string
+        }
+        Update: {
+          day?: string
+          done?: number
+          due?: number
+          missed?: string[]
+          notified_at?: string | null
+          patient_id?: string
+          recorded_at?: string
+          therapist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_day_results_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_day_results_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_schedules: {
         Row: {
           cancelled_at: string | null
@@ -1123,6 +1171,7 @@ export type Database = {
           exercise_plan: boolean
           inactivity: boolean
           messages: boolean
+          missed_days: boolean
           reminder_time: string | null
           session_results: boolean
           updated_at: string
@@ -1134,6 +1183,7 @@ export type Database = {
           exercise_plan?: boolean
           inactivity?: boolean
           messages?: boolean
+          missed_days?: boolean
           reminder_time?: string | null
           session_results?: boolean
           updated_at?: string
@@ -1145,6 +1195,7 @@ export type Database = {
           exercise_plan?: boolean
           inactivity?: boolean
           messages?: boolean
+          missed_days?: boolean
           reminder_time?: string | null
           session_results?: boolean
           updated_at?: string
@@ -2280,6 +2331,10 @@ export type Database = {
         }
         Returns: string
       }
+      record_exercise_days: {
+        Args: { p_now?: string }
+        Returns: number
+      }
       register_device: {
         Args: { p_token: string; p_platform?: string }
         Returns: undefined
@@ -2340,6 +2395,7 @@ export type Database = {
           p_care_team: boolean
           p_reminder_time?: string
           p_messages?: boolean
+          p_missed_days?: boolean
         }
         Returns: Json
       }

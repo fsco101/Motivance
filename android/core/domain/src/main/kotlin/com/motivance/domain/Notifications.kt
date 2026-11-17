@@ -1,7 +1,7 @@
 package com.motivance.domain
 
 /** Which push switch a kind answers to. Mirrors notification_group() on the server. */
-enum class NotificationGroup { BOOKINGS, EXERCISE_PLAN, SESSION_RESULTS, INACTIVITY, CARE_TEAM, PRACTICE, MESSAGES }
+enum class NotificationGroup { BOOKINGS, EXERCISE_PLAN, SESSION_RESULTS, INACTIVITY, CARE_TEAM, PRACTICE, MESSAGES, MISSED_DAYS }
 
 enum class NotificationKind(val key:String,val group:NotificationGroup=NotificationGroup.BOOKINGS) {
     CONFIRMED("confirmed"),REJECTED("rejected"),CANCELLED("cancelled"),RESCHEDULED("rescheduled"),THERAPIST_CHANGED("therapist_changed"),RETURNED_TO_PENDING("returned_to_pending"),
@@ -12,7 +12,7 @@ enum class NotificationKind(val key:String,val group:NotificationGroup=Notificat
     PRACTICE_REMINDER("practice_reminder",NotificationGroup.PRACTICE),PATIENT_INACTIVE("patient_inactive",NotificationGroup.INACTIVITY),
     CARE_LINKED("care_linked",NotificationGroup.CARE_TEAM),CARE_UNLINKED("care_unlinked",NotificationGroup.CARE_TEAM),
     PATIENT_LINKED("patient_linked",NotificationGroup.CARE_TEAM),PATIENT_UNLINKED("patient_unlinked",NotificationGroup.CARE_TEAM),
-    CHAT_MESSAGE("chat_message",NotificationGroup.MESSAGES);
+    CHAT_MESSAGE("chat_message",NotificationGroup.MESSAGES),EXERCISE_MISSED("exercise_missed",NotificationGroup.MISSED_DAYS);
     /** A kind this version does not know is left out, so a newer server never shows a blank row. */
     companion object {fun of(value:String)=entries.firstOrNull {it.key==value}}
 }
@@ -31,6 +31,8 @@ data class AppNotification(
     val completed:Int?=null,val target:Int?=null,val days:Int?=null,
     /** For a new message: which conversation, and who wrote. Never the words. */
     val conversationId:String?=null,val sender:String?=null,
+    /** A missed exercise day (#128): the calendar day, and how many of the exercises due were done. */
+    val day:String?=null,val due:Int?=null,val done:Int?=null,
 ) {
     val unread get()=readAt==null
 }
@@ -53,7 +55,7 @@ sealed interface NotificationDestination {
 fun AppNotification.destination(workspace:UserRole?):NotificationDestination=when(kind) {
     NotificationKind.PLAN_UPDATED,NotificationKind.PRACTICE_REMINDER -> NotificationDestination.Exercises
     NotificationKind.CARE_LINKED,NotificationKind.CARE_UNLINKED -> NotificationDestination.Home
-    NotificationKind.SESSION_FINISHED,NotificationKind.PATIENT_INACTIVE,NotificationKind.PATIENT_LINKED ->
+    NotificationKind.SESSION_FINISHED,NotificationKind.PATIENT_INACTIVE,NotificationKind.PATIENT_LINKED,NotificationKind.EXERCISE_MISSED ->
         subjectId?.let {NotificationDestination.Patient(it)} ?: NotificationDestination.Patients
     NotificationKind.PATIENT_UNLINKED -> NotificationDestination.Patients
     NotificationKind.CHAT_MESSAGE -> NotificationDestination.Conversation(conversationId)
@@ -70,6 +72,7 @@ data class NotificationSettings(
     /** "HH:MM" on a 24-hour clock in the center's time zone, or null for no daily reminder. */
     val reminderTime:String?=null,
     val messages:Boolean=true,
+    val missedDays:Boolean=true,
 ) {
     fun allows(group:NotificationGroup)=when(group) {
         NotificationGroup.BOOKINGS -> bookings
@@ -79,6 +82,7 @@ data class NotificationSettings(
         NotificationGroup.CARE_TEAM -> careTeam
         NotificationGroup.PRACTICE -> reminderTime!=null
         NotificationGroup.MESSAGES -> messages
+        NotificationGroup.MISSED_DAYS -> missedDays
     }
     fun with(group:NotificationGroup,on:Boolean)=when(group) {
         NotificationGroup.BOOKINGS -> copy(bookings=on)
@@ -88,6 +92,7 @@ data class NotificationSettings(
         NotificationGroup.CARE_TEAM -> copy(careTeam=on)
         NotificationGroup.PRACTICE -> copy(reminderTime=if(on) reminderTime ?: DEFAULT_REMINDER else null)
         NotificationGroup.MESSAGES -> copy(messages=on)
+        NotificationGroup.MISSED_DAYS -> copy(missedDays=on)
     }
     companion object {
         const val DEFAULT_REMINDER="18:00"
@@ -107,7 +112,7 @@ fun notificationGroupsFor(roles:Set<UserRole>):List<NotificationGroup> {
     return buildList {
         if(patient || therapist || scheduler) add(NotificationGroup.BOOKINGS)
         if(patient) {add(NotificationGroup.EXERCISE_PLAN);add(NotificationGroup.PRACTICE)}
-        if(therapist) {add(NotificationGroup.SESSION_RESULTS);add(NotificationGroup.INACTIVITY)}
+        if(therapist) {add(NotificationGroup.SESSION_RESULTS);add(NotificationGroup.INACTIVITY);add(NotificationGroup.MISSED_DAYS)}
         if(patient || therapist) add(NotificationGroup.CARE_TEAM)
         // Only a patient and their therapist talk.
         if(patient || therapist) add(NotificationGroup.MESSAGES)

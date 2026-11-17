@@ -24,7 +24,9 @@ export type ScheduleState = 'upcoming' | 'exercise' | 'rest' | 'ended'
 export type ScheduleOnDay = ExerciseSchedule & { state: ScheduleState; daysLeft: number; nextDay: string | null }
 /** One active exercise on one day. An exercise without a schedule is due every day. */
 export type DayExercise = { assignmentId: string; scheduleId: string | null; therapistId: string; due: boolean; done: boolean }
-export type ExerciseDay = { day: string; exercises: DayExercise[]; schedules: ScheduleOnDay[] }
+/** A finished exercise day with something left undone, from the last 30 days. */
+export type MissedDay = { day: string; therapistId: string; due: number; done: number }
+export type ExerciseDay = { day: string; exercises: DayExercise[]; schedules: ScheduleOnDay[]; missed: MissedDay[] }
 
 type RawSchedule = {
   id: string; patient_id: string; therapist_id: string; therapist_name: string | null; starts_on: string; ends_on: string
@@ -34,6 +36,7 @@ type RawDay = {
   day: string
   exercises: Array<{ assignment_id: string; schedule_id: string | null; therapist_id: string; due: boolean; done: boolean }>
   schedules: Array<RawSchedule & { state: ScheduleState; days_left: number; next_day: string | null }>
+  missed?: Array<{ day: string; therapist_id: string; due: number; done: number }>
 }
 
 export const decodeSchedule = (raw: RawSchedule): ExerciseSchedule => ({
@@ -46,6 +49,7 @@ export const decodeExerciseDay = (raw: RawDay): ExerciseDay => ({
   day: raw.day,
   exercises: raw.exercises.map((item) => ({ assignmentId: item.assignment_id, scheduleId: item.schedule_id, therapistId: item.therapist_id, due: item.due, done: item.done })),
   schedules: raw.schedules.map((item) => ({ ...decodeSchedule(item), state: item.state, daysLeft: item.days_left, nextDay: item.next_day })),
+  missed: (raw.missed ?? []).map((item) => ({ day: item.day, therapistId: item.therapist_id, due: item.due, done: item.done })),
 })
 
 /** The weekday of a calendar date, independent of the reader's time zone. */

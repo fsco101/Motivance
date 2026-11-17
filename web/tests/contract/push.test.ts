@@ -51,12 +51,13 @@ describe('a push that is not about a session', () => {
   it.each([
     ['plan_updated', { therapist_name: 'Dana Reyes' }, 'Your exercise plan has changed', 'Dana Reyes updated your exercise plan.'],
     ['session_finished', { patient_name: 'Ana Dela Cruz', completed: 6, target: 5 }, 'Session finished: Ana Dela Cruz', 'Ana Dela Cruz finished a session: 6 of 5 repetitions.'],
-    ['practice_reminder', { date: '2026-12-07' }, 'Time for your exercises', 'You have not exercised today. Your plan is ready when you are.'],
+    ['practice_reminder', { date: '2026-12-07' }, 'Time for your exercises', 'You have exercises left to do today. Your plan is ready when you are.'],
     ['patient_inactive', { patient_name: 'Ana Dela Cruz', days: 4 }, 'No exercise for 4 days: Ana Dela Cruz', 'Ana Dela Cruz has not exercised for 4 days.'],
     ['care_linked', { therapist_name: 'Dana Reyes' }, 'You have a therapist', 'Dana Reyes is now your therapist.'],
     ['care_unlinked', { therapist_name: 'Dana Reyes' }, 'Your therapist link has ended', 'Dana Reyes is no longer linked to your account.'],
     ['patient_linked', { patient_name: 'Ana Dela Cruz' }, 'New patient: Ana Dela Cruz', 'Ana Dela Cruz is now linked to you.'],
     ['patient_unlinked', { patient_name: 'Ana Dela Cruz' }, 'Patient link ended: Ana Dela Cruz', 'Ana Dela Cruz is no longer linked to you.'],
+    ['exercise_missed', { patient_name: 'Ana Dela Cruz', day: '2026-11-17', due: 3, done: 1 }, 'Missed exercises: Ana Dela Cruz', 'Ana Dela Cruz missed exercises on Tue, Nov 17. Done: 1 of 3.'],
   ])('%s has its own words', (kind, data, title, body) => {
     expect(care(kind, data)).toMatchObject({ title, body, kind, booking_id: '' })
   })
@@ -72,6 +73,7 @@ describe('a push that is not about a session', () => {
   it('is written in the reader\'s language', () => {
     expect(care('care_linked', { therapist_name: 'Dana Reyes' }, 'fil')).toMatchObject({ title: 'May therapist ka na', body: 'Si Dana Reyes na ang iyong therapist.' })
     expect(care('patient_inactive', { patient_name: 'Ana', days: 3 }, 'fil').body).toBe('3 araw nang hindi nag-eehersisyo si Ana.')
+    expect(care('exercise_missed', { patient_name: 'Ana', day: '2026-11-17', due: 2, done: 0 }, 'fil').body).toMatch(/^May hindi nagawang ehersisyo si Ana noong .+\. Nagawa: 0 sa 2\.$/)
   })
 
   it('keeps a name on one line of the title', () => {

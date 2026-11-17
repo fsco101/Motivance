@@ -142,6 +142,7 @@ export function PatientRecordPage() {
       schedules: today.data.schedules.map((schedule) => ({ ...schedule, mine: schedule.therapistId === userId, plans: plans.filter((plan) => plan.scheduleId === schedule.id) })),
       everyDay: plans.filter((plan) => plan.scheduleId === null),
       ended: plans.filter((plan) => plan.scheduleId !== null && !today.data.schedules.some((schedule) => schedule.id === plan.scheduleId)),
+      missed: today.data.missed,
       trend: series && {
         exercise: series.prescription.exerciseName, points: romPoints(series, format.short),
         detail: t('progress.seriesLine', { side: t(`common.${series.side}`, series.side), version: series.prescription.version, low: series.prescription.low, high: series.prescription.high }),

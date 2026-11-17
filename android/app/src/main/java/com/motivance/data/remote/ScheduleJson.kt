@@ -3,6 +3,7 @@ package com.motivance.data.remote
 import com.motivance.domain.DayExercise
 import com.motivance.domain.ExerciseDay
 import com.motivance.domain.ExerciseSchedule
+import com.motivance.domain.MissedDay
 import com.motivance.domain.ScheduleDraft
 import com.motivance.domain.ScheduleState
 import com.motivance.domain.ScheduleWindow
@@ -27,7 +28,8 @@ object ScheduleJson {
     fun day(j:JSONObject)=ExerciseDay(
         LocalDate.parse(j.getString("day")),
         j.optJSONArray("exercises").rows {DayExercise(it.getString("assignment_id"),it.text("schedule_id"),it.getString("therapist_id"),it.getBoolean("due"),it.getBoolean("done"))},
-        j.optJSONArray("schedules").rows(::schedule))
+        j.optJSONArray("schedules").rows(::schedule),
+        j.optJSONArray("missed").rows {MissedDay(LocalDate.parse(it.getString("day")),it.getString("therapist_id"),it.getInt("due"),it.getInt("done"))})
 
     /** The schedule cached with an exercise on the phone: its dates and rest days. */
     fun window(j:JSONObject)=ScheduleWindow(j.getString("id"),LocalDate.parse(j.getString("starts_on")),LocalDate.parse(j.getString("ends_on")),

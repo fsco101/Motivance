@@ -1062,7 +1062,7 @@
     <string name="set_side_result">%1$s: %2$d of %3$d reps, %4$s range, %5$s</string>
     <string name="notification_plan_updated">%1$s updated your exercise plan.</string>
     <string name="notification_session_finished">%1$s finished a session: %2$d of %3$d repetitions.</string>
-    <string name="notification_practice_reminder">You have not exercised today. Your plan is ready when you are.</string>
+    <string name="notification_practice_reminder">You have exercises left to do today. Your plan is ready when you are.</string>
     <string name="notification_patient_inactive">%1$s has not exercised for %2$d days.</string>
     <string name="notification_care_linked">%1$s is now your therapist.</string>
     <string name="notification_care_unlinked">%1$s is no longer linked to your account.</string>
@@ -1087,7 +1087,7 @@
     <string name="notification_settings_session_results">Finished sessions</string>
     <string name="notification_settings_session_results_detail">When one of your patients uploads a session.</string>
     <string name="notification_settings_inactivity">Inactive patients</string>
-    <string name="notification_settings_inactivity_detail">When a patient with a plan has not exercised for 3 days.</string>
+    <string name="notification_settings_inactivity_detail">When a patient with an every-day exercise has not exercised for 3 days.</string>
     <string name="notification_settings_care_team">Care team</string>
     <string name="notification_settings_care_team_detail">When a therapist and patient are linked or unlinked.</string>
     <string name="notification_settings_unavailable">Push notifications are not set up in this version of the app. The bell still shows everything.</string>
@@ -1369,4 +1369,12 @@
     <string name="patient_upcoming_detail">Your exercises start on %1$s.</string>
     <string name="patient_finished_title">No exercises planned</string>
     <string name="patient_finished_detail">Your schedule is over. Your therapist will plan what comes next.</string>
+    <!-- Missed exercise days (#128) -->
+    <string name="exercise_schedule_missed_title">Missed exercise days</string>
+    <string name="exercise_schedule_missed_help">Days in the last 30 with a scheduled exercise left undone.</string>
+    <string name="exercise_schedule_missed_item">%1$s, done: %2$d of %3$d</string>
+    <string name="notification_exercise_missed">%1$s missed exercises on %2$s. Done: %3$d of %4$d.</string>
+    <string name="notification_settings_missed_days">Missed exercise days</string>
+    <string name="notification_settings_missed_days_detail">The morning after a patient leaves scheduled exercises undone.</string>
+    <string name="push_channel_missed_days">Missed exercise days</string>
 </resources>

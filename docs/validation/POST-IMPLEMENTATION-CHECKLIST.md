@@ -314,6 +314,8 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] With a therapist, review whether "exercise day", "rest day" and "every-day exercise" match how the center talks about home programmes, in English and Filipino.
 - [ ] On a physical phone as a patient: finish an exercise with the phone offline and confirm it leaves today's list straight away and does not come back once the upload goes through. Check a rest day, the day after the last exercise day, and a day just after midnight in Manila with the phone set to another time zone.
 - [ ] With a reminder time set, confirm the daily reminder arrives on an exercise day with something left to do, and not on a rest day or after everything is done.
+- [ ] On the hosted project with real push, leave a scheduled exercise undone and confirm the therapist's phone shows "Missed exercises" the next morning, in both languages, and that turning off "Missed exercise days" stops the push but keeps the bell row.
+- [ ] With a therapist, review whether one notification per patient and day is the right amount, and whether the record's list of missed days helps follow up.
 
 ## Recording results
 

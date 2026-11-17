@@ -30,7 +30,8 @@ class ExerciseScheduleTest {
     private val everyDay=PrescriptionSummary("a2","v2","patient","exercise",1,"right",10.0,80.0,8,therapistId="therapist")
     private val state=RehabilitationState(owner="therapist",workspace=RehabWorkspace(patients=listOf(LinkedPatient("patient","Rosa Lim")),
         catalogue=listOf(CatalogueExercise("exercise","Fixture elbow","elbow-flexion-v1","Bend and straighten the elbow.")),prescriptions=listOf(elbow,everyDay)),
-        days=mapOf("patient" to ExerciseDay(today,listOf(DayExercise("a1","s1","therapist",due=true,done=true),DayExercise("a2",null,"therapist",due=true,done=false)),listOf(schedule,theirs))))
+        days=mapOf("patient" to ExerciseDay(today,listOf(DayExercise("a1","s1","therapist",due=true,done=true),DayExercise("a2",null,"therapist",due=true,done=false)),listOf(schedule,theirs),
+            listOf(MissedDay(LocalDate.parse("2026-11-17"),"therapist",2,1)))))
 
     private fun text(id:Int,vararg args:Any)=context.getString(id,*args)
     private fun record(state:RehabilitationState=this.state,ended:(String)->Unit={},stopped:(String)->Unit={},added:(ExerciseSchedule)->Unit={}) {
@@ -47,6 +48,8 @@ class ExerciseScheduleTest {
         compose.onNodeWithText(text(R.string.exercise_schedule_today_done)).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(text(R.string.exercise_schedule_today_todo)).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(text(R.string.exercise_schedule_every_day)).performScrollTo().assertIsDisplayed()
+        // The record marks the days with something left undone (#128).
+        compose.onNodeWithText(text(R.string.exercise_schedule_missed_item,displayDate("2026-11-17"),1,2)).performScrollTo().assertIsDisplayed()
         compose.onAllNodesWithText(text(R.string.exercise_schedule_add_exercise))[0].performScrollTo().performClick()
         assertEquals("s1",added?.id)
     }

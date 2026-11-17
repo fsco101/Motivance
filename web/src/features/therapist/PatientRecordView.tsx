@@ -8,7 +8,7 @@ import { RangeBar } from '@/components/Charts'
 import { DataTable, type Column } from '@/components/DataTable'
 import { ConfirmDialog, Dialog } from '@/components/Dialog'
 import { Avatar, EmptyState, Panel, Skeleton, StatusPill } from '@/components/Display'
-import type { ScheduleDraft, ScheduleOnDay } from '@/data/exerciseSchedule'
+import type { MissedDay, ScheduleDraft, ScheduleOnDay } from '@/data/exerciseSchedule'
 import { clock } from '@/data/therapist'
 import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { spring } from '@/motion/tokens'
@@ -36,6 +36,8 @@ export type PatientRecord = {
   everyDay: PlanCard[]
   /** Exercises still on the plan whose schedule has ended, so the patient no longer sees them. */
   ended: PlanCard[]
+  /** Finished exercise days of the last 30 with something left undone, newest first (#128). */
+  missed: MissedDay[]
   trend: RecordTrend | null
 }
 
@@ -170,6 +172,17 @@ export function PatientRecordView({ load, base, actions }: { load: Load<PatientR
                       {schedule.plans.length === 0 ? <p className="px-4 pb-4 text-sm text-slate">{t('schedule.empty')}</p> : table(schedule.plans)}
                     </ScheduleCard>
                   ))}
+                {patient.missed.length > 0 && (
+                  <section aria-labelledby="missed-days" className="border-t border-line px-4 py-4">
+                    <h3 id="missed-days" className="font-sans text-sm font-bold">{t('schedule.missedTitle')}</h3>
+                    <p className="text-sm text-slate">{t('schedule.missedHelp')}</p>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                      {patient.missed.map((day) => (
+                        <li key={`${day.day}-${day.therapistId}`}><StatusPill tone={day.done === 0 ? 'danger' : 'caution'}>{t('schedule.missedItem', { day: format.day(day.day), done: day.done, due: day.due })}</StatusPill></li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
               </Panel>
               {patient.everyDay.length > 0 && (
                 <Panel title={t('schedule.everyDay')} description={t('schedule.everyDayHelp')} flush

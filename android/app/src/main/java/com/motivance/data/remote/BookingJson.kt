@@ -32,16 +32,17 @@ object BookingJson {
             val data=row.getJSONObject("data")
             AppNotification(row.getString("id"),kind,data.text("reference_no").orEmpty(),data.text("starts_at"),data.text("ends_at"),data.text("previous_starts_at"),
                 data.text("patient_name"),data.text("therapist_name"),data.text("reason"),row.text("read_at"),row.getString("created_at"),data.optInt("sessions"),data.text("last_starts_at"),
-                row.text("subject_id"),row.text("subject_name"),row.text("subject_photo"),data.number("completed"),data.number("target"),data.number("days"),data.text("conversation_id"),data.text("sender_name"))
+                row.text("subject_id"),row.text("subject_name"),row.text("subject_photo"),data.number("completed"),data.number("target"),data.number("days"),data.text("conversation_id"),data.text("sender_name"),
+                data.text("day"),data.number("due"),data.number("done"))
         }
     })
 
     /** A switch the server left out stays on, as it is for someone who never chose. */
     fun settings(json:JSONObject)=NotificationSettings(json.optBoolean("bookings",true),json.optBoolean("exercise_plan",true),json.optBoolean("session_results",true),
-        json.optBoolean("inactivity",true),json.optBoolean("care_team",true),json.text("reminder_time"),json.optBoolean("messages",true))
+        json.optBoolean("inactivity",true),json.optBoolean("care_team",true),json.text("reminder_time"),json.optBoolean("messages",true),json.optBoolean("missed_days",true))
 
     fun settingsBody(settings:NotificationSettings):JSONObject=JSONObject().put("p_bookings",settings.bookings).put("p_exercise_plan",settings.exercisePlan)
-        .put("p_session_results",settings.sessionResults).put("p_inactivity",settings.inactivity).put("p_care_team",settings.careTeam).put("p_messages",settings.messages)
+        .put("p_session_results",settings.sessionResults).put("p_inactivity",settings.inactivity).put("p_care_team",settings.careTeam).put("p_messages",settings.messages).put("p_missed_days",settings.missedDays)
         .put("p_reminder_time",settings.reminderTime ?: JSONObject.NULL)
 
     private fun session(json:JSONObject)=ScheduleSession(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.CONFIRMED,

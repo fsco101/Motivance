@@ -102,6 +102,16 @@ private fun DayExercise?.today():Pair<Int,PillTone>?=when {
         if(inside.isEmpty()) Text(stringResource(R.string.exercise_schedule_empty),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
         inside.forEach {Plan(it)}
     }
+    if(day.missed.isNotEmpty()) ClinicalCard {
+        Text(stringResource(R.string.exercise_schedule_missed_title),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
+        Text(stringResource(R.string.exercise_schedule_missed_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+            day.missed.forEach {missed ->
+                StatusPill(stringResource(R.string.exercise_schedule_missed_item,displayDate(missed.day.toString()),missed.done,missed.due),
+                    if(missed.done==0) PillTone.ATTENTION else PillTone.NEUTRAL)
+            }
+        }
+    }
     if(everyDay.isNotEmpty()) {
         SectionHeading(R.string.exercise_schedule_every_day) {
             FilledTonalButton(assignEveryDay,enabled=!state.busy,modifier=Modifier.heightIn(min=48.dp)) {

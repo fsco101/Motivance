@@ -85,3 +85,35 @@ Also covered: days already past are never rewritten ("never rewrites days alread
 Two older checks were brought up to date. `test_care_notifications.py` expected a patient who did one of two exercises not to be reminded, which #127 changes on purpose. It also left out the `messages` switch that care chat added on 2026-11-15, so it had been failing since then.
 
 **Not done:** physical-phone checks, in the checklist.
+
+## #128: a missed day does not stack, and the therapist is notified (2026-11-17)
+
+- **Not carried over.** Each day lists only its own exercises (#127), so a missed day never becomes a backlog or a doubled target.
+- **Server.** Migration `202611170006_missed_exercise_days.sql`. The `missed-exercise-days` job records each of the last three exercise days once in `exercise_day_results`. From 08:00 to 20:00 at the center, it sends the therapist one `exercise_missed` notification per patient and day with something left undone. The notification carries the day and how many of the exercises due were done. Rest days, days outside a schedule and the day an exercise was added never count. The kind has its own push switch (`missed_days`), and the inactivity alert now follows every-day exercises only, so a therapist is not told twice.
+- **Push and bell.** "Missed exercises: Ana" / "Ana missed exercises on Tue, Nov 17. Done: 1 of 3." in English and Filipino, in the push (`push_text.ts`) and in the bell on both apps. Opening it goes to the patient's record.
+- **Patient record.** Both apps list the missed days of the last 30, each with how many were done.
+- **Settings.** Android's Notifications card gains "Missed exercise days" for therapists, with its own notification channel. The web has no settings page, as before.
+- **Wording.** The practice reminder now says "You have exercises left to do today", which matches #127's rule.
+
+| Acceptance criterion | Evidence |
+| --- | --- |
+| A day with nothing done and one with some done each send one notification to every linked therapist; a fully done day, a rest day and a day outside the set send none | `web/tests/contract/missed-days.test.ts` "tells the therapist about a day with nothing done and one with some done, and nothing else" |
+| Running the job again sends nothing new | Same test, second run; "records at night but waits for the morning to tell anyone" |
+| The patient's next day shows only its own exercises | Same test (`exercise_day` lists two due exercises, not a backlog); #127 tests |
+| With the switch off nothing is pushed, and the bell still shows it | "keeps the push off for a therapist who turned the switch off…" (push delivery `skipped`, no email; an older app leaves the switch as it was) |
+| The patient record marks missed days on both apps | Web: `PatientRecordView` (gallery sample, `exercise-schedule.spec.ts`); Android: `ExerciseScheduleTest`, `ScheduleRepositoryTest` |
+| Contract tests cover the job, and every new string exists in English and Filipino | `missed-days.test.ts` (5), `push.test.ts` (34); `locales.test.ts`; `check_resources.py` (1324 strings per language) |
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Contract suite | `npm run test:contract` | 24 files, 240 passed, 3 skipped by design |
+| Care notification checks | `python scripts/test_care_notifications.py` | 62 passed |
+| Web browser | `exercise-schedule.spec.ts`, `notifications.spec.ts`; gallery record and notification pages | 16 and 4 passed |
+| Web unit, types, lint | `npm test`, `npm run typecheck`, `npm run lint` | 316 passed; clean |
+| Android domain and app unit | `.\gradlew.bat :core:domain:test :app:testDebugUnitTest` | 123 and 291 tests, 0 failures |
+| Android lint | `.\gradlew.bat :app:lintDebug` | 0 errors, 147 warnings, as before |
+| Android device tests (emulator, Pixel 6, API 35) | `ExerciseScheduleTest`, `NotificationSettingsCardTest`, `PushNotifierTest` | 21 of 21 passed |
+
+**Rollout.** Apply migrations `202611170004` to `202611170006` to the hosted project, then redeploy `notification-dispatch`, which carries the new push words, and the web app.
+
+**Not done:** physical-phone and therapist checks, in the checklist.

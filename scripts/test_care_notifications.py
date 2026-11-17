@@ -221,7 +221,7 @@ update public.sessions set started_at=now()-interval '90 hours',ended_at=now()-i
 
     # Settings: defaults, validation and ownership.
     code, data = rpc('my_notification_settings', {}, ts)
-    check(code == 200 and data == {'bookings': True, 'exercise_plan': True, 'session_results': True, 'inactivity': True, 'care_team': True, 'messages': True, 'reminder_time': None},
+    check(code == 200 and data == {'bookings': True, 'exercise_plan': True, 'session_results': True, 'inactivity': True, 'care_team': True, 'messages': True, 'missed_days': True, 'reminder_time': None},
           'Someone who never chose has every switch on and no reminder')
     for value in ('25:00', '7:30', '07:30:00', 'soon'):
         code, _ = rpc('save_notification_settings', {'p_bookings': True, 'p_exercise_plan': True, 'p_session_results': True, 'p_inactivity': True, 'p_care_team': True, 'p_reminder_time': value}, ts)

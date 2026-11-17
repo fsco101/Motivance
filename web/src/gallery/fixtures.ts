@@ -52,6 +52,7 @@ export const record: PatientRecord = {
   }],
   everyDay: [],
   ended: [],
+  missed: [{ day: '2026-11-05', therapistId: 't1', due: 2, done: 1 }, { day: '2026-11-03', therapistId: 't1', due: 2, done: 0 }],
   trend: {
     exercise: elbow, detail: 'Right side, version 3, prescribed 20° to 120°',
     points: days.map((day, index) => ({ id: day, label: new Date(day).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }), value: index === 3 ? null : reach[index]! - 14 })),
@@ -195,6 +196,7 @@ export const affected: AffectedBooking[] = [
 const noteFacts = {
   sessions: 0, lastStartsAt: null, reference: 'BK-2026-000158', startsAt: '2026-12-14T02:00:00Z', endsAt: '2026-12-14T03:00:00Z', previousStartsAt: null, patient: 'Ana Dela Cruz', therapist: 'Dana Reyes',
   reason: null, readAt: null, subjectId: 't1', subjectName: 'Dana Reyes', subjectPhoto: null, completed: null, target: null, days: null, conversationId: null, sender: null,
+  day: null, due: null, done: null,
 }
 export const inbox: Inbox = {
   unread: 3,

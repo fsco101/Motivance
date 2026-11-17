@@ -115,6 +115,7 @@
     "restDateLabel": "Add a rest date", "addRestDate": "Add", "removeRestDate": "Remove {{date}}", "noRestDates": "No single rest dates.", "save": "Save schedule",
     "todayDone": "Done today", "todayToDo": "To do today", "todayRest": "Not today",
     "remove": "Remove", "removeTitle": "Remove this exercise?", "removeMessage": "{{exercise}} leaves {{name}}’s plan. Sessions already done stay in history.", "removeConfirm": "Remove exercise",
+    "missedTitle": "Missed exercise days", "missedHelp": "Days in the last 30 with a scheduled exercise left undone.", "missedItem": "{{day}}, done: {{done}} of {{due}}",
     "inSchedule": "Schedule",
     "problems": {
       "dates": "Choose an end date on or after the start date.", "tooLong": "A schedule can be at most 366 days long.", "pastStart": "Start today or later.",

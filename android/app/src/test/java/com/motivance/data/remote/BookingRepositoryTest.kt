@@ -42,7 +42,7 @@ class BookingRepositoryTest {
                      "ends_at":"2026-12-14T03:00:00+00:00","previous_starts_at":null,"patient_name":"Ana","therapist_name":null,"reason":null}}]}"""
                 path=="/rest/v1/rpc/mark_notifications_read" -> "0"
                 path=="/rest/v1/rpc/set_my_language" -> ""
-                path=="/rest/v1/rpc/my_notification_settings" -> """{"bookings":true,"exercise_plan":false,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":"07:30","messages":false}"""
+                path=="/rest/v1/rpc/my_notification_settings" -> """{"bookings":true,"exercise_plan":false,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":"07:30","messages":false,"missed_days":false}"""
                 path=="/rest/v1/rpc/save_notification_settings" -> """{"bookings":false,"exercise_plan":true,"session_results":true,"inactivity":true,"care_team":true,"reminder_time":null}"""
                 path=="/rest/v1/rpc/my_schedule" -> """{"time_zone":"Asia/Manila","days":[{"date":"2026-12-07","status":"open","holiday":null,"rows":[
                     {"starts_at":"2026-12-07T00:00:00+00:00","ends_at":"2026-12-07T01:00:00+00:00","session":null},
@@ -253,14 +253,14 @@ class BookingRepositoryTest {
     }
 
     @Test fun notificationSettingsAreRead()=runBlocking {
-        assertEquals(NotificationSettings(exercisePlan=false,reminderTime="07:30",messages=false),repository().loadNotificationSettings())
+        assertEquals(NotificationSettings(exercisePlan=false,reminderTime="07:30",messages=false,missedDays=false),repository().loadNotificationSettings())
     }
 
     @Test fun savingSettingsSendsEverySwitchAndReadsBackWhatWasSaved()=runBlocking {
         val saved=repository().saveNotificationSettings(NotificationSettings(bookings=false))
         val body=bodies["/rest/v1/rpc/save_notification_settings"]!!
         assertFalse(body.getBoolean("p_bookings"))
-        assertTrue(body.getBoolean("p_exercise_plan") && body.getBoolean("p_session_results") && body.getBoolean("p_inactivity") && body.getBoolean("p_care_team") && body.getBoolean("p_messages"))
+        assertTrue(body.getBoolean("p_exercise_plan") && body.getBoolean("p_session_results") && body.getBoolean("p_inactivity") && body.getBoolean("p_care_team") && body.getBoolean("p_messages") && body.getBoolean("p_missed_days"))
         assertTrue("No reminder is sent as null, which turns it off",body.isNull("p_reminder_time") && body.has("p_reminder_time"))
         assertEquals(NotificationSettings(bookings=false),saved)
         repository().saveNotificationSettings(NotificationSettings(reminderTime="18:00"))
@@ -278,8 +278,11 @@ class BookingRepositoryTest {
              "data":{"patient_name":"Ana","completed":6,"target":5,"side":"left"}},
             {"id":"n2","kind":"patient_inactive","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":"p1","subject_name":"Ana","subject_photo":null,
              "data":{"patient_name":"Ana","days":4,"last_session_at":null}},
-            {"id":"n3","kind":"practice_reminder","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":null,"subject_name":null,"subject_photo":null,"data":{"date":"2026-12-01"}}]}"""))
-        assertEquals(listOf(NotificationKind.SESSION_FINISHED,NotificationKind.PATIENT_INACTIVE,NotificationKind.PRACTICE_REMINDER),inbox.items.map {it.kind})
+            {"id":"n3","kind":"practice_reminder","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":null,"subject_name":null,"subject_photo":null,"data":{"date":"2026-12-01"}},
+            {"id":"n4","kind":"exercise_missed","booking_id":null,"read_at":null,"created_at":"2026-12-01T02:00:00+00:00","subject_id":"p1","subject_name":"Ana","subject_photo":null,
+             "data":{"patient_name":"Ana","day":"2026-11-30","due":3,"done":1}}]}"""))
+        assertEquals(listOf(NotificationKind.SESSION_FINISHED,NotificationKind.PATIENT_INACTIVE,NotificationKind.PRACTICE_REMINDER,NotificationKind.EXERCISE_MISSED),inbox.items.map {it.kind})
+        assertEquals(Triple("2026-11-30",3,1),inbox.items[3].let {Triple(it.day,it.due,it.done)})
         val finished=inbox.items[0]
         assertNull(finished.startsAt);assertNull(finished.endsAt);assertEquals("",finished.reference)
         assertEquals(6,finished.completed);assertEquals(5,finished.target)

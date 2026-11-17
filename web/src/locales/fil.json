@@ -115,6 +115,7 @@
     "restDateLabel": "Magdagdag ng petsa ng pahinga", "addRestDate": "Idagdag", "removeRestDate": "Alisin ang {{date}}", "noRestDates": "Walang hiwalay na petsa ng pahinga.", "save": "I-save ang iskedyul",
     "todayDone": "Tapos na ngayon", "todayToDo": "Gagawin ngayon", "todayRest": "Hindi ngayon",
     "remove": "Alisin", "removeTitle": "Alisin ang ehersisyong ito?", "removeMessage": "Aalisin ang {{exercise}} sa plano ni {{name}}. Mananatili sa history ang mga natapos na session.", "removeConfirm": "Alisin ang ehersisyo",
+    "missedTitle": "Mga araw na may hindi nagawang ehersisyo", "missedHelp": "Mga araw sa nakaraang 30 na may naka-iskedyul na ehersisyong hindi nagawa.", "missedItem": "{{day}}, nagawa: {{done}} sa {{due}}",
     "inSchedule": "Iskedyul",
     "problems": {
       "dates": "Pumili ng petsa ng pagtatapos na kapareho o pagkatapos ng simula.", "tooLong": "Hanggang 366 araw lang ang haba ng iskedyul.", "pastStart": "Magsimula ngayon o sa susunod na araw.",

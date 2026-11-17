@@ -4,7 +4,7 @@ import { Button } from '@/components/Button'
 import { Avatar, EmptyState, PageHeader, Panel } from '@/components/Display'
 import { BOOKING_KINDS, type AppNotification, type Inbox } from '@/data/notifications'
 import { useCenterFormat, useReasonText } from '@/features/booking/format'
-import { Loadable, SkeletonLines, type Load } from '@/features/shared'
+import { Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { cn } from '@/lib/cn'
 
 const bookingKinds = new Set<string>(BOOKING_KINDS)
@@ -13,6 +13,7 @@ const bookingKinds = new Set<string>(BOOKING_KINDS)
 export function useNotificationText() {
   const { t } = useTranslation()
   const format = useCenterFormat()
+  const dayFormat = useFormat()
   return (note: AppNotification) => {
     // A therapist who lost a session knows it by the time they had, not the time it moved to.
     const was = note.previousStartsAt ?? note.startsAt
@@ -20,7 +21,7 @@ export function useNotificationText() {
       when: note.startsAt && note.endsAt ? format.when(note.startsAt, note.endsAt) : '', was: was ? `${format.day(was)}, ${format.time(was)}` : '',
       patient: note.patient ?? '', therapist: note.therapist ?? t('booking.noTherapist'),
       sessions: note.sessions, last: note.lastStartsAt ? format.day(note.lastStartsAt) : '', completed: note.completed ?? 0, target: note.target ?? 0, days: note.days ?? 0,
-      sender: note.sender ?? note.subjectName ?? '',
+      sender: note.sender ?? note.subjectName ?? '', day: note.day ? dayFormat.day(note.day) : '', due: note.due ?? 0, done: note.done ?? 0,
     })
   }
 }

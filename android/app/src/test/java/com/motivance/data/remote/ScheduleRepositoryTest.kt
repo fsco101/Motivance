@@ -21,7 +21,8 @@ class ScheduleRepositoryTest {
         {"assignment_id":"a1","schedule_id":"s1","therapist_id":"t1","due":true,"done":true},
         {"assignment_id":"a2","schedule_id":null,"therapist_id":"t1","due":true,"done":false}],
       "schedules":[{"id":"s1","patient_id":"p1","therapist_id":"t1","therapist_name":"Dana Reyes","starts_on":"2026-11-16","ends_on":"2026-11-29",
-        "rest_weekdays":[7],"rest_dates":["2026-11-20"],"exercise_days":11,"rest_days":3,"exercise_count":1,"state":"exercise","days_left":9,"next_day":"2026-11-19"}]}"""
+        "rest_weekdays":[7],"rest_dates":["2026-11-20"],"exercise_days":11,"rest_days":3,"exercise_count":1,"state":"exercise","days_left":9,"next_day":"2026-11-19"}],
+      "missed":[{"day":"2026-11-17","therapist_id":"t1","due":2,"done":1}]}"""
 
     private class Stack(private val answer:(String,JSONObject)->Pair<Int,String>) {
         val sent=mutableListOf<Pair<String,JSONObject>>()
@@ -52,6 +53,7 @@ class ScheduleRepositoryTest {
         assertEquals(LocalDate.parse("2026-11-19"),schedule.nextDay)
         assertEquals("Dana Reyes",schedule.therapistName)
         assertEquals(9,schedule.daysLeft)
+        assertEquals(listOf(com.motivance.domain.MissedDay(LocalDate.parse("2026-11-17"),"t1",2,1)),read.missed)
     }
 
     @Test fun savesWeekdaysAndDatesSortedAndOnce()=runBlocking {
