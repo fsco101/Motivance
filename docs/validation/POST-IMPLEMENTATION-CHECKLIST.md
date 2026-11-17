@@ -317,6 +317,12 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] On the hosted project with real push, leave a scheduled exercise undone and confirm the therapist's phone shows "Missed exercises" the next morning, in both languages, and that turning off "Missed exercise days" stops the push but keeps the bell row.
 - [ ] With a therapist, review whether one notification per patient and day is the right amount, and whether the record's list of missed days helps follow up.
 
+## Finish celebration (#130, 2026-11-17)
+
+- [ ] On physical phones, in both languages, finish a session at, above and below the target. Confirm the tune and the line are heard at a comfortable media volume, that nothing plays with "Finish sound" off or with the phone's media volume at zero, and that the result page follows after about 3.5 seconds or on a tap.
+- [ ] Finish the last exercise due today and confirm both the screen and the voice say so. Finish one that is not the last and confirm they do not.
+- [ ] With representative patients, ask whether the moment feels encouraging rather than in the way, and whether "Good effort" reads as kind when the target was not reached.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

@@ -1377,4 +1377,17 @@
     <string name="notification_settings_missed_days">Mga araw na may hindi nagawang ehersisyo</string>
     <string name="notification_settings_missed_days_detail">Kinaumagahan, kapag may naka-iskedyul na ehersisyong hindi nagawa ang pasyente.</string>
     <string name="push_channel_missed_days">Mga araw na may hindi nagawang ehersisyo</string>
+    <!-- Celebrating a finished exercise (#130) -->
+    <string name="finish_title_target">Tapos na!</string>
+    <string name="finish_title_short">Mahusay na pagsisikap!</string>
+    <string name="finish_reps">Pag-ulit: %1$d sa %2$d</string>
+    <string name="finish_range">Pinakamalawak na galaw: %1$s°</string>
+    <string name="finish_day_done">Iyan na ang huling ehersisyo para ngayong araw.</string>
+    <string name="finish_tap">I-tap para makita ang resulta</string>
+    <string name="finish_sound_on">Naka-on ang tunog sa pagtatapos</string>
+    <string name="finish_sound_off">Naka-off ang tunog sa pagtatapos</string>
+    <string name="finish_sound_description">Maikling tugtog at pampalakas-loob kapag natapos ka</string>
+    <string name="cue_finish_target">Magaling! Tapos na ang ehersisyo.</string>
+    <string name="cue_finish_short">Mahusay na pagsisikap ngayong araw: %1$d sa %2$d.</string>
+    <string name="cue_finish_day_done">Iyan na ang huling ehersisyo para ngayong araw.</string>
 </resources>

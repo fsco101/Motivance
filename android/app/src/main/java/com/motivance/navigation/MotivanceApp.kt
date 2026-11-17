@@ -168,7 +168,14 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     if(auth.restoring) { AuthLoadingScreen(); return }
     fun goBack() { route=parentRoute(route,auth.session!=null,auth.session?.workspace(role)==UserRole.THERAPIST) }
     BackHandler(enabled=route!="LANDING" && route!="HOME") { goBack() }
-    if(route=="CAMERA") { CameraPrototype(ownerId=auth.session?.userId ?: "local-demo") { route="CHECK_COMPLETE" }; return }
+    if(route=="CAMERA") {
+        // Whether the exercise just finished was the last one due today, for the celebration's words (#130).
+        CameraPrototype(ownerId=auth.session?.userId ?: "local-demo",lastOfDay={
+            val plan=patientToday(local.cached,local.history,connected.days[connected.owner],centerDate())
+            plan.due>0 && plan.todo.isEmpty()
+        }) { route="CHECK_COMPLETE" }
+        return
+    }
     if(route=="AUTH" && auth.session==null) {
         AuthScreen(vm,{route="SETUP"}) { route="LANDING" }; return
     }

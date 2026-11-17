@@ -1377,4 +1377,17 @@
     <string name="notification_settings_missed_days">Missed exercise days</string>
     <string name="notification_settings_missed_days_detail">The morning after a patient leaves scheduled exercises undone.</string>
     <string name="push_channel_missed_days">Missed exercise days</string>
+    <!-- Celebrating a finished exercise (#130) -->
+    <string name="finish_title_target">Finished!</string>
+    <string name="finish_title_short">Good effort!</string>
+    <string name="finish_reps">Repetitions: %1$d of %2$d</string>
+    <string name="finish_range">Best range: %1$s°</string>
+    <string name="finish_day_done">That was today’s last exercise.</string>
+    <string name="finish_tap">Tap to see your results</string>
+    <string name="finish_sound_on">Finish sound on</string>
+    <string name="finish_sound_off">Finish sound off</string>
+    <string name="finish_sound_description">A short tune and a word of encouragement when you finish</string>
+    <string name="cue_finish_target">Great work! Exercise finished.</string>
+    <string name="cue_finish_short">Good effort today: %1$d of %2$d.</string>
+    <string name="cue_finish_day_done">That was today’s last exercise.</string>
 </resources>
