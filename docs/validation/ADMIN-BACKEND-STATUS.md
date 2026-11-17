@@ -24,5 +24,5 @@ Engineering review: Claude Code, 2026-11-17. Operations: [BACKEND-STATUS.md](../
 ## Not executed
 
 - The Android overview was not seen on a screen (no emulator; too little free memory with the local stack running). It is in the [follow-up checklist](POST-IMPLEMENTATION-CHECKLIST.md).
-- The migration is not applied to the hosted project.
+- The migration was applied to the hosted project on 2026-11-17 (`db push` after a dry run, read back with `migration list --linked`). The hosted overview has not been opened, and the live web app has not been redeployed. If the project is not on the Free plan, `backend_plan` still needs updating.
 - `scripts/check_web_bundle.py` reports 325 KB against its 300 KB budget; it was 322 KB before the photo-storage change and 323 KB before this one.
