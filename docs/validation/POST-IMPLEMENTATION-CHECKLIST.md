@@ -323,6 +323,13 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] Finish the last exercise due today and confirm both the screen and the voice say so. Finish one that is not the last and confirm they do not.
 - [ ] With representative patients, ask whether the moment feels encouraging rather than in the way, and whether "Good effort" reads as kind when the target was not reached.
 
+## Session videos shared with the therapist (#129, 2026-11-18)
+
+- [ ] On a physical phone with a real recorded session of a few minutes, share it with the therapist. Time how long making it smaller and sending take on mobile data and on Wi-Fi, and confirm the therapist can watch it on Android and on the web, and the patient in their history on both.
+- [ ] Stop sharing from the history and confirm the therapist can no longer open it. Run `python scripts/cleanup_chat_media.py --target hosted` after 15 days, or after stopping, and confirm the file is gone from Storage while the phone's gallery copy remains.
+- [ ] Review the reworded consent, sign-up and landing text, and the sharing explanation, in English and Filipino, with the deployment owner, and decide whether the privacy agreement needs a new version for sharing.
+- [ ] Owner decision still open: one choice per video (built) or a standing setting that shares every recorded video.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

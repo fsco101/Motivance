@@ -202,7 +202,7 @@
     <string name="sync_failed">Automatic retries exhausted. Check the connection and use Sync now.</string>
     <string name="sync_legacy">Earlier result has no upload consent evidence; retained locally for review.</string>
     <string name="sync_pending">Waiting for upload; retries continue when connected</string>
-    <string name="sync_metrics_consent">I consent to storing movement summaries on this phone and syncing them to my rehabilitation account. No landmarks are stored, and no video unless I turn on recording; a video stays on this phone.</string>
+    <string name="sync_metrics_consent">I consent to storing movement summaries on this phone and syncing them to my rehabilitation account. No landmarks are stored, and no video unless I turn on recording; a video stays on this phone unless I choose to share it with my therapist.</string>
     <string name="history_filters">History filters</string>
     <string name="history_all_exercises">All exercise versions</string>
     <string name="history_side">Side</string>
@@ -715,7 +715,7 @@
     <string name="signup_privacy_point_1">Your connected therapist can see your profile details to support your care.</string>
     <string name="signup_privacy_point_2">Your rehabilitation records are used only for session tracking and progress review.</string>
     <string name="signup_privacy_point_3">You can edit your profile, or request a copy or deletion of your data, from Profile. Requests are reviewed first.</string>
-    <string name="signup_privacy_point_4">Recording movement summaries needs separate consent before your first session. A session video is saved only if you turn recording on, and only on your phone.</string>
+    <string name="signup_privacy_point_4">Recording movement summaries needs separate consent before your first session. A session video is saved only if you turn recording on, on your phone, and reaches your therapist only if you choose to share it.</string>
     <string name="signup_privacy_read_full">Read the full agreement</string>
     <string name="signup_privacy_hide_full">Hide the full agreement</string>
     <string name="form_birthdate_required">Choose your birthdate.</string>
@@ -1261,7 +1261,7 @@
     <string name="video_caption">%1$s · %2$s · %3$d / %4$d</string>
     <string name="video_consent_title">Record your sessions?</string>
     <string name="video_consent_point1">The video shows the camera picture with your skeleton and the measured angle drawn on it, as you see it while exercising.</string>
-    <string name="video_consent_point2">It is saved only on this phone, in the Motivance album of your gallery. Motivance does not upload it.</string>
+    <string name="video_consent_point2">It is saved on this phone, in the Motivance album of your gallery. Motivance uploads it only if you choose to share it with your therapist, and deletes that copy from the server after 15 days.</string>
     <string name="video_consent_point3">If your phone backs up its gallery to a cloud photo service, the video may be backed up there too.</string>
     <string name="video_consent_point4">It reaches your therapist only if you send it in a conversation. Motivance then removes its copy 15 days after it is sent; the one on your phone stays.</string>
     <string name="video_consent_point5">Signing out does not remove it. Delete it from the session result or from your gallery. Recording stays off until you turn it on for a session.</string>
@@ -1269,7 +1269,7 @@
     <string name="video_consent_decline">Not now</string>
     <string name="video_title">Session video</string>
     <string name="video_saving">Saving the video to your gallery…</string>
-    <string name="video_in_gallery">Saved in your gallery’s Motivance album. It stays on this phone unless you send it.</string>
+    <string name="video_in_gallery">Saved in your gallery’s Motivance album. It stays on this phone unless you send it in chat or share it with your therapist.</string>
     <string name="video_watch">Watch</string>
     <string name="video_send">Send in chat</string>
     <string name="video_delete">Delete video</string>
@@ -1390,4 +1390,26 @@
     <string name="cue_finish_target">Great work! Exercise finished.</string>
     <string name="cue_finish_short">Good effort today: %1$d of %2$d.</string>
     <string name="cue_finish_day_done">That was today’s last exercise.</string>
+    <!-- Session videos shared with the therapist (#129) -->
+    <string name="video_share">Let my therapist see it</string>
+    <string name="video_share_title">Let your therapist see this video?</string>
+    <string name="video_share_detail">A smaller copy, up to its first five minutes, is sent to the therapist whose exercise this was. They can watch it for 15 days; it is then deleted from the server. The copy on your phone stays, and you can stop sharing at any time.</string>
+    <string name="video_share_confirm">Share with my therapist</string>
+    <string name="video_sharing_progress">Sending to your therapist: %1$d%%</string>
+    <string name="video_shared_until">Your therapist can watch this until %1$s.</string>
+    <string name="video_stop_sharing">Stop sharing</string>
+    <string name="video_stop_title">Stop sharing this video?</string>
+    <string name="video_stop_detail">Your therapist can no longer watch it, and it is deleted from the server. The copy on your phone stays.</string>
+    <string name="video_shared">Shared with your therapist</string>
+    <string name="video_share_stopped">Video no longer shared</string>
+    <string name="video_share_error_uploading">Your session is still being sent. Try again once it has uploaded.</string>
+    <string name="video_share_error_no_therapist">The therapist for this exercise is no longer linked to you, so it cannot be shared.</string>
+    <string name="video_share_error_already">This session’s video is already shared.</string>
+    <string name="video_share_error_too_large">The video is too large to send, even made smaller.</string>
+    <string name="video_share_error_rate">You have shared several videos in the last hour. Try again later.</string>
+    <string name="video_share_error_prepare">This video could not be made ready to send.</string>
+    <string name="video_watch_shared">Watch video</string>
+    <string name="video_shared_by_patient">Shared by the patient until %1$s.</string>
+    <string name="video_link_failed">The video could not be opened. Try again.</string>
+    <string name="video_close">Close</string>
 </resources>

@@ -1,7 +1,8 @@
-import { ShareNetworkIcon } from '@phosphor-icons/react'
+import { ShareNetworkIcon, VideoCameraIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
 import { Button } from '@/components/Button'
 import type { ProgressFacts } from '@/data/chat'
+import type { SessionVideo } from '@/data/sessionVideos'
 import { useTranslation } from 'react-i18next'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
 import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
@@ -37,10 +38,13 @@ type Props = {
   onMore: () => void
   /** Shares what is on screen into a conversation. Absent where there is no chat to share into. */
   onShare?: (facts: ProgressFacts) => void
+  /** The video the patient shared for a session, if any, and a way to watch it (#129). */
+  videoFor?: (sessionId: string) => SessionVideo | undefined
+  onWatch?: (video: SessionVideo) => void
 }
 
 /** A table cannot fit a phone without hiding the results, so there each session stacks. Only patients use this page on a phone. */
-function SessionList({ sessions }: { sessions: readonly HistoricalSession[] }) {
+function SessionList({ sessions, videoFor, onWatch }: { sessions: readonly HistoricalSession[]; videoFor?: Props['videoFor']; onWatch?: Props['onWatch'] }) {
   const { t } = useTranslation()
   const format = useFormat()
   return (
@@ -60,6 +64,9 @@ function SessionList({ sessions }: { sessions: readonly HistoricalSession[] }) {
                 {', '}{t('record.repetitions')}: <span className="numeric font-semibold">{measurement.repetitions} / {session.prescription?.targetRepetitions ?? 0}</span>
               </p>
             ))}
+            {onWatch && videoFor?.(session.id) && (
+              <Button size="sm" variant="secondary" className="mt-2" leading={<VideoCameraIcon aria-hidden />} onClick={() => onWatch(videoFor(session.id)!)}>{t('video.watch')}</Button>
+            )}
           </li>
         )
       })}
@@ -89,7 +96,7 @@ function Outcome({ series }: { series: ProgressSeries }) {
   )
 }
 
-export function ProgressView({ self, choices, results, activity, filters, onFilters, onPatient, onMore, onShare }: Props) {
+export function ProgressView({ self, choices, results, activity, filters, onFilters, onPatient, onMore, onShare, videoFor, onWatch }: Props) {
   const { t } = useTranslation()
   const format = useFormat()
   const sessions = results.status === 'ready' ? results.data.sessions : null
@@ -115,6 +122,10 @@ export function ProgressView({ self, choices, results, activity, filters, onFilt
         : s.measurements.map((m) => <span key={`${m.key}-${m.side}`} className="numeric block">{m.repetitions} / {s.prescription?.targetRepetitions ?? 0}</span>)
     ) },
     { key: 'status', header: t('progress.result'), align: 'end', cell: (s) => { const status = resultStatus(s); return <StatusPill tone={statusTone[status]}>{t(`progress.status.${status}`)}</StatusPill> } },
+    ...(onWatch && videoFor ? [{ key: 'video', header: t('video.column'), align: 'end' as const, cell: (s: HistoricalSession) => {
+      const video = videoFor(s.id)
+      return video ? <Button size="sm" variant="secondary" leading={<VideoCameraIcon aria-hidden />} onClick={() => onWatch(video)}>{t('video.watch')}</Button> : null
+    } }] : []),
   ]
   return (
     <>
@@ -151,7 +162,7 @@ export function ProgressView({ self, choices, results, activity, filters, onFilt
                   </Panel>
                 ))}
                 <Panel title={t('progress.sessions')} flush footer={<LoadMore shown={t('progress.shown', { count: found.sessions.length })} onLoad={found.more ? onMore : undefined} busy={found.loadingMore} label={t('progress.loadOlder')} />}>
-                  {self && <SessionList sessions={found.sessions} />}
+                  {self && <SessionList sessions={found.sessions} videoFor={videoFor} onWatch={onWatch} />}
                   <div className={cn(self && 'hidden tablet:block')}><DataTable caption={t('progress.sessions')} columns={columns} rows={found.sessions} rowKey={(s) => s.id} /></div>
                 </Panel>
                 <p className="max-w-[62ch] text-sm text-slate">{t('progress.notValidated')}</p>

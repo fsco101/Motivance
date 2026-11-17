@@ -122,6 +122,13 @@
       "pastEnd": "Choose an end date of today or later.", "allRest": "Leave at least one day of the week for exercise.", "noDay": "No exercise day is left. Remove a rest day or move the end date."
     }
   },
+  "video": {
+    "watch": "Watch video", "column": "Video", "title": "Session video",
+    "therapistNote": "Shared by the patient. It is deleted from the server on {{date}}.",
+    "selfNote": "Your therapist can watch this until {{date}}. The copy on your phone stays.",
+    "stop": "Stop sharing", "stopTitle": "Stop sharing this video?", "stopMessage": "Your therapist can no longer watch it, and it is deleted from the server. The copy on your phone stays.",
+    "stopped": "Video no longer shared", "loadFailed": "The video could not be opened. Try again."
+  },
   "progress": {
     "noPatientsTitle": "No patients yet", "noPatientsDetail": "Progress appears here once a patient is linked to you.",
     "description": "Measured movement over time, one patient at a time.", "rom": "Range of motion", "notValidated": "Movement estimates are not clinically validated.", "notMeasured": "Not measured",

@@ -20,6 +20,7 @@ import { useShareProgress } from '@/features/chat/ShareDialog'
 import { useActivity, useProgressResults } from './history'
 import { PatientRecordView, type PatientRecord, type PlanCard } from './PatientRecordView'
 import { PatientsView } from './PatientsView'
+import { useSessionVideos } from './SessionVideoDialog'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from './ProgressView'
 import { TherapistHomeView, type TherapistHome } from './TherapistHomeView'
 import { latestMovement, latestSeries, nameOf, reachedBy, recentFirst, romPoints, summarisePatients } from './summaries'
@@ -264,6 +265,7 @@ export function ProgressPage() {
   const { results, onMore } = useProgressResults(patientId, filters)
   const activity = useActivity(patientId)
   const sharing = useShareProgress(patientId, false)
+  const videos = useSessionVideos(patientId, false)
   if (workspace.data && patients.length === 0) {
     return <><PageHeader title={t('nav.progress')} description={t('progress.description')} /><EmptyState title={t('progress.noPatientsTitle')} detail={t('progress.noPatientsDetail')} /></>
   }
@@ -276,8 +278,9 @@ export function ProgressPage() {
   return (
     <>
       <ProgressView choices={choices} results={results} activity={activity} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
-        onPatient={(id) => setParams({ patient: id })} onMore={onMore} onShare={sharing.share} />
+        onPatient={(id) => setParams({ patient: id })} onMore={onMore} onShare={sharing.share} videoFor={videos.videoFor} onWatch={videos.onWatch} />
       {sharing.dialog}
+      {videos.dialog}
     </>
   )
 }

@@ -1,6 +1,8 @@
 package com.motivance.navigation
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import androidx.core.net.toUri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -66,6 +68,10 @@ import com.motivance.feature.notifications.*
 import com.motivance.feature.exercise.CameraPrototype
 import com.motivance.feature.exercise.SessionVideo
 import com.motivance.feature.exercise.SessionVideoCard
+import com.motivance.feature.exercise.SessionVideoStore
+import com.motivance.feature.exercise.SessionVideoViewModel
+import com.motivance.feature.exercise.VideoShareControls
+import com.motivance.feature.exercise.WatchSharedVideo
 import com.motivance.feature.exercise.ExerciseSessionViewModel
 import com.motivance.feature.exercise.SideResult
 import com.motivance.feature.rehabilitation.*
@@ -121,6 +127,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     val notificationSettings:NotificationSettingsViewModel=viewModel()
     val notificationSettingsState by notificationSettings.state.collectAsStateWithLifecycle()
     val chat:ChatViewModel=viewModel()
+    // Session videos shared with the therapist (#129).
+    val videos:SessionVideoViewModel=viewModel()
+    val videoState by videos.state.collectAsStateWithLifecycle()
     val chatState by chat.state.collectAsStateWithLifecycle()
     val haptics=rememberHaptics()
     LaunchedEffect(auth.session?.userId,auth.session?.roles) {administration.configure(auth.session?.takeIf {UserRole.ADMIN in it.roles}?.userId)}
@@ -152,6 +161,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     }
     // With no Firebase values this never asks and never registers, so the app behaves as if push did not exist.
     val context=LocalContext.current
+    val videoStore=remember {SessionVideoStore(context)}
     var pushAllowed by remember {mutableStateOf(notificationsAllowed(context))}
     val askForPush=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> pushAllowed=granted; if(granted) vm.registerPush()}
     LaunchedEffect(auth.session?.userId) {
@@ -335,6 +345,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     local.metrics.incomplete,local.metrics.durationMs,connected.outbox.firstOrNull {it.sessionId==local.id}?.state,local.sides,
                     again={exercise.newSession(); route="SETUP"},history={route="LOCAL_HISTORY"},done={route=if(auth.session!=null) "HOME" else "LANDING"}) {
                     val videoToaster=LocalToaster.current
+                    val ownVideo=local.video
                     SessionVideoCard(local.video,local.videoSaving,
                         send=if(chatOwner!=null && actualRole==UserRole.PATIENT) ({video:SessionVideo ->
                             // Only conversations that take videos are offered; the video then goes the way any attached one does.
@@ -343,7 +354,14 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                             else if(choices.size==1) {chat.open(choices.single().id); selectedConversation=choices.single().id; route="CONVERSATION"; chat.attach(video.uri,"video/mp4")}
                             else sendingVideo=video to choices
                         }) else null,
-                        gone={exercise.videoGone(it)})
+                        gone={exercise.videoGone(it)}) {
+                        // A signed-in patient can let the exercise's therapist see this one video (#129).
+                        if(ownVideo!=null && actualRole==UserRole.PATIENT && auth.session!=null) {
+                            LaunchedEffect(connected.owner) {videos.load(connected.owner)}
+                            VideoShareControls(ownVideo.sessions.firstNotNullOfOrNull {videoState.shared[it]},videoState.sending==ownVideo.uri,videoState.progress,
+                                onShare={videos.share(connected.owner,ownVideo)},onStop={ownVideo.sessions.firstNotNullOfOrNull {videoState.shared[it]}?.let(videos::stop)})
+                        }
+                    }
                 }
                 "PROFILE" -> {
                     PageHeader(R.string.nav_profile,R.string.account_and_access)
@@ -369,6 +387,10 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "LOCAL_HISTORY" -> {
                     PageHeader(R.string.local_history,R.string.local_history_detail)
+                    val videoOwner=auth.session?.userId ?: "local-demo"
+                    val canShare=auth.session!=null && actualRole==UserRole.PATIENT
+                    val toaster=LocalToaster.current
+                    if(canShare) LaunchedEffect(videoOwner) {videos.load(videoOwner)}
                     if(local.history.isEmpty()) EmptyState(R.string.no_sessions,R.string.no_sessions_detail)
                     local.history.forEach { row ->
                         val metrics=ExerciseJson.snapshot(row.snapshotJson)
@@ -393,6 +415,19 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                             Text(stringResource(if(rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall,
                                 color=MaterialTheme.colorScheme.onSurfaceVariant)
                             connected.outbox.firstOrNull {it.sessionId==row.id}?.let {StatusPill(syncLabel(it.state))}
+                            // This session's recording (#129): the phone's own copy when it has one, otherwise the copy shared with the therapist.
+                            val phoneVideo=remember(row.id,local.video) {videoStore.forSession(videoOwner,row.id)}
+                            val sharedVideo=phoneVideo?.sessions?.firstNotNullOfOrNull {videoState.shared[it]} ?: videoState.shared[row.id]
+                            if(phoneVideo!=null || sharedVideo!=null) {
+                                HorizontalDivider()
+                                if(phoneVideo!=null) OutlinedButton({
+                                    try {context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(phoneVideo.uri.toUri(),"video/mp4").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))}
+                                    catch(_:ActivityNotFoundException) {toaster.show(R.string.video_open_failed,ToastTone.ERROR)}
+                                },Modifier.fillMaxWidth().heightIn(min=48.dp),shape=MaterialTheme.shapes.medium) {Text(stringResource(R.string.video_watch))}
+                                else if(sharedVideo!=null) WatchSharedVideo(sharedVideo,videos::link)
+                                if(canShare) VideoShareControls(sharedVideo,phoneVideo!=null && videoState.sending==phoneVideo.uri,videoState.progress,
+                                    onShare=phoneVideo?.let {video -> {videos.share(videoOwner,video)}},onStop={sharedVideo?.let(videos::stop)})
+                            }
                         }
                     }
                 }
@@ -421,7 +456,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                             share=if(chatOwner!=null) ({chat.shareExercise(patientId,it)}) else null)
                     }
                     SectionHeading(R.string.recovery_progress)
-                    ResultsDashboard(connected.workspace,connected.owner,patientId,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}})
+                    patientId?.let {LaunchedEffect(it) {videos.load(it)}}
+                    ResultsDashboard(connected.workspace,connected.owner,patientId,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}},
+                        videoFor={videoState.shared[it]},link=videos::link)
                 }
                 "ASSIGN" -> {
                     val existing=connected.workspace.prescriptions.firstOrNull {it.assignmentId==editingAssignment}
@@ -496,7 +533,9 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
                     ConnectedStatus(connected) {rehabilitation.refreshNow(); history.refresh()}
-                    ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}})
+                    if(actualRole==UserRole.PATIENT && connected.owner.isNotBlank()) LaunchedEffect(connected.owner) {videos.load(connected.owner)}
+                    ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}},
+                        videoFor={videoState.shared[it]},link=videos::link)
                 }
                 else -> if(actualRole==UserRole.SCHEDULER) SchedulerHome() else {
                     val patientRole=actualRole==UserRole.PATIENT

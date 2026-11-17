@@ -115,10 +115,10 @@ fun fitWithin(width:Int,height:Int,longSide:Int,shortSide:Int=longSide):Size {
 
 /** What a video becomes: its size, and how much of it is kept. Longer clips keep their first 30 seconds. Mirrors videoPlan on the web. */
 data class VideoPlan(val width:Int,val height:Int,val durationMs:Long,val trimmed:Boolean)
-fun videoPlan(width:Int,height:Int,durationMs:Long):VideoPlan {
+fun videoPlan(width:Int,height:Int,durationMs:Long,longestMs:Long=MediaLimits.VIDEO_MS):VideoPlan {
     require(width>0 && height>0 && durationMs>0) {"chat_media_invalid"}
     val size=fitWithin(width,height,MediaLimits.VIDEO_LONG_SIDE,MediaLimits.VIDEO_SHORT_SIDE)
-    return VideoPlan(size.width,size.height,minOf(durationMs,MediaLimits.VIDEO_MS),durationMs>MediaLimits.VIDEO_MS+250)
+    return VideoPlan(size.width,size.height,minOf(durationMs,longestMs),durationMs>longestMs+250)
 }
 
 /** A photo or video made smaller on this phone and waiting to be sent: its two files, and what the server is told about them. */

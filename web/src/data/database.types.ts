@@ -1605,6 +1605,97 @@ export type Database = {
           },
         ]
       }
+      session_video_trash: {
+        Row: {
+          path: string
+          queued_at: string
+        }
+        Insert: {
+          path: string
+          queued_at?: string
+        }
+        Update: {
+          path?: string
+          queued_at?: string
+        }
+        Relationships: []
+      }
+      session_videos: {
+        Row: {
+          bytes: number | null
+          created_at: string
+          duration_ms: number
+          expires_at: string | null
+          height: number
+          id: string
+          media_path: string
+          patient_id: string
+          preview_bytes: number | null
+          preview_path: string
+          removed_at: string | null
+          session_id: string
+          shared_at: string | null
+          therapist_id: string
+          width: number
+        }
+        Insert: {
+          bytes?: number | null
+          created_at?: string
+          duration_ms: number
+          expires_at?: string | null
+          height: number
+          id: string
+          media_path: string
+          patient_id: string
+          preview_bytes?: number | null
+          preview_path: string
+          removed_at?: string | null
+          session_id: string
+          shared_at?: string | null
+          therapist_id: string
+          width: number
+        }
+        Update: {
+          bytes?: number | null
+          created_at?: string
+          duration_ms?: number
+          expires_at?: string | null
+          height?: number
+          id?: string
+          media_path?: string
+          patient_id?: string
+          preview_bytes?: number | null
+          preview_path?: string
+          removed_at?: string | null
+          session_id?: string
+          shared_at?: string | null
+          therapist_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_videos_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_videos_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_videos_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           algorithm_version: string
@@ -2649,6 +2740,46 @@ export type Database = {
         Args: { p_series: string }
         Returns: Json
       }
+      session_video_days: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      session_video_due: {
+        Args: { p_limit?: number }
+        Returns: string[]
+      }
+      session_video_json: {
+        Args: { v: Database["public"]["Tables"]["session_videos"]["Row"] }
+        Returns: Json
+      }
+      session_video_limit: {
+        Args: { p_kind: string }
+        Returns: number
+      }
+      session_video_ms: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      session_video_readable: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
+      session_video_removed: {
+        Args: { p_paths: string[] }
+        Returns: number
+      }
+      session_video_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      session_video_viewer: {
+        Args: { v: Database["public"]["Tables"]["session_videos"]["Row"] }
+        Returns: boolean
+      }
+      session_video_writable: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
       set_chat_consent: {
         Args: { p_granted: boolean }
         Returns: Json
@@ -2681,6 +2812,10 @@ export type Database = {
           p_progress: Json
           p_caption?: string
         }
+        Returns: Json
+      }
+      share_session_video: {
+        Args: { p_id: string }
         Returns: Json
       }
       signup_code_lifetime: {
@@ -2723,8 +2858,22 @@ export type Database = {
         Args: { p_mime?: string }
         Returns: Json
       }
+      start_session_video: {
+        Args: {
+          p_id: string
+          p_session: string
+          p_width: number
+          p_height: number
+          p_duration_ms: number
+        }
+        Returns: Json
+      }
       stop_exercise: {
         Args: { p_assignment: string }
+        Returns: undefined
+      }
+      stop_sharing_session_video: {
+        Args: { p_id: string }
         Returns: undefined
       }
       therapist_schedule: {

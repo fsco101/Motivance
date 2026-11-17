@@ -1,5 +1,7 @@
 package com.motivance.feature.rehabilitation
 
+import com.motivance.feature.exercise.WatchSharedVideo
+import com.motivance.feature.exercise.sharedUntil
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -41,7 +43,9 @@ private const val QUIET_DAYS = 7
 @Composable
 fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patientId: String?, vm: HistoryViewModel,
     /** Shares a progress card about the patient shown, into chat. Absent where there is no chat. */
-    share: ((String, ChatCard.Progress) -> Unit)? = null) {
+    share: ((String, ChatCard.Progress) -> Unit)? = null,
+    /** The video shared for a session, and a way to have a link to watch it (#129). */
+    videoFor: (String) -> SharedVideo? = { null }, link: (suspend (SharedVideo) -> String?)? = null) {
     val self = patientId == owner
     val zone = remember { ZoneId.systemDefault() }
     var patient by rememberSaveable(owner, patientId) { mutableStateOf(patientId.orEmpty()) }
@@ -122,7 +126,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
         }
         Text(stringResource(R.string.synced_results), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         Text(stringResource(R.string.history_loaded, rows.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        rows.forEach { SessionResult(it, self, zone) }
+        rows.forEach { SessionResult(it, self, zone, videoFor(it.id), link) }
         if (state.next != null) ActionButton(R.string.history_older,{vm.loadOlder()},busy=state.loading,busyLabel=R.string.ui_loading_older)
         else Text(stringResource(R.string.history_end), style = MaterialTheme.typography.bodySmall)
         Text(stringResource(R.string.history_comparability), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -249,7 +253,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     }
 }
 
-@Composable private fun SessionResult(s: HistoricalSession, self: Boolean, zone: ZoneId) {
+@Composable private fun SessionResult(s: HistoricalSession, self: Boolean, zone: ZoneId, video: SharedVideo? = null, link: (suspend (SharedVideo) -> String?)? = null) {
     val status = s.resultStatus
     ClinicalCard {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -282,6 +286,12 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+        }
+        if (video != null && link != null) {
+            HorizontalDivider()
+            Text(stringResource(if (self) R.string.video_shared_until else R.string.video_shared_by_patient, sharedUntil(video)),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            WatchSharedVideo(video, link)
         }
     }
 }

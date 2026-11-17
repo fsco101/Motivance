@@ -10,6 +10,7 @@ import com.motivance.data.push.PushRegistrar
 import com.motivance.data.remote.SupabaseAuthRepository
 import com.motivance.domain.PushDevices
 import com.motivance.domain.ChatRepository
+import com.motivance.domain.SessionVideoRepository
 import com.motivance.domain.ChatOutbox
 import com.motivance.domain.ChatLive
 import com.motivance.data.local.RoomChatOutbox
@@ -29,6 +30,7 @@ abstract class AppModule {
     @Binds @Singleton abstract fun booking(impl: SupabaseAuthRepository): BookingRepository
     @Binds @Singleton abstract fun notifications(impl: SupabaseAuthRepository): NotificationRepository
     @Binds @Singleton abstract fun chat(impl: SupabaseAuthRepository): ChatRepository
+    @Binds @Singleton abstract fun sessionVideos(impl: SupabaseAuthRepository): SessionVideoRepository
     @Binds @Singleton abstract fun chatOutbox(impl: RoomChatOutbox): ChatOutbox
     @Binds abstract fun chatLive(impl: LiveChat): ChatLive
     @Binds @Singleton abstract fun chatMedia(impl: ChatMediaFiles): ChatMediaStore

@@ -28,7 +28,7 @@ import java.time.OffsetDateTime
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
     private val cache:SessionStore?=null,
     private val vault:SessionVault?=null,
-) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository, SessionVideoRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -73,7 +73,7 @@ import java.time.OffsetDateTime
                 val failure=runCatching {JSONObject(response.body?.string().orEmpty())}.getOrNull()
                 // Only known codes pass: other server messages can name tables and columns.
                 val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
-                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_") || it.startsWith("schedule_")}
+                    ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_") || it.startsWith("schedule_") || it.startsWith("video_")}
                 throw RemoteFailure(response.code,code)
             }
             response.body?.string().orEmpty()
@@ -286,6 +286,25 @@ import java.time.OffsetDateTime
         val signed=JSONObject(storage("/storage/v1/object/sign/$CHAT_BUCKET/$path",JSONObject().put("expiresIn",seconds).toString().toRequestBody("application/json".toMediaType()),token)).getString("signedURL")
         baseUrl.trimEnd('/')+"/storage/v1"+signed
     }
+    override suspend fun loadSharedVideos(patientId:String)=authorized {token,_ ->
+        SessionVideoJson.list(JSONArray(call("/rest/v1/session_videos?select=${SessionVideoJson.SELECT}&patient_id=eq.$patientId",null,token,"GET")))
+    }
+    override suspend fun startSessionVideo(id:String,sessionId:String,width:Int,height:Int,durationMs:Long)=authorized {token,_ ->
+        ChatJson.places(call("/rest/v1/rpc/start_session_video",JSONObject().put("p_id",id).put("p_session",sessionId).put("p_width",width).put("p_height",height)
+            .put("p_duration_ms",durationMs),token))
+    }
+    override suspend fun uploadSessionVideo(path:String,bytes:ByteArray,mime:String) {authorized {token,_ -> storage("/storage/v1/object/$VIDEO_BUCKET/$path",bytes.toRequestBody(mime.toMediaType()),token,upload=true)}}
+    override suspend fun shareSessionVideo(id:String)=authorized {token,_ ->
+        val result=JSONObject(call("/rest/v1/rpc/share_session_video",JSONObject().put("p_id",id),token))
+        // A file over its limit is refused and removed in the same step, so the answer says so rather than failing.
+        result.optString("refused").takeIf {it.isNotBlank()}?.let {throw RemoteFailure(400,it)}
+        SessionVideoJson.video(result)
+    }
+    override suspend fun stopSharingVideo(id:String) {authorized {token,_ -> call("/rest/v1/rpc/stop_sharing_session_video",JSONObject().put("p_id",id),token)}}
+    override suspend fun sessionVideoLink(path:String,seconds:Int)=authorized {token,_ ->
+        val signed=JSONObject(storage("/storage/v1/object/sign/$VIDEO_BUCKET/$path",JSONObject().put("expiresIn",seconds).toString().toRequestBody("application/json".toMediaType()),token)).getString("signedURL")
+        baseUrl.trimEnd('/')+"/storage/v1"+signed
+    }
     /** Storage takes raw files, so it has its own call. Paths come from the server and are checked before they are used. */
     private suspend fun storage(path:String,body:RequestBody,bearer:String,upload:Boolean=false,cacheControl:String?=null):String = withContext(Dispatchers.IO) {
         requireSafeBase()
@@ -356,8 +375,12 @@ private const val ACTIVITY_PAGE=30
 private fun JSONObject.text(key:String):String?=if(isNull(key)) null else getString(key)
 
 private const val CHAT_BUCKET="chat-media"
-/** conversation/attachment/media.ext or preview.jpg, under the chat bucket, for upload or for a link; or a profile photo upload. */
-private val STORAGE_PATH=Regex("/storage/v1/object/((sign/)?chat-media/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.(jpg|webp|mp4|webm)|preview\\.jpg)|avatars/[0-9a-f-]{36}/[0-9a-f]{32}\\.webp)")
+private const val VIDEO_BUCKET="session-videos"
+/**
+ * conversation/attachment/media.ext or preview.jpg under the chat bucket, or patient/video/media.mp4 or preview.jpg under the session
+ * video bucket (#129), for upload or for a link; or a profile photo upload.
+ */
+private val STORAGE_PATH=Regex("/storage/v1/object/((sign/)?chat-media/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.(jpg|webp|mp4|webm)|preview\\.jpg)|(sign/)?session-videos/[0-9a-f-]{36}/[0-9a-f-]{36}/(media\\.mp4|preview\\.jpg)|avatars/[0-9a-f-]{36}/[0-9a-f]{32}\\.webp)")
 private const val AVATAR_BUCKET="avatars"
 private const val PHOTO_MIME="image/webp"
 /** Every photo gets a new name, so a stored file never changes and can be cached for a year. */

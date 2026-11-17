@@ -202,7 +202,7 @@
     <string name="sync_failed">Naubos ang automatic retries. Suriin ang koneksyon at piliin ang Sync.</string>
     <string name="sync_legacy">Walang upload consent evidence ang naunang resulta; nasa device para repasuhin.</string>
     <string name="sync_pending">Hinihintay ang upload; susubukan muli kapag konektado</string>
-    <string name="sync_metrics_consent">Pumapayag akong itago sa telepono at i-sync sa aking rehabilitation account ang movement summaries. Walang itinatagong landmark, at walang video maliban kung in-on ko ang pag-record; nananatili sa telepono ang video.</string>
+    <string name="sync_metrics_consent">Pumapayag akong itago sa telepono at i-sync sa aking rehabilitation account ang movement summaries. Walang itinatagong landmark, at walang video maliban kung in-on ko ang pag-record; nananatili sa telepono ang video maliban kung piliin kong ibahagi ito sa aking therapist.</string>
     <string name="history_filters">Mga filter ng kasaysayan</string>
     <string name="history_all_exercises">Lahat ng bersiyon ng ehersisyo</string>
     <string name="history_side">Panig</string>
@@ -715,7 +715,7 @@
     <string name="signup_privacy_point_1">Makikita ng iyong konektadong therapist ang mga detalye ng iyong profile para suportahan ang iyong pangangalaga.</string>
     <string name="signup_privacy_point_2">Ginagamit lamang ang iyong mga rehabilitation record para sa pagsubaybay ng sesyon at pagsusuri ng progreso.</string>
     <string name="signup_privacy_point_3">Maaari mong i-edit ang iyong profile, o humiling ng kopya o pagbura ng iyong data, sa Profile. Sinusuri muna ang mga kahilingan.</string>
-    <string name="signup_privacy_point_4">Kailangan ng hiwalay na pahintulot bago ang iyong unang sesyon para maitala ang mga buod ng paggalaw. May video ng sesyon lamang kung in-on mo ang pag-record, at sa telepono mo lamang.</string>
+    <string name="signup_privacy_point_4">Kailangan ng hiwalay na pahintulot bago ang iyong unang sesyon para maitala ang mga buod ng paggalaw. May video ng sesyon lamang kung in-on mo ang pag-record, sa telepono mo, at makikita lang ito ng therapist mo kung piliin mong ibahagi.</string>
     <string name="signup_privacy_read_full">Basahin ang buong kasunduan</string>
     <string name="signup_privacy_hide_full">Itago ang buong kasunduan</string>
     <string name="form_birthdate_required">Piliin ang iyong petsa ng kapanganakan.</string>
@@ -1261,7 +1261,7 @@
     <string name="video_caption">%1$s · %2$s · %3$d / %4$d</string>
     <string name="video_consent_title">I-record ang mga sesyon mo?</string>
     <string name="video_consent_point1">Ipinapakita ng video ang kuha ng camera na may skeleton mo at ang nasukat na anggulo, gaya ng nakikita mo habang nag-eehersisyo.</string>
-    <string name="video_consent_point2">Sa teleponong ito lamang ito sine-save, sa Motivance album ng gallery mo. Hindi ito ina-upload ng Motivance.</string>
+    <string name="video_consent_point2">Sine-save ito sa teleponong ito, sa Motivance album ng gallery mo. Ina-upload lang ito ng Motivance kung piliin mong ibahagi ito sa iyong therapist, at buburahin ang kopyang iyon sa server matapos ang 15 araw.</string>
     <string name="video_consent_point3">Kung bina-back up ng telepono mo ang gallery sa isang cloud photo service, maaaring ma-back up din doon ang video.</string>
     <string name="video_consent_point4">Makakarating lamang ito sa therapist mo kung ipapadala mo ito sa usapan. Aalisin ng Motivance ang kopya nito 15 araw matapos itong maipadala; mananatili ang nasa telepono mo.</string>
     <string name="video_consent_point5">Hindi ito naaalis kapag nag-sign out ka. Burahin ito sa resulta ng sesyon o sa gallery mo. Nananatiling naka-off ang pag-record hanggang i-on mo ito para sa isang sesyon.</string>
@@ -1269,7 +1269,7 @@
     <string name="video_consent_decline">Hindi muna</string>
     <string name="video_title">Video ng sesyon</string>
     <string name="video_saving">Sine-save ang video sa gallery mo…</string>
-    <string name="video_in_gallery">Naka-save sa Motivance album ng gallery mo. Mananatili ito sa teleponong ito maliban kung ipadala mo.</string>
+    <string name="video_in_gallery">Naka-save sa Motivance album ng gallery mo. Mananatili ito sa teleponong ito maliban kung ipadala mo sa chat o ibahagi sa iyong therapist.</string>
     <string name="video_watch">Panoorin</string>
     <string name="video_send">Ipadala sa chat</string>
     <string name="video_delete">Burahin ang video</string>
@@ -1390,4 +1390,26 @@
     <string name="cue_finish_target">Magaling! Tapos na ang ehersisyo.</string>
     <string name="cue_finish_short">Mahusay na pagsisikap ngayong araw: %1$d sa %2$d.</string>
     <string name="cue_finish_day_done">Iyan na ang huling ehersisyo para ngayong araw.</string>
+    <!-- Session videos shared with the therapist (#129) -->
+    <string name="video_share">Ipakita sa aking therapist</string>
+    <string name="video_share_title">Ipakita ang video na ito sa iyong therapist?</string>
+    <string name="video_share_detail">Isang mas maliit na kopya, hanggang sa unang limang minuto nito, ang ipapadala sa therapist ng ehersisyong ito. Mapapanood niya ito sa loob ng 15 araw; pagkatapos ay buburahin ito sa server. Mananatili ang kopya sa iyong telepono, at maaari mong itigil ang pagbabahagi anumang oras.</string>
+    <string name="video_share_confirm">Ibahagi sa aking therapist</string>
+    <string name="video_sharing_progress">Ipinapadala sa iyong therapist: %1$d%%</string>
+    <string name="video_shared_until">Mapapanood ito ng iyong therapist hanggang %1$s.</string>
+    <string name="video_stop_sharing">Itigil ang pagbabahagi</string>
+    <string name="video_stop_title">Itigil ang pagbabahagi ng video na ito?</string>
+    <string name="video_stop_detail">Hindi na ito mapapanood ng iyong therapist, at buburahin ito sa server. Mananatili ang kopya sa iyong telepono.</string>
+    <string name="video_shared">Ibinahagi sa iyong therapist</string>
+    <string name="video_share_stopped">Hindi na ibinabahagi ang video</string>
+    <string name="video_share_error_uploading">Ipinapadala pa ang iyong session. Subukan muli kapag na-upload na ito.</string>
+    <string name="video_share_error_no_therapist">Hindi na naka-link sa iyo ang therapist ng ehersisyong ito, kaya hindi ito maibabahagi.</string>
+    <string name="video_share_error_already">Naibahagi na ang video ng session na ito.</string>
+    <string name="video_share_error_too_large">Masyadong malaki ang video para maipadala, kahit pinaliit na.</string>
+    <string name="video_share_error_rate">Marami ka nang naibahaging video sa nakaraang oras. Subukan muli mamaya.</string>
+    <string name="video_share_error_prepare">Hindi maihanda ang video na ito para maipadala.</string>
+    <string name="video_watch_shared">Panoorin ang video</string>
+    <string name="video_shared_by_patient">Ibinahagi ng pasyente hanggang %1$s.</string>
+    <string name="video_link_failed">Hindi mabuksan ang video. Subukan muli.</string>
+    <string name="video_close">Isara</string>
 </resources>

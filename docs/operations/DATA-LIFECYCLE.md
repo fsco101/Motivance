@@ -16,12 +16,15 @@ A patient can turn on **Record this session** before an exercise. It is off for 
 
 | Data | Where | How long it stays |
 | --- | --- | --- |
-| The video: the camera picture with the skeleton and the measured angle drawn on it, as the patient saw it | The phone's gallery, in a Motivance album (`Movies/Motivance`) | Until the patient deletes it, from the session's result or from the gallery. Signing out leaves it, because it is the patient's own file. Motivance never uploads it on its own |
+| The video: the camera picture with the skeleton and the measured angle drawn on it, as the patient saw it | The phone's gallery, in a Motivance album (`Movies/Motivance`) | Until the patient deletes it, from the session's result or from the gallery. Signing out leaves it, because it is the patient's own file. Motivance uploads a copy only when the patient shares that one video with their therapist (below) |
 | The working copy while recording | The app's cache, `session-video/` | Removed once the video is in the gallery, or at once when nothing was recorded |
 | Which video belongs to which sessions, and the agreement | The app's own preferences, per account | Kept across sign-out; a pointer only, never the video |
 | A copy the patient sends in a conversation | As for any chat video: made smaller first, `chat-media`, removed 15 days after sending | The phone's gallery copy is not affected |
+| A copy shared with the therapist (#129) | Made smaller on the phone (480p, about 500 kbps, the first five minutes), then the private bucket `session-videos`, with a row in `session_videos` | 15 days from sharing, or at once when the patient stops sharing. After that no link is issued, and `scripts/cleanup_chat_media.py` removes the file. The phone's gallery copy is not affected |
 
 Before Android 10 the gallery is a shared folder, so the app asks for the storage permission (declared only up to Android 9) when recording is turned on there.
+
+**Sharing a session video with the therapist (#129).** Nothing leaves the phone until the patient chooses, for one session, "Let my therapist see it". The app then says what happens, before anything is sent: a smaller copy goes to the therapist whose exercise it was, who can watch it for 15 days, after which it is deleted from the server. The phone's copy stays, and the patient can stop sharing at any time from the result or from their history, on Android or the web. Only the patient and that therapist, while their link is active, can read the row or get a link to the file; another therapist, a Scheduler and an administrator cannot. A link to watch lasts five minutes. Uploads are limited to five an hour per patient, 20 MB per video and 200 KB per still, all enforced by the server. An upload never shared within an hour is removed like an expired one.
 
 ## Retention policy
 

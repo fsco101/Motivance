@@ -20,6 +20,7 @@ import { useChatAgreement } from '@/features/chat/pages'
 import { useShareProgress } from '@/features/chat/ShareDialog'
 import { useActivity, useProgressResults } from '@/features/therapist/history'
 import { NO_FILTERS, ProgressView, type ProgressChoices } from '@/features/therapist/ProgressView'
+import { useSessionVideos } from '@/features/therapist/SessionVideoDialog'
 import '@/locales/booking'
 import { BookSessionView } from './BookSessionView'
 import { MyBookingsView } from './MyBookingsView'
@@ -220,11 +221,12 @@ export function PatientProgressPage() {
   const { results, onMore } = useProgressResults(userId, filters)
   const activity = useActivity(userId)
   const sharing = useShareProgress(userId, true)
+  const videos = useSessionVideos(userId, true)
   const state = asLoad(exercises)
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state : ready({
     patients: [], patientId: userId, exercises: [...new Map(state.data.map((item) => [item.exerciseVersionId, { id: item.exerciseVersionId, name: item.name }])).values()],
   })
-  return <><ProgressView self choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} onShare={sharing.share} />{sharing.dialog}</>
+  return <><ProgressView self choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} onShare={sharing.share} videoFor={videos.videoFor} onWatch={videos.onWatch} />{sharing.dialog}{videos.dialog}</>
 }
 
 export function PatientProfilePage() {

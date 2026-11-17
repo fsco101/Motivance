@@ -7,6 +7,7 @@ import android.graphics.Matrix
 import android.media.ExifInterface
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -50,6 +51,8 @@ class MediaProblem(val code:String):Exception(code)
  */
 interface ChatMediaStore {
     suspend fun prepare(owner:String,uri:String,onProgress:(Float)->Unit):MediaDraft
+    /** A session recording made smaller for sharing with the therapist (#129): 480p, its first five minutes, about 500 kbps. */
+    suspend fun prepareSessionVideo(owner:String,uri:String,onProgress:(Float)->Unit):MediaDraft {throw UnsupportedOperationException()}
     suspend fun read(path:String):ByteArray
     /** Once sent, the files become the phone's copy of that message. */
     suspend fun keep(owner:String,id:String,draft:MediaDraft)
@@ -86,6 +89,12 @@ interface ChatMediaStore {
             // A photo or video taken in the app was only ever a step on the way: once made smaller, the original goes.
             if(source.authority=="${context.packageName}.files") withContext(Dispatchers.IO) {runCatching {context.contentResolver.delete(source,null,null)}}
         }
+    }
+
+    override suspend fun prepareSessionVideo(owner:String,uri:String,onProgress:(Float)->Unit):MediaDraft {
+        val name=UUID.randomUUID().toString()
+        val out=folder("session-share",owner)
+        return video(uri.toUri(),File(out,"$name.mp4"),File(out,"$name-preview.jpg"),onProgress,SESSION_VIDEO)
     }
 
     override suspend fun read(path:String)=withContext(Dispatchers.IO) {File(path).readBytes()}
@@ -156,10 +165,17 @@ interface ChatMediaStore {
     }
 
     // ------------------------------------------------------------------------------------------------------------------
-    // Video: 480p H.264 at about 1 Mbps with AAC sound, its first 30 seconds, then a still from its first frame.
+    // Video: 480p H.264 with AAC sound, then a still from its first frame. For chat, about 1 Mbps and the first 30 seconds; a
+    // shared session video (#129) is about 500 kbps and keeps its first five minutes.
+
+    private class VideoLimits(val longestMs:Long,val bits:Int,val bytes:Long)
+    private companion object {
+        val CHAT_VIDEO=VideoLimits(MediaLimits.VIDEO_MS,MediaLimits.VIDEO_BITS,MediaLimits.VIDEO)
+        val SESSION_VIDEO=VideoLimits(SessionVideoLimits.VIDEO_MS,SessionVideoLimits.VIDEO_BITS,SessionVideoLimits.VIDEO)
+    }
 
     @OptIn(UnstableApi::class)
-    private suspend fun video(uri:Uri,out:File,preview:File,onProgress:(Float)->Unit):MediaDraft {
+    private suspend fun video(uri:Uri,out:File,preview:File,onProgress:(Float)->Unit,limits:VideoLimits=CHAT_VIDEO):MediaDraft {
         val (width,height,length)=withContext(Dispatchers.IO) {
             MediaMetadataRetriever().run {
                 try {
@@ -173,7 +189,7 @@ interface ChatMediaStore {
                 } catch(_:Exception) {throw MediaProblem("chat_media_unreadable")} finally {release()}
             }
         }
-        val plan=runCatching {videoPlan(width,height,length)}.getOrElse {throw MediaProblem("chat_media_unreadable")}
+        val plan=runCatching {videoPlan(width,height,length,limits.longestMs)}.getOrElse {throw MediaProblem("chat_media_unreadable")}
         val result=withContext(Dispatchers.Main) {
             coroutineScope {
                 var transformer:Transformer?=null
@@ -187,7 +203,7 @@ interface ChatMediaStore {
                 try {
                     suspendCancellableCoroutine<ExportResult> {done ->
                         val encoder=DefaultEncoderFactory.Builder(context)
-                            .setRequestedVideoEncoderSettings(VideoEncoderSettings.Builder().setBitrate(MediaLimits.VIDEO_BITS).build()).build()
+                            .setRequestedVideoEncoderSettings(VideoEncoderSettings.Builder().setBitrate(limits.bits).build()).build()
                         val made=Transformer.Builder(context).setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC).setEncoderFactory(encoder)
                             .addListener(object:Transformer.Listener {
                                 override fun onCompleted(composition:Composition,exportResult:ExportResult) {done.resume(exportResult)}
@@ -206,13 +222,13 @@ interface ChatMediaStore {
                 } finally {watch.cancel()}
             }
         }
-        if(out.length()>MediaLimits.VIDEO) {out.delete(); throw MediaProblem("chat_media_too_large")}
+        if(out.length()>limits.bytes) {out.delete(); throw MediaProblem("chat_media_too_large")}
         withContext(Dispatchers.IO) {
             val frame=MediaMetadataRetriever().run {try {setDataSource(out.path); getFrameAtTime(0)} finally {release()}} ?: throw MediaProblem("chat_media_unreadable")
             try {encode(frame,fitWithin(frame.width,frame.height,MediaLimits.PREVIEW_LONG_SIDE),MediaLimits.PREVIEW,preview)} finally {frame.recycle()}
         }
         onProgress(1f)
         return MediaDraft(MediaKind.VIDEO,out.path,"video/mp4",preview.path,plan.width,plan.height,
-            result.durationMs.takeIf {it>0}?.coerceAtMost(MediaLimits.VIDEO_MS) ?: plan.durationMs)
+            result.durationMs.takeIf {it>0}?.coerceAtMost(limits.longestMs) ?: plan.durationMs)
     }
 }

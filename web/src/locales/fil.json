@@ -122,6 +122,13 @@
       "pastEnd": "Pumili ng petsa ng pagtatapos na ngayon o sa susunod na araw.", "allRest": "Mag-iwan ng kahit isang araw ng linggo para sa ehersisyo.", "noDay": "Wala nang araw ng ehersisyo. Mag-alis ng araw ng pahinga o ilipat ang petsa ng pagtatapos."
     }
   },
+  "video": {
+    "watch": "Panoorin ang video", "column": "Video", "title": "Video ng session",
+    "therapistNote": "Ibinahagi ng pasyente. Buburahin ito sa server sa {{date}}.",
+    "selfNote": "Mapapanood ito ng iyong therapist hanggang {{date}}. Mananatili ang kopya sa iyong telepono.",
+    "stop": "Itigil ang pagbabahagi", "stopTitle": "Itigil ang pagbabahagi ng video na ito?", "stopMessage": "Hindi na ito mapapanood ng iyong therapist, at buburahin ito sa server. Mananatili ang kopya sa iyong telepono.",
+    "stopped": "Hindi na ibinabahagi ang video", "loadFailed": "Hindi mabuksan ang video. Subukan muli."
+  },
   "progress": {
     "noPatientsTitle": "Wala pang pasyente", "noPatientsDetail": "Lalabas dito ang pag-unlad kapag may nakaugnay na pasyente sa iyo.",
     "description": "Nasukat na galaw sa paglipas ng panahon, isang pasyente sa bawat pagkakataon.", "rom": "Saklaw ng galaw", "notValidated": "Hindi pa clinically validated ang mga sukat.", "notMeasured": "Hindi nasukat",
