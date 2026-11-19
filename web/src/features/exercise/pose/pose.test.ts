@@ -122,6 +122,14 @@ describe('FrameLoop', () => {
     expect(stamps[1]).toBeGreaterThan(stamps[0]!)
   })
 
+  it('stamps frames in whole milliseconds, as Android does, even from a fractional clock', async () => {
+    const { loop, video, detector, finish, tick } = setup({ latency: 0 })
+    tick(0.4)
+    loop.start()
+    video.deliver(); await finish()
+    expect(Number.isInteger(vi.mocked(detector.detect).mock.calls[0]?.[1])).toBe(true)
+  })
+
   it('skips a result that is more than a second old and frees its picture', async () => {
     const { loop, video, onFrame, finish } = setup({ latency: 1001 })
     loop.start()

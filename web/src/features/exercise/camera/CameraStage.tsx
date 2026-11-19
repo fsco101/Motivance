@@ -59,11 +59,13 @@ interface StageProps {
   coach?: ReactNode
   /** Measuring stopped because the tab was hidden. */
   paused?: boolean
+  /** More live readings beside the angle and repetitions, such as the time left on a side. */
+  tiles?: ReactNode
   children?: ReactNode
 }
 
 /** The dark camera panel from Android (SkeletonPreview.kt): header, picture with skeleton, quality chip and live readings. */
-export function CameraStage({ rules, snapshot, hasFrame, canvas, video, points, coach, paused, children }: StageProps) {
+export function CameraStage({ rules, snapshot, hasFrame, canvas, video, points, coach, paused, tiles, children }: StageProps) {
   const { t } = useTranslation()
   const ready = snapshot.quality === 'READY'
   const caution = snapshot.quality === 'TRUNK_LEAN'
@@ -98,9 +100,10 @@ export function CameraStage({ rules, snapshot, hasFrame, canvas, video, points, 
         </p>
       </div>
       <div className="flex flex-col gap-3 p-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className={`grid gap-3 ${tiles ? 'grid-cols-2 tablet:grid-cols-3' : 'grid-cols-2'}`}>
           <MetricTile label={t('camera.angle', { joint: measured })} value={degrees(liveAngle)} />
           <MetricTile label={t('camera.reps')} value={`${snapshot.completed} / ${rules.targetRepetitions}`} accent={snapshot.completed > 0} live />
+          {tiles}
         </div>
         {children}
       </div>

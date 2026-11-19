@@ -1,4 +1,4 @@
-import { CameraIcon, DeviceMobileIcon } from '@phosphor-icons/react'
+import { CameraIcon, PlayIcon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Button } from '@/components/Button'
@@ -22,7 +22,7 @@ function ExerciseCard({ exercise, onStart }: { exercise: MyExercise; onStart: ()
       </div>
       {exercise.instructions && <p className="mt-4 max-w-[62ch]">{exercise.instructions}</p>}
       {exercise.focus && <p className="mt-2 text-sm text-slate">{t('patient.focus', { side, joint: t(`joints.${exercise.focus}`, exercise.focus) })}</p>}
-      <Button className="mt-4" leading={<DeviceMobileIcon aria-hidden />} onClick={onStart}>{t('patient.startExercise')}</Button>
+      <Button className="mt-4" leading={<PlayIcon aria-hidden />} onClick={onStart}>{t('patient.startExercise')}</Button>
     </Panel>
   )
 }

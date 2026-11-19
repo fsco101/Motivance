@@ -52,14 +52,14 @@ function useMyToday() {
 const useMyBookings = () => useQuery({ queryKey: ['booking', 'mine'], queryFn: () => loadMyBookings(supabase()) })
 
 /**
- * Starting an exercise opens the suggestion to use the phone, with the exercise's name. The camera check runs here,
- * unless this browser cannot run the camera, when it suggests the phone too.
+ * Starting an exercise or the camera check runs it here, in the browser. A browser that cannot run the camera gets the
+ * suggestion to use the phone instead, with the exercise's name when there is one.
  */
 function usePhonePrompt() {
   const [prompt, setPrompt] = useState<{ exercise: string | null } | null>(null)
   const navigate = useNavigate()
   return {
-    start: (exercise: MyExercise) => setPrompt({ exercise: exercise.name }),
+    start: (exercise: MyExercise) => (cameraSupport().ok ? navigate(`${BASE}/exercises/${exercise.versionId}/session`) : setPrompt({ exercise: exercise.name })),
     camera: () => (cameraSupport().ok ? navigate(`${BASE}/camera-check`) : setPrompt({ exercise: null })),
     dialog: <UseThePhone open={prompt !== null} onOpenChange={(open) => { if (!open) setPrompt(null) }} exercise={prompt?.exercise} />,
   }

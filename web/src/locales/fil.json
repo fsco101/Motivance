@@ -5,7 +5,7 @@
     "showPassword": "Ipakita ang password", "hidePassword": "Itago ang password", "nothingHere": "Walang maipapakita.", "done": "Tapos na",
     "loadFailedTitle": "Hindi ma-load ang pahinang ito", "loadFailed": "Suriin ang koneksyon at subukan muli."
   },
-  "nav": { "cameraCheck": "Pagsubok ng camera",
+  "nav": { "exerciseSession": "Sesyon ng ehersisyo", "cameraCheck": "Pagsubok ng camera",
     "messages": "Mga mensahe", "messagesUnread_one": "Mga mensahe, {{shown}} hindi pa nababasa", "messagesUnread_other": "Mga mensahe, {{shown}} hindi pa nababasa",
     "workspace": { "admin": "Pangangasiwa", "therapist": "Workspace ng therapist", "scheduler": "Pag-iiskedyul", "patient": "Iyong pangangalaga" },
     "main": "Pangunahin", "home": "Home", "patients": "Mga pasyente", "exercises": "Mga ehersisyo", "progress": "Pag-unlad", "overview": "Buod", "accounts": "Mga account",

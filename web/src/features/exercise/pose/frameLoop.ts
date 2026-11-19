@@ -81,7 +81,8 @@ export class FrameLoop {
     }
     this.paused = false
     if (!this.gate.tryEnter()) return
-    const stamp = Math.max(this.now(), this.lastStamp + 1)
+    // Whole milliseconds, as Android stamps frames: the saved durations are whole milliseconds on the server.
+    const stamp = Math.max(Math.round(this.now()), this.lastStamp + 1)
     this.lastStamp = stamp
     this.options.detector.detect(this.options.video, stamp).then(
       (detection) => this.onDetection(detection, stamp),

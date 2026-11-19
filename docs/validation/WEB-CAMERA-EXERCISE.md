@@ -87,3 +87,41 @@ Both are in the checklist.
 | Web | `npm run typecheck`, `npm run lint`, `npm test`, gallery `design.spec.ts` | 0 errors; 0 warnings; 29 files, 344 tests; 84 of 84 |
 
 **Existing problem, not caused by this work.** `python scripts/check_web_bundle.py` reports 327 KB of initial JavaScript, against a 300 KB budget. The last commit before the camera screen, which had no camera code in the first download, gives the same 327 KB. The camera page adds only its breadcrumb label to the first download. This needs its own fix.
+
+## #137 A full exercise session on the web
+
+**What was built.**
+
+- **Start.** Start exercise on Home and on Exercises opens `/patient/exercises/:versionId/session`. A browser that cannot run the camera still gets the "use the phone" suggestion. Only the assignment's newest prescription version can be measured, as on the phone. Any other address says the exercise is no longer assigned.
+- **Rules** (`session/rules.ts`). The prescription is read exactly as Android's `PrescriptionCache` reads it: the same kinds, measurement conventions, defaults and refusals. A web test reads the same server fixture Android's `WebPublishedPrescriptionTest` reads, and gets the same rules.
+- **The run** (`session/controller.ts`, from `ExerciseSessionViewModel`):
+  - consent is recorded at the first Start, through `record_consent`, and used for the whole run;
+  - Start is refused while tracking isn't ready;
+  - Pause and Resume keep the same session;
+  - a hidden tab pauses measuring and holds a countdown;
+  - demo rules are never recorded.
+- **Both-sides sets** (`session/sideSet.ts`). This is a port of `SideSet.kt`, tested with Android's numbers. The left side ends at the target or when its time is up. A 5-second countdown follows, with Pause and Start, and the right side starts once tracking is ready. Each side is saved as its own session under the one consent.
+- **Saving.** Each finished side is sent to `ingest_session` with the same fields as Android's upload, plus `client: "web"`. The web has no outbox, so a failed save stays on the result page with Try again, and leaving the page asks first. A retry sends the same session id, and the server accepts it once.
+- **Afterwards.** Once saved, the patient's queries refresh, so the exercise leaves today's list straight away and appears in history and progress.
+- **Server** (`supabase/migrations/202611200001_session_client.sql`). `sessions.client` is `android` or `web`. A payload without it, as Android sends, records `android`; any other value is refused. Nothing else in `ingest_session` changed.
+- **Screen.** Android's measurement controls (status, guidance, consent, Start, Pause, Resume, Finish), the side-switch card, the Time left tile, the calculations panel and a result page, in English and Filipino.
+
+**Bug found.** `performance.now()` has fractions of a millisecond, so the active time came out as 8165.9 ms, and the server refused it: it stores whole milliseconds, as Android's clock gives them. Frame timestamps and the session's own start and pause times are now whole milliseconds. Tests cover both.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Side sets (Android's numbers), rules (with Android's fixture), payload, controller | `npx vitest run --project unit src/features/exercise/session` | 32 of 32 |
+| Saved through the web code to the local backend | `npx vitest run --project contract tests/contract/web-session.test.ts` | 4 of 4. A web session saves once and a retry returns duplicate; `client` is `web`; today's exercise is done; both sides save separately under one consent; changed rules and withdrawn consent are refused; a payload without `client` records `android`, and an unknown one is refused |
+| Sessions saved by other paths still accepted | contract tests `summary`, `missed-days`, `exercise-schedule`, `session-videos`, `crossApp`, `queries`; `python scripts/test_bilateral_sets.py`, `test_custom_exercises.py`, `test_connected_workflow.py`; `supabase test db` | 48 of 48; all three pass; 99 of 99 |
+| The whole session in Chromium, signed in, against the local backend | `npx playwright test tests/e2e/exercise-session.spec.ts --workers=1` | 2 of 2. Start, consent, measuring, 2 of 2 repetitions, saved, gone from today's list; axe at 390 and 1280 px; an unassigned exercise says so. The fake camera shows no person, so the MediaPipe host module is replaced with one that scripts an elbow bending; everything else is the real app |
+| Patient pages under the new decision | `tests/e2e/patient.spec.ts` | 13 of 13. The test that said exercises "never run here" now checks they open here, ask for nothing until the camera is allowed, and still suggest the phone in a browser without camera access |
+| Web | `npm run typecheck`, `npm run lint`, `npm test` | 0 errors; 0 warnings; 31 files, 377 tests |
+
+**Deploying.** The migration and the web app can go to the hosted project in either order. The current hosted `ingest_session` ignores `client`, and the new one records a phone session as `android`.
+
+**Not run:**
+
+- a real person exercising in a real browser;
+- comparing a web session's result with a phone session of the same movement.
+
+Both are in the checklist.
