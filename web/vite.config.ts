@@ -10,6 +10,8 @@ export default defineConfig({
   server: { port: 3000, strictPort: true },
   preview: { port: 3000, strictPort: true },
   build: { sourcemap: false },
+  // The pose worker is a module worker in development; build it the same way so MediaPipe loads its runtime the same way.
+  worker: { format: 'es' },
   test: {
     projects: [
       {

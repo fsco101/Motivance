@@ -1,9 +1,9 @@
 name: Android checks
 on:
   push:
-    paths: ['android/**', 'shared/**', 'web/src/features/exercise/assessment/**', 'scripts/generate_assessment_cases.py', 'supabase/migrations/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', 'scripts/check_resources.py', '.github/workflows/android-ci.yml']
+    paths: ['android/**', 'shared/**', 'web/src/features/exercise/assessment/**', 'web/src/features/exercise/pose/models/**', 'scripts/generate_assessment_cases.py', 'scripts/check_pose_model.py', 'docs/validation/pose-model.json', 'supabase/migrations/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', 'scripts/check_resources.py', '.github/workflows/android-ci.yml']
   pull_request:
-    paths: ['android/**', 'shared/**', 'web/src/features/exercise/assessment/**', 'scripts/generate_assessment_cases.py', 'supabase/migrations/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', 'scripts/check_resources.py', '.github/workflows/android-ci.yml']
+    paths: ['android/**', 'shared/**', 'web/src/features/exercise/assessment/**', 'web/src/features/exercise/pose/models/**', 'scripts/generate_assessment_cases.py', 'scripts/check_pose_model.py', 'docs/validation/pose-model.json', 'supabase/migrations/**', 'web/src/features/admin/**', 'web/src/data/admin.ts', 'scripts/check_admin_parity.py', 'scripts/test_admin_parity.py', 'docs/architecture/ADMIN-PARITY.md', 'scripts/check_module_boundaries.py', 'scripts/check_apk_native_libraries.py', 'scripts/check_resources.py', '.github/workflows/android-ci.yml']
 permissions:
   contents: read
 jobs:
@@ -23,6 +23,7 @@ jobs:
       - run: python scripts/check_module_boundaries.py
       - run: python scripts/check_resources.py
       - run: python scripts/generate_assessment_cases.py --check
+      - run: python scripts/check_pose_model.py
       - run: bash ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug :app:testDebugUnitTest :core:domain:test :core:assessment:test --no-daemon
         working-directory: android
       - run: python scripts/check_apk_native_libraries.py
