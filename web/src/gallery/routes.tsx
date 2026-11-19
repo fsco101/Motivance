@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams, useSearchParams, type RouteObject } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams, type RouteObject } from 'react-router'
 import type { Slot } from '@/data/booking'
 import type { Closure, Holiday, TimeOff } from '@/data/calendar'
 import type { ScheduleAudience } from '@/data/schedule'
@@ -24,6 +24,7 @@ import { ready, type Load } from '@/features/shared'
 import { AssignmentEditorView } from '@/features/therapist/AssignmentEditorView'
 import { ProfileView, type ProfileActions } from '@/features/profile/ProfileView'
 import { ExercisesView } from '@/features/therapist/ExercisesView'
+import { CameraCheckPage } from '@/features/exercise/CameraCheckPage'
 import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
@@ -90,7 +91,10 @@ function PatientHome() {
   const [open, setOpen] = useState(false)
   return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, today: { ...data.restDay, state: 'none' }, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.today.todo[0]?.name} /></>
 }
-const PatientExercises = () => <PatientExercisesView base={PATIENT} load={useDemo(data.myToday, data.restDay)} onStart={said('Suggested the phone')} onCamera={said('Suggested the phone')} />
+function PatientExercises() {
+  const navigate = useNavigate()
+  return <PatientExercisesView base={PATIENT} load={useDemo(data.myToday, data.restDay)} onStart={said('Suggested the phone')} onCamera={() => void navigate(`${PATIENT}/camera-check`)} />
+}
 function PatientBook() {
   const [date, setDate] = useState<string | null>(data.availability.days[0]!.date)
   const [chosen, setChosen] = useState<Slot | null>(null)
@@ -271,6 +275,7 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
         { path: 'bookings/move', element: <PatientMove />, handle: { crumb: 'nav.moveSession' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
+        { path: 'camera-check', element: <CameraCheckPage base={PATIENT} />, handle: { crumb: 'nav.cameraCheck' } },
         { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
         { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <Messages self /> }, { path: ':id', element: <Messages self /> }] },
         { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },

@@ -330,6 +330,14 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] Review the reworded consent, sign-up and landing text, and the sharing explanation, in English and Filipino, with the deployment owner, and decide whether the privacy agreement needs a new version for sharing.
 - [ ] Owner decision still open: one choice per video (built) or a standing setting that shares every recorded video.
 
+## Camera exercise on the web (#142, started 2026-11-19)
+
+- [ ] #134: Record one exercise session as a video file, then run it through Android and through the web (Chrome's fake camera can play a `.y4m` or `.mjpeg` file). Confirm both find the same people and landmarks per frame within a small tolerance, and that the counts and ranges match. No recording of a person exists in the repository yet, so this was not run.
+- [ ] #134: On real computers with and without a graphics chip, and in Chrome, Edge, Firefox and Safari, open the camera check and record the diagnostics line (FPS, p95 latency, graphics chip or processor). Compare with the provisional median ≤150 ms and p95 ≤250 ms gate. Headless Chromium only reached about 2 FPS, because it draws graphics in software.
+- [ ] #134: On Chrome for Android and Safari on an iPhone, open the camera check and confirm tracking starts, uses the graphics chip where it can, and pauses when the tab is put in the background.
+- [ ] #136: In a real browser, block the camera for the site, open the camera check and confirm the blocked message appears. Then allow it from the address bar and confirm the camera starts without a reload. Headless Chromium has no permission prompt, so the browser test simulates the browser's answers.
+- [ ] #136: Stand in front of a webcam and a phone in a browser, and confirm the skeleton, the elbow protractor and the angle follow the body without trailing, mirrored on a front camera, at phone and desktop width. Check that the screen reader reads the quality message and the repetitions without repeating every frame.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

@@ -5,7 +5,7 @@
     "showPassword": "Show password", "hidePassword": "Hide password", "nothingHere": "Nothing to show.", "done": "Done",
     "loadFailedTitle": "This page could not load", "loadFailed": "Check your connection and try again."
   },
-  "nav": {
+  "nav": { "cameraCheck": "Camera check",
     "messages": "Messages", "messagesUnread_one": "Messages, {{shown}} unread", "messagesUnread_other": "Messages, {{shown}} unread",
     "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling", "patient": "Your care" },
     "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",

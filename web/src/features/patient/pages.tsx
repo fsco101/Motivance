@@ -29,6 +29,7 @@ import { ConnectPanel, PrivacyPanel, type PrivacyState } from './PatientCareView
 import { PatientExercisesView } from './PatientExercisesView'
 import { PatientHomeView, type PatientHome } from './PatientHomeView'
 import { UseThePhone } from './UseThePhone'
+import { cameraSupport } from '@/features/exercise/pose/support'
 
 const BASE = '/patient'
 
@@ -50,12 +51,16 @@ function useMyToday() {
 
 const useMyBookings = () => useQuery({ queryKey: ['booking', 'mine'], queryFn: () => loadMyBookings(supabase()) })
 
-/** Starting an exercise or the camera check opens the suggestion, with the exercise's name when there is one. */
+/**
+ * Starting an exercise opens the suggestion to use the phone, with the exercise's name. The camera check runs here,
+ * unless this browser cannot run the camera, when it suggests the phone too.
+ */
 function usePhonePrompt() {
   const [prompt, setPrompt] = useState<{ exercise: string | null } | null>(null)
+  const navigate = useNavigate()
   return {
     start: (exercise: MyExercise) => setPrompt({ exercise: exercise.name }),
-    camera: () => setPrompt({ exercise: null }),
+    camera: () => (cameraSupport().ok ? navigate(`${BASE}/camera-check`) : setPrompt({ exercise: null })),
     dialog: <UseThePhone open={prompt !== null} onOpenChange={(open) => { if (!open) setPrompt(null) }} exercise={prompt?.exercise} />,
   }
 }
