@@ -58,7 +58,7 @@ In-center booking (S9-S12) is built, and [BOOKING.md](architecture/BOOKING.md) o
 | Concern | Decision |
 |---|---|
 | Android application, UI and CV orchestration | Kotlin, Jetpack Compose, coroutines and StateFlow |
-| Angle, ROM and repetition engine | Pure Kotlin, independent of Android and MediaPipe |
+| Angle, ROM and repetition engine | Pure Kotlin, independent of Android and MediaPipe, with a TypeScript copy for the web camera; both answer the same shared cases (see [Folder structure](#planned-folder-structure)) |
 | Build configuration | Gradle Kotlin DSL, version catalogue and checked-in Gradle wrapper |
 | Central persistence | PostgreSQL SQL migrations, RLS and transactional functions in Supabase |
 | Local persistence | Room over SQLite; Room migrations and schema exports |
@@ -310,6 +310,7 @@ Motivance/
       data/                       # Typed Supabase access and generated types
       layout/                     # Rail, top bar and breadcrumbs
       features/                   # Presentational views and pages, by workspace
+        exercise/assessment/      # TypeScript copy of core:assessment for the web camera
       landing/                    # The public page
       gallery/                    # Development-only design review, not bundled
       locales/                    # English and Filipino
@@ -320,6 +321,8 @@ Motivance/
     tests/                        # SQL/RLS/transaction checks
     seed.sql                      # Created in S1 with synthetic data
     config.toml                   # Created in S1 by Supabase CLI
+  shared/
+    assessment/                   # Landmark cases both measurement engines must answer identically
   docs/
     PLAN.md                       # Scope and architecture authority
     SPRINTS.md                    # Sprint maintenance and sync guide
@@ -338,6 +341,8 @@ Motivance/
 ```
 
 `core:domain` owns immutable models, repository interfaces and use cases without Android or Supabase imports. `core:assessment` depends on domain models and implements angle math, quality rules, filters and repetition state machines without Android/MediaPipe imports. The app maps model outputs to domain landmarks and implements platform/storage/network adapters. Features call domain contracts and do not access other feature internals. Use ViewModels with immutable UI state and lifecycle-aware collection. Never add camera SDK types to the pure Kotlin engine.
+
+**One measurement on both apps.** The web camera measures with a TypeScript copy of `core:assessment` in `web/src/features/exercise/assessment/`, chosen over compiling Kotlin to JavaScript because the engine is small and the web build stays free of a Kotlin toolchain. It keeps Kotlin's 32-bit float arithmetic where a decision depends on it. `shared/assessment/cases.txt` (written by `scripts/generate_assessment_cases.py`) replays landmark sequences for every joint, both sides, the hold, incomplete, too-fast and timed-out repetitions, lost tracking, pause, restore and each limit. The Kotlin engine writes its answers to `expected.txt` (`SharedCasesTest`), and the web engine must reproduce them (`sharedCases.test.ts`). Changing a rule in only one engine fails one of those tests, so a rule changes in both together. Both CI workflows run when either engine or the cases change.
 
 ## Validation, release and operational gates
 

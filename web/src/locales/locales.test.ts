@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest'
 import bookingEn from './booking.en.json'
 import bookingFil from './booking.fil.json'
 import en from './en.json'
+import exerciseEn from './exercise.en.json'
+import exerciseFil from './exercise.fil.json'
 import fil from './fil.json'
 import landingEn from './landing.en.json'
 import landingFil from './landing.fil.json'
@@ -18,8 +20,8 @@ function flatten(tree: Tree, prefix = ''): Record<string, string> {
 const placeholders = (text: string) => [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort()
 
 describe('English and Filipino', () => {
-  const english = { ...flatten(en), ...flatten(bookingEn), ...flatten(landingEn) }
-  const filipino = { ...flatten(fil), ...flatten(bookingFil), ...flatten(landingFil) }
+  const english = { ...flatten(en), ...flatten(bookingEn), ...flatten(landingEn), ...flatten(exerciseEn) }
+  const filipino = { ...flatten(fil), ...flatten(bookingFil), ...flatten(landingFil), ...flatten(exerciseFil) }
 
   it('have the same keys', () => {
     expect(Object.keys(filipino).sort()).toEqual(Object.keys(english).sort())
@@ -31,6 +33,10 @@ describe('English and Filipino', () => {
 
   it('keep the public pages\' text apart for the same reason', () => {
     expect(Object.keys(landingEn).filter((section) => section in en || section in bookingEn)).toEqual([])
+  })
+
+  it('keep the camera exercise text apart for the same reason', () => {
+    expect(Object.keys(exerciseEn).filter((section) => section in en || section in bookingEn || section in landingEn)).toEqual([])
   })
 
   it('use the same placeholders', () => {

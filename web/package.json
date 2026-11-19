@@ -20,6 +20,7 @@
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0",
     "@fontsource-variable/bricolage-grotesque": "5.3.0",
+    "@mediapipe/tasks-vision": "1.2.3",
     "@phosphor-icons/react": "2.1.10",
     "@supabase/supabase-js": "2.119.0",
     "@tanstack/react-query": "5.106.1",

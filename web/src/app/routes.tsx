@@ -53,6 +53,7 @@ const PatientReschedule = patient('PatientReschedulePage')
 const PatientExercises = patient('PatientExercisesPage')
 const PatientProgress = patient('PatientProgressPage')
 const PatientProfile = patient('PatientProfilePage')
+const PatientCameraCheck = lazy(async () => ({ default: (await import('@/features/exercise/pages')).PatientCameraCheckPage }))
 const Profile = lazy(async () => ({ default: (await import('@/features/profile/pages')).ProfilePage }))
 const LandingPage = lazy(async () => ({ default: (await import('@/landing/LandingPage')).LandingPage }))
 const SignUpPage = lazy(async () => ({ default: (await import('@/auth/SignUpPage')).SignUpPage }))
@@ -178,6 +179,7 @@ export const routes: RouteObject[] = [
           { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
           { path: 'bookings/:id/move', element: <PatientReschedule />, handle: { crumb: 'nav.moveSession' } },
           { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
+          { path: 'camera-check', element: <PatientCameraCheck />, handle: { crumb: 'nav.cameraCheck' } },
           { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
           { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <MessagesPage base="/patient" self /> }, { path: ':id', element: <MessagesPage base="/patient" self /> }] },
           { path: 'profile', element: <PatientProfile />, handle: { crumb: 'account.profile' } },
