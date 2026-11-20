@@ -24,8 +24,12 @@ import { WeeklySeriesDialog, type SeriesActions } from './WeeklySeriesDialog'
 
 /** Where a Scheduler lands. A change anywhere in the workspace invalidates ['scheduler'], so this follows it. */
 export function SchedulerHomePage() {
+  const [today] = useState(() => todayAt(CENTER_ZONE))
   const summary = useQuery({ queryKey: ['scheduler', 'summary'], queryFn: () => loadSummary(supabase()) })
-  return <SchedulerDashboardView load={asLoad(summary)} base="/scheduler" />
+  // The same reads as the Requests and Schedule pages, oldest request and earliest session first.
+  const pending = useQuery({ queryKey: ['scheduler', 'preview', 'pending'], queryFn: () => loadRequests(supabase(), { ...NO_FILTERS, status: 'pending' }, { key: 'starts_at', direction: 'asc' }, 0) })
+  const sessions = useQuery({ queryKey: ['scheduler', 'preview', 'today', today], queryFn: () => loadConfirmed(supabase(), { ...NO_SCHEDULE_FILTERS, from: today, to: today }, { key: 'starts_at', direction: 'asc' }, 0) })
+  return <SchedulerDashboardView load={asLoad(summary)} pending={asLoad(pending)} today={asLoad(sessions)} base="/scheduler" />
 }
 
 /** Whatever happens, what is on screen reloads, so a Scheduler never acts on what another person has already changed. */

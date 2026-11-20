@@ -264,3 +264,31 @@ test('deciding the only row on the last page steps back to a page with rows', as
   await expect(page.getByText('Page 1 of 1')).toBeVisible()
   await expect(page.getByRole('table').getByRole('row')).toHaveCount(26)
 })
+
+test('Home previews the requests waiting and today\'s sessions, the same ones the full pages list (#153)', async () => {
+  // A session at noon today at the center, confirmed with a therapist.
+  const today = sql(`select (now() at time zone 'Asia/Manila')::date`)
+  sql(`insert into public.bookings(id,reference_no,patient_id,therapist_id,starts_at,ends_at,status) values
+ ('${randomUUID()}','BK-TODAY-${tag}','${ben.id}','${linked.id}','${today}T12:00:00+08:00','${today}T13:00:00+08:00','confirmed')`)
+  await book(ana, manila(workingDay(30), 9))
+  await page.goto('/scheduler')
+  const waiting = page.getByRole('region', { name: 'Waiting for a decision' })
+  const todays = page.getByRole('region', { name: 'Today\'s sessions' })
+  await expect(todays.getByText(`12:00 PM – 1:00 PM · Ben ${tag}`)).toBeVisible()
+  await expect(todays.getByText(`Zed ${tag}`)).toBeVisible()
+  await noViolations()
+
+  // "See all" counts exactly what the full page lists, and opens it already filtered.
+  const count = async (region: typeof waiting) => Number(/(\d+)/.exec((await region.getByRole('link', { name: /See all/ }).textContent()) ?? '')![1])
+  const pending = await count(waiting)
+  const sessions = await count(todays)
+  expect(pending).toBeGreaterThanOrEqual(1)
+  expect(await waiting.getByRole('listitem').count()).toBe(Math.min(pending, 5))
+  await waiting.getByRole('link', { name: /See all/ }).click()
+  await expect(page).toHaveURL(/\/scheduler\/requests\?status=pending$/)
+  await expect(page.getByText(new RegExp(`^[0-9]+ to [0-9]+ of ${pending}$`)).first()).toBeVisible()
+  await page.goto('/scheduler')
+  await todays.getByRole('link', { name: /See all/ }).click()
+  await expect(page).toHaveURL(new RegExp(`/scheduler/schedule[?]from=${today}&to=${today}$`))
+  await expect(page.getByText(new RegExp(`^[0-9]+ to [0-9]+ of ${sessions}$`)).first()).toBeVisible()
+})

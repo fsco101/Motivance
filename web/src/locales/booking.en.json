@@ -133,7 +133,13 @@
     "noOpenSlots": "No open slots this week",
     "utilizationMeaning": "Utilization is booked sessions as a share of available places in open slots, from {{from}} to {{to}}. Booked means confirmed or rescheduled.",
     "seriesReason": "Reason for visit (optional)",
-    "seriesReasonHint": "Given to every session in the course. The patient and therapist will see it."
+    "seriesReasonHint": "Given to every session in the course. The patient and therapist will see it.",
+    "previewPending": "Waiting for a decision",
+    "previewPendingEmpty": "No requests are waiting.",
+    "previewToday": "Today's sessions",
+    "previewTodayEmpty": "No sessions today.",
+    "previewAll_one": "See all {{count}}",
+    "previewAll_other": "See all {{count}}"
   },
   "patient": {
     "greeting": "Hello, {{name}}",

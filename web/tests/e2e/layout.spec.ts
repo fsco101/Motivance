@@ -164,3 +164,19 @@ test('a patient record keeps each plan row to one line of actions, with the rest
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
   expect(results.violations.map((v) => v.id)).toEqual([])
 })
+
+test('the Latest movement arc keeps a set size, with the patients beside it (#152)', async ({ page }) => {
+  for (const width of [820, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.goto('/design/therapist')
+    const panel = page.getByRole('region', { name: 'Latest movement' })
+    await expect(panel).toBeVisible()
+    const arc = (await panel.locator('svg').first().boundingBox())!
+    const list = (await panel.getByRole('list').boundingBox())!
+    const box = (await panel.boundingBox())!
+    expect(arc.width, `${width} px`).toBeLessThanOrEqual(24 * 16 + 1)
+    // The list sits beside the arc, not under it, and the panel stays a strip rather than a screen.
+    expect(list.x, `${width} px`).toBeGreaterThan(arc.x + arc.width - 1)
+    expect(box.height, `${width} px`).toBeLessThan(420)
+  }
+})
