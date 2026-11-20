@@ -283,7 +283,7 @@ export const galleryRoutes: RouteObject[] = [{
     },
     {
       path: 'scheduler', element: <Frame workspace="scheduler" />, handle: { crumb: 'nav.home' },
-      children: [{ index: true, element: <SchedulerDashboardView load={ready(data.schedulerSummary)} base={SCHEDULER} /> }, { path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'schedule', element: <SchedulerSchedule />, handle: { crumb: 'nav.scheduleShort' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
+      children: [{ index: true, element: <SchedulerDashboardView load={ready(data.schedulerSummary)} pending={ready({ rows: data.requests.filter((row) => row.status === 'pending'), total: 6 })} today={ready({ rows: data.requests.filter((row) => row.status === 'confirmed' || row.status === 'rescheduled'), total: 9 })} base={SCHEDULER} /> }, { path: 'requests', element: <SchedulerRequests />, handle: { crumb: 'nav.requests' } }, { path: 'schedule', element: <SchedulerSchedule />, handle: { crumb: 'nav.scheduleShort' } }, { path: 'calendar', element: <SchedulerCalendar />, handle: { crumb: 'nav.calendar' } }],
     },
     {
       path: 'admin', element: <Frame workspace="admin" />, handle: { crumb: 'nav.overview' },

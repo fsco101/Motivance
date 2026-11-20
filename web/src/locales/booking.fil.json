@@ -133,7 +133,13 @@
     "noOpenSlots": "Walang bukas na oras ngayong linggo",
     "utilizationMeaning": "Ang paggamit ay ang bahagi ng mga naka-book na session sa mga puwesto sa mga bukas na oras, mula {{from}} hanggang {{to}}. Ang naka-book ay kumpirmado o inilipat ng oras.",
     "seriesReason": "Dahilan ng pagbisita (opsiyonal)",
-    "seriesReasonHint": "Ibibigay sa bawat sesyon ng kurso. Makikita ito ng pasyente at therapist."
+    "seriesReasonHint": "Ibibigay sa bawat sesyon ng kurso. Makikita ito ng pasyente at therapist.",
+    "previewPending": "Naghihintay ng desisyon",
+    "previewPendingEmpty": "Walang naghihintay na request.",
+    "previewToday": "Mga session ngayon",
+    "previewTodayEmpty": "Walang session ngayong araw.",
+    "previewAll_one": "Tingnan ang lahat ({{count}})",
+    "previewAll_other": "Tingnan ang lahat ({{count}})"
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
