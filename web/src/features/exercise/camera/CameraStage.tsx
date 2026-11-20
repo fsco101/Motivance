@@ -44,7 +44,14 @@ export function useStageCanvas(rules: ExerciseRules, mirrored: boolean) {
       rules, snapshot, mirrored, width: size.current.width, height: size.current.height, font: font.current,
     })
   }, [rules, mirrored])
-  return { canvas, draw }
+  /** The same picture on another canvas, such as a recording's, at that canvas's own size. */
+  const paint = useCallback((ctx: CanvasRenderingContext2D, frame: TrackedFrame, snapshot: AssessmentSnapshot, width: number, height: number) => {
+    drawStage(ctx, {
+      frame: { image: frame.image as unknown as CanvasImageSource, width: frame.width, height: frame.height, people: frame.people },
+      rules, snapshot, mirrored, width, height, font: font.current,
+    })
+  }, [rules, mirrored])
+  return { canvas, draw, paint }
 }
 
 interface StageProps {

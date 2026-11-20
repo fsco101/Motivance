@@ -19,6 +19,7 @@ import { usePreparedTracking, useTracking } from './camera/useTracking'
 import { Checklist, Privacy, UsePhoneInstead } from './CameraCheckPage'
 import { FinishCelebration, RepCoach, SoundSwitches, useCoach } from './coach/Coach'
 import { GuideStage } from './guide/ExerciseGuide'
+import { RecordChoice, RecordConsentDialog, SessionVideoPanel, useRecordChoice, useRecordingSupport, useSessionRecording } from './video/SessionVideo'
 import { guideMotionFor } from './guide/rig'
 import { cameraSupport } from './pose/support'
 import { SessionController, type SessionState, type SideResult } from './session/controller'
@@ -98,8 +99,25 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
   const stage = useStageCanvas(state.rules, live?.mirrored ?? true)
   const [consent, setConsent] = useState(false)
   const done = state.phase === 'done'
+  // Recording is the patient's own choice for each session, off until they turn it on (#114, #139).
+  const support = useRecordingSupport()
+  const recordChoice = useRecordChoice(owner)
+  const stream = live?.stream ?? null
+  const cameraSize = useMemo(() => {
+    const settings = stream?.getVideoTracks()[0]?.getSettings()
+    return settings?.width && settings.height ? { width: settings.width, height: settings.height } : null
+  }, [stream])
+  const recording = useSessionRecording(state, recordChoice.record, support, cameraSize)
   const tracking = useTracking({
-    video, stream: done ? null : live?.stream ?? null, draw: stage.draw,
+    video, stream: done ? null : stream,
+    draw: (frame, snapshot) => {
+      stage.draw(frame, snapshot)
+      const recorder = recording.recorder.current
+      if (!recorder) return
+      const angle = snapshot.quality === 'READY' && snapshot.angleDegrees !== null ? `${snapshot.angleDegrees.toFixed(0)}°` : '—'
+      recorder.frame((ctx, width, height) => stage.paint(ctx, frame, snapshot, width, height),
+        t('recording.caption', { name, angle, done: snapshot.completed, target: state.rules.targetRepetitions }))
+    },
     process: (frame) => controller.frame(frame.people, frame.width, frame.height, frame.timestampMs),
     onHidden: () => controller.interrupt(),
   })
@@ -132,7 +150,7 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
         saving={state.saves.some((save) => save.status === 'saving')} allSaved={!state.unsaved} lastOfDay={checkDay} onDone={() => setCelebrated(true)} />
     )
   }
-  if (done) return <SessionResult state={state} base={base} onRetry={() => controller.retry()} />
+  if (done) return <SessionResult state={state} base={base} onRetry={() => controller.retry()} recording={recording} />
   const cameraState = camera.state
   const remaining = sideRemainingMs(state.rules, state.snapshot)
   return (
@@ -153,6 +171,7 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
           {tracking.status === 'loading' && <Notice tone="info" title={t('camera.loading')}>{t('camera.loadingHelp')}</Notice>}
           {tracking.hiddenPause && <Notice tone="info" title={t('camera.paused')}>{t('camera.hiddenPause')}</Notice>}
           {tracking.slow && <Notice tone="caution">{t('camera.slow')}</Notice>}
+          {recording.live && <div><StatusPill tone="danger">{t('recording.live')}</StatusPill></div>}
           <CameraStage rules={state.rules} snapshot={state.snapshot} hasFrame={tracking.hasFrame} canvas={stage.canvas} video={video} points={tracking.points} paused={tracking.hiddenPause}
             coach={<RepCoach state={state} paused={tracking.hiddenPause} caption={coach.caption} />}
             tiles={remaining !== null ? <MetricTile label={t('camera.timeLeft')} value={clock(Math.ceil(remaining / 1000))} /> : undefined} />
@@ -160,6 +179,10 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
           {!state.snapshot.running && <GuideStage motion={guideMotionFor(state.rules)} name={name} dark className="h-56" />}
           {state.switching ? <SideSwitchCard state={state} onPause={() => { coach.unlock(); controller.pauseSwitch() }} onStart={() => { coach.unlock(); controller.startNextSide() }} />
             : <MeasurementControls state={state} consent={consent} onConsent={setConsent} onStart={() => { coach.unlock(); void controller.start(consent) }} onPause={() => controller.pause()} onFinish={() => { coach.unlock(); controller.finish() }} />}
+          {state.sessionId === null && !state.switching && state.sides.length === 0 && (
+            <RecordChoice on={recordChoice.record} support={support} onChange={(on) => { coach.unlock(); recordChoice.change(on) }} />
+          )}
+          <RecordConsentDialog open={recordChoice.asking} onDecline={recordChoice.decline} onAccept={recordChoice.accept} />
           <SoundSwitches coach={coach} />
           <section className="flex flex-col gap-3 rounded-[24px] border border-night-line bg-night p-4 text-paper">
             <h2 className="text-lg font-semibold">{t('calc.title')}</h2>
@@ -252,7 +275,7 @@ function sideLine(t: (key: string, values?: Record<string, unknown>) => string, 
 }
 
 /** Closing screen: the count against the target, range, misses and time, and whether it reached the server. */
-function SessionResult({ state, base, onRetry }: { state: SessionState; base: string; onRetry: () => void }) {
+function SessionResult({ state, base, onRetry, recording }: { state: SessionState; base: string; onRetry: () => void; recording: ReturnType<typeof useSessionRecording> }) {
   const { t } = useTranslation()
   const last: AssessmentSnapshot = state.sides[state.sides.length - 1]?.snapshot ?? state.snapshot
   const target = state.sides[state.sides.length - 1]?.target ?? state.rules.targetRepetitions
@@ -276,6 +299,9 @@ function SessionResult({ state, base, onRetry }: { state: SessionState; base: st
           </dl>
         )}
       </Panel>
+      {recording.finishing && <Notice tone="info">{t('recording.finishing')}</Notice>}
+      {recording.failed && !recording.video && <Notice tone="caution">{t('recording.failed')}</Notice>}
+      {recording.video && <SessionVideoPanel video={recording.video} saved={state.saves.length > 0 && !state.unsaved} />}
       {state.saves.length === 0 ? <Notice tone="info">{t('session.nothingMeasured')}</Notice>
         : saving ? <Notice tone="info">{t('session.saving')}</Notice>
           : failed ? <Notice tone="error" onRetry={onRetry}>{t('session.failed')}</Notice>

@@ -3,53 +3,15 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Browser, type Page } from '@playwright/test'
 import { publishPrescription } from '../../src/data/therapist'
 import { loadCatalogue } from '../../src/data/workspace'
+import { fakeBodyAndVoice } from '../support/camera'
 import { createUser, link, removeUsers, signedIn, sql, type TestUser } from '../support/stack'
 
 /**
  * A full exercise session on the web (#137) against the local backend: Start from Exercises, consent, measure, finish,
- * save, and the exercise is gone from today's list.
- *
- * Chrome's fake camera shows a test pattern, not a person, so the MediaPipe host module is replaced with one that
- * reports a left elbow bending from 10° to 100° and back every three seconds, after a second and a half at rest.
- * Everything else is the real app: the camera, the frame loop, the shared engine, the drawing, the controller and the save.
+ * save, and the exercise is gone from today's list. The body and the voice are scripted (tests/support/camera.ts).
  */
 test.use({ launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] }, permissions: ['camera'] })
 test.describe.configure({ mode: 'serial' })
-
-const SCRIPTED_HOST = `
-let first = null
-const host = {
-  thread: 'worker', delegate: 'GPU',
-  async init() { return 'GPU' },
-  async detect(source, timestampMs) {
-    const image = await createImageBitmap(source)
-    first ??= timestampMs
-    const t = (timestampMs - first) / 1000
-    const angle = t < 1.5 ? 10 : 55 - 45 * Math.cos((2 * Math.PI * (t - 1.5)) / 3)
-    const r = (angle * Math.PI) / 180
-    const points = Array.from({ length: 33 }, () => ({ x: 0.5, y: 0.5, visibility: 1 }))
-    points[11] = { x: 0.5, y: 0.3, visibility: 1 }; points[23] = { x: 0.5, y: 0.8, visibility: 1 }
-    points[13] = { x: 0.5, y: 0.5, visibility: 1 }; points[15] = { x: 0.5 + Math.sin(r) * 0.15, y: 0.5 + Math.cos(r) * 0.15, visibility: 1 }
-    return { people: [points], image, width: image.width, height: image.height, timestampMs }
-  },
-  close() {},
-}
-export async function preparePoseTracking() { return host }
-export async function releasePoseTracking() { return [] }
-`
-
-/** A browser voice that records what it is asked to say and finishes each phrase after a moment, one at a time. */
-const FAKE_VOICE = `
-  window.__spoken = []
-  window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; this.lang = ''; this.voice = null; this.onend = null; this.onerror = null } }
-  const queue = []
-  const next = () => { const u = queue[0]; if (!u) return; setTimeout(() => { if (queue[0] !== u) return; queue.shift(); window.__spoken.push(u.text); u.onend && u.onend(); next() }, 300) }
-  Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: Object.assign(new EventTarget(), {
-    getVoices: () => [{ lang: 'en-US', name: 'Test voice', localService: true, default: true }],
-    speak(u) { queue.push(u); if (queue.length === 1) next() },
-    cancel() { const dropped = queue.splice(0); dropped.forEach((u) => u.onerror && u.onerror()) },
-  }) })
-`
 
 let therapist: TestUser
 let patient: TestUser
@@ -57,8 +19,7 @@ let page: Page
 
 async function signIn(browser: Browser, person: TestUser) {
   const opened = await (await browser.newContext()).newPage()
-  await opened.route('**/src/features/exercise/pose/hosts.ts*', (route) => route.fulfill({ contentType: 'text/javascript', body: SCRIPTED_HOST }))
-  await opened.addInitScript(FAKE_VOICE)
+  await fakeBodyAndVoice(opened)
   await opened.goto('/sign-in')
   await opened.getByLabel('Email').fill(person.email)
   await opened.getByLabel('Password', { exact: true }).fill(person.password)
@@ -134,6 +95,8 @@ test('a patient does today\'s exercise in the browser, and it is saved like a ph
   await expect.poll(() => page.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken.at(-1))).toBe('Great work! Exercise finished. That was today’s last exercise.')
   await page.getByRole('button', { name: 'See your results' }).click()
   await expect(page.getByRole('heading', { name: 'Exercise finished' })).toBeVisible()
+  // Recording was left off, so there is no video and nothing to keep.
+  await expect(page.getByRole('heading', { name: 'Session video' })).toHaveCount(0)
   await expect(page.getByText('Saved to your account. Your therapist can see it in your progress.')).toBeVisible()
 
   expect(sql(`select count(*)||','||min(client) from public.sessions where patient_id='${patient.id}'`)).toBe('1,web')

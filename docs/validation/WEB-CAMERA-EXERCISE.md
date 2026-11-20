@@ -166,3 +166,40 @@ Both are in the checklist.
 - **Listening.** Nobody has listened to the real voices or the tune in browsers.
 
 Both are in the checklist.
+
+## #139 Record and share a session video
+
+**Owner's decision (2026-11-20).** A web recording stays in the open tab for this visit, with Download and Share with my therapist. If the patient does neither, it is gone when they leave, and the page asks before they go. Nothing reaches the server unless the patient shares it.
+
+**What was built** (`web/src/features/exercise/video/`):
+
+- **Choice and consent.** "Record this session" is off by default and offered before Start, as on Android. The first time it is turned on, the recording's own agreement is asked. It is separate from the movement-summary consent and is kept in this browser for each account, as the phone keeps it. Its five points say where the video stays, what Download means on a shared computer, and that the video is gone when the patient leaves. They are in English and Filipino.
+- **Recording** (`recorder.ts`). It is a port of Android's `SessionRecorder`:
+  - each tracked frame is drawn on the recorder's own canvas, at the camera picture's shape (640×480 for a 640×480 camera, never more than 1280 pixels), by the same `drawStage` as the screen;
+  - Android's caption band is added: exercise · angle · count / target;
+  - the run's sessions join one video, as both sides of a set do on the phone;
+  - the bitrate is Android's: about 3 bits a pixel, between 1 and 4 Mbps.
+
+  Where `MediaRecorder` records MP4 (H.264), it records the canvas stream. Otherwise WebCodecs encodes the canvas through Mediabunny's MP4 muxer, and a frame that arrives while the encoder is busy is skipped rather than queued. With neither, the switch is replaced by "This browser cannot record session videos". Recording starts with the session, so opening the camera records nothing. A "Recording" pill shows while it runs.
+- **In the tab** (`SessionVideo.tsx`). The result page shows the video, Download video (`Motivance-session-YYYYMMDD-HHMMSS.mp4`) and Let my therapist see it. Until one of those is done, closing the tab asks first through `beforeunload`, and leaving inside the app asks through React Router's blocker.
+- **Sharing** (`prepare.ts`). The recording is made smaller with Mediabunny's conversion, which uses WebCodecs: 480p (`sharePlan`, Android's `sessionVideoPlan`), its first five minutes, about 500 kbps, written as an ordinary MP4. The share shows a progress percentage. It then follows Android's steps: `start_session_video`, upload the MP4 and the first-frame JPEG preview, `share_session_video`. The server's refusals are shown in the patient's words. Share waits until the session is saved, and Stop sharing is on the same panel. Watching and stopping from progress are the #129 screens, unchanged.
+- **Dependency.** `mediabunny` 1.65.2 (MPL-2.0), pinned exactly. It is the maintained successor of `mp4-muxer`, which is deprecated in its favour. It loads only when a video is recorded or shared, so the first download is unchanged at 327 KB.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Sizes, bitrate, share plan within the server's limits, file name, refusals, consent store | `npx vitest run --project unit src/features/exercise/video` | 6 of 6 |
+| Record, keep, download and share in Chromium against the local backend, with the scripted body | `npx playwright test tests/e2e/exercise-video.spec.ts --workers=1` | 2 of 2. Details below |
+| Recording off changes nothing | `tests/e2e/exercise-session.spec.ts` | Pass. No video panel; everything else as in #137 and #138 |
+| Web | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `python scripts/check_web_bundle.py` | 0 errors; 0 warnings; 35 files, 406 tests; built; 327 KB (the existing overage, unchanged) |
+
+What the browser test checked:
+
+- **Consent and recording.** The consent is asked once, with no axe violations. Recording starts only with the session.
+- **The video.** It is a 640×480 MP4 that plays. A frame 4 seconds in has more than 200 pixels of the focus colour on the arm, and the dark caption band.
+- **Accessibility.** axe passes at 390 and 1280 px.
+- **Keeping it.** Leaving asks first. Nothing is uploaded before sharing. Download gives an `ftyp` MP4 with the phone's naming.
+- **Sharing.** The share stores a 640×480 `video/mp4` under 20 MB on the web session. The therapist reads one shared video, and after Stop sharing none.
+- **Trimming.** A 380-second 1280×720 recording made in the browser is shared as 852×480, 300 seconds and under 20 MB, with progress rising to 100%.
+- **Frame rate.** FPS was the same before and during recording: 19.5 and 19.8, then 19.4 and 19.8. The slow-camera warning never showed. This is a spot check in headless Chromium with the scripted body, not MediaPipe on real hardware.
+
+**Not run:** recording and sharing in real browsers, including Safari and Firefox, which take the other recording paths. Also not run: a recording longer than five minutes made in a real session, and the therapist watching a web video on Android. All are in the checklist.

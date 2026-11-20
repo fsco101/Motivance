@@ -346,6 +346,9 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] #138: Switch the app to Filipino and confirm the browser speaks Filipino where it has a Filipino voice. Where it has none, confirm it speaks English, as Android does, and that a browser with no voice at all shows the cues as text.
 - [ ] #138: Listen to the finish tune and the finish line on laptop speakers and a phone, at both the target and short of it, and on the day's last exercise. Confirm sound off stays off after a reload.
 - [ ] #138: Turn on the system's reduce-motion setting and confirm the guide holds the target position and the celebration does not pop. Ask a therapist to compare each library exercise's web guide with Android's.
+- [ ] #139: In Chrome or Edge (`MediaRecorder` MP4), in Firefox (WebCodecs and Mediabunny) and in Safari on a Mac and an iPhone, record a session. Confirm the video plays, shows the skeleton, angle and caption, and downloads as an MP4. Note FPS in diagnostics with recording off and on, with real MediaPipe.
+- [ ] #139: Record a session longer than five minutes, share it, and confirm the shared copy is 480p, ends at five minutes, and stays under 20 MB. Watch it as the therapist on the web and on Android, then stop sharing and confirm both lose access.
+- [ ] #139: Close the tab with an unsaved recording and confirm the browser asks first. On a shared computer, confirm the downloaded file is where the patient expects and can be deleted.
 
 ## Recording results
 
