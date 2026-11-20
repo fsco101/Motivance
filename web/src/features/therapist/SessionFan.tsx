@@ -27,11 +27,12 @@ export function SessionFan({ sessions, base }: { sessions: readonly FanSession[]
   const active = sessions.find((session) => session.id === activeId) ?? sessions[0]
   if (!active) return null
   return (
-    <section aria-label={t('home.latestMovement')} className="on-dark grid items-center gap-6 rounded-card bg-ink p-5 text-paper desk:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] desk:gap-10">
+    <section aria-label={t('home.latestMovement')} className="on-dark grid items-center gap-6 rounded-card bg-ink p-5 text-paper tablet:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] desk:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] desk:gap-10">
       <div className="min-w-0">
         <h2 className="text-base font-bold">{t('home.latestMovement')}</h2>
         <p className="mb-3 text-sm text-night-ink">{t('home.latestMovementDetail')}</p>
-        <div className="relative">
+        {/* Capped, so on a tablet it stays a figure beside the list instead of filling the screen (#152). */}
+        <div className="relative mx-auto w-full max-w-[24rem]">
           <svg viewBox={`0 0 ${W} ${CY + 14}`} aria-hidden className="w-full overflow-visible">
             {[0, 45, 90, 135, 180].map((degrees) => {
               const a = polar(CX, CY, OUTER + 14, protractorAngle(degrees))
@@ -57,7 +58,7 @@ export function SessionFan({ sessions, base }: { sessions: readonly FanSession[]
           </div>
         </div>
       </div>
-      <ul className="grid content-center gap-1 tablet:grid-cols-2">
+      <ul className="grid content-center gap-1 desk:grid-cols-2 wide:grid-cols-3">
         {sessions.map((session) => {
           const on = session.id === active.id
           return (
