@@ -8,14 +8,17 @@ import { expect, test, type Page } from '@playwright/test'
  */
 const WIDE = ['/design/patient', '/design/patient/exercises', '/design/patient/progress', '/design/patient/camera-check', '/design/therapist', '/design/therapist/patients/p1', '/design/scheduler', '/design/admin/accounts']
 
-/** The gaps between the content and the space it sits in: from the sidebar's edge on the left, to the window's edge on the right. */
+/**
+ * The gaps between the content and the space it sits in: the page area beside the sidebar, inside its scrollbar on a wide
+ * window, or the window itself on a phone.
+ */
 async function gaps(page: Page, selector: string) {
   return page.evaluate((selector) => {
-    const element = document.querySelector(selector)!
-    const box = element.getBoundingClientRect()
-    const sidebar = document.querySelector('nav[aria-label]')?.closest('div.bg-ink')?.getBoundingClientRect()
-    const start = sidebar && sidebar.width > 0 ? sidebar.right : 0
-    return { left: Math.round(box.left - start), right: Math.round(document.documentElement.clientWidth - box.right), width: Math.round(box.width) }
+    const box = document.querySelector(selector)!.getBoundingClientRect()
+    const area = document.querySelector('[data-scroll="page"]') as HTMLElement
+    const start = area.getBoundingClientRect().left
+    const end = start + area.clientWidth
+    return { left: Math.round(box.left - start), right: Math.round(end - box.right), width: Math.round(box.width) }
   }, selector)
 }
 
@@ -179,4 +182,33 @@ test('the Latest movement arc keeps a set size, with the patients beside it (#15
     expect(list.x, `${width} px`).toBeGreaterThan(arc.x + arc.width - 1)
     expect(box.height, `${width} px`).toBeLessThan(420)
   }
+})
+
+test('a long page scrolls beside the sidebar, which stays the full height of the window', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 800 })
+  await page.goto('/design/therapist/patients/p1')
+  await expect(page.locator('#main h1').first()).toBeVisible()
+  const area = page.locator('[data-scroll="page"]')
+  // The window stays still; the page area has its own scrollbar.
+  expect(await area.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true)
+  await area.hover()
+  await page.mouse.wheel(0, 2000)
+  await expect.poll(() => area.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+  expect(await page.evaluate(() => window.scrollY)).toBe(0)
+  const sidebar = (await page.getByRole('navigation', { name: 'Main' }).boundingBox())!
+  expect(sidebar.y).toBe(0)
+  expect(sidebar.height).toBe(800)
+  // The header stays at the top while the page scrolls under it.
+  expect((await page.getByRole('navigation', { name: 'You are here' }).boundingBox())!.y).toBeLessThan(56)
+  // A new page opens at its top.
+  await page.getByRole('navigation', { name: 'You are here' }).getByRole('link', { name: 'Patients' }).click()
+  await expect.poll(() => area.evaluate((element) => element.scrollTop)).toBe(0)
+})
+
+test('on a phone the whole window scrolls, as phones expect', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 700 })
+  await page.goto('/design/patient/progress')
+  await expect(page.locator('#main h1').first()).toBeVisible()
+  await page.mouse.wheel(0, 1500)
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 })

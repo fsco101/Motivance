@@ -39,8 +39,10 @@ test.describe('with the camera allowed', () => {
     await page.setViewportSize({ width: 1920, height: 900 })
     const narrow = await page.evaluate(() => {
       const box = document.querySelector('#main [data-width="narrow"]')!.getBoundingClientRect()
-      const sidebar = document.querySelector('nav[aria-label="Main"]')!.getBoundingClientRect()
-      return { left: Math.round(box.left - sidebar.right), right: Math.round(document.documentElement.clientWidth - box.right), width: Math.round(box.width) }
+      // Measured inside the page area, which scrolls beside the sidebar and keeps room for its scrollbar.
+      const area = document.querySelector('[data-scroll="page"]') as HTMLElement
+      const start = area.getBoundingClientRect().left
+      return { left: Math.round(box.left - start), right: Math.round(start + area.clientWidth - box.right), width: Math.round(box.width) }
     })
     expect(Math.abs(narrow.left - narrow.right), JSON.stringify(narrow)).toBeLessThanOrEqual(1)
     expect(narrow.width).toBeLessThanOrEqual(768)

@@ -1,9 +1,9 @@
 import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDoubleLeftIcon, CaretDoubleRightIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
-import { useCallback, useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, NavLink, useMatches } from 'react-router'
+import { Link, NavLink, useLocation, useMatches } from 'react-router'
 import type { Workspace } from '@/auth/roles'
 import { Avatar, Tooltip } from '@/components/Display'
 import { cn } from '@/lib/cn'
@@ -247,13 +247,19 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, chi
   const [exercising, setExercising] = useState(false)
   // In exercise mode the frame is hidden, not unmounted, so the page in <main> keeps its place in the tree and its state.
   const frame = exercising ? 'hidden' : undefined
+  // From tablet width the window stays still and the page scrolls beside the sidebar, so the sidebar is always full height.
+  // A new page starts at its top, as a whole-window scroll would.
+  const scroller = useRef<HTMLDivElement>(null)
+  const { pathname } = useLocation()
+  useEffect(() => { scroller.current?.scrollTo({ top: 0 }) }, [pathname])
   return (
     <ExerciseModeContext.Provider value={setExercising}>
     <RadixTooltip.Provider>
       <a href="#main" className={cn('sr-only focus:not-sr-only focus:fixed focus:left-20 focus:top-3 focus:z-50 focus:rounded-control focus:bg-paper focus:px-3 focus:py-2 focus:shadow-float', frame)}>{t('nav.skip')}</a>
-      <div className={cn('grid min-h-dvh', exercising ? 'grid-cols-1' : 'grid-cols-[auto_minmax(0,1fr)]')}>
-        <div className={frame}><Sidebar workspace={workspace} base={base} /></div>
-        <div className="flex min-w-0 flex-col">
+      <div className={cn('grid min-h-dvh tablet:h-dvh tablet:overflow-hidden', exercising ? 'grid-cols-1' : 'grid-cols-[auto_minmax(0,1fr)]')}>
+        {/* Pinned as well, for a phone, where the whole window scrolls. */}
+        <div className={cn('sticky top-0 h-dvh self-start', frame)}><Sidebar workspace={workspace} base={base} /></div>
+        <div ref={scroller} data-scroll="page" className="scroll-area flex min-w-0 flex-col tablet:overflow-y-auto">
           <div className={cn('sticky top-0 z-30 border-b border-line bg-paper px-5 desk:px-7', frame)}>
             <div className={cn(CONTENT_WIDTH, 'flex h-14 items-center justify-between gap-4')}>
               <Breadcrumbs />
