@@ -18,7 +18,7 @@ test('it says what Motivance is, how booking works, and where to go next', async
   await expect(steps.nth(0)).toContainText('Create your account')
   await expect(steps.nth(1)).toContainText('Choose a date and time')
   await expect(steps.nth(2)).toContainText('A Scheduler confirms it')
-  await expect(page.getByRole('heading', { name: 'Your exercises, on your phone' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your exercises, on your phone or computer' })).toBeVisible()
 })
 
 test('it shows what progress looks like on sample numbers, and says they are a sample', async ({ page }) => {
@@ -54,7 +54,7 @@ test('it reads in Filipino', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Filipino' }).first().click()
   await expect(page.getByRole('heading', { name: /^Mag-book ng therapy session/, level: 1 })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Ang mga ehersisyo mo, nasa telepono mo' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ang mga ehersisyo mo, nasa telepono o computer mo' })).toBeVisible()
   await noViolations(page)
   await page.getByRole('button', { name: 'English' }).first().click()
 })

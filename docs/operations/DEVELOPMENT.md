@@ -142,3 +142,18 @@ Open `http://localhost:3000/design` to review every screen on sample data, with 
 | Measure card smoothness | `$env:MEASURE_MOTION=1; npx playwright test design -g smooth` | Nothing |
 
 Contract and browser tests create disposable accounts and remove them afterwards.
+
+### The camera exercise in the browser
+
+The camera needs a secure page; `http://localhost:3000` counts as one. Sign in as a patient with an assignment, open Exercises and select Start exercise, or Camera positioning check. MediaPipe and the pose model are served by the app itself, so nothing is downloaded from elsewhere. Diagnostics under the camera show FPS, p95 latency and whether detection runs on the graphics chip or the processor.
+
+| Check | Command | What it uses |
+| --- | --- | --- |
+| Engine against Android's answers | `npx vitest run --project unit src/features/exercise/assessment` | `shared/assessment/expected.txt`, written by Android's `SharedCasesTest` |
+| Guide, coach, cues, session, video rules | `npx vitest run --project unit src/features/exercise` | Fakes for the clock, the voice and storage |
+| Real MediaPipe in Chromium | `npx playwright test pose-tracking --workers=1` | Chrome's fake camera (`--use-fake-device-for-media-stream`) |
+| Regression on a recorded exercise with real MediaPipe on the graphics chip: camera check, a both-sides session saved to history, a performance spot check, and an offline run for comparison | `npx playwright test recorded-exercise --workers=1` | A drawn exercise recording in `web/test-videos/`, made on the first run and fed to Chrome as a `.y4m` camera |
+| The same recording on Android, and the comparison | `python scripts/compare_recorded_exercise.py` with `ANDROID_SERIAL` set to a throwaway emulator | `RecordedExerciseTest`; writes `comparison.json` beside the frames |
+| Camera check, session, coaching, recording and sharing | `npx playwright test camera-check camera-blocked exercise-session exercise-video --workers=1` | Chrome's fake camera, with MediaPipe replaced by a scripted elbow and the voice by a recorder (`tests/support/camera.ts`); everything else is the real app and the local backend |
+
+Chrome's fake camera shows a test pattern, not a person, so the session tests serve `tests/support/camera.ts` in place of the MediaPipe host module. It reports a left elbow bending from 10° to 100° and back every three seconds. Run these with one worker on a machine short of memory. Real people, cameras and browsers are covered by `docs/validation/POST-IMPLEMENTATION-CHECKLIST.md`, not by these tests.

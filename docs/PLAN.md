@@ -1,6 +1,6 @@
 # Motivance implementation plan
 
-Build an Android rehabilitation support application in Kotlin, with a feature-complete MVP by week 8 and a validated live pilot by week 10. The live camera view displays a skeleton, estimates joint angles and range of motion (ROM), counts repetitions and compares movement against therapist-defined prescriptions. The application supports professional review; supported measurements must pass a predeclared validation protocol. After the Android pilot, a TypeScript web workspace gives every role a browser version of their work, and only the camera exercise stays on the phone; see [Web workspace](#web-workspace).
+Build an Android rehabilitation support application in Kotlin, with a feature-complete MVP by week 8 and a validated live pilot by week 10. The live camera view displays a skeleton, estimates joint angles and range of motion (ROM), counts repetitions and compares movement against therapist-defined prescriptions. The application supports professional review; supported measurements must pass a predeclared validation protocol. After the Android pilot, a TypeScript web workspace gives every role a browser version of their work, including, since the owner's decision of 2026-11-19, the camera exercise; see [Web workspace](#web-workspace).
 
 Implementation instruction: therapist review and physical-device validation are deferred follow-up work, not blockers to implementing Sprints 2 and 3. The executable development catalogue supports elbow flexion and shoulder abduction, and therapists can add their own single-joint exercises ([custom exercises](validation/CUSTOM-EXERCISES.md)). Record later reference/device/therapist checks in [POST-IMPLEMENTATION-CHECKLIST.md](validation/POST-IMPLEMENTATION-CHECKLIST.md); do not represent deferred checks as executed clinical validation.
 
@@ -104,7 +104,15 @@ Dependency references: [Compose BOM](https://developer.android.com/develop/ui/co
 
 ## Web workspace
 
-Therapists and administrators work with a lot of data, which is cramped on a phone, so S6-S8 add a web app for those two roles. S9 opens it to patients and Schedulers. Per the owner's instruction, patients can use everything on the web except the camera: an exercise session and the camera check need the phone, so starting one suggests the mobile app. Local history and Sync now describe what is stored on a phone, so they stay there too.
+Therapists and administrators work with a lot of data, which is cramped on a phone, so S6-S8 add a web app for those two roles. S9 opens it to patients and Schedulers, who can use everything on the web. Local history and Sync describe what is stored on a phone, so they stay there.
+
+**Camera exercise on the web (owner's decision, 2026-11-19, epic #142).** S9 first kept the exercise session and the camera check on the phone. On 2026-11-19 the owner decided:
+
+1. the web app gets the camera exercise, using MediaPipe;
+2. it has the same features and gives the same results as the Android camera feature;
+3. it is built with the current web versions and the browser's own tools, not a copy of Android's versions or code.
+
+What must match is what a patient sees and uses, and the results. The TypeScript engine answers the same shared cases as the Kotlin one (#135). A web session saves the same fields through `ingest_session`, with `sessions.client` recording `web` or `android`. MediaPipe runs inside the browser, so camera frames and landmarks never leave the device, as on the phone. A browser that cannot run the camera gets a dialog suggesting another browser or the mobile app. Supported: current Chrome, Edge, Firefox and Safari on desktop, Chrome on Android phones and Safari on iPhones. The evidence is in [WEB-CAMERA-EXERCISE.md](validation/WEB-CAMERA-EXERCISE.md).
 
 `web/` is a frontend only: a React and TypeScript single-page app on static hosting, with a public landing page at `/`. Supabase remains the only backend, so new tables, policies and functions go in `supabase/migrations/`, and anything needing a secret goes in `supabase/functions/`. The web app holds only the publishable key, never the service-role key.
 
@@ -122,11 +130,28 @@ The stack is pinned in `web/package.json`. Each runtime dependency earns its pla
 | Backend access | `@supabase/supabase-js`, generated database types | Auth, queries and RPC calls; types come from the migrations, and CI fails if they drift |
 | Routing and server state | React Router, TanStack Query | Pages, and caching in memory only, cleared at sign-out |
 | Accessible primitives | Radix UI | Dialogs, menus, selects and tooltips with correct keyboard behaviour |
-| Motion | Motion (motion.dev) | Interactive cards, transitions and arcs. `LazyMotion` keeps its layout engine out of the initial download |
+| Motion | Motion (motion.dev) | Interactive cards, transitions and arcs, and the exercise guide figure. `LazyMotion` keeps its layout engine out of the initial download |
+| Body tracking | `@mediapipe/tasks-vision` 1.2.3 (Apache-2.0), with Android's `pose_landmarker_lite.task` (`float16/1`) | The web release of MediaPipe, on the graphics chip in a Web Worker. The model comes from `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`, SHA-256 `59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a`; its distribution-terms review is pending, as on Android. `docs/validation/pose-model.json` records both copies, and `scripts/check_pose_model.py` keeps them identical. Loaded only by the camera pages |
+| Session video | `mediabunny` 1.65.2 (MPL-2.0) | Writes MP4 with WebCodecs where `MediaRecorder` cannot, and makes a recording 480p and five minutes for sharing. It replaces the deprecated `mp4-muxer`, and is loaded only when a video is recorded or shared |
 | Languages | i18next, react-i18next | English and Filipino, with a parity check |
 | Icons and fonts | Phosphor Icons, Fontsource | Tree-shaken icons, and self-hosted Bricolage Grotesque and Atkinson Hyperlegible Next |
 | Styling (build only) | Tailwind CSS 4 | Design tokens as the only available values |
 | Testing (build only) | Vitest, Testing Library, Playwright, axe-core | Unit, contract, browser and accessibility checks |
+
+**Browser tools used by the camera exercise.** Each is part of the browser; nothing extra is installed.
+
+| Tool | Used for | Without it |
+|---|---|---|
+| `getUserMedia` on a secure page | The camera, at 640×480 like the phone | The dialog suggesting another browser or the mobile app |
+| WebAssembly, `createImageBitmap` | MediaPipe and handing frames to it | The same dialog |
+| `requestVideoFrameCallback` | Measuring each new camera frame once | The same dialog |
+| Web Worker | Detection off the page's thread | Detection runs on the page's thread |
+| WebGL (MediaPipe's GPU delegate) | Detection on the graphics chip | Detection on the processor, which is slower; the shared slow-camera rule warns the patient |
+| Canvas 2D | The skeleton, protractor and the recording's frames | Required by every supported browser |
+| Web Speech (`speechSynthesis`) | Spoken cues in English or Filipino | The cues are shown as text |
+| Web Audio | The finish tune | The finish is silent; everything else is the same |
+| `MediaRecorder` (MP4) | Recording a session video | WebCodecs and Mediabunny record instead |
+| WebCodecs | Recording where `MediaRecorder` cannot do MP4, and shrinking a video to share | "This browser cannot record session videos", or, when only shrinking is missing, a recording can be downloaded but not shared |
 
 Three proposed packages were dropped. Storybook became a development-only `/design` route, which renders the real views on sample data and is not bundled. Recharts became a small SVG chart, which keeps gaps honest and saves initial download. TanStack Table was not needed for the current tables; reconsider it if S8 needs more.
 
@@ -149,7 +174,16 @@ flowchart TD
   API --> DB[PostgreSQL with RLS]
   DB --> Refresh[Repository refresh into local cache]
   Refresh --> Review[Patient history and therapist dashboard]
+  WebCamera[Browser camera getUserMedia] --> WebPose[MediaPipe web in a Worker]
+  WebPose --> WebQuality[Same quality gate]
+  WebQuality --> WebEngine[TypeScript engine, same shared cases]
+  Prescription --> WebEngine
+  WebEngine --> Canvas[Canvas skeleton and React coaching]
+  WebEngine --> WebSave[Save directly, retry from the tab]
+  WebSave --> API
 ```
+
+The lower branch is the web camera exercise. It saves directly, with no local outbox; a failed save waits in the open tab with Try again, and the server accepts each session once.
 
 Run pixel conversion and inference off the main thread; serialize the lightweight assessment engine and UI commands on the main thread and draw only the latest coherent result. Use backpressure rather than queueing stale frames. Transform landmarks for rotation, preview crop and mirroring before drawing. Choose each exercise's 2D/estimated-3D angle convention explicitly. Reject low-confidence/degenerate samples before updating valid ROM extrema or repetition state. A lost skeleton suspends measurement updates and asks the user to reposition.
 

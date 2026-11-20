@@ -117,18 +117,18 @@ test('starting an exercise opens it here, and nothing asks for the camera until 
   await expect(page.locator('video')).toHaveCount(0)
 })
 
-test('a browser that cannot use the camera still suggests the phone', async ({ browser }) => {
+test('a browser that cannot use the camera suggests another browser or the phone', async ({ browser }) => {
   const context = await browser.newContext({ storageState: await page.context().storageState() })
   const without = await context.newPage()
   await without.addInitScript(() => { Object.defineProperty(navigator, 'mediaDevices', { value: undefined }) })
   await without.goto('/patient/exercises')
   await without.getByRole('button', { name: 'Start exercise' }).click()
-  const dialog = without.getByRole('dialog', { name: 'Continue on your phone' })
+  const dialog = without.getByRole('dialog', { name: 'Use another browser or your phone' })
   await expect(dialog).toContainText('Elbow flexion')
   await dialog.getByRole('button', { name: 'Done' }).click()
   await expect(without).toHaveURL(/\/patient\/exercises$/)
   await without.getByRole('button', { name: 'Camera positioning check' }).click()
-  await expect(without.getByRole('dialog', { name: 'Continue on your phone' })).toBeVisible()
+  await expect(without.getByRole('dialog', { name: 'Use another browser or your phone' })).toBeVisible()
   await context.close()
 })
 

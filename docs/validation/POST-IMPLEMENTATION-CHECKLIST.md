@@ -346,6 +346,13 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] #138: Switch the app to Filipino and confirm the browser speaks Filipino where it has a Filipino voice. Where it has none, confirm it speaks English, as Android does, and that a browser with no voice at all shows the cues as text.
 - [ ] #138: Listen to the finish tune and the finish line on laptop speakers and a phone, at both the target and short of it, and on the day's last exercise. Confirm sound off stays off after a reload.
 - [ ] #138: Turn on the system's reduce-motion setting and confirm the guide holds the target position and the celebration does not pop. Ask a therapist to compare each library exercise's web guide with Android's.
+- [ ] #139: In Chrome or Edge (`MediaRecorder` MP4), in Firefox (WebCodecs and Mediabunny) and in Safari on a Mac and an iPhone, record a session. Confirm the video plays, shows the skeleton, angle and caption, and downloads as an MP4. Note FPS in diagnostics with recording off and on, with real MediaPipe.
+- [ ] #139: Record a session longer than five minutes, share it, and confirm the shared copy is 480p, ends at five minutes, and stays under 20 MB. Watch it as the therapist on the web and on Android, then stop sharing and confirm both lose access.
+- [ ] #141: Run the web camera exercise on real laptops with and without a graphics chip, in current Chrome, Edge, Firefox and Safari on desktop, Chrome on an Android phone and Safari on an iPhone. For each, record FPS, median and p95 latency (diagnostics under the camera) and whether detection used the graphics chip. Compare with the provisional gate of median ≤150 ms and p95 ≤250 ms. The development laptop's headless spot check (17.3 FPS, median 35.5 ms, p95 43.7 ms) does not stand in for these.
+- [ ] #141: Run one 15-minute web session on a laptop and on a phone browser. Watch FPS, latency, the tab's memory and the device's heat, and note any slow-camera warning or pause.
+- [ ] #141: Record one real exercise session as a video, play it through Chrome's fake camera and through Android (`scripts/compare_recorded_exercise.py`, with the frames replaced), and compare counts and ranges. The recorded regression uses a drawn figure, so it shows the two apps agree, not that either is accurate on a real body.
+- [ ] #141: Ask a therapist to compare web and phone results for the same patient movement, with both apps watching the same exercise, and to say whether the counts, ranges and coaching match.
+- [ ] #139: Close the tab with an unsaved recording and confirm the browser asks first. On a shared computer, confirm the downloaded file is where the patient expects and can be deleted.
 
 ## Recording results
 

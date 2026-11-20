@@ -93,7 +93,18 @@ Visitors reach the landing page at `/`; a signed-in account skips it and goes to
 
 Patients are often on a phone, so this is the one workspace built for one. Below 768 px the sidebar gives way to a bottom bar, in reach of a thumb, and lists stack rather than sit in tables: a table cannot fit a phone without hiding the results. Above that it uses the same frame as the staff workspaces.
 
-The next exercise is the page's one bold element, because it is what a patient came to do. Starting it opens a suggestion to continue on the phone, with a store link and QR code once the app has an address, because movement is measured through the phone's camera. Nothing about an exercise runs in the browser.
+The next exercise is the page's one bold element, because it is what a patient came to do. Starting it opens the exercise in the browser: setup with the moving guide figure, the camera, then the session. A browser that cannot run the camera gets a dialog suggesting another browser or the mobile app, with a store link and QR code once the app has an address.
+
+**The camera exercise (owner's decision, 2026-11-19; epic #142).** The camera pages use the dark session theme, as Android does: night ground, panel and mint for a reached range. The camera picture and skeleton are drawn on one canvas, from the same frame that was measured. The controls are React components with the web design system:
+
+- the coach;
+- Start, Pause and Finish;
+- the side-switch card;
+- the voice, finish-sound and recording switches;
+- the celebration;
+- the result page with the session video.
+
+The guide figure is SVG animated with `motion`, and holds still under reduced motion. The layout follows the web's patient workspace rather than Android's screens; the features and the results are Android's.
 
 My Schedule shows a month to find a date, and that date by the hour, so a session reads in its place in the day. Only dates with a session stand out. The bottom bar holds five, so Book leaves it for My Schedule, and stays on the pages that lead to it.
 
