@@ -117,7 +117,8 @@ test('another therapist’s schedule shows who set it, and only they can change 
 
 test('removing an exercise asks first, naming it and the patient', async () => {
   const mine = page.getByRole('region', { name: `${dayLabel(today)} to ${dayLabel(addDays(today, 20))}` })
-  await mine.getByRole('row', { name: /Elbow flexion/ }).getByRole('button', { name: 'Remove' }).click()
+  await mine.getByRole('row', { name: /Elbow flexion/ }).getByRole('button', { name: 'Actions for Elbow flexion' }).click()
+  await page.getByRole('menuitem', { name: 'Remove' }).click()
   const confirm = page.getByRole('alertdialog', { name: 'Remove this exercise?' })
   await expect(confirm).toContainText('Elbow flexion leaves Rosa Lim’s plan.')
   await confirm.getByRole('button', { name: 'Remove exercise' }).click()

@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn'
 import { setLanguage, type Language } from '@/locales/i18n'
 import { spring } from '@/motion/tokens'
 
-const LANGUAGES: ReadonlyArray<{ value: Language; label: string }> = [{ value: 'en', label: 'English' }, { value: 'fil', label: 'Filipino' }]
+export const LANGUAGES: ReadonlyArray<{ value: Language; label: string }> = [{ value: 'en', label: 'English' }, { value: 'fil', label: 'Filipino' }]
 
 export function LanguageSwitch({ className }: { className?: string }) {
   const { t, i18n } = useTranslation()

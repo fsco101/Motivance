@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { romDegrees, repetitionGuide, type AssessmentSnapshot, type ExerciseRules, type RepStep } from '../assessment'
 import type { TrackedFrame } from '../pose'
-import { drawStage, durationParts, focusVisible, showBody } from './stage'
+import { drawStage, durationParts } from './stage'
 
 const degrees = (value: number | null) => (value !== null && Number.isFinite(value) ? `${value.toFixed(1)}°` : '—')
 
@@ -52,70 +52,6 @@ export function useStageCanvas(rules: ExerciseRules, mirrored: boolean) {
     })
   }, [rules, mirrored])
   return { canvas, draw, paint }
-}
-
-interface StageProps {
-  rules: ExerciseRules
-  snapshot: AssessmentSnapshot
-  hasFrame: boolean
-  canvas: RefObject<HTMLCanvasElement | null>
-  video: RefObject<HTMLVideoElement | null>
-  /** Points of the newest frame, to say when the focus part is out of view. */
-  points: TrackedFrame['people'][number] | null
-  /** Shown under the header, so it stays in view while the patient watches themselves. */
-  coach?: ReactNode
-  /** Measuring stopped because the tab was hidden. */
-  paused?: boolean
-  /** More live readings beside the angle and repetitions, such as the time left on a side. */
-  tiles?: ReactNode
-  children?: ReactNode
-}
-
-/** The dark camera panel from Android (SkeletonPreview.kt): header, picture with skeleton, quality chip and live readings. */
-export function CameraStage({ rules, snapshot, hasFrame, canvas, video, points, coach, paused, tiles, children }: StageProps) {
-  const { t } = useTranslation()
-  const ready = snapshot.quality === 'READY'
-  const caution = snapshot.quality === 'TRUNK_LEAN'
-  const side = t(rules.side === 'LEFT' ? 'camera.left' : 'camera.right')
-  const focus = t('camera.focus', { side, joint: t(`joints.${rules.focusJoint}`) })
-  const measured = t(`joints.${rules.measuredJoint}`)
-  const liveAngle = ready && hasFrame ? snapshot.angleDegrees : null
-  const body = showBody(snapshot.quality, hasFrame)
-  return (
-    <section className="overflow-hidden rounded-[24px] border border-night-line bg-night text-paper">
-      <div className="flex flex-col gap-1.5 p-4">
-        <p className="flex items-center gap-2 text-sm font-medium text-night-ink">
-          <span aria-hidden className={`size-2 rounded-full ${hasFrame ? 'animate-pulse bg-sprout-bright motion-reduce:animate-none' : 'bg-night-ink'}`} />
-          {t(hasFrame ? 'camera.live' : 'camera.waiting')}
-        </p>
-        <h2 className="text-lg font-semibold text-paper">{focus}</h2>
-        {rules.focusJoint !== rules.measuredJoint && <p className="text-sm text-night-ink">{t('camera.focusMeasurement', { joint: measured })}</p>}
-        {body && points && !focusVisible(points, rules) && <p className="text-sm text-night-caution">{t('camera.focusNotVisible')}</p>}
-        {coach}
-      </div>
-      <div className="relative mx-auto aspect-[4/5] max-h-[440px] w-full">
-        <video ref={video} muted playsInline aria-hidden className="pointer-events-none absolute size-px opacity-0" />
-        <canvas ref={canvas} role="img" aria-label={t('camera.description', { focus })} className="absolute inset-0 size-full" />
-        {(!hasFrame || paused) && (
-          <div className="absolute inset-0 grid place-items-center bg-night/80 p-8 text-center text-night-ink">
-            <p className="max-w-[32ch]">{t(paused ? 'camera.paused' : 'camera.position')}</p>
-          </div>
-        )}
-        <p aria-live="polite" className={`absolute bottom-3 left-1/2 flex max-w-[calc(100%-24px)] -translate-x-1/2 items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold ${caution ? 'bg-[#4a3410e6] text-night-caution' : ready ? 'bg-[#103c2ae6] text-paper' : 'bg-[#132f38e6] text-paper'}`}>
-          <span aria-hidden className={`size-2 shrink-0 rounded-full ${caution ? 'bg-night-caution' : ready ? 'bg-sprout-bright' : 'bg-night-ink'}`} />
-          {t(`quality.${snapshot.quality}`)}
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 p-4">
-        <div className={`grid gap-3 ${tiles ? 'grid-cols-2 tablet:grid-cols-3' : 'grid-cols-2'}`}>
-          <MetricTile label={t('camera.angle', { joint: measured })} value={degrees(liveAngle)} />
-          <MetricTile label={t('camera.reps')} value={`${snapshot.completed} / ${rules.targetRepetitions}`} accent={snapshot.completed > 0} live />
-          {tiles}
-        </div>
-        {children}
-      </div>
-    </section>
-  )
 }
 
 export function MetricTile({ label, value, accent, live }: { label: string; value: string; accent?: boolean; live?: boolean }) {

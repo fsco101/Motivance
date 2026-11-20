@@ -31,6 +31,15 @@ describe('a patient\'s exercises', () => {
     expect(decodeExercises([plan(version(1, { name: 'x' }, { side_seconds: '90' }))], 'en')[0]?.sideSeconds).toBeNull()
   })
 
+  it('names the joint the exercise measures, for its guide figure (#150)', () => {
+    const measures = (algorithm: string, definition: Record<string, unknown>) => decodeExercises([plan({ ...version(1, definition), exercise_versions: { id: 'e', algorithm_key: algorithm, definition } })], 'en')[0]?.joint
+    expect(measures('elbow-flexion-v1', { name: 'x' })).toBe('ELBOW')
+    expect(measures('shoulder-abduction-v1', { name: 'x' })).toBe('SHOULDER')
+    expect(measures('joint-angle-v1', { name: 'Seated knee', measured_joint: 'KNEE' })).toBe('KNEE')
+    expect(measures('joint-angle-v1', { name: 'x', measured_joint: 'NOSE' })).toBeNull()
+    expect(measures('something-else', { name: 'x' })).toBeNull()
+  })
+
   it('leaves out an assignment with nothing to show', () => {
     expect(decodeExercises([plan()], 'en')).toEqual([])
     expect(decodeExercises([plan({ ...version(1, {}), exercise_versions: null })], 'en')).toEqual([])

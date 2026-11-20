@@ -3,12 +3,14 @@ import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppQrCode, appUrl } from '@/components/AppQrCode'
 import { Button, ButtonLink } from '@/components/Button'
-import { Notice, PageHeader, Panel } from '@/components/Display'
+import { NarrowPage, Notice, PageHeader, Panel } from '@/components/Display'
+import { useExerciseMode } from '@/layout/exerciseMode'
 import '@/locales/exercise'
 import { createRules } from './assessment'
-import { Calculations, CameraStage, useStageCanvas } from './camera/CameraStage'
+import { Calculations, useStageCanvas } from './camera/CameraStage'
 import { useCamera } from './camera/useCamera'
 import { usePreparedTracking, usePreviewEngine, useTracking } from './camera/useTracking'
+import { CameraPicture, ExerciseModeFrame, ExitButton, FullscreenButton, Reading, useFullscreen, useModeKeys } from './mode/ExerciseMode'
 import { cameraSupport } from './pose/support'
 
 /** A browser that cannot run the camera is sent to the phone app, as before. */
@@ -80,37 +82,46 @@ export function CameraCheckPage({ base }: { base: string }) {
   const [step, setStep] = useState<'setup' | 'live' | 'done'>('setup')
   const support = useMemo(() => cameraSupport(), [])
   usePreparedTracking()
+  if (support.ok && step === 'live') return <LiveCheck onFinish={() => setStep('done')} />
+  const header = <PageHeader title={t('camera.checkTitle')} description={t('camera.checkSubtitle')} />
+  if (!support.ok) return <NarrowPage>{header}<UsePhoneInstead message={t('camera.trackingFailed')} /></NarrowPage>
+  if (step === 'done') {
+    return (
+      <NarrowPage>
+        {header}
+        <div className="grid gap-4">
+          <Panel>
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <CheckCircleIcon aria-hidden weight="fill" className="size-16 text-lagoon" />
+              <h2 className="text-xl font-semibold">{t('camera.complete')}</h2>
+              <p className="text-slate">{t('camera.previewOnly')}</p>
+            </div>
+          </Panel>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={() => setStep('setup')}>{t('camera.again')}</Button>
+            <ButtonLink to={`${base}/exercises`} variant="secondary">{t('camera.backToExercises')}</ButtonLink>
+          </div>
+        </div>
+      </NarrowPage>
+    )
+  }
   return (
     <>
-      <PageHeader title={t('camera.checkTitle')} description={t('camera.checkSubtitle')} />
-      {!support.ok ? <UsePhoneInstead message={t('camera.trackingFailed')} />
-        : step === 'setup' ? (
-          <div className="grid max-w-[640px] gap-4">
-            <SetupFigure />
-            <Checklist />
-            <div><Button size="lg" onClick={() => setStep('live')}>{t('camera.open')}</Button></div>
-            <Privacy />
-          </div>
-        ) : step === 'live' ? <LiveCheck onFinish={() => setStep('done')} />
-          : (
-            <div className="grid max-w-[640px] gap-4">
-              <Panel>
-                <div className="flex flex-col items-center gap-3 py-4 text-center">
-                  <CheckCircleIcon aria-hidden weight="fill" className="size-16 text-lagoon" />
-                  <h2 className="text-xl font-semibold">{t('camera.complete')}</h2>
-                  <p className="text-slate">{t('camera.previewOnly')}</p>
-                </div>
-              </Panel>
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={() => setStep('setup')}>{t('camera.again')}</Button>
-                <ButtonLink to={`${base}/exercises`} variant="secondary">{t('camera.backToExercises')}</ButtonLink>
-              </div>
-            </div>
-          )}
+      {header}
+      {/* How to set up beside the checklist, laid out for a wide screen. */}
+      <div className="grid items-start gap-5 desk:grid-cols-2">
+        <SetupFigure />
+        <div className="grid gap-4">
+          <Checklist />
+          <div><Button size="lg" onClick={() => setStep('live')}>{t('camera.open')}</Button></div>
+          <Privacy />
+        </div>
+      </div>
     </>
   )
 }
 
+/** The live check in exercise mode: the picture beside the angle, the count on demo rules and how they are counted. */
 function LiveCheck({ onFinish }: { onFinish: () => void }) {
   const { t } = useTranslation()
   const camera = useCamera()
@@ -120,38 +131,64 @@ function LiveCheck({ onFinish }: { onFinish: () => void }) {
   const stage = useStageCanvas(rules, live?.mirrored ?? true)
   const preview = usePreviewEngine(rules)
   const tracking = { ...useTracking({ video, stream: live?.stream ?? null, process: preview.process, onHidden: preview.onHidden, draw: stage.draw }), snapshot: preview.snapshot }
+  useExerciseMode(true)
+  const screen = useFullscreen()
+  useModeKeys({ onFullscreen: screen.toggle })
   const state = camera.state
+  const finish = () => { camera.stop(); onFinish() }
+  const s = tracking.snapshot
+  const angle = s.quality === 'READY' && tracking.hasFrame ? s.angleDegrees : null
+  const cover = state.status === 'idle' || state.status === 'starting' ? (
+    <div className="flex max-w-md flex-col items-center gap-4">
+      <p className="text-lg text-paper">{t('camera.allowHelp')}</p>
+      <Button size="lg" variant="bright" onClick={() => void camera.start()} busy={state.status === 'starting'}>{t('camera.allow')}</Button>
+    </div>
+  ) : state.status === 'error' ? (
+    <div className="max-w-md text-left">
+      {state.error === 'blocked'
+        ? <Notice tone="caution" title={t('camera.blocked')} onRetry={() => void camera.start()}>{t('camera.blockedHelp')}</Notice>
+        : <Notice tone="caution" onRetry={() => void camera.start()}>{t(`camera.${state.error}`)}</Notice>}
+    </div>
+  ) : live && tracking.status === 'failed' ? <div className="max-w-lg text-left text-ink"><UsePhoneInstead message={t('camera.trackingFailed')} /></div>
+    : live && tracking.status === 'loading' ? (
+      <div className="flex max-w-md flex-col gap-2"><p className="text-lg font-semibold text-paper">{t('camera.loading')}</p><p>{t('camera.loadingHelp')}</p></div>
+    ) : undefined
   return (
-    <div className="grid max-w-[640px] gap-4">
-      {state.status === 'idle' || state.status === 'starting' ? (
-        <Panel>
-          <p className="mb-4 max-w-[60ch] text-slate">{t('camera.allowHelp')}</p>
-          <Button onClick={() => void camera.start()} busy={state.status === 'starting'}>{t('camera.allow')}</Button>
-        </Panel>
-      ) : state.status === 'error' ? (
-        state.error === 'blocked'
-          ? <Notice tone="caution" title={t('camera.blocked')} onRetry={() => void camera.start()}>{t('camera.blockedHelp')}</Notice>
-          : <Notice tone="caution" onRetry={() => void camera.start()}>{t(`camera.${state.error}`)}</Notice>
-      ) : null}
-      {live && tracking.status === 'failed' && <UsePhoneInstead message={t('camera.trackingFailed')} />}
-      {live && tracking.status !== 'failed' && (
+    <ExerciseModeFrame
+      title={t('camera.checkTitle')}
+      status={(
+        <p className="flex items-center gap-2 text-sm font-semibold text-night-ink">
+          <span aria-hidden className={`size-2 rounded-full ${tracking.hasFrame ? 'animate-pulse bg-sprout-bright motion-reduce:animate-none' : 'bg-night-ink'}`} />
+          {t(tracking.hasFrame ? 'camera.live' : 'camera.waiting')}
+        </p>
+      )}
+      top={<><FullscreenButton screen={screen} /><ExitButton onExit={finish} label={t('mode.exit')} /></>}
+      picture={<CameraPicture rules={rules} snapshot={s} hasFrame={tracking.hasFrame} canvas={stage.canvas} video={video} points={tracking.points} paused={tracking.hiddenPause} cover={cover} />}
+      panel={(
         <>
-          {tracking.status === 'loading' && <Notice tone="info" title={t('camera.loading')}>{t('camera.loadingHelp')}</Notice>}
           {tracking.hiddenPause && <Notice tone="info" title={t('camera.paused')}>{t('camera.hiddenPause')}</Notice>}
           {tracking.slow && <Notice tone="caution">{t('camera.slow')}</Notice>}
-          <CameraStage rules={rules} snapshot={tracking.snapshot} hasFrame={tracking.hasFrame} canvas={stage.canvas} video={video} points={tracking.points} paused={tracking.hiddenPause}>
-            <Calculations rules={rules} snapshot={tracking.snapshot} hasFrame={tracking.hasFrame} />
-          </CameraStage>
-          {tracking.diagnostics && tracking.delegate && (
-            <p className="text-xs text-slate tabular-nums">{t('camera.diagnostics', { fps: tracking.diagnostics.fps.toFixed(1), p95: tracking.diagnostics.p95LatencyMs, delegate: t(`camera.delegate${tracking.delegate}`) })}</p>
-          )}
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => { camera.stop(); onFinish() }}>{t('camera.finish')}</Button>
-            {camera.devices.length > 1 && <Button variant="secondary" leading={<ArrowsClockwiseIcon aria-hidden />} onClick={camera.switchCamera}>{t('camera.switch')}</Button>}
+          <div className="grid grid-cols-2 gap-3">
+            <Reading label={t('camera.angle', { joint: t(`joints.${rules.measuredJoint}`) })} value={angle !== null ? `${angle.toFixed(1)}°` : '—'} />
+            <Reading label={t('camera.reps')} value={`${s.completed} / ${rules.targetRepetitions}`} />
           </div>
+          {/* The check is for understanding the camera, so how it counts is shown, not tucked away. */}
+          <section className="flex flex-col gap-3 rounded-[24px] border border-night-line p-4">
+            <h2 className="text-lg font-semibold">{t('calc.title')}</h2>
+            <Calculations rules={rules} snapshot={s} hasFrame={tracking.hasFrame} />
+          </section>
+          {tracking.diagnostics && tracking.delegate && (
+            <p className="mt-auto text-xs text-night-ink tabular-nums">{t('camera.diagnostics', { fps: tracking.diagnostics.fps.toFixed(1), p95: tracking.diagnostics.p95LatencyMs, delegate: t(`camera.delegate${tracking.delegate}`) })}</p>
+          )}
         </>
       )}
-      {!live && state.status !== 'error' && <Privacy />}
-    </div>
+      bar={(
+        <>
+          <Button size="lg" variant="bright" onClick={finish}>{t('camera.finish')}</Button>
+          {camera.devices.length > 1 && <Button size="lg" variant="secondary" leading={<ArrowsClockwiseIcon aria-hidden />} onClick={camera.switchCamera}>{t('camera.switch')}</Button>}
+          {screen.available && <p className="hidden text-xs text-night-ink desk:ml-auto desk:block">{t('mode.keysCheck')}</p>}
+        </>
+      )}
+    />
   )
 }

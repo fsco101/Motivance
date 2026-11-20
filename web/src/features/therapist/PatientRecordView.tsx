@@ -1,9 +1,10 @@
-import { CalendarPlusIcon, ChatCircleDotsIcon, PencilSimpleIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react'
+import { CalendarPlusIcon, ChatCircleDotsIcon, DotsThreeIcon, PencilSimpleIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
-import { useState, type ReactNode } from 'react'
+import { DropdownMenu } from 'radix-ui'
+import { useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { Button, ButtonLink } from '@/components/Button'
+import { Button, ButtonLink, IconButton } from '@/components/Button'
 import { RangeBar } from '@/components/Charts'
 import { DataTable, type Column } from '@/components/DataTable'
 import { ConfirmDialog, Dialog } from '@/components/Dialog'
@@ -54,6 +55,54 @@ export type RecordActions = {
 const todayTone = { done: 'positive', todo: 'primary', rest: 'neutral' } as const
 const todayLabel = { done: 'schedule.todayDone', todo: 'schedule.todayToDo', rest: 'schedule.todayRest' } as const
 
+/**
+ * A plan row's actions (#151): Edit plan stays a button, and the rest sit in a menu, so a row is one line tall. A chosen item runs
+ * once the menu has closed, so a confirmation opens from the menu's button and focus returns there if it is cancelled.
+ */
+function PlanActions({ plan, editTo, onSend, onRemove }: { plan: PlanCard; editTo: string; onSend?: (planId: string) => void; onRemove?: (plan: PlanCard) => void }) {
+  const { t } = useTranslation()
+  const trigger = useRef<HTMLButtonElement>(null)
+  const chosen = useRef<(() => void) | null>(null)
+  const afterClose = (event: Event) => {
+    const run = chosen.current
+    if (!run) return
+    chosen.current = null
+    event.preventDefault()
+    trigger.current?.focus()
+    run()
+  }
+  const item = 'flex min-h-9 cursor-pointer items-center gap-2.5 rounded-md px-3 outline-none'
+  const canRemove = onRemove && !plan.locked
+  return (
+    <div className="flex items-center justify-end gap-2">
+      {plan.locked
+        ? <span className="text-xs text-slate">{t('record.otherTherapist')}</span>
+        : <ButtonLink to={`${editTo}?plan=${plan.id}`} variant="secondary" size="sm" leading={<PencilSimpleIcon aria-hidden />}>{t('record.edit')}</ButtonLink>}
+      {(onSend || canRemove) && (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild ref={trigger}>
+            <IconButton press={false} label={t('patients.actions', { name: plan.exercise })} className="size-8"><DotsThreeIcon weight="bold" aria-hidden /></IconButton>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content align="end" className="z-50 min-w-48 rounded-control border border-line bg-paper p-1 text-sm shadow-float" onCloseAutoFocus={afterClose}>
+              {onSend && (
+                <DropdownMenu.Item onSelect={() => { chosen.current = () => onSend(plan.id) }} className={`${item} data-highlighted:bg-tide`}>
+                  <ChatCircleDotsIcon aria-hidden className="text-lg" />{t('chat.cards.sendExercise')}
+                </DropdownMenu.Item>
+              )}
+              {canRemove && (
+                <DropdownMenu.Item onSelect={() => { chosen.current = () => onRemove(plan) }} className={`${item} text-alarm data-highlighted:bg-alarm-soft`}>
+                  <TrashIcon aria-hidden className="text-lg" />{t('schedule.remove')}
+                </DropdownMenu.Item>
+              )}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      )}
+    </div>
+  )
+}
+
 function PlanTable({ plans, editTo, onSend, onRemove }: { plans: readonly PlanCard[]; editTo: string; onSend?: (planId: string) => void; onRemove?: (plan: PlanCard) => void }) {
   const { t } = useTranslation()
   const columns: ReadonlyArray<Column<PlanCard>> = [
@@ -75,14 +124,7 @@ function PlanTable({ plans, editTo, onSend, onRemove }: { plans: readonly PlanCa
     ) },
     { key: 'focus', header: t('record.focus'), hideBelow: 'desk', cell: (plan) => plan.focus ?? t('record.focusAutomatic') },
     { key: 'version', header: t('admin.versionColumn'), cell: (plan) => <StatusPill tone="primary">{t('record.version', { version: plan.version })}</StatusPill> },
-    { key: 'action', header: t('patients.columnActions'), align: 'end', cell: (plan) => (
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {plan.locked
-          ? <span className="text-xs text-slate">{t('record.otherTherapist')}</span>
-          : <ButtonLink to={`${editTo}?plan=${plan.id}`} variant="secondary" size="sm" leading={<PencilSimpleIcon aria-hidden />}>{t('record.edit')}</ButtonLink>}
-        {onSend && <Button variant="secondary" size="sm" leading={<ChatCircleDotsIcon aria-hidden />} onClick={() => onSend(plan.id)}>{t('chat.cards.sendExercise')}</Button>}
-        {onRemove && !plan.locked && <Button variant="quiet" size="sm" leading={<TrashIcon aria-hidden />} onClick={() => onRemove(plan)}>{t('schedule.remove')}</Button>}
-      </div>) },
+    { key: 'action', header: t('patients.columnActions'), align: 'end', cell: (plan) => <PlanActions plan={plan} editTo={editTo} onSend={onSend} onRemove={onRemove} /> },
   ]
   return <DataTable caption={t('record.plans')} columns={columns} rows={plans} rowKey={(plan) => plan.id} />
 }

@@ -78,8 +78,8 @@ export const sessions: HistoricalSession[] = days.map((day, index): HistoricalSe
 export const exerciseActivity = activitySummary(sessions, new Date(2026, 10, 6, 12))
 
 export const myExercises: MyExercise[] = [
-  { assignmentId: 'a1', versionId: 'pv1', exerciseVersionId: 'v1', name: 'Elbow flexion', instructions: 'Sit tall, keep your upper arm still, and bend your elbow slowly.', side: 'left', low: 20, high: 120, repetitions: 10, focus: 'ELBOW', version: 2, sideSeconds: null },
-  { assignmentId: 'a2', versionId: 'pv2', exerciseVersionId: 'v2', name: 'Shoulder abduction', instructions: 'Raise your arm out to the side, then lower it with control.', side: 'right', low: 15, high: 90, repetitions: 8, focus: null, version: 1, sideSeconds: null },
+  { assignmentId: 'a1', versionId: 'pv1', exerciseVersionId: 'v1', name: 'Elbow flexion', instructions: 'Sit tall, keep your upper arm still, and bend your elbow slowly.', side: 'left', low: 20, high: 120, repetitions: 10, focus: 'ELBOW', version: 2, sideSeconds: null, joint: 'ELBOW' },
+  { assignmentId: 'a2', versionId: 'pv2', exerciseVersionId: 'v2', name: 'Shoulder abduction', instructions: 'Raise your arm out to the side, then lower it with control.', side: 'right', low: 15, high: 90, repetitions: 8, focus: null, version: 1, sideSeconds: null, joint: 'SHOULDER' },
 ]
 const today = new Date()
 const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7))

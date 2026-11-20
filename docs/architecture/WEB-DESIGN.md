@@ -70,7 +70,7 @@ Both are self-hosted under the SIL Open Font License, with licences in `web/publ
 +-----------+------------------------------------------------+
 ```
 
-The sidebar and top bar stay in place while the page scrolls. Below 1024 px the sidebar folds to icons, with its labels kept for screen readers. Columns hide or stack before anything scrolls sideways. Content is left aligned, because staff scan down a left edge. A quiet footer under every workspace page carries the copyright and the prototype disclaimer. On a patient's phone it leaves room for the bottom bar.
+The sidebar and top bar stay in place while the page scrolls. The person can fold the sidebar to icons with Collapse menu at its foot, and it stays folded in that browser (#147). Below 1024 px it folds by itself and the button goes away. Folded, each icon names itself in a tooltip on hover and on keyboard focus, and the labels stay for screen readers. The graduated edge is deliberately faint and fine, texture rather than content, with the needle still marking the current page. Columns hide or stack before anything scrolls sideways. The content column is centred beside the sidebar, up to 1,600 px wide, so a wide screen has the same margin on both sides; the header bar and footer line up with it (#146). Within it, text and tables stay left aligned, because staff scan down a left edge. A wide page (tables, dashboards) uses the whole column; a page with little to put side by side, such as a single form or a step-by-step flow, uses `NarrowPage`, which centres its header and content together at up to 768 px. No page sets its own left-aligned width. A quiet footer under every workspace page carries the copyright and the prototype disclaimer. On a patient's phone it leaves room for the bottom bar.
 
 **Building blocks.** `Panel` is the surface, with an optional title, toolbar and footer. `DataTable` lists records, with sorting, grouping and a selected row. `StatCard` shows one server count and opens the page that explains it. `BarList` compares a few counts, and `RangeBar` shows prescribed and measured range on the 0 to 180 degree scale.
 
@@ -91,11 +91,18 @@ Visitors reach the landing page at `/`; a signed-in account skips it and goes to
 
 ## Patient workspace
 
-Patients are often on a phone, so this is the one workspace built for one. Below 768 px the sidebar gives way to a bottom bar, in reach of a thumb, and lists stack rather than sit in tables: a table cannot fit a phone without hiding the results. Above that it uses the same frame as the staff workspaces.
+Patients are often on a phone, so this is the one workspace built for one. Below 768 px the header shows the page's title in full instead of the breadcrumb trail, and the English/Filipino choice moves into the account menu (#148). The sidebar gives way to a bottom bar, in reach of a thumb, and lists stack rather than sit in tables: a table cannot fit a phone without hiding the results. Above that it uses the same frame as the staff workspaces.
 
 The next exercise is the page's one bold element, because it is what a patient came to do. Starting it opens the exercise in the browser: setup with the moving guide figure, the camera, then the session. A browser that cannot run the camera gets a dialog suggesting another browser or the mobile app, with a store link and QR code once the app has an address.
 
-**The camera exercise (owner's decision, 2026-11-19; epic #142).** The camera pages use the dark session theme, as Android does: night ground, panel and mint for a reached range. The camera picture and skeleton are drawn on one canvas, from the same frame that was measured. The controls are React components with the web design system:
+**The camera exercise (owner's decision, 2026-11-19; epic #142).** On a laptop the patient stands two or three metres back so the camera sees their whole body, so while the camera is live (the session and the camera check) the page goes into **exercise mode** (#149). In exercise mode the workspace sidebar, header and footer step aside; they are hidden, not removed, so the session keeps its state. The exercise takes the whole window in the dark session theme:
+
+- a top bar with the exercise, its status, Full screen and Exit;
+- the camera picture with the skeleton, as large as the screen allows;
+- a panel beside it with the repetition count and the coach's instruction. Both are sized to read from across the room, at least three times body text: the count at `clamp(4.5rem, 9vw, 9rem)`, the instruction at `clamp(2.25rem, 4vw, 3.5rem)`;
+- one bar of controls at the bottom that never scrolls away.
+
+Space pauses or resumes for someone who walks up to the laptop, F toggles full screen, and the bar names both keys. "How repetitions are counted" opens in a dialog. Exit asks first while a side is being measured. At 1280 by 720 and wider nothing scrolls. On a phone the parts stack, and the bar follows the readings instead of covering them. Setup, the camera check's checklist and the results stay in the workspace, in two columns on a wide screen.
 
 - the coach;
 - Start, Pause and Finish;

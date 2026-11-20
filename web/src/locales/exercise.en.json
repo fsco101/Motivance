@@ -221,5 +221,18 @@
     "errorRate": "You have shared several videos in the last hour. Try again later.",
     "errorPrepare": "This browser could not make the video ready to send. You can still download it.",
     "errorFailed": "The video could not be shared. Check your connection and try again."
+  },
+  "mode": {
+    "exit": "Exit",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen",
+    "keys": "Keys: Space pauses or resumes, F switches full screen.",
+    "keysNoFullscreen": "Keys: Space pauses or resumes.",
+    "leaveTitle": "Leave this exercise?",
+    "leaveDetail": "The side you are measuring stops and is not saved. Sides you already finished are saved.",
+    "leave": "Leave",
+    "stay": "Keep exercising",
+    "keysCheck": "Key: F switches full screen.",
+    "panel": "Count and coaching"
   }
 }

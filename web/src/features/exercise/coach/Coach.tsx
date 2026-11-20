@@ -3,6 +3,7 @@ import { AnimatePresence, m as motion } from 'motion/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
+import { cn } from '@/lib/cn'
 import { useStill } from '@/motion/useStill'
 import { repetitionGuide } from '../assessment'
 import { useDuration } from '../camera/CameraStage'
@@ -88,7 +89,7 @@ export type Coach = ReturnType<typeof useCoach>
  * The step the engine is waiting for and the last result, in plain words beside the camera image (RepCoach on Android).
  * Everything comes from the shared repetition guide and the engine's results, so it only describes what the counter does.
  */
-export function RepCoach({ state, paused, caption }: { state: SessionState; paused: boolean; caption: { text: string; key: number } | null }) {
+export function RepCoach({ state, paused, caption, large = false }: { state: SessionState; paused: boolean; caption: { text: string; key: number } | null; large?: boolean }) {
   const { t } = useTranslation()
   const duration = useDuration()
   const { rules, snapshot: s } = state
@@ -118,65 +119,39 @@ export function RepCoach({ state, paused, caption }: { state: SessionState; paus
               : t('coach.return', { degrees: Math.trunc(rules.lowDegrees) })
   const stepNumber = step === null ? null : ['START', 'REACH', 'HOLD', 'RETURN'].indexOf(step) + 1
   return (
-    <div className="mt-2 flex flex-col gap-1.5 rounded-[16px] bg-night-panel p-3.5">
+    // Large in exercise mode, where it is read from across the room.
+    <div className={large ? 'flex flex-col gap-2 rounded-[24px] bg-night-panel p-5' : 'mt-2 flex flex-col gap-1.5 rounded-[16px] bg-night-panel p-3.5'}>
       <AnimatePresence initial={false}>
         {showing && (
           <motion.div key={showing.sequence} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-            <ResultLine outcome={showing.outcome} target={rules.targetRepetitions} />
+            <ResultLine outcome={showing.outcome} target={rules.targetRepetitions} large={large} />
           </motion.div>
         )}
       </AnimatePresence>
-      {stepNumber !== null && <p className="text-sm font-medium text-night-ink">{t('coach.step', { n: stepNumber })}</p>}
-      <p aria-live="polite" className="text-xl font-semibold text-paper">{prompt}</p>
+      {stepNumber !== null && <p className={large ? 'text-lg font-semibold text-night-ink' : 'text-sm font-medium text-night-ink'}>{t('coach.step', { n: stepNumber })}</p>}
+      {/* The step to do now is the biggest thing on the screen; a note about not counting yet need not be. */}
+      <p aria-live="polite" className={large ? cn('font-display font-bold text-paper', step === null ? 'text-2xl leading-snug' : 'text-[clamp(2.25rem,4vw,3.5rem)] leading-tight') : 'text-xl font-semibold text-paper'}>{prompt}</p>
       {step === 'HOLD' && rules.peakHoldMs > 0 && (
         <div role="progressbar" aria-label={t('coach.holdProgress')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(guide.holdProgress * 100)}
           className="h-1.5 w-full overflow-hidden rounded-full bg-night-ink/25">
           <div className="h-full rounded-full bg-sprout-bright" style={{ width: `${guide.holdProgress * 100}%` }} />
         </div>
       )}
-      {caption && <p key={caption.key} aria-live="polite" className="text-base font-medium text-sprout-bright">{caption.text}</p>}
+      {caption && <p key={caption.key} aria-live="polite" className={large ? 'text-2xl font-semibold text-sprout-bright' : 'text-base font-medium text-sprout-bright'}>{caption.text}</p>}
     </div>
   )
 }
 
-function ResultLine({ outcome, target }: { outcome: NonNullable<SessionState['result']>['outcome']; target: number }) {
+function ResultLine({ outcome, target, large = false }: { outcome: NonNullable<SessionState['result']>['outcome']; target: number; large?: boolean }) {
   const { t } = useTranslation()
   const counted = outcome.type === 'counted'
   const words = outcome.type === 'counted' ? t('coach.counted', { count: outcome.count, target })
     : t(outcome.reason === 'TOO_FAST' ? 'coach.missedFast' : outcome.reason === 'TIMED_OUT' ? 'coach.missedSlow' : 'coach.missedRange')
   return (
-    <p role="status" className={`flex items-center gap-2 text-lg font-bold ${counted ? 'text-sprout-bright' : 'text-night-caution'}`}>
-      {counted ? <CheckCircleIcon aria-hidden weight="fill" className="size-6 shrink-0" /> : <InfoIcon aria-hidden weight="fill" className="size-6 shrink-0" />}
+    <p role="status" className={`flex items-center gap-2 font-bold ${large ? 'text-[clamp(1.5rem,2.5vw,2.25rem)] leading-tight' : 'text-lg'} ${counted ? 'text-sprout-bright' : 'text-night-caution'}`}>
+      {counted ? <CheckCircleIcon aria-hidden weight="fill" className={large ? 'size-10 shrink-0' : 'size-6 shrink-0'} /> : <InfoIcon aria-hidden weight="fill" className={large ? 'size-10 shrink-0' : 'size-6 shrink-0'} />}
       {words}
     </p>
-  )
-}
-
-/** A labelled switch, as on Android: words read better at a distance than a speaker icon. */
-export function SoundSwitch({ on, onLabel, offLabel, help, onChange }: { on: boolean; onLabel: string; offLabel: string; help: string; onChange: (on: boolean) => void }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)}
-      className="flex min-h-[52px] w-full items-center gap-3 rounded-control px-1 text-left">
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="font-semibold text-paper">{on ? onLabel : offLabel}</span>
-        <span className="text-sm text-night-ink">{help}</span>
-      </span>
-      <span aria-hidden className={`relative h-7 w-12 shrink-0 rounded-full transition-colors motion-reduce:transition-none ${on ? 'bg-sprout-bright' : 'bg-night-line'}`}>
-        <span className={`absolute top-1 size-5 rounded-full bg-paper transition-[left] motion-reduce:transition-none ${on ? 'left-6' : 'left-1'}`} />
-      </span>
-    </button>
-  )
-}
-
-/** The voice switch and the finish sound's own switch, beside it (RepSoundToggle and FinishSoundToggle on Android). */
-export function SoundSwitches({ coach }: { coach: Coach }) {
-  const { t } = useTranslation()
-  return (
-    <section className="flex flex-col gap-1 rounded-[24px] border border-night-line bg-night p-3 text-paper">
-      <SoundSwitch on={coach.voice} onLabel={t('coach.voiceOn')} offLabel={t('coach.voiceOff')} help={t('coach.voiceHelp')} onChange={coach.setVoice} />
-      {coach.voice && !coach.speaks && <p className="px-1 text-sm text-night-ink">{t('coach.voiceTextOnly')}</p>}
-      <SoundSwitch on={coach.finishSound} onLabel={t('coach.finishOn')} offLabel={t('coach.finishOff')} help={t('coach.finishHelp')} onChange={coach.setFinishSound} />
-    </section>
   )
 }
 
@@ -228,7 +203,7 @@ export function FinishCelebration({ completed, target, romDegrees, saving, allSa
 
   const Icon = reached ? StarIcon : CheckCircleIcon
   return (
-    <section className="flex min-h-[420px] w-full max-w-[640px] flex-col items-center justify-center gap-3.5 rounded-[24px] bg-night p-6 text-center text-paper">
+    <section className="flex min-h-[420px] w-full flex-col items-center justify-center gap-3.5 rounded-[24px] bg-night p-6 text-center text-paper">
       <motion.span aria-hidden initial={reduced ? false : { scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}>
         <Icon weight="fill" className="size-28 text-sprout-bright" />
       </motion.span>

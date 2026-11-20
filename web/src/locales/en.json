@@ -8,7 +8,7 @@
   "nav": { "exerciseSession": "Exercise session", "cameraCheck": "Camera check",
     "messages": "Messages", "messagesUnread_one": "Messages, {{shown}} unread", "messagesUnread_other": "Messages, {{shown}} unread",
     "workspace": { "admin": "Administration", "therapist": "Therapist workspace", "scheduler": "Scheduling", "patient": "Your care" },
-    "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
+    "collapse": "Collapse menu", "expand": "Expand menu", "main": "Main", "home": "Home", "patients": "Patients", "exercises": "Exercises", "progress": "Progress", "overview": "Overview", "accounts": "Accounts",
     "links": "Links", "catalogue": "Catalogue", "activity": "Activity", "skip": "Skip to content", "breadcrumbs": "You are here",
     "footer": "Footer", "footerNote": "Development prototype. Movement measurements require professional validation.",
     "book": "Book",

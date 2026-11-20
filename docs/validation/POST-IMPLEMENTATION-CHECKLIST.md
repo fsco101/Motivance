@@ -352,6 +352,7 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] #141: Run one 15-minute web session on a laptop and on a phone browser. Watch FPS, latency, the tab's memory and the device's heat, and note any slow-camera warning or pause.
 - [ ] #141: Record one real exercise session as a video, play it through Chrome's fake camera and through Android (`scripts/compare_recorded_exercise.py`, with the frames replaced), and compare counts and ranges. The recorded regression uses a drawn figure, so it shows the two apps agree, not that either is accurate on a real body.
 - [ ] #141: Ask a therapist to compare web and phone results for the same patient movement, with both apps watching the same exercise, and to say whether the counts, ranges and coaching match.
+- [ ] #149: On a real laptop, stand two and three metres from the screen in exercise mode. Confirm a patient can read the count and the instruction, sees each "Counted!" or "Not counted", and can use Space to pause and resume after walking up. Repeat in full screen, and on a phone browser propped up as a patient would.
 - [ ] #139: Close the tab with an unsaved recording and confirm the browser asks first. On a shared computer, confirm the downloaded file is where the patient expects and can be deleted.
 
 ## Recording results

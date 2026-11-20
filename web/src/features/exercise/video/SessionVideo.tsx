@@ -8,7 +8,6 @@ import { Notice, Panel } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { stopSharingVideo, type SessionVideo } from '@/data/sessionVideos'
 import { useFormat } from '@/features/shared'
-import { SoundSwitch } from '../coach/Coach'
 import type { SessionState } from '../session/controller'
 import { recordVideoConsent, shareRefusalKey, videoConsented, videoFileName } from './plan'
 import { prepareForSharing, shareDraft } from './prepare'
@@ -61,18 +60,6 @@ export function useSessionRecording(state: SessionState, record: boolean, suppor
   useEffect(() => () => { recorder.current?.cancel(); recorder.current = null }, [])
   useEffect(() => () => { if (video) URL.revokeObjectURL(video.url) }, [video])
   return { recorder, live, video, finishing, failed }
-}
-
-/** "Record this session", off until the patient turns it on, before the session starts (RecordChoice on Android). */
-export function RecordChoice({ on, support, onChange }: { on: boolean; support: RecordingSupport | undefined; onChange: (on: boolean) => void }) {
-  const { t } = useTranslation()
-  if (support === undefined) return null
-  if (support === null) return <p className="rounded-[24px] border border-night-line bg-night p-4 text-sm text-night-ink">{t('recording.unsupported')}</p>
-  return (
-    <section className="rounded-[24px] border border-night-line bg-night p-3 text-paper">
-      <SoundSwitch on={on} onLabel={t('recording.record')} offLabel={t('recording.record')} help={t('recording.recordDetail')} onChange={onChange} />
-    </section>
-  )
 }
 
 /** The recording's own agreement, apart from movement summaries, asked the first time recording is turned on. */
