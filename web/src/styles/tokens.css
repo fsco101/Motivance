@@ -127,11 +127,12 @@
 }
 
 /* The graduated edge of the rail, read like the scale on a goniometer. */
+/* Quiet on purpose: finer and fainter than the labels beside it, so it reads as texture, not as content (#147). */
 @utility graduated {
   background-image:
-    repeating-linear-gradient(to bottom, var(--color-night-line) 0 1px, transparent 1px 8px),
-    repeating-linear-gradient(to bottom, var(--color-night-ink) 0 1px, transparent 1px 40px);
-  background-size: 7px 100%, 13px 100%;
+    repeating-linear-gradient(to bottom, color-mix(in srgb, var(--color-night-line) 70%, transparent) 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(to bottom, color-mix(in srgb, var(--color-night-ink) 35%, transparent) 0 1px, transparent 1px 40px);
+  background-size: 4px 100%, 8px 100%;
   background-position: right, right;
   background-repeat: no-repeat;
 }

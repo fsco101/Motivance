@@ -1,11 +1,11 @@
-import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
+import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDoubleLeftIcon, CaretDoubleRightIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
-import type { ReactNode } from 'react'
+import { useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useMatches } from 'react-router'
 import type { Workspace } from '@/auth/roles'
-import { Avatar } from '@/components/Display'
+import { Avatar, Tooltip } from '@/components/Display'
 import { cn } from '@/lib/cn'
 import { spring } from '@/motion/tokens'
 import { LanguageSwitch } from './LanguageSwitch'
@@ -46,40 +46,77 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
   ],
 }
 
+const SIDEBAR_KEY = 'motivance.sidebar'
+const readCollapsed = () => { try { return window.localStorage.getItem(SIDEBAR_KEY) === 'collapsed' } catch { return false } }
+const WIDE_QUERY = '(min-width: 64rem)'
+const subscribeWide = (changed: () => void) => {
+  const list = window.matchMedia(WIDE_QUERY)
+  list.addEventListener('change', changed)
+  return () => list.removeEventListener('change', changed)
+}
+/** True on a window wide enough for the sidebar's labels. Narrower windows fold it to icons by themselves. */
+const useWideWindow = () => useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE_QUERY).matches, () => true)
+
 /**
- * The sidebar keeps the goniometer's graduated edge, and a needle marks where you are. On a narrow window it folds to icons,
- * and the labels stay for screen readers.
+ * The sidebar keeps the goniometer's graduated edge, and a needle marks where you are. The person can fold it to icons with
+ * the button at its foot, and it stays folded in this browser; a narrow window folds it by itself. Folded, each icon names
+ * itself in a tooltip, and the labels stay for screen readers.
  */
 function Sidebar({ workspace, base }: { workspace: Workspace; base: string }) {
   const { t } = useTranslation()
+  const [collapsed, setCollapsed] = useState(readCollapsed)
+  const wideWindow = useWideWindow()
+  const open = wideWindow && !collapsed
+  const toggle = () => {
+    const next = !collapsed
+    setCollapsed(next)
+    try { window.localStorage.setItem(SIDEBAR_KEY, next ? 'collapsed' : 'open') } catch { /* The choice then lasts for this page only. */ }
+  }
+  // The tooltip sits on a wrapper, because a link's class is a function of whether it is the current page, which the tooltip
+  // cannot merge into. Focus reaches the wrapper from the link inside, so keyboard users get the name too.
+  const named = (label: string, element: ReactElement) => (open ? element : <Tooltip label={label} side="right"><span className="block">{element}</span></Tooltip>)
   return (
     <div className={cn('bg-ink', workspace === 'patient' && 'hidden tablet:block')}>
-      <nav aria-label={t('nav.main')} className="on-dark graduated sticky top-0 flex h-dvh w-16 flex-col text-night-ink desk:w-60">
-        <Link to={base} aria-label={`Motivance, ${t('nav.home')}`} className="flex h-14 shrink-0 items-center gap-2.5 px-3.5 desk:px-5">
+      <nav aria-label={t('nav.main')} className={cn('on-dark graduated sticky top-0 flex h-dvh flex-col text-night-ink transition-[width] duration-200 motion-reduce:transition-none', open ? 'w-60' : 'w-16')}>
+        <Link to={base} aria-label={`Motivance, ${t('nav.home')}`} className={cn('flex h-14 shrink-0 items-center gap-2.5', open ? 'px-5' : 'px-3.5')}>
           <img src="/logo-96.png" alt="" width={30} height={30} className="rounded-md" />
-          <span className="hidden font-display text-lg font-bold text-paper desk:block">Motivance</span>
+          {open && <span className="font-display text-lg font-bold text-paper">Motivance</span>}
         </Link>
-        <p className="hidden px-5 pb-2 pt-4 text-xs font-semibold desk:block">{t(`nav.workspace.${workspace}`)}</p>
-        <ul className="mt-3 flex flex-col gap-0.5 pl-2 pr-4 desk:mt-0 desk:pl-3 desk:pr-5">
+        {open && <p className="px-5 pb-2 pt-4 text-xs font-semibold">{t(`nav.workspace.${workspace}`)}</p>}
+        <ul className={cn('flex flex-col gap-0.5', open ? 'pl-3 pr-5' : 'mt-3 pl-2 pr-4')}>
           {NAV[workspace].map((item) => (
             <li key={item.label}>
-              <NavLink to={item.path ? `${base}/${item.path}` : base} end={item.end}
-                className={({ isActive }) => cn('relative flex h-10 items-center justify-center gap-3 rounded-control text-sm font-semibold transition-colors transition-quick desk:justify-start desk:px-3', isActive ? 'bg-night-panel text-paper' : 'hover:bg-night-panel/60 hover:text-paper')}>
-                {({ isActive }) => (
-                  <>
-                    <item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="shrink-0 text-xl" />
-                    <span className="sr-only desk:not-sr-only">{t(item.label)}</span>
-                    {isActive && (
-                      <motion.span layoutId="rail-needle" transition={spring.needle} aria-hidden className="absolute -right-4 top-[calc(50%-1px)] flex h-0.5 w-4 items-center bg-sprout-bright desk:-right-5 desk:w-5">
-                        <span className="-ml-1 size-2 rounded-full bg-sprout-bright" />
-                      </motion.span>
-                    )}
-                  </>
-                )}
-              </NavLink>
+              {named(t(item.label), (
+                <NavLink to={item.path ? `${base}/${item.path}` : base} end={item.end}
+                  className={({ isActive }) => cn('relative flex h-10 items-center gap-3 rounded-control text-sm font-semibold transition-colors transition-quick', open ? 'justify-start px-3' : 'justify-center', isActive ? 'bg-night-panel text-paper' : 'hover:bg-night-panel/60 hover:text-paper')}>
+                  {({ isActive }) => (
+                    <>
+                      <item.icon weight={isActive ? 'fill' : 'regular'} aria-hidden className="shrink-0 text-xl" />
+                      <span className={open ? undefined : 'sr-only'}>{t(item.label)}</span>
+                      {/* Folding swaps the needle rather than sliding it, because the sidebar is changing width while it would measure. */}
+                      {isActive && (
+                        <motion.span layoutId={open ? 'rail-needle' : 'rail-needle-folded'} transition={spring.needle} aria-hidden className={cn('absolute top-[calc(50%-1px)] flex h-0.5 items-center bg-sprout-bright', open ? '-right-5 w-5' : '-right-4 w-4')}>
+                          <span className="-ml-1 size-2 rounded-full bg-sprout-bright" />
+                        </motion.span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              ))}
             </li>
           ))}
         </ul>
+        {wideWindow && (
+          <div className={cn('mt-auto pb-4', open ? 'pl-3 pr-5' : 'pl-2 pr-4')}>
+            {named(t('nav.expand'), (
+              <button type="button" onClick={toggle} aria-expanded={open} aria-label={t(open ? 'nav.collapse' : 'nav.expand')}
+                className={cn('flex h-10 w-full items-center gap-3 rounded-control text-sm font-semibold transition-colors transition-quick hover:bg-night-panel/60 hover:text-paper', open ? 'justify-start px-3' : 'justify-center')}>
+                {open ? <CaretDoubleLeftIcon aria-hidden className="shrink-0 text-xl" /> : <CaretDoubleRightIcon aria-hidden className="shrink-0 text-xl" />}
+                {open && <span>{t('nav.collapse')}</span>}
+              </button>
+            ))}
+          </div>
+        )}
       </nav>
     </div>
   )

@@ -122,12 +122,12 @@ export function Panel({ title, description, action, toolbar, footer, flush, chil
   )
 }
 
-export function Tooltip({ label, children }: { label: string; children: ReactNode }) {
+export function Tooltip({ label, side, children }: { label: string; side?: 'top' | 'right' | 'bottom' | 'left'; children: ReactNode }) {
   return (
     <RadixTooltip.Root delayDuration={250}>
       <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
       <RadixTooltip.Portal>
-        <RadixTooltip.Content sideOffset={6} className="z-50 max-w-64 rounded-md bg-ink px-2.5 py-1.5 text-sm text-paper shadow-float">{label}</RadixTooltip.Content>
+        <RadixTooltip.Content side={side} sideOffset={6} className="z-50 max-w-64 rounded-md bg-ink px-2.5 py-1.5 text-sm text-paper shadow-float">{label}</RadixTooltip.Content>
       </RadixTooltip.Portal>
     </RadixTooltip.Root>
   )
