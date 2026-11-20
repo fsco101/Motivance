@@ -259,7 +259,8 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, chi
       <div className={cn('grid min-h-dvh tablet:h-dvh tablet:overflow-hidden', exercising ? 'grid-cols-1' : 'grid-cols-[auto_minmax(0,1fr)]')}>
         {/* Pinned as well, for a phone, where the whole window scrolls. */}
         <div className={cn('sticky top-0 h-dvh self-start', frame)}><Sidebar workspace={workspace} base={base} /></div>
-        <div ref={scroller} data-scroll="page" className="scroll-area flex min-w-0 flex-col tablet:overflow-y-auto">
+        {/* Positioned, so hidden text placed for screen readers stays inside the page area instead of stretching the window. */}
+        <div ref={scroller} data-scroll="page" className="scroll-area relative flex min-w-0 flex-col tablet:overflow-y-auto">
           <div className={cn('sticky top-0 z-30 border-b border-line bg-paper px-5 desk:px-7', frame)}>
             <div className={cn(CONTENT_WIDTH, 'flex h-14 items-center justify-between gap-4')}>
               <Breadcrumbs />

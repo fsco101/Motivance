@@ -205,6 +205,15 @@ test('a long page scrolls beside the sidebar, which stays the full height of the
   await expect.poll(() => area.evaluate((element) => element.scrollTop)).toBe(0)
 })
 
+test('only the page area scrolls: nothing stretches the window below the page (Progress had a hidden caption that did)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 800 })
+  for (const path of ['/design/patient/progress', '/design/therapist/progress', '/design/therapist/patients/p1', '/design/admin/activity']) {
+    await page.goto(path)
+    await expect(page.locator('#main h1').first()).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollHeight), path).toBeLessThanOrEqual(800)
+  }
+})
+
 test('on a phone the whole window scrolls, as phones expect', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 700 })
   await page.goto('/design/patient/progress')
