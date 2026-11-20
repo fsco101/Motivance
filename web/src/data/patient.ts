@@ -14,6 +14,17 @@ export type MyExercise = {
   low: number; high: number; repetitions: number; focus: string | null; version: number
   /** The time for each side, or null without one. */
   sideSeconds: number | null
+  /** The joint the exercise measures, for its guide figure; null for an exercise the web cannot show. */
+  joint: string | null
+}
+
+const JOINTS = ['SHOULDER', 'ELBOW', 'WRIST', 'HIP', 'KNEE', 'ANKLE']
+/** The joint each built-in exercise measures; a therapist's own exercise names its own (as session/rules.ts reads them). */
+function measuredJoint(algorithm: string, definition: Record<string, unknown>) {
+  if (algorithm === 'elbow-flexion-v1') return 'ELBOW'
+  if (algorithm === 'shoulder-abduction-v1') return 'SHOULDER'
+  if (algorithm === 'joint-angle-v1' && typeof definition.measured_joint === 'string' && JOINTS.includes(definition.measured_joint)) return definition.measured_joint
+  return null
 }
 
 const PLAN_SELECT = 'id,prescription_versions(id,version,parameters,side,minimum_degrees,maximum_degrees,target_repetitions,exercise_versions(id,algorithm_key,definition))'
@@ -41,6 +52,7 @@ export function decodeExercises(rows: readonly RawPlan[], language: string): MyE
       side: latest.side, low: latest.minimum_degrees, high: latest.maximum_degrees, repetitions: latest.target_repetitions,
       focus: text(parameters.focus_joint) || null, version: latest.version,
       sideSeconds: typeof parameters.side_seconds === 'number' ? parameters.side_seconds : null,
+      joint: measuredJoint(latest.exercise_versions.algorithm_key, definition),
     }]
   })
 }

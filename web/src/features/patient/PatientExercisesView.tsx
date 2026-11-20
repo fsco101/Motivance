@@ -7,13 +7,24 @@ import { EmptyState, PageHeader, Panel, StatusPill } from '@/components/Display'
 import type { TodayPlan } from '@/data/exerciseSchedule'
 import type { MyExercise } from '@/data/patient'
 import { clock } from '@/data/therapist'
+import { BODY_JOINTS, type BodyJoint } from '@/features/exercise/assessment'
+import { GuideStage } from '@/features/exercise/guide/ExerciseGuide'
+import { guideMotion } from '@/features/exercise/guide/rig'
 import { Loadable, SkeletonCards, useFormat, type Load } from '@/features/shared'
+
+/** The model person doing this exercise through its prescribed range, as Android's lists show it (#150). */
+function exerciseMotion(exercise: MyExercise) {
+  if (!exercise.joint || !BODY_JOINTS.includes(exercise.joint as BodyJoint)) return null
+  return guideMotion(exercise.joint as BodyJoint, exercise.side === 'right' ? 'RIGHT' : 'LEFT', exercise.name, exercise.low, exercise.high)
+}
 
 function ExerciseCard({ exercise, onStart }: { exercise: MyExercise; onStart: () => void }) {
   const { t } = useTranslation()
   const side = t(`common.${exercise.side}`, exercise.side)
+  const motion = exerciseMotion(exercise)
   return (
-    <Panel title={exercise.name} description={side}>
+    <Panel title={exercise.name} description={side} className="flex h-full flex-col">
+      {motion && <GuideStage motion={motion} name={exercise.name} className="mb-4 h-52" />}
       <RangeBar low={exercise.low} high={exercise.high} />
       <div className="mt-3 flex flex-wrap gap-2">
         <StatusPill tone="positive">{t('patient.rangeValue', { low: exercise.low, high: exercise.high })}</StatusPill>
@@ -51,7 +62,7 @@ export function PatientExercisesView({ load, base, onStart, onCamera }: { load: 
           : plan.state !== 'exercise' ? <Panel><TodayNotice plan={plan} /></Panel> : (
             <>
               {plan.due > 1 && <p role="status" className="mb-4 font-semibold text-lagoon-deep">{t('patient.todayDone', { done: plan.done, total: plan.due })}</p>}
-              <div className="grid items-start gap-5 desk:grid-cols-2">{plan.todo.map((exercise) => <ExerciseCard key={exercise.versionId} exercise={exercise} onStart={() => onStart(exercise)} />)}</div>
+              <div className="grid gap-5 tablet:grid-cols-2 wide:grid-cols-3">{plan.todo.map((exercise) => <ExerciseCard key={exercise.versionId} exercise={exercise} onStart={() => onStart(exercise)} />)}</div>
             </>
           )}
       </Loadable>

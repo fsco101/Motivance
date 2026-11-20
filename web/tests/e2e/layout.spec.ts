@@ -121,3 +121,21 @@ test('a tablet or wider keeps the breadcrumb and the language switch in the head
   await expect(trail.getByRole('link', { name: 'Patients' })).toBeVisible()
   await expect(page.getByRole('group', { name: 'Language' })).toBeVisible()
 })
+
+test('patient Exercises is a card grid, each card showing its own movement and range (#150)', async ({ page }) => {
+  for (const [width, columns] of [[390, 1], [820, 2], [1600, 3]] as const) {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.goto('/design/patient/exercises')
+    await expect(page.getByRole('img', { name: 'Animated guide: Elbow flexion, moving between 20° and 120°.' })).toBeVisible()
+    await expect(page.getByRole('img', { name: 'Animated guide: Shoulder abduction, moving between 15° and 90°.' })).toBeVisible()
+    const grid = await page.locator('#main .grid').filter({ has: page.getByRole('button', { name: 'Start exercise' }) }).last()
+      .evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length)
+    expect(grid, `${width} px`).toBe(columns)
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
+    expect(results.violations.map((v) => v.id), `${width} px`).toEqual([])
+  }
+  // With reduced motion the figures hold still, with nothing to pause.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect(page.getByRole('img', { name: /Animated guide: Elbow flexion/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /the guide$/ })).toHaveCount(0)
+})
