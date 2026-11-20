@@ -54,8 +54,11 @@ describe('guardFetch', () => {
 })
 
 describe('cameraSupport', () => {
-  const capable = { isSecureContext: true, WebAssembly: {}, navigator: { mediaDevices: { getUserMedia: () => undefined } }, createImageBitmap: () => undefined }
-  it('accepts a browser with a secure page, camera access, WebAssembly and image bitmaps', () => {
+  const capable = {
+    isSecureContext: true, WebAssembly: {}, navigator: { mediaDevices: { getUserMedia: () => undefined } }, createImageBitmap: () => undefined,
+    HTMLVideoElement: { prototype: { requestVideoFrameCallback: () => 0 } },
+  }
+  it('accepts a browser with a secure page, camera access, WebAssembly, image bitmaps and video frame callbacks', () => {
     expect(cameraSupport(capable)).toEqual({ ok: true })
   })
   it('names what is missing', () => {
@@ -63,6 +66,8 @@ describe('cameraSupport', () => {
     expect(cameraSupport({ ...capable, navigator: {} })).toEqual({ ok: false, reason: 'no-camera' })
     expect(cameraSupport({ ...capable, WebAssembly: undefined })).toEqual({ ok: false, reason: 'unsupported' })
     expect(cameraSupport({ ...capable, createImageBitmap: undefined })).toEqual({ ok: false, reason: 'unsupported' })
+    // The frame loop runs on each new video frame, so a browser without the callback cannot measure.
+    expect(cameraSupport({ ...capable, HTMLVideoElement: { prototype: {} } })).toEqual({ ok: false, reason: 'unsupported' })
   })
 })
 

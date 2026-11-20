@@ -203,3 +203,29 @@ What the browser test checked:
 - **Frame rate.** FPS was the same before and during recording: 19.5 and 19.8, then 19.4 and 19.8. The slow-camera warning never showed. This is a spot check in headless Chromium with the scripted body, not MediaPipe on real hardware.
 
 **Not run:** recording and sharing in real browsers, including Safari and Firefox, which take the other recording paths. Also not run: a recording longer than five minutes made in a real session, and the therapist watching a web video on Android. All are in the checklist.
+
+## #140 Decisions, privacy text and documentation
+
+**Decisions recorded.** `docs/PLAN.md` (Web workspace) records the owner's three-part decision of 2026-11-19 and the supported browsers. `docs/architecture/BOOKING.md` and `WEB-DESIGN.md` no longer say the exercise stays on the phone, and `UI-UX.md` points to them. `sprints/sprint-09.json` keeps S9's historical scope, with a note on MOT-52 that it was superseded.
+
+**Dependencies and tools.** The `PLAN.md` dependency table has rows for `@mediapipe/tasks-vision` 1.2.3, with the model's source, SHA-256 and pending review, and for `mediabunny` 1.65.2. A new table lists each browser tool the camera relies on and what happens without it. The architecture diagram has the web branch: browser camera, MediaPipe in a Worker, the same quality gate, the TypeScript engine, canvas and React coaching, and saving directly.
+
+**Code change found while writing the table.** The frame loop needs `requestVideoFrameCallback`, but the support check did not ask for it. A browser without it would have failed after opening the camera. It now gets the "use another browser or the phone" dialog at once, and a unit test covers this.
+
+**Patient text, in English and Filipino:**
+
+- The landing page's lead, the exercise card and the privacy section now say exercises run in the Android app or a current browser, and that camera frames stay on the device in both. The privacy section also says where each kind of recording stays.
+- Sign-up point 4 covers recording in the browser.
+- The fallback dialog is now "Use another browser or your phone".
+- Withdrawing consent no longer says to agree again "on your phone".
+
+**Operations.** `docs/operations/DATA-LIFECYCLE.md` has a table for web recordings: the tab, a download, the agreement in local storage, and the shared copy. `docs/operations/DEVELOPMENT.md` explains how to run and test the web camera, including the fake camera and the scripted body.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Text parity | `npx vitest run --project unit src/locales` | 7 of 7 |
+| Landing in both languages, axe | `npx playwright test landing --workers=1` | 10 of 10 |
+| Patient pages, including the fallback dialog in a browser without a camera | `npx playwright test patient --workers=1` | 13 of 13 |
+| Sprint records | `python scripts/sync_sprints.py --validate-only`, `python scripts/test_sync_sprints.py` | Valid; OK |
+| Model copies | `python scripts/check_pose_model.py` | Match `59929e1d1ee9…` |
+| Web | `npm test`, `npm run lint`, `npm run build` | 35 files, 406 tests; 0 warnings; built |

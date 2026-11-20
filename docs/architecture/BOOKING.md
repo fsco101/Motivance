@@ -6,7 +6,7 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 
 ## What this changes
 
-- **Patients get the whole app on the web, except the camera.** The earlier design sent a patient who signed in on the web to a "use the mobile app" page. Patients now have a full web workspace with everything they can do on Android. Only the camera exercise suggests moving to the phone.
+- **Patients get the whole app on the web.** The earlier design sent a patient who signed in on the web to a "use the mobile app" page. Patients now have a full web workspace with everything they can do on Android. Until 2026-11-19 the camera exercise stayed on the phone. The owner then decided the web gets it too, with the same features and results (epic #142; see [PLAN.md](../PLAN.md#web-workspace)). Only a browser that cannot run the camera still suggests another browser or the phone.
 - **The web has sign-up.** Registration existed only on Android.
 - **A fourth role exists.** Android parsed roles with `UserRole.valueOf`, which throws on a role it does not know, so that had to change before any account could hold the new role.
 
@@ -21,7 +21,7 @@ Supabase remains the only backend, so "endpoints" here are database functions ca
 
 ## Decisions
 
-- **What stays on the phone.** The exercise session and the camera check need the camera. Local history and Sync now describe what is stored on that phone, so they have no meaning on the web.
+- **What stays on the phone.** Local history and Sync describe what is stored on that phone, so they have no meaning on the web. A web session saves directly to the server instead.
 - **Withdrawing consent on the web reaches the phone.** Android trusts its own last consent record, so after a web withdrawal it would reuse the old grant, and the server would reject that session on upload. Android reads the server's latest consent when it refreshes, so it asks again.
 - **Every session has a specific time.** A patient chooses a time slot, not just a day, and a Scheduler who reschedules picks another specific slot. Each session has a start and end time, such as 9:00-10:00 AM, in the center's time zone. My Schedule lays out the chosen date by time across the center's opening hours. The same start and end time appear on My bookings, the Scheduler's tables, notifications, emails and exports.
 - **My Schedule shows only what a Scheduler has confirmed.** That means confirmed and rescheduled sessions. Requests still waiting, and rejected or cancelled ones, stay on the patient's My bookings page. A therapist sees only sessions assigned to them, with the patient's name, time and reference number. Opening the patient's record still needs the existing therapist-patient link, so a booking alone grants no access to clinical data.

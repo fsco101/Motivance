@@ -8,7 +8,7 @@ Before creating a prescribed session checkpoint the app records an owner-scoped 
 
 Withdrawal stops new collection under the prior grant. A new session needs a new explicit grant; server ingestion rejects sessions extending past a withdrawal under the old grant. Records completed before withdrawal remain available to their patient. The UI offers export/deletion requests independently of camera permission and consent withdrawal.
 
-No app feature stores raw camera frames or per-frame pose sequences, and nothing records video unless the patient turns on Record this session (below). SQLite holds aggregate results, versioned targets, instructions and consent/outbox state. Device backup/transfer is excluded. Sign-out deletes the encrypted token file and prescription cache, interrupts drafts and retains owner-scoped results/outbox so an unsent result is not silently lost. A different account cannot upload those records. Keystore protects tokens; Room aggregate data is app-private but not encrypted by Room.
+No app feature stores raw camera frames or per-frame pose sequences, on the phone or in the browser, and nothing records video unless the patient turns on Record this session (below). In the web app, MediaPipe runs inside the browser, so frames and landmarks never leave the device there either; a web session sends only the summary the patient agreed to, as the phone does. SQLite holds aggregate results, versioned targets, instructions and consent/outbox state. Device backup/transfer is excluded. Sign-out deletes the encrypted token file and prescription cache, interrupts drafts and retains owner-scoped results/outbox so an unsent result is not silently lost. A different account cannot upload those records. Keystore protects tokens; Room aggregate data is app-private but not encrypted by Room.
 
 ## Session videos (#114)
 
@@ -23,6 +23,17 @@ A patient can turn on **Record this session** before an exercise. It is off for 
 | A copy shared with the therapist (#129) | Made smaller on the phone (480p, about 500 kbps, the first five minutes), then the private bucket `session-videos`, with a row in `session_videos` | 15 days from sharing, or at once when the patient stops sharing. After that no link is issued, and `scripts/cleanup_chat_media.py` removes the file. The phone's gallery copy is not affected |
 
 Before Android 10 the gallery is a shared folder, so the app asks for the storage permission (declared only up to Android 9) when recording is turned on there.
+
+**Session videos in the web app (#139).** The patient turns recording on and agrees in the same way. The browser cannot save to a gallery, so by the owner's decision (2026-11-20) the video lives only in the open tab:
+
+| What | Where | How long |
+| --- | --- | --- |
+| The video: the camera picture with the skeleton, the angle and a caption, as the patient saw it | The browser's memory for that tab | Until the patient leaves the page or closes the tab. The page asks first while it is neither downloaded nor shared |
+| A downloaded copy | Wherever the browser saves downloads on that device | The patient's own file, to keep or delete. The agreement reminds them to delete it on a shared computer |
+| The recording agreement | The browser's local storage, per account (`motivance.video.consent:<account>`) | Until the browser's site data is cleared; a pointer only, never the video |
+| A copy shared with the therapist | Made smaller in the browser (480p, about 500 kbps, the first five minutes), then the same `session-videos` bucket and `session_videos` row as a phone's | As for a phone's: 15 days, or until the patient stops sharing |
+
+The browser's voice and sound switches are kept in local storage too. They hold no health data.
 
 **Sharing a session video with the therapist (#129).** Nothing leaves the phone until the patient chooses, for one session, "Let my therapist see it". The app then says what happens, before anything is sent: a smaller copy goes to the therapist whose exercise it was, who can watch it for 15 days, after which it is deleted from the server. The phone's copy stays, and the patient can stop sharing at any time from the result or from their history, on Android or the web. Only the patient and that therapist, while their link is active, can read the row or get a link to the file; another therapist, a Scheduler and an administrator cannot. A link to watch lasts five minutes. Uploads are limited to five an hour per patient, 20 MB per video and 200 KB per still, all enforced by the server. An upload never shared within an hour is removed like an expired one.
 
