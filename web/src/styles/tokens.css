@@ -143,6 +143,13 @@
   }
 }
 
+/* The page's own scrollbar beside the sidebar: slim and quiet, with its room kept so a page never shifts when it grows long. */
+@utility scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+  scrollbar-gutter: stable;
+}
+
 @utility numeric {
   font-family: var(--font-display);
   font-optical-sizing: auto;
