@@ -35,6 +35,15 @@ test.describe('with the camera allowed', () => {
 
     await page.getByRole('button', { name: 'Finish camera check' }).click()
     await expect(page.getByRole('heading', { name: 'Camera check finished' })).toBeVisible()
+    // A narrow page centres its title and content together on a wide screen (#146).
+    await page.setViewportSize({ width: 1920, height: 900 })
+    const narrow = await page.evaluate(() => {
+      const box = document.querySelector('#main [data-width="narrow"]')!.getBoundingClientRect()
+      const sidebar = document.querySelector('nav[aria-label="Main"]')!.getBoundingClientRect()
+      return { left: Math.round(box.left - sidebar.right), right: Math.round(document.documentElement.clientWidth - box.right), width: Math.round(box.width) }
+    })
+    expect(Math.abs(narrow.left - narrow.right), JSON.stringify(narrow)).toBeLessThanOrEqual(1)
+    expect(narrow.width).toBeLessThanOrEqual(768)
     await expect(page.getByText('Camera preview only. No exercise measurements are recorded.')).toBeVisible()
   })
 

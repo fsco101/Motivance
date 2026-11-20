@@ -3,10 +3,10 @@ import { expect, test, type Page } from '@playwright/test'
 
 /**
  * The workspace frame on wide screens (#146): the content is centred beside the sidebar, so the margins on either side are equal at
- * any width, and a narrow page centres its header and content together. Runs on the design gallery, which needs no account.
+ * any width. A narrow page centring its header and content together is checked on the camera check's last screen
+ * (camera-check.spec.ts). Runs on the design gallery, which needs no account.
  */
-const WIDE = ['/design/patient', '/design/patient/exercises', '/design/patient/progress', '/design/therapist', '/design/therapist/patients/p1', '/design/scheduler', '/design/admin/accounts']
-const NARROW = ['/design/patient/camera-check']
+const WIDE = ['/design/patient', '/design/patient/exercises', '/design/patient/progress', '/design/patient/camera-check', '/design/therapist', '/design/therapist/patients/p1', '/design/scheduler', '/design/admin/accounts']
 
 /** The gaps between the content and the space it sits in: from the sidebar's edge on the left, to the window's edge on the right. */
 async function gaps(page: Page, selector: string) {
@@ -22,7 +22,7 @@ async function gaps(page: Page, selector: string) {
 for (const width of [1440, 1920, 2560]) {
   test(`content has the same margin on both sides at ${width} px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 })
-    for (const path of [...WIDE, ...NARROW]) {
+    for (const path of WIDE) {
       await page.goto(path)
       await expect(page.locator('#main h1').first()).toBeVisible()
       const content = await gaps(page, '#main > div')
@@ -30,13 +30,6 @@ for (const width of [1440, 1920, 2560]) {
       // The header and footer line up with the content.
       const header = await page.locator('div.h-14', { has: page.getByRole('navigation', { name: 'You are here' }) }).boundingBox()
       expect(Math.round(header!.x), path).toBe(Math.round((await page.locator('#main > div').boundingBox())!.x))
-    }
-    for (const path of NARROW) {
-      await page.goto(path)
-      await expect(page.locator('#main h1').first()).toBeVisible()
-      const narrow = await gaps(page, '#main [data-width="narrow"]')
-      expect(Math.abs(narrow.left - narrow.right), `${path}: ${JSON.stringify(narrow)}`).toBeLessThanOrEqual(1)
-      expect(narrow.width).toBeLessThanOrEqual(768)
     }
   })
 }

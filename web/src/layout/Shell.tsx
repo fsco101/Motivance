@@ -9,6 +9,7 @@ import { Avatar, Tooltip } from '@/components/Display'
 import { cn } from '@/lib/cn'
 import { spring } from '@/motion/tokens'
 import { setLanguage, type Language } from '@/locales/i18n'
+import { ExerciseModeContext } from './exerciseMode'
 import { LANGUAGES, LanguageSwitch } from './LanguageSwitch'
 
 type NavItem = { path: string; label: string; icon: Icon; end?: boolean; /** For the bottom bar, where a long label would be cut off. */ short?: string; /** Left off the bottom bar, which holds five. The pages around it link to it. */ wide?: boolean }
@@ -83,10 +84,10 @@ function Sidebar({ workspace, base }: { workspace: Workspace; base: string }) {
   const named = (label: string, element: ReactElement) => (open ? element : <Tooltip label={label} side="right"><span className="block">{element}</span></Tooltip>)
   return (
     <div className={cn('bg-ink', workspace === 'patient' && 'hidden tablet:block')}>
-      <nav aria-label={t('nav.main')} className={cn('on-dark graduated sticky top-0 flex h-dvh flex-col text-night-ink transition-[width] duration-200 motion-reduce:transition-none', open ? 'w-60' : 'w-16')}>
+      <nav aria-label={t('nav.main')} className={cn('on-dark graduated sticky top-0 flex h-dvh flex-col overflow-hidden text-night-ink transition-[width] duration-200 motion-reduce:transition-none', open ? 'w-60' : 'w-16')}>
         <Link to={base} aria-label={`Motivance, ${t('nav.home')}`} className={cn('flex h-14 shrink-0 items-center gap-2.5', open ? 'px-5' : 'px-3.5')}>
           <img src="/logo-96.png" alt="" width={30} height={30} className="rounded-md" />
-          {open && <span className="font-display text-lg font-bold text-paper">Motivance</span>}
+          {open && <span className="whitespace-nowrap font-display text-lg font-bold text-paper">Motivance</span>}
         </Link>
         {open && <p className="px-5 pb-2 pt-4 text-xs font-semibold">{t(`nav.workspace.${workspace}`)}</p>}
         <ul className={cn('flex flex-col gap-0.5', open ? 'pl-3 pr-5' : 'mt-3 pl-2 pr-4')}>
@@ -243,13 +244,17 @@ type Props = { workspace: Workspace; base: string; account: ShellAccount; onSwit
 /** The frame of both workspaces. It takes everything as props, so the design gallery runs the same frame on sample data. */
 export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, children }: Props) {
   const { t } = useTranslation()
+  const [exercising, setExercising] = useState(false)
+  // In exercise mode the frame is hidden, not unmounted, so the page in <main> keeps its place in the tree and its state.
+  const frame = exercising ? 'hidden' : undefined
   return (
+    <ExerciseModeContext.Provider value={setExercising}>
     <RadixTooltip.Provider>
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-20 focus:top-3 focus:z-50 focus:rounded-control focus:bg-paper focus:px-3 focus:py-2 focus:shadow-float">{t('nav.skip')}</a>
-      <div className="grid min-h-dvh grid-cols-[auto_minmax(0,1fr)]">
-        <Sidebar workspace={workspace} base={base} />
+      <a href="#main" className={cn('sr-only focus:not-sr-only focus:fixed focus:left-20 focus:top-3 focus:z-50 focus:rounded-control focus:bg-paper focus:px-3 focus:py-2 focus:shadow-float', frame)}>{t('nav.skip')}</a>
+      <div className={cn('grid min-h-dvh', exercising ? 'grid-cols-1' : 'grid-cols-[auto_minmax(0,1fr)]')}>
+        <div className={frame}><Sidebar workspace={workspace} base={base} /></div>
         <div className="flex min-w-0 flex-col">
-          <div className="sticky top-0 z-30 border-b border-line bg-paper px-5 desk:px-7">
+          <div className={cn('sticky top-0 z-30 border-b border-line bg-paper px-5 desk:px-7', frame)}>
             <div className={cn(CONTENT_WIDTH, 'flex h-14 items-center justify-between gap-4')}>
               <Breadcrumbs />
               <div className="flex shrink-0 items-center gap-3">
@@ -260,11 +265,14 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, chi
             </div>
           </div>
           {/* Centred, so a wide screen has the same margin on both sides; the header and footer line up with it. */}
-          <main id="main" tabIndex={-1} className="w-full flex-1 px-5 pb-12 pt-5 outline-none desk:px-7"><div className={CONTENT_WIDTH}>{children}</div></main>
-          <Footer clearBottomBar={workspace === 'patient'} />
+          <main id="main" tabIndex={-1} className={cn('w-full flex-1 outline-none', exercising ? 'bg-night' : 'px-5 pb-12 pt-5 desk:px-7')}>
+            <div className={exercising ? undefined : CONTENT_WIDTH}>{children}</div>
+          </main>
+          <div className={frame}><Footer clearBottomBar={workspace === 'patient'} /></div>
         </div>
       </div>
-      {workspace === 'patient' && <BottomBar workspace={workspace} base={base} />}
+      {workspace === 'patient' && <div className={frame}><BottomBar workspace={workspace} base={base} /></div>}
     </RadixTooltip.Provider>
+    </ExerciseModeContext.Provider>
   )
 }

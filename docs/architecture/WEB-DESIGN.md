@@ -95,7 +95,14 @@ Patients are often on a phone, so this is the one workspace built for one. Below
 
 The next exercise is the page's one bold element, because it is what a patient came to do. Starting it opens the exercise in the browser: setup with the moving guide figure, the camera, then the session. A browser that cannot run the camera gets a dialog suggesting another browser or the mobile app, with a store link and QR code once the app has an address.
 
-**The camera exercise (owner's decision, 2026-11-19; epic #142).** The camera pages use the dark session theme, as Android does: night ground, panel and mint for a reached range. The camera picture and skeleton are drawn on one canvas, from the same frame that was measured. The controls are React components with the web design system:
+**The camera exercise (owner's decision, 2026-11-19; epic #142).** On a laptop the patient stands two or three metres back so the camera sees their whole body, so while the camera is live (the session and the camera check) the page goes into **exercise mode** (#149). In exercise mode the workspace sidebar, header and footer step aside; they are hidden, not removed, so the session keeps its state. The exercise takes the whole window in the dark session theme:
+
+- a top bar with the exercise, its status, Full screen and Exit;
+- the camera picture with the skeleton, as large as the screen allows;
+- a panel beside it with the repetition count and the coach's instruction. Both are sized to read from across the room, at least three times body text: the count at `clamp(4.5rem, 9vw, 9rem)`, the instruction at `clamp(2.25rem, 4vw, 3.5rem)`;
+- one bar of controls at the bottom that never scrolls away.
+
+Space pauses or resumes for someone who walks up to the laptop, F toggles full screen, and the bar names both keys. "How repetitions are counted" opens in a dialog. Exit asks first while a side is being measured. At 1280 by 720 and wider nothing scrolls. On a phone the parts stack, and the bar follows the readings instead of covering them. Setup, the camera check's checklist and the results stay in the workspace, in two columns on a wide screen.
 
 - the coach;
 - Start, Pause and Finish;

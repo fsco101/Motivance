@@ -221,5 +221,18 @@
     "errorRate": "Marami ka nang naibahaging video sa nakaraang oras. Subukan muli mamaya.",
     "errorPrepare": "Hindi maihanda ng browser na ito ang video para maipadala. Maaari mo pa rin itong i-download.",
     "errorFailed": "Hindi naibahagi ang video. Suriin ang iyong koneksyon at subukan muli."
+  },
+  "mode": {
+    "exit": "Lumabas",
+    "fullscreen": "Buong screen",
+    "exitFullscreen": "Umalis sa buong screen",
+    "keys": "Mga key: Space para i-pause o ituloy, F para sa buong screen.",
+    "keysNoFullscreen": "Mga key: Space para i-pause o ituloy.",
+    "leaveTitle": "Umalis sa ehersisyong ito?",
+    "leaveDetail": "Titigil ang panig na sinusukat at hindi ito mase-save. Naka-save na ang mga panig na natapos mo.",
+    "leave": "Umalis",
+    "stay": "Ituloy ang ehersisyo",
+    "keysCheck": "Key: F para sa buong screen.",
+    "panel": "Bilang at gabay"
   }
 }
