@@ -25,7 +25,7 @@ function setup(rules: ExerciseRules, options: { failSaves?: number } = {}) {
     now: () => clock,
     wall: () => wall,
     uuid: () => `session-${++ids}`,
-    later: (run, ms) => { const timer = { at: clock + ms, run }; timers.push(timer); return () => { timers.splice(timers.indexOf(timer), 1) } },
+    later: (run, ms) => { const timer = { at: clock + ms, run }; timers.push(timer); return () => { const at = timers.indexOf(timer); if (at >= 0) timers.splice(at, 1) } },
   }
   const session = new SessionController(rules, deps)
   const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve() }
@@ -110,8 +110,10 @@ describe('SessionController', () => {
     await session.start(true)
     rep()
     await flush()
-    expect(session.state.switching).toMatchObject({ next: 'RIGHT', stage: 'counting', secondsLeft: 5 })
+    expect(session.state.switching).toMatchObject({ next: 'RIGHT', stage: 'announcing', secondsLeft: 5 })
     expect(saved.map((s) => s.rules.side)).toEqual(['LEFT'])
+    session.announced()
+    expect(session.state.switching).toMatchObject({ stage: 'counting', secondsLeft: 5 })
     await pass(5000)
     expect(session.state.switching).toMatchObject({ stage: 'waiting' })
     expect(session.state.rules.side).toBe('RIGHT')
@@ -125,6 +127,37 @@ describe('SessionController', () => {
     expect(saved.map((s) => [s.rules.side, s.sessionId])).toEqual([['LEFT', 'session-1'], ['RIGHT', 'session-2']])
     expect(deps.grantConsent).toHaveBeenCalledTimes(1)
     expect(session.state.sides.map((s) => s.side)).toEqual(['LEFT', 'RIGHT'])
+  })
+
+  it('waits for the next-side announcement before counting down, and counts anyway if the voice never says it is done', async () => {
+    const { session, ready, rep, flush, pass } = setup(prescribed({ bilateral: true, targetRepetitions: 1 }))
+    const cues: string[] = []
+    session.onCue((cue) => cues.push(cue.type === 'count' ? `count ${cue.n}` : cue.type))
+    ready()
+    await session.start(true)
+    rep()
+    await flush()
+    expect(cues).toEqual(['sideDone'])
+    await pass(5999)
+    expect(session.state.switching).toMatchObject({ stage: 'announcing' })
+    await pass(1)
+    expect(session.state.switching).toMatchObject({ stage: 'counting', secondsLeft: 5 })
+    session.announced()
+    await pass(5000)
+    expect(cues).toEqual(['sideDone', 'count 5', 'count 4', 'count 3', 'count 2', 'count 1', 'go'])
+    expect(session.state.switching).toMatchObject({ stage: 'waiting' })
+  })
+
+  it('counts down at once when the announcement is done straight away, as with the voice off', async () => {
+    const { session, ready, rep, flush, pass } = setup(prescribed({ bilateral: true, targetRepetitions: 1 }))
+    session.onCue((cue) => { if (cue.type === 'sideDone') session.announced() })
+    ready()
+    await session.start(true)
+    rep()
+    await flush()
+    expect(session.state.switching).toMatchObject({ stage: 'counting', secondsLeft: 5 })
+    await pass(5000)
+    expect(session.state.switching).toMatchObject({ stage: 'waiting' })
   })
 
   it('holds the countdown when paused and starts the next side on Start', async () => {

@@ -342,6 +342,10 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] #137: Do a both-sides set with a time per side in the browser. Confirm the left side ends on time or at the target, the countdown reads clearly and can be paused, and both sides appear in history.
 - [ ] #137: Switch off the network before finishing, finish, and confirm the result says it is not saved and offers Try again. Then reconnect, try again, and confirm the session is saved once.
 - [ ] #137: Apply `202611200001_session_client.sql` to the hosted project, then check that new phone sessions record `android` and web sessions record `web`.
+- [ ] #138: In Chrome, Edge, Safari and Firefox on a laptop, and in a phone browser, run a session with the voice on. Note the camera FPS in diagnostics with the voice off, then with it on during quick repetitions. Confirm speaking does not lower it, and that phrases never overlap.
+- [ ] #138: Switch the app to Filipino and confirm the browser speaks Filipino where it has a Filipino voice. Where it has none, confirm it speaks English, as Android does, and that a browser with no voice at all shows the cues as text.
+- [ ] #138: Listen to the finish tune and the finish line on laptop speakers and a phone, at both the target and short of it, and on the day's last exercise. Confirm sound off stays off after a reload.
+- [ ] #138: Turn on the system's reduce-motion setting and confirm the guide holds the target position and the celebration does not pop. Ask a therapist to compare each library exercise's web guide with Android's.
 
 ## Recording results
 

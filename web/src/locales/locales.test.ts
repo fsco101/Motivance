@@ -10,11 +10,12 @@ import fil from './fil.json'
 import landingEn from './landing.en.json'
 import landingFil from './landing.fil.json'
 
-type Tree = { [key: string]: string | Tree }
+/** Text, a list of alternatives (such as the spoken praise), or a section. */
+type Tree = { [key: string]: string | readonly string[] | Tree }
 
 function flatten(tree: Tree, prefix = ''): Record<string, string> {
   return Object.entries(tree).reduce<Record<string, string>>((all, [key, value]) => (
-    typeof value === 'string' ? { ...all, [prefix + key]: value } : { ...all, ...flatten(value, `${prefix}${key}.`) }
+    typeof value === 'string' ? { ...all, [prefix + key]: value } : { ...all, ...flatten(value as Tree, `${prefix}${key}.`) }
   ), {})
 }
 const placeholders = (text: string) => [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort()

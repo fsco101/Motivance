@@ -16,11 +16,12 @@ export interface SessionDeps {
   later: (run: () => void, ms: number) => () => void
 }
 
-export type SwitchStage = 'counting' | 'paused' | 'waiting'
+/** Announcing waits for the voice to say which side is next, so the countdown never talks over it (SwitchStage on Android). */
+export type SwitchStage = 'announcing' | 'counting' | 'paused' | 'waiting'
 export interface SideSwitch { next: BodySide; stage: SwitchStage; secondsLeft: number }
 export interface SideResult { side: BodySide; target: number; snapshot: AssessmentSnapshot }
 export interface SaveRecord { side: BodySide; sessionId: string; status: 'saving' | 'saved' | 'failed' }
-/** What the session says out loud apart from each repetition (SetCue on Android). Spoken by #138's voice. */
+/** What the session says out loud apart from each repetition (SetCue on Android). */
 export type SetCue = { type: 'targetReached' } | { type: 'sideDone'; done: BodySide; next: BodySide } | { type: 'count'; n: number } | { type: 'go' } | { type: 'complete' }
 
 export interface SessionState {
@@ -168,8 +169,19 @@ export class SessionController {
     }
     const nextRules = createRules({ ...rules, side: next })
     this.engine = new MovementAssessment(nextRules)
-    this.set({ rules: nextRules, snapshot: this.engine.snapshot, sides, sessionId: null, result: null, startRefused: false, switching: { next, stage: 'counting', secondsLeft: SIDE_SET.countdownSeconds } })
+    this.set({ rules: nextRules, snapshot: this.engine.snapshot, sides, sessionId: null, result: null, startRefused: false, switching: { next, stage: 'announcing', secondsLeft: SIDE_SET.countdownSeconds } })
+    this.cancelTimer?.()
+    // Without word from the voice, the countdown starts anyway. Set before the cue, which can end the announcement at once.
+    this.cancelTimer = this.deps.later(() => this.announced(), SIDE_SET.announcementLimitMs)
     this.cue({ type: 'sideDone', done: rules.side, next })
+  }
+
+  /** The next-side announcement has been said, or there is no voice to wait for: start the countdown. */
+  announced() {
+    const switching = this.state.switching
+    if (switching?.stage !== 'announcing') return
+    this.cancelTimer?.()
+    this.set({ switching: { ...switching, stage: 'counting', secondsLeft: SIDE_SET.countdownSeconds } })
     this.cue({ type: 'count', n: SIDE_SET.countdownSeconds })
     this.tick()
   }

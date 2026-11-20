@@ -121,5 +121,61 @@
     "nothingMeasured": "Nothing was measured, so nothing was saved.",
     "back": "Back to exercises",
     "privacy": "The camera picture stays in this browser. Only the movement summary you allow is saved."
+  },
+  "coach": {
+    "notRecording": "Not counting yet. Select Start measurement below.",
+    "paused": "Paused. Repetitions are not counting.",
+    "tracking": "Waiting for tracking. Stay in view of the camera.",
+    "step": "Step {{n}} of 4",
+    "start": "Go to the start: {{degrees}}° or less",
+    "reach": "Move to {{degrees}}° or more",
+    "hold": "Hold it there for {{time}}",
+    "return": "Now go back to {{degrees}}° or less to count it",
+    "counted": "Counted! {{count}} of {{target}}",
+    "missedRange": "Not counted. Reach the target and hold it before coming back.",
+    "missedFast": "Not counted. Move a little slower.",
+    "missedSlow": "Not counted. That took too long, so start again.",
+    "holdProgress": "Hold time",
+    "voiceOn": "Voice on",
+    "voiceOff": "Voice off",
+    "voiceHelp": "Spoken feedback after each repetition",
+    "voiceTextOnly": "This browser has no voice for this language, so the feedback is shown here as text.",
+    "finishOn": "Finish sound on",
+    "finishOff": "Finish sound off",
+    "finishHelp": "A short tune and a word of encouragement when you finish"
+  },
+  "cue": {
+    "counted": [
+      "Great!",
+      "Excellent!",
+      "Nice!",
+      "Well done!",
+      "Good job!"
+    ],
+    "missedRange": "Try again. Reach the target and hold it.",
+    "missedFast": "Try again, a little slower.",
+    "missedSlow": "Try again from the start.",
+    "targetReached": "Target reached. Keep going until the time is up.",
+    "sideDone": "{{done}} done. Next: {{next}}, {{name}}.",
+    "go": "Start.",
+    "complete": "Exercise complete.",
+    "left": "Left side",
+    "right": "Right side",
+    "finishTarget": "Great work! Exercise finished.",
+    "finishShort": "Good effort today: {{done}} of {{target}}.",
+    "dayDone": "That was today’s last exercise."
+  },
+  "guide": {
+    "description": "Animated guide: {{name}}, moving between {{low}}° and {{high}}°.",
+    "pause": "Pause the guide",
+    "play": "Play the guide"
+  },
+  "finish": {
+    "titleTarget": "Finished!",
+    "titleShort": "Good effort!",
+    "reps": "Repetitions: {{done}} of {{target}}",
+    "range": "Best range: {{degrees}}°",
+    "dayDone": "That was today’s last exercise.",
+    "tap": "See your results"
   }
 }

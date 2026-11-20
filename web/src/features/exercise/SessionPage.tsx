@@ -7,6 +7,7 @@ import { useSignedIn } from '@/auth/AuthProvider'
 import { Button, ButtonLink } from '@/components/Button'
 import { Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
 import { supabase } from '@/data/client'
+import { loadExerciseDay } from '@/data/exerciseSchedule'
 import { grantConsent, loadSessionRules, saveSession, type SessionExercise } from '@/data/session'
 import { clock } from '@/data/therapist'
 import { SkeletonLines } from '@/features/shared'
@@ -16,6 +17,9 @@ import { Calculations, CameraStage, MetricTile, useDuration, useStageCanvas } fr
 import { useCamera } from './camera/useCamera'
 import { usePreparedTracking, useTracking } from './camera/useTracking'
 import { Checklist, Privacy, UsePhoneInstead } from './CameraCheckPage'
+import { FinishCelebration, RepCoach, SoundSwitches, useCoach } from './coach/Coach'
+import { GuideStage } from './guide/ExerciseGuide'
+import { guideMotionFor } from './guide/rig'
 import { cameraSupport } from './pose/support'
 import { SessionController, type SessionState, type SideResult } from './session/controller'
 import { sideRemainingMs } from './session/sideSet'
@@ -40,7 +44,7 @@ export function ExerciseSessionPage({ base }: { base: string }) {
   return (
     <>
       <PageHeader title={name} description={t('session.title')} />
-      {step === 'setup' ? <Setup exercise={exercise.data} onOpen={() => setStep('live')} /> : <LiveSession rules={rules} owner={userId} base={base} />}
+      {step === 'setup' ? <Setup exercise={exercise.data} onOpen={() => setStep('live')} /> : <LiveSession rules={rules} name={name} owner={userId} base={base} />}
       {step === 'setup' && <div className="mt-4">{back}</div>}
     </>
   )
@@ -52,6 +56,8 @@ function Setup({ exercise, onOpen }: { exercise: SessionExercise; onOpen: () => 
   return (
     <div className="grid max-w-[640px] gap-4">
       <Panel title={t(`joints.${rules.measuredJoint}`)} description={rules.bilateral ? t('session.perSide') : t(rules.side === 'LEFT' ? 'camera.left' : 'camera.right')}>
+        {/* The model person moves through the range this patient was prescribed. */}
+        <GuideStage motion={guideMotionFor(rules)} name={exercise.name} className="mb-4 h-64" />
         <div className="flex flex-wrap gap-2">
           <StatusPill tone="positive">{t('session.targets', { low: Math.trunc(rules.lowDegrees), high: Math.trunc(rules.highDegrees), reps: rules.targetRepetitions })}</StatusPill>
           {rules.sideSeconds !== null && <StatusPill tone="positive">{t('session.timePerSide', { time: clock(rules.sideSeconds) })}</StatusPill>}
@@ -79,10 +85,13 @@ function useController(rules: ExerciseRules, owner: string) {
   return { controller, state }
 }
 
-function LiveSession({ rules, owner, base }: { rules: ExerciseRules; owner: string; base: string }) {
+function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name: string; owner: string; base: string }) {
   const { t } = useTranslation()
   const client = useQueryClient()
   const { controller, state } = useController(rules, owner)
+  const coach = useCoach(controller, state, name)
+  const [celebrated, setCelebrated] = useState(false)
+  const checkDay = useMemo(() => lastOfDay(owner), [owner])
   const camera = useCamera()
   const live = camera.state.status === 'live' ? camera.state : null
   const video = useRef<HTMLVideoElement | null>(null)
@@ -113,6 +122,16 @@ function LiveSession({ rules, owner, base }: { rules: ExerciseRules; owner: stri
     void client.invalidateQueries({ queryKey: ['patient'] })
   }, [savedAll, client])
 
+  if (done && state.saves.length > 0 && !celebrated) {
+    // Both sides of a set count together; a single side is one entry.
+    const completed = state.sides.reduce((sum, side) => sum + side.snapshot.completed, 0)
+    const target = state.sides.reduce((sum, side) => sum + side.target, 0)
+    const ranges = state.sides.map((side) => romDegrees(side.snapshot)).filter((value): value is number => value !== null)
+    return (
+      <FinishCelebration completed={completed} target={target} romDegrees={ranges.length > 0 ? Math.max(...ranges) : null} coach={coach}
+        saving={state.saves.some((save) => save.status === 'saving')} allSaved={!state.unsaved} lastOfDay={checkDay} onDone={() => setCelebrated(true)} />
+    )
+  }
   if (done) return <SessionResult state={state} base={base} onRetry={() => controller.retry()} />
   const cameraState = camera.state
   const remaining = sideRemainingMs(state.rules, state.snapshot)
@@ -121,7 +140,7 @@ function LiveSession({ rules, owner, base }: { rules: ExerciseRules; owner: stri
       {cameraState.status === 'idle' || cameraState.status === 'starting' ? (
         <Panel>
           <p className="mb-4 max-w-[60ch] text-slate">{t('camera.allowHelp')}</p>
-          <Button onClick={() => void camera.start()} busy={cameraState.status === 'starting'}>{t('camera.allow')}</Button>
+          <Button onClick={() => { coach.unlock(); void camera.start() }} busy={cameraState.status === 'starting'}>{t('camera.allow')}</Button>
         </Panel>
       ) : cameraState.status === 'error' ? (
         cameraState.error === 'blocked'
@@ -135,9 +154,13 @@ function LiveSession({ rules, owner, base }: { rules: ExerciseRules; owner: stri
           {tracking.hiddenPause && <Notice tone="info" title={t('camera.paused')}>{t('camera.hiddenPause')}</Notice>}
           {tracking.slow && <Notice tone="caution">{t('camera.slow')}</Notice>}
           <CameraStage rules={state.rules} snapshot={state.snapshot} hasFrame={tracking.hasFrame} canvas={stage.canvas} video={video} points={tracking.points} paused={tracking.hiddenPause}
+            coach={<RepCoach state={state} paused={tracking.hiddenPause} caption={coach.caption} />}
             tiles={remaining !== null ? <MetricTile label={t('camera.timeLeft')} value={clock(Math.ceil(remaining / 1000))} /> : undefined} />
-          {state.switching ? <SideSwitchCard state={state} onPause={() => controller.pauseSwitch()} onStart={() => controller.startNextSide()} />
-            : <MeasurementControls state={state} consent={consent} onConsent={setConsent} onStart={() => void controller.start(consent)} onPause={() => controller.pause()} onFinish={() => controller.finish()} />}
+          {/* A reminder of the movement before starting. Once running, the patient follows their own measured movement instead. */}
+          {!state.snapshot.running && <GuideStage motion={guideMotionFor(state.rules)} name={name} dark className="h-56" />}
+          {state.switching ? <SideSwitchCard state={state} onPause={() => { coach.unlock(); controller.pauseSwitch() }} onStart={() => { coach.unlock(); controller.startNextSide() }} />
+            : <MeasurementControls state={state} consent={consent} onConsent={setConsent} onStart={() => { coach.unlock(); void controller.start(consent) }} onPause={() => controller.pause()} onFinish={() => { coach.unlock(); controller.finish() }} />}
+          <SoundSwitches coach={coach} />
           <section className="flex flex-col gap-3 rounded-[24px] border border-night-line bg-night p-4 text-paper">
             <h2 className="text-lg font-semibold">{t('calc.title')}</h2>
             <Calculations rules={state.rules} snapshot={state.snapshot} hasFrame={tracking.hasFrame} />
@@ -199,7 +222,7 @@ function SideSwitchCard({ state, onPause, onStart }: { state: SessionState; onPa
   return (
     <section className="flex flex-col items-center gap-3 rounded-[24px] bg-night-panel p-4 text-center text-paper">
       <h2 aria-live="polite" className="text-xl font-semibold">{t('session.nextSide', { side })}</h2>
-      {switching.stage === 'counting' && (
+      {(switching.stage === 'announcing' || switching.stage === 'counting') && (
         <>
           <p aria-hidden className="text-6xl font-semibold text-sprout-bright tabular-nums">{switching.secondsLeft}</p>
           <p aria-live="polite" className="text-night-ink">{t('session.startingIn', { seconds: switching.secondsLeft })}</p>
@@ -211,6 +234,13 @@ function SideSwitchCard({ state, onPause, onStart }: { state: SessionState; onPa
       {state.saves.some((save) => save.status === 'failed') && <p className="text-night-caution">{t('session.failed')}</p>}
     </section>
   )
+}
+
+/** Whether the exercise just finished was the last one due today, read once the session is saved (lastOfDay on Android). */
+const lastOfDay = (owner: string) => async () => {
+  const day = await loadExerciseDay(supabase(), owner)
+  const due = day.exercises.filter((exercise) => exercise.due)
+  return due.length > 0 && due.every((exercise) => exercise.done)
 }
 
 function sideLine(t: (key: string, values?: Record<string, unknown>) => string, side: SideResult) {

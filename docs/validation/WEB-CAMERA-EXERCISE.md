@@ -125,3 +125,44 @@ Both are in the checklist.
 - comparing a web session's result with a phone session of the same movement.
 
 Both are in the checklist.
+
+## #138 Guide, rep coach, spoken cues, side switch and finish celebration
+
+**What was built.**
+
+- **Exercise guide** (`guide/rig.ts`, `outline.ts`, `draw.ts`, `ExerciseGuide.tsx`). These are ports of `:core:domain` `ExerciseGuide.kt` and the app's `GuideOutline.kt` and `drawGuide`: the same poses, framing, outlines, outfits and prescribed range. The tests are Android's `ExerciseGuideTest` cases with its numbers. The figure is SVG, redrawn from `motion`'s `useAnimationFrame` over Android's 4.2-second repetition. It has a pause button. It shows on the session's setup panel, and on the camera screen until measuring starts, as on Android. When the patient prefers reduced motion it holds the target position with no button. That preference is read from the live media query (`motion/useStill.ts`), so a change made while the page is open stops the figure at once; `motion`'s own hook reads the setting only once.
+- **Rep coach** (`coach/Coach.tsx`). It shows the step the engine is waiting for, from the shared `repetitionGuide`, as on Android's `RepCoach`: "Step n of 4", the prompt, and the hold bar. Each counted, incomplete, too-fast or timed-out result stays for 2.5 seconds. It sits in the camera panel's coach slot.
+- **Spoken cues** (`coach/cues.ts`). These are `RepCueScript`, `SetCueLines`, `CueVoice` and `FinishLines` from Android:
+  - the praise rotates and never repeats the line just said;
+  - the voice is Filipino when the browser has one, otherwise English;
+  - a repetition result cuts off anything still being said, so quick repetitions never pile up;
+  - set announcements wait their turn;
+  - without a voice for the language, each line is shown as text in the coach.
+
+  Speech goes through `speechSynthesis`, outside the frame loop. Voice off is kept in `localStorage`.
+- **Side switch.** The controller now has Android's announcing stage: the countdown waits until "Left side done. Next: Right side…" has been said, or 6 seconds, whichever comes first. With the voice off it starts at once. The card is the one from #137.
+- **Finish celebration.** Android's tune: the same samples, played through the Web Audio API. The words are the same, including the last exercise of the day, which is read from `exercise_day` once the sessions are saved. It has its own sound switch, kept in `localStorage`, and a button straight to the results. The icon's pop stays still when the patient prefers reduced motion.
+- **Sound only after a press.** The voice and the audio context are only used after Allow camera, Start or a switch has been pressed.
+- **Text.** The `coach`, `cue`, `guide` and `finish` sections, in English and Filipino, are taken from Android's strings. "Tap" became "Select" or "See your results".
+
+**Bugs found.**
+
+- A voice that reports "done" straight away, as with the voice off, made the controller cancel its own countdown. The fallback timer is now set before the cue, and a unit test covers it.
+- The browser test found that React's development double mount left the cue player released for good, so nothing was spoken. Cleanup now only stops speech.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Guide rig (Android's cases) and drawing for every joint, side and posture, both outfits | `npx vitest run --project unit src/features/exercise/guide` | 13 of 13. Every pose was also rendered and inspected as a picture |
+| Phrases match Android in both languages; praise never repeats; voice choice; no overlap with a fake voice; announcements wait and report when said; silent until pressed; text without a voice; switches remembered; tune samples | `npx vitest run --project unit src/features/exercise/coach` | 8 of 8 |
+| Announcing stage, 6-second fallback, immediate countdown with the voice off | `npx vitest run --project unit src/features/exercise/session` | 34 of 34 |
+| Text parity | `npx vitest run --project unit src/locales` | 7 of 7 |
+| Whole session in Chromium against the local backend, with a scripted body and a fake browser voice | `npx playwright test tests/e2e/exercise-session.spec.ts --workers=1` | 2 of 2. The guide shows the prescribed range, pauses, and has no button under reduced motion. Voice off survives a reload. The coach shows "Step n of 4" and "Counted! 1 of 2". The guide is hidden while measuring. Praise was spoken. The celebration says "That was today's last exercise." and speaks "Great work! Exercise finished. That was today's last exercise." Then the results page appears, and axe passes at 390 and 1280 px |
+| Other camera pages | `camera-check`, `pose-tracking`, `camera-blocked`, `patient-today` specs | All pass |
+| Web | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` | 0 errors; 0 warnings; 34 files, 400 tests; built |
+
+**Not run:**
+
+- **FPS while speaking.** Headless Chromium has no real voice and draws in software at about 2 FPS, so a frame-rate comparison there would mean nothing.
+- **Listening.** Nobody has listened to the real voices or the tune in browsers.
+
+Both are in the checklist.

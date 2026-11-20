@@ -121,5 +121,61 @@
     "nothingMeasured": "Walang nasukat, kaya walang nai-save.",
     "back": "Bumalik sa mga ehersisyo",
     "privacy": "Nananatili sa browser na ito ang larawan ng camera. Ang buod lamang ng paggalaw na pinahintulutan mo ang sine-save."
+  },
+  "coach": {
+    "notRecording": "Hindi pa nagbibilang. Piliin ang Simulan ang pagsukat sa ibaba.",
+    "paused": "Naka-pause. Hindi nagbibilang ng ulit.",
+    "tracking": "Hinihintay ang tracking. Manatili sa harap ng camera.",
+    "step": "Hakbang {{n}} sa 4",
+    "start": "Pumunta sa simula: {{degrees}}° o mas mababa",
+    "reach": "Abutin ang {{degrees}}° o higit pa",
+    "hold": "Hawakan diyan nang {{time}}",
+    "return": "Ngayon, bumalik sa {{degrees}}° o mas mababa para mabilang",
+    "counted": "Nabilang! {{count}} sa {{target}}",
+    "missedRange": "Hindi nabilang. Abutin ang target at hawakan bago bumalik.",
+    "missedFast": "Hindi nabilang. Bagalan nang kaunti ang galaw.",
+    "missedSlow": "Hindi nabilang. Masyadong natagalan, kaya magsimula muli.",
+    "holdProgress": "Oras ng paghawak",
+    "voiceOn": "Naka-on ang boses",
+    "voiceOff": "Naka-off ang boses",
+    "voiceHelp": "Pasalitang feedback pagkatapos ng bawat ulit",
+    "voiceTextOnly": "Walang boses ang browser na ito para sa wikang ito, kaya ipinapakita rito ang feedback bilang teksto.",
+    "finishOn": "Naka-on ang tunog sa pagtatapos",
+    "finishOff": "Naka-off ang tunog sa pagtatapos",
+    "finishHelp": "Maikling tugtog at pampalakas-loob kapag natapos ka"
+  },
+  "cue": {
+    "counted": [
+      "Magaling!",
+      "Napakahusay!",
+      "Ayos!",
+      "Mahusay!",
+      "Galing mo!"
+    ],
+    "missedRange": "Subukan ulit. Abutin ang target at hawakan.",
+    "missedFast": "Subukan ulit, mas mabagal nang kaunti.",
+    "missedSlow": "Subukan ulit mula sa simula.",
+    "targetReached": "Naabot mo na ang target. Ituloy lang hanggang matapos ang oras.",
+    "sideDone": "Tapos na ang {{done}}. Susunod: {{next}}, {{name}}.",
+    "go": "Simulan.",
+    "complete": "Tapos na ang ehersisyo.",
+    "left": "Kaliwang bahagi",
+    "right": "Kanang bahagi",
+    "finishTarget": "Magaling! Tapos na ang ehersisyo.",
+    "finishShort": "Mahusay na pagsisikap ngayong araw: {{done}} sa {{target}}.",
+    "dayDone": "Iyan na ang huling ehersisyo para ngayong araw."
+  },
+  "guide": {
+    "description": "Gumagalaw na gabay: {{name}}, mula {{low}}° hanggang {{high}}°.",
+    "pause": "I-pause ang gabay",
+    "play": "I-play ang gabay"
+  },
+  "finish": {
+    "titleTarget": "Tapos na!",
+    "titleShort": "Mahusay na pagsisikap!",
+    "reps": "Pag-ulit: {{done}} sa {{target}}",
+    "range": "Pinakamalawak na galaw: {{degrees}}°",
+    "dayDone": "Iyan na ang huling ehersisyo para ngayong araw.",
+    "tap": "Tingnan ang resulta"
   }
 }
