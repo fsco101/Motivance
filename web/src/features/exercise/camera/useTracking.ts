@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { CameraDiagnostics, MovementAssessment, slowCamera, type AssessmentSnapshot, type DiagnosticsSnapshot, type ExerciseRules, type Landmark } from '../assessment'
 import type { TrackedFrame } from '../pose'
 
@@ -39,31 +39,27 @@ function startTracking(element: HTMLVideoElement, stream: MediaStream, on: Handl
 interface Options {
   video: RefObject<HTMLVideoElement | null>
   stream: MediaStream | null
-  rules: ExerciseRules
+  /** Measures one frame and returns the engine's snapshot for drawing. */
+  process: (frame: TrackedFrame) => AssessmentSnapshot
+  /** Called once when measuring must stop because the tab is hidden. */
+  onHidden: () => void
   /** Draws each accepted frame straight away, before its picture is freed. */
   draw: (frame: TrackedFrame, snapshot: AssessmentSnapshot) => void
 }
 
 /**
- * Feeds each tracked camera frame to the shared measurement engine. The page reads the engine through `engine` to
- * start or pause measuring. While the tab is hidden measuring pauses, standing in for Android's heat pause.
+ * Runs body tracking on the camera and hands each frame to `process`, which owns the measurement engine. While the
+ * tab is hidden it calls `onHidden`, standing in for Android's heat pause.
  */
-export function useTracking({ video, stream, rules, draw }: Options) {
+export function useTracking({ video, stream, process, onHidden, draw }: Options) {
   const [status, setStatus] = useState<TrackingStatus>('loading')
-  const [snapshot, setSnapshot] = useState<AssessmentSnapshot>(() => new MovementAssessment(rules).snapshot)
   const [diagnostics, setDiagnostics] = useState<DiagnosticsSnapshot | null>(null)
   const [delegate, setDelegate] = useState<'GPU' | 'CPU' | null>(null)
   const [hiddenPause, setHiddenPause] = useState(false)
   const [frameSeen, setFrameSeen] = useState<MediaStream | null>(null)
   const [points, setPoints] = useState<Landmark[] | null>(null)
-  const engine = useRef<MovementAssessment | null>(null)
-  const latest = useRef({ draw, rules })
-  useEffect(() => { latest.current = { draw, rules } }, [draw, rules])
-
-  useEffect(() => {
-    const next = new MovementAssessment(rules)
-    engine.current = next
-  }, [rules])
+  const latest = useRef({ draw, process, onHidden })
+  useEffect(() => { latest.current = { draw, process, onHidden } }, [draw, process, onHidden])
 
   useEffect(() => {
     const element = video.current
@@ -72,27 +68,36 @@ export function useTracking({ video, stream, rules, draw }: Options) {
       ready: (used) => { setDelegate(used); setStatus('ready') },
       failed: () => setStatus('failed'),
       frame: (frame) => {
-        const current = engine.current ??= new MovementAssessment(latest.current.rules)
-        const next = current.process(frame.people, frame.width, frame.height, frame.timestampMs)
-        latest.current.draw(frame, next)
+        const snapshot = latest.current.process(frame)
+        latest.current.draw(frame, snapshot)
         frame.image.close()
         setHiddenPause(false)
-        setSnapshot(next)
         setDiagnostics(frame.diagnostics)
         setFrameSeen(stream)
         setPoints(frame.people.length === 1 ? frame.people[0]! : null)
       },
-      pause: () => {
-        setHiddenPause(true)
-        if (engine.current) setSnapshot(engine.current.pause(performance.now()))
-      },
+      pause: () => { setHiddenPause(true); latest.current.onHidden() },
     })
   }, [stream, video])
 
   return {
-    status, snapshot, diagnostics, delegate, hiddenPause, points, engine,
+    status, diagnostics, delegate, hiddenPause, points,
     /** A frame from the current camera has been drawn. Switching camera starts over. */
     hasFrame: stream !== null && frameSeen === stream,
     slow: diagnostics ? slowCamera(diagnostics) : false,
   }
+}
+
+/** A preview engine for the camera check: measures, never starts, and keeps its snapshot as React state. */
+export function usePreviewEngine(rules: ExerciseRules) {
+  const engine = useRef<MovementAssessment | null>(null)
+  const [snapshot, setSnapshot] = useState<AssessmentSnapshot>(() => new MovementAssessment(rules).snapshot)
+  const process = useCallback((frame: TrackedFrame) => {
+    const current = (engine.current ??= new MovementAssessment(rules))
+    const next = current.process(frame.people, frame.width, frame.height, frame.timestampMs)
+    setSnapshot(next)
+    return next
+  }, [rules])
+  const onHidden = useCallback(() => { if (engine.current) setSnapshot(engine.current.pause(Math.round(performance.now()))) }, [])
+  return { snapshot, process, onHidden }
 }

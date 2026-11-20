@@ -87,3 +87,82 @@ Both are in the checklist.
 | Web | `npm run typecheck`, `npm run lint`, `npm test`, gallery `design.spec.ts` | 0 errors; 0 warnings; 29 files, 344 tests; 84 of 84 |
 
 **Existing problem, not caused by this work.** `python scripts/check_web_bundle.py` reports 327 KB of initial JavaScript, against a 300 KB budget. The last commit before the camera screen, which had no camera code in the first download, gives the same 327 KB. The camera page adds only its breadcrumb label to the first download. This needs its own fix.
+
+## #137 A full exercise session on the web
+
+**What was built.**
+
+- **Start.** Start exercise on Home and on Exercises opens `/patient/exercises/:versionId/session`. A browser that cannot run the camera still gets the "use the phone" suggestion. Only the assignment's newest prescription version can be measured, as on the phone. Any other address says the exercise is no longer assigned.
+- **Rules** (`session/rules.ts`). The prescription is read exactly as Android's `PrescriptionCache` reads it: the same kinds, measurement conventions, defaults and refusals. A web test reads the same server fixture Android's `WebPublishedPrescriptionTest` reads, and gets the same rules.
+- **The run** (`session/controller.ts`, from `ExerciseSessionViewModel`):
+  - consent is recorded at the first Start, through `record_consent`, and used for the whole run;
+  - Start is refused while tracking isn't ready;
+  - Pause and Resume keep the same session;
+  - a hidden tab pauses measuring and holds a countdown;
+  - demo rules are never recorded.
+- **Both-sides sets** (`session/sideSet.ts`). This is a port of `SideSet.kt`, tested with Android's numbers. The left side ends at the target or when its time is up. A 5-second countdown follows, with Pause and Start, and the right side starts once tracking is ready. Each side is saved as its own session under the one consent.
+- **Saving.** Each finished side is sent to `ingest_session` with the same fields as Android's upload, plus `client: "web"`. The web has no outbox, so a failed save stays on the result page with Try again, and leaving the page asks first. A retry sends the same session id, and the server accepts it once.
+- **Afterwards.** Once saved, the patient's queries refresh, so the exercise leaves today's list straight away and appears in history and progress.
+- **Server** (`supabase/migrations/202611200001_session_client.sql`). `sessions.client` is `android` or `web`. A payload without it, as Android sends, records `android`; any other value is refused. Nothing else in `ingest_session` changed.
+- **Screen.** Android's measurement controls (status, guidance, consent, Start, Pause, Resume, Finish), the side-switch card, the Time left tile, the calculations panel and a result page, in English and Filipino.
+
+**Bug found.** `performance.now()` has fractions of a millisecond, so the active time came out as 8165.9 ms, and the server refused it: it stores whole milliseconds, as Android's clock gives them. Frame timestamps and the session's own start and pause times are now whole milliseconds. Tests cover both.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Side sets (Android's numbers), rules (with Android's fixture), payload, controller | `npx vitest run --project unit src/features/exercise/session` | 32 of 32 |
+| Saved through the web code to the local backend | `npx vitest run --project contract tests/contract/web-session.test.ts` | 4 of 4. A web session saves once and a retry returns duplicate; `client` is `web`; today's exercise is done; both sides save separately under one consent; changed rules and withdrawn consent are refused; a payload without `client` records `android`, and an unknown one is refused |
+| Sessions saved by other paths still accepted | contract tests `summary`, `missed-days`, `exercise-schedule`, `session-videos`, `crossApp`, `queries`; `python scripts/test_bilateral_sets.py`, `test_custom_exercises.py`, `test_connected_workflow.py`; `supabase test db` | 48 of 48; all three pass; 99 of 99 |
+| The whole session in Chromium, signed in, against the local backend | `npx playwright test tests/e2e/exercise-session.spec.ts --workers=1` | 2 of 2. Start, consent, measuring, 2 of 2 repetitions, saved, gone from today's list; axe at 390 and 1280 px; an unassigned exercise says so. The fake camera shows no person, so the MediaPipe host module is replaced with one that scripts an elbow bending; everything else is the real app |
+| Patient pages under the new decision | `tests/e2e/patient.spec.ts` | 13 of 13. The test that said exercises "never run here" now checks they open here, ask for nothing until the camera is allowed, and still suggest the phone in a browser without camera access |
+| Web | `npm run typecheck`, `npm run lint`, `npm test` | 0 errors; 0 warnings; 31 files, 377 tests |
+
+**Deploying.** The migration and the web app can go to the hosted project in either order. The current hosted `ingest_session` ignores `client`, and the new one records a phone session as `android`.
+
+**Not run:**
+
+- a real person exercising in a real browser;
+- comparing a web session's result with a phone session of the same movement.
+
+Both are in the checklist.
+
+## #138 Guide, rep coach, spoken cues, side switch and finish celebration
+
+**What was built.**
+
+- **Exercise guide** (`guide/rig.ts`, `outline.ts`, `draw.ts`, `ExerciseGuide.tsx`). These are ports of `:core:domain` `ExerciseGuide.kt` and the app's `GuideOutline.kt` and `drawGuide`: the same poses, framing, outlines, outfits and prescribed range. The tests are Android's `ExerciseGuideTest` cases with its numbers. The figure is SVG, redrawn from `motion`'s `useAnimationFrame` over Android's 4.2-second repetition. It has a pause button. It shows on the session's setup panel, and on the camera screen until measuring starts, as on Android. When the patient prefers reduced motion it holds the target position with no button. That preference is read from the live media query (`motion/useStill.ts`), so a change made while the page is open stops the figure at once; `motion`'s own hook reads the setting only once.
+- **Rep coach** (`coach/Coach.tsx`). It shows the step the engine is waiting for, from the shared `repetitionGuide`, as on Android's `RepCoach`: "Step n of 4", the prompt, and the hold bar. Each counted, incomplete, too-fast or timed-out result stays for 2.5 seconds. It sits in the camera panel's coach slot.
+- **Spoken cues** (`coach/cues.ts`). These are `RepCueScript`, `SetCueLines`, `CueVoice` and `FinishLines` from Android:
+  - the praise rotates and never repeats the line just said;
+  - the voice is Filipino when the browser has one, otherwise English;
+  - a repetition result cuts off anything still being said, so quick repetitions never pile up;
+  - set announcements wait their turn;
+  - without a voice for the language, each line is shown as text in the coach.
+
+  Speech goes through `speechSynthesis`, outside the frame loop. Voice off is kept in `localStorage`.
+- **Side switch.** The controller now has Android's announcing stage: the countdown waits until "Left side done. Next: Right side…" has been said, or 6 seconds, whichever comes first. With the voice off it starts at once. The card is the one from #137.
+- **Finish celebration.** Android's tune: the same samples, played through the Web Audio API. The words are the same, including the last exercise of the day, which is read from `exercise_day` once the sessions are saved. It has its own sound switch, kept in `localStorage`, and a button straight to the results. The icon's pop stays still when the patient prefers reduced motion.
+- **Sound only after a press.** The voice and the audio context are only used after Allow camera, Start or a switch has been pressed.
+- **Text.** The `coach`, `cue`, `guide` and `finish` sections, in English and Filipino, are taken from Android's strings. "Tap" became "Select" or "See your results".
+
+**Bugs found.**
+
+- A voice that reports "done" straight away, as with the voice off, made the controller cancel its own countdown. The fallback timer is now set before the cue, and a unit test covers it.
+- The browser test found that React's development double mount left the cue player released for good, so nothing was spoken. Cleanup now only stops speech.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Guide rig (Android's cases) and drawing for every joint, side and posture, both outfits | `npx vitest run --project unit src/features/exercise/guide` | 13 of 13. Every pose was also rendered and inspected as a picture |
+| Phrases match Android in both languages; praise never repeats; voice choice; no overlap with a fake voice; announcements wait and report when said; silent until pressed; text without a voice; switches remembered; tune samples | `npx vitest run --project unit src/features/exercise/coach` | 8 of 8 |
+| Announcing stage, 6-second fallback, immediate countdown with the voice off | `npx vitest run --project unit src/features/exercise/session` | 34 of 34 |
+| Text parity | `npx vitest run --project unit src/locales` | 7 of 7 |
+| Whole session in Chromium against the local backend, with a scripted body and a fake browser voice | `npx playwright test tests/e2e/exercise-session.spec.ts --workers=1` | 2 of 2. The guide shows the prescribed range, pauses, and has no button under reduced motion. Voice off survives a reload. The coach shows "Step n of 4" and "Counted! 1 of 2". The guide is hidden while measuring. Praise was spoken. The celebration says "That was today's last exercise." and speaks "Great work! Exercise finished. That was today's last exercise." Then the results page appears, and axe passes at 390 and 1280 px |
+| Other camera pages | `camera-check`, `pose-tracking`, `camera-blocked`, `patient-today` specs | All pass |
+| Web | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` | 0 errors; 0 warnings; 34 files, 400 tests; built |
+
+**Not run:**
+
+- **FPS while speaking.** Headless Chromium has no real voice and draws in software at about 2 FPS, so a frame-rate comparison there would mean nothing.
+- **Listening.** Nobody has listened to the real voices or the tune in browsers.
+
+Both are in the checklist.

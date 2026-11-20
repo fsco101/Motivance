@@ -99,25 +99,37 @@ test('a both-sides exercise shows both sides and the time per side', async () =>
   sql(`update public.exercise_assignments set active=false where id='${assignment}'`)
 })
 
-test('starting an exercise suggests the phone, and it never runs here', async () => {
+test('starting an exercise opens it here, and nothing asks for the camera until the patient allows it', async () => {
+  // Per the owner's decision of 2026-11-19 (#142), the camera exercise and the camera check run in the browser too.
   await page.goto('/patient/exercises')
   await page.getByRole('button', { name: 'Start exercise' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Continue on your phone' })
-  await expect(dialog).toContainText('uses your phone\'s camera')
-  await expect(dialog).toContainText('Elbow flexion')
+  await expect(page).toHaveURL(/\/patient\/exercises\/[0-9a-f-]+\/session$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Elbow flexion' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Open camera' })).toBeVisible()
   await noViolations()
-  await dialog.getByRole('button', { name: 'Done' }).click()
-  await expect(dialog).toBeHidden()
-  await expect(page).toHaveURL(/\/patient\/exercises$/)
+  await page.goto('/patient/exercises')
   await page.getByRole('button', { name: 'Camera positioning check' }).click()
-  await expect(page.getByRole('dialog', { name: 'Continue on your phone' })).toContainText('The camera check uses your phone\'s camera')
-  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/\/patient\/camera-check$/)
   await page.goto('/patient')
   await page.getByRole('button', { name: 'Start exercise' }).click()
-  await expect(page.getByRole('dialog', { name: 'Continue on your phone' })).toBeVisible()
-  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/\/session$/)
   expect(await page.evaluate(() => (window as unknown as { cameraRequests: number }).cameraRequests)).toBe(0)
   await expect(page.locator('video')).toHaveCount(0)
+})
+
+test('a browser that cannot use the camera still suggests the phone', async ({ browser }) => {
+  const context = await browser.newContext({ storageState: await page.context().storageState() })
+  const without = await context.newPage()
+  await without.addInitScript(() => { Object.defineProperty(navigator, 'mediaDevices', { value: undefined }) })
+  await without.goto('/patient/exercises')
+  await without.getByRole('button', { name: 'Start exercise' }).click()
+  const dialog = without.getByRole('dialog', { name: 'Continue on your phone' })
+  await expect(dialog).toContainText('Elbow flexion')
+  await dialog.getByRole('button', { name: 'Done' }).click()
+  await expect(without).toHaveURL(/\/patient\/exercises$/)
+  await without.getByRole('button', { name: 'Camera positioning check' }).click()
+  await expect(without.getByRole('dialog', { name: 'Continue on your phone' })).toBeVisible()
+  await context.close()
 })
 
 test('progress shows the patient\'s own history without a patient picker', async () => {

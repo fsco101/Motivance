@@ -1,4 +1,4 @@
-import { CalendarPlusIcon, CheckIcon, DeviceMobileIcon } from '@phosphor-icons/react'
+import { CalendarPlusIcon, CheckIcon, PlayIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -27,7 +27,7 @@ function NextExercise({ today, base, onStart }: { today: TodayPlan<MyExercise>; 
       <h2 id="next-exercise" className="mt-1 text-3xl font-bold">{exercise.name}</h2>
       <p className="mt-2 text-night-ink">{t('patient.exerciseLine', { side: t(`common.${exercise.side}`, exercise.side), low: exercise.low, high: exercise.high, count: exercise.repetitions })}</p>
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button variant="bright" leading={<DeviceMobileIcon aria-hidden />} onClick={() => onStart(exercise)}>{t('patient.startExercise')}</Button>
+        <Button variant="bright" leading={<PlayIcon aria-hidden />} onClick={() => onStart(exercise)}>{t('patient.startExercise')}</Button>
         {count > 1 && <Link to={`${base}/exercises`} className="font-semibold underline-offset-4 hover:underline">{t('patient.allExercises', { count })}</Link>}
       </div>
     </section>

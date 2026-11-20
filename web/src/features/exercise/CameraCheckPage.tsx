@@ -8,7 +8,7 @@ import '@/locales/exercise'
 import { createRules } from './assessment'
 import { Calculations, CameraStage, useStageCanvas } from './camera/CameraStage'
 import { useCamera } from './camera/useCamera'
-import { usePreparedTracking, useTracking } from './camera/useTracking'
+import { usePreparedTracking, usePreviewEngine, useTracking } from './camera/useTracking'
 import { cameraSupport } from './pose/support'
 
 /** A browser that cannot run the camera is sent to the phone app, as before. */
@@ -31,7 +31,7 @@ export function UsePhoneInstead({ message }: { message: string }) {
   )
 }
 
-function Checklist() {
+export function Checklist() {
   const { t } = useTranslation()
   return (
     <Panel title={t('camera.checklist')}>
@@ -48,7 +48,7 @@ function Checklist() {
 }
 
 /** A device on a stand, a dashed sightline and a standing person: the setup in one glance. */
-function SetupFigure() {
+export function SetupFigure() {
   const { t } = useTranslation()
   return (
     <svg viewBox="0 0 320 180" role="img" aria-label={t('camera.setupFigure')} className="h-auto w-full rounded-[24px] bg-night">
@@ -69,9 +69,9 @@ function SetupFigure() {
   )
 }
 
-function Privacy() {
+export function Privacy({ text }: { text?: string }) {
   const { t } = useTranslation()
-  return <p className="flex items-start gap-2.5 text-sm text-slate"><LockSimpleIcon aria-hidden className="mt-0.5 shrink-0" />{t('camera.privacy')}</p>
+  return <p className="flex items-start gap-2.5 text-sm text-slate"><LockSimpleIcon aria-hidden className="mt-0.5 shrink-0" />{text ?? t('camera.privacy')}</p>
 }
 
 /** The camera check: preview only, with demo rules, so nothing is measured or saved (Android's SETUP, CAMERA and CHECK_COMPLETE). */
@@ -118,7 +118,8 @@ function LiveCheck({ onFinish }: { onFinish: () => void }) {
   const live = camera.state.status === 'live' ? camera.state : null
   const video = useRef<HTMLVideoElement | null>(null)
   const stage = useStageCanvas(rules, live?.mirrored ?? true)
-  const tracking = useTracking({ video, stream: live?.stream ?? null, rules, draw: stage.draw })
+  const preview = usePreviewEngine(rules)
+  const tracking = { ...useTracking({ video, stream: live?.stream ?? null, process: preview.process, onHidden: preview.onHidden, draw: stage.draw }), snapshot: preview.snapshot }
   const state = camera.state
   return (
     <div className="grid max-w-[640px] gap-4">

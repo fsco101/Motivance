@@ -1700,6 +1700,7 @@ export type Database = {
         Row: {
           algorithm_version: string
           app_version: string
+          client: string
           consent_event_id: string | null
           duration_ms: number
           ended_at: string
@@ -1714,6 +1715,7 @@ export type Database = {
         Insert: {
           algorithm_version: string
           app_version: string
+          client?: string
           consent_event_id?: string | null
           duration_ms?: number
           ended_at: string
@@ -1728,6 +1730,7 @@ export type Database = {
         Update: {
           algorithm_version?: string
           app_version?: string
+          client?: string
           consent_event_id?: string | null
           duration_ms?: number
           ended_at?: string
