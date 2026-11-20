@@ -79,7 +79,7 @@ While recording a video (#139), the session held 19.5 FPS before recording and 1
 | Android instrumented tests | Not rerun in full: no Android app code changed in #134 to #141. `RecordedExerciseTest` is the only new instrumented test, and it ran as above | Not rerun |
 | Web unit tests, lint, types, build | `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` | 35 files, 406 tests; 0 warnings; 0 errors; built |
 | Web contract tests | `npm run test:contract` | 26 files, 252 passed, 3 skipped |
-| Web browser suite | `npx playwright test --workers=1` | **Not complete.** The system stopped the full run for low memory. Its 73 failures were all crashes (worker exit `3221225794` or "Target crashed"), with no failed assertion. Run alone: `exercise-session`, `exercise-video`, `recorded-exercise`, `camera-check`, `camera-blocked`, `pose-tracking`, `patient-today`, `landing` and `patient` pass. The full suite still needs a clean run on a machine with free memory before #141 is closed |
+| Web browser suite | `npx playwright test <files> --workers=1`, all 32 files in five batches | 333 passed, 0 failed. The skipped tests are the ones that need their own variables (`CAPTURE_DESIGNS`, `MEASURE_MOTION`). An earlier single run was stopped by the system for low memory, crashing workers without any failed assertion. The three accounts it left behind were removed with the suite's own cleanup, idle Gradle daemons were stopped, and the run was split into batches |
 | Repository checks | `check_admin_parity.py`, `check_module_boundaries.py`, `check_pose_model.py` | Pass |
 | Bundle | `python scripts/check_web_bundle.py` | 327 KB against a 300 KB budget: the overage that existed before #134, unchanged |
 
