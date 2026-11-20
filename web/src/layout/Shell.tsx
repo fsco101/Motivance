@@ -104,12 +104,17 @@ function BottomBar({ workspace, base }: { workspace: Workspace; base: string }) 
 function Footer({ clearBottomBar }: { clearBottomBar: boolean }) {
   const { t } = useTranslation()
   return (
-    <footer aria-label={t('nav.footer')} className={cn('flex flex-col gap-1 border-t border-line px-5 py-4 text-xs text-slate tablet:flex-row tablet:items-center tablet:justify-between tablet:gap-4 desk:px-7', clearBottomBar && 'max-tablet:pb-24')}>
-      <p>© {new Date().getFullYear()} Motivance</p>
-      <p>{t('nav.footerNote')}</p>
+    <footer aria-label={t('nav.footer')} className={cn('border-t border-line px-5 py-4 text-xs text-slate desk:px-7', clearBottomBar && 'max-tablet:pb-24')}>
+      <div className={cn(CONTENT_WIDTH, 'flex flex-col gap-1 tablet:flex-row tablet:items-center tablet:justify-between tablet:gap-4')}>
+        <p>© {new Date().getFullYear()} Motivance</p>
+        <p>{t('nav.footerNote')}</p>
+      </div>
     </footer>
   )
 }
+
+/** The widest a workspace page gets, centred in the space beside the sidebar. */
+const CONTENT_WIDTH = 'mx-auto w-full max-w-[100rem]'
 
 export type Crumb = { crumb?: string | ((params: Record<string, string | undefined>) => string) }
 
@@ -178,15 +183,18 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, chi
       <div className="grid min-h-dvh grid-cols-[auto_minmax(0,1fr)]">
         <Sidebar workspace={workspace} base={base} />
         <div className="flex min-w-0 flex-col">
-          <div className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-line bg-paper px-5 desk:px-7">
-            <Breadcrumbs />
-            <div className="flex shrink-0 items-center gap-3">
-              <LanguageSwitch />
-              {bell}
-              <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
+          <div className="sticky top-0 z-30 border-b border-line bg-paper px-5 desk:px-7">
+            <div className={cn(CONTENT_WIDTH, 'flex h-14 items-center justify-between gap-4')}>
+              <Breadcrumbs />
+              <div className="flex shrink-0 items-center gap-3">
+                <LanguageSwitch />
+                {bell}
+                <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
+              </div>
             </div>
           </div>
-          <main id="main" tabIndex={-1} className="w-full max-w-[100rem] flex-1 px-5 pb-12 pt-5 outline-none desk:px-7">{children}</main>
+          {/* Centred, so a wide screen has the same margin on both sides; the header and footer line up with it. */}
+          <main id="main" tabIndex={-1} className="w-full flex-1 px-5 pb-12 pt-5 outline-none desk:px-7"><div className={CONTENT_WIDTH}>{children}</div></main>
           <Footer clearBottomBar={workspace === 'patient'} />
         </div>
       </div>

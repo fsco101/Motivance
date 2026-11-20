@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppQrCode, appUrl } from '@/components/AppQrCode'
 import { Button, ButtonLink } from '@/components/Button'
-import { Notice, PageHeader, Panel } from '@/components/Display'
+import { NarrowPage, Notice, PageHeader, Panel } from '@/components/Display'
 import '@/locales/exercise'
 import { createRules } from './assessment'
 import { Calculations, CameraStage, useStageCanvas } from './camera/CameraStage'
@@ -81,11 +81,11 @@ export function CameraCheckPage({ base }: { base: string }) {
   const support = useMemo(() => cameraSupport(), [])
   usePreparedTracking()
   return (
-    <>
+    <NarrowPage>
       <PageHeader title={t('camera.checkTitle')} description={t('camera.checkSubtitle')} />
       {!support.ok ? <UsePhoneInstead message={t('camera.trackingFailed')} />
         : step === 'setup' ? (
-          <div className="grid max-w-[640px] gap-4">
+          <div className="grid gap-4">
             <SetupFigure />
             <Checklist />
             <div><Button size="lg" onClick={() => setStep('live')}>{t('camera.open')}</Button></div>
@@ -93,7 +93,7 @@ export function CameraCheckPage({ base }: { base: string }) {
           </div>
         ) : step === 'live' ? <LiveCheck onFinish={() => setStep('done')} />
           : (
-            <div className="grid max-w-[640px] gap-4">
+            <div className="grid gap-4">
               <Panel>
                 <div className="flex flex-col items-center gap-3 py-4 text-center">
                   <CheckCircleIcon aria-hidden weight="fill" className="size-16 text-lagoon" />
@@ -107,7 +107,7 @@ export function CameraCheckPage({ base }: { base: string }) {
               </div>
             </div>
           )}
-    </>
+    </NarrowPage>
   )
 }
 
@@ -122,7 +122,7 @@ function LiveCheck({ onFinish }: { onFinish: () => void }) {
   const tracking = { ...useTracking({ video, stream: live?.stream ?? null, process: preview.process, onHidden: preview.onHidden, draw: stage.draw }), snapshot: preview.snapshot }
   const state = camera.state
   return (
-    <div className="grid max-w-[640px] gap-4">
+    <div className="grid gap-4">
       {state.status === 'idle' || state.status === 'starting' ? (
         <Panel>
           <p className="mb-4 max-w-[60ch] text-slate">{t('camera.allowHelp')}</p>

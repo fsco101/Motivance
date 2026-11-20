@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { Button, ButtonLink } from '@/components/Button'
-import { Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
+import { NarrowPage, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { loadExerciseDay } from '@/data/exerciseSchedule'
 import { grantConsent, loadSessionRules, saveSession, type SessionExercise } from '@/data/session'
@@ -37,17 +37,17 @@ export function ExerciseSessionPage({ base }: { base: string }) {
   const [step, setStep] = useState<'setup' | 'live'>('setup')
   usePreparedTracking()
   const back = <ButtonLink to={`${base}/exercises`} variant="secondary">{t('session.back')}</ButtonLink>
-  if (!support.ok) return <><PageHeader title={t('session.title')} /><UsePhoneInstead message={t('camera.trackingFailed')} /></>
-  if (exercise.isPending) return <><PageHeader title={t('session.title')} /><Panel><SkeletonLines /></Panel></>
-  if (exercise.isError) return <><PageHeader title={t('session.title')} /><Notice onRetry={() => void exercise.refetch()}>{t('session.loadFailed')}</Notice></>
-  if (!exercise.data) return <><PageHeader title={t('session.title')} /><Panel><p className="mb-4 max-w-[60ch]">{t('session.notFound')}</p>{back}</Panel></>
+  if (!support.ok) return <NarrowPage><PageHeader title={t('session.title')} /><UsePhoneInstead message={t('camera.trackingFailed')} /></NarrowPage>
+  if (exercise.isPending) return <NarrowPage><PageHeader title={t('session.title')} /><Panel><SkeletonLines /></Panel></NarrowPage>
+  if (exercise.isError) return <NarrowPage><PageHeader title={t('session.title')} /><Notice onRetry={() => void exercise.refetch()}>{t('session.loadFailed')}</Notice></NarrowPage>
+  if (!exercise.data) return <NarrowPage><PageHeader title={t('session.title')} /><Panel><p className="mb-4 max-w-[60ch]">{t('session.notFound')}</p>{back}</Panel></NarrowPage>
   const { rules, name } = exercise.data
   return (
-    <>
+    <NarrowPage>
       <PageHeader title={name} description={t('session.title')} />
       {step === 'setup' ? <Setup exercise={exercise.data} onOpen={() => setStep('live')} /> : <LiveSession rules={rules} name={name} owner={userId} base={base} />}
       {step === 'setup' && <div className="mt-4">{back}</div>}
-    </>
+    </NarrowPage>
   )
 }
 
@@ -55,7 +55,7 @@ function Setup({ exercise, onOpen }: { exercise: SessionExercise; onOpen: () => 
   const { t } = useTranslation()
   const { rules } = exercise
   return (
-    <div className="grid max-w-[640px] gap-4">
+    <div className="grid gap-4">
       <Panel title={t(`joints.${rules.measuredJoint}`)} description={rules.bilateral ? t('session.perSide') : t(rules.side === 'LEFT' ? 'camera.left' : 'camera.right')}>
         {/* The model person moves through the range this patient was prescribed. */}
         <GuideStage motion={guideMotionFor(rules)} name={exercise.name} className="mb-4 h-64" />
@@ -154,7 +154,7 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
   const cameraState = camera.state
   const remaining = sideRemainingMs(state.rules, state.snapshot)
   return (
-    <div className="grid max-w-[640px] gap-4">
+    <div className="grid gap-4">
       {cameraState.status === 'idle' || cameraState.status === 'starting' ? (
         <Panel>
           <p className="mb-4 max-w-[60ch] text-slate">{t('camera.allowHelp')}</p>
@@ -282,7 +282,7 @@ function SessionResult({ state, base, onRetry, recording }: { state: SessionStat
   const saving = state.saves.some((save) => save.status === 'saving')
   const failed = state.saves.some((save) => save.status === 'failed')
   return (
-    <div className="grid max-w-[640px] gap-4">
+    <div className="grid gap-4">
       <Panel>
         <div className="flex flex-col items-center gap-2 py-2 text-center">
           <CheckCircleIcon aria-hidden weight="fill" className="size-14 text-lagoon" />

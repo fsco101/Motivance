@@ -79,6 +79,14 @@ export function Notice({ tone = 'error', title, children, onRetry, className }: 
 }
 
 /** A number without a box around it: the digits carry the weight, not a card. */
+/**
+ * A page with little to show side by side, such as a single form or a step-by-step flow: centred, header included, so it never
+ * hugs the left edge of a wide screen. Wide pages (tables, dashboards) use the full content width instead.
+ */
+export function NarrowPage({ children }: { children: ReactNode }) {
+  return <div data-width="narrow" className="mx-auto w-full max-w-[48rem]">{children}</div>
+}
+
 export function PageHeader({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children?: ReactNode }) {
   return (
     <header className="mb-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">

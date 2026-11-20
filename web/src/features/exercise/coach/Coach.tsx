@@ -228,7 +228,7 @@ export function FinishCelebration({ completed, target, romDegrees, saving, allSa
 
   const Icon = reached ? StarIcon : CheckCircleIcon
   return (
-    <section className="flex min-h-[420px] w-full max-w-[640px] flex-col items-center justify-center gap-3.5 rounded-[24px] bg-night p-6 text-center text-paper">
+    <section className="flex min-h-[420px] w-full flex-col items-center justify-center gap-3.5 rounded-[24px] bg-night p-6 text-center text-paper">
       <motion.span aria-hidden initial={reduced ? false : { scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}>
         <Icon weight="fill" className="size-28 text-sprout-bright" />
       </motion.span>
