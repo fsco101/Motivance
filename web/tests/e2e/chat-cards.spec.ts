@@ -78,7 +78,8 @@ test('a patient shares their progress from the Progress page, and the therapist 
 
 test('a therapist sends a plan from the patient’s record, and it opens the patient’s exercises', async () => {
   await staff.goto(`/therapist/patients/${patient.id}`)
-  await staff.getByRole('row', { name: /Elbow flexion/ }).getByRole('button', { name: 'Send in chat' }).click()
+  await staff.getByRole('row', { name: /Elbow flexion/ }).getByRole('button', { name: 'Actions for Elbow flexion' }).click()
+  await staff.getByRole('menuitem', { name: 'Send in chat' }).click()
   await expect(staff.getByText('Exercise sent in the conversation.')).toBeVisible()
   await person.goto('/patient/messages')
   const card = log(person).getByRole('listitem').filter({ hasText: 'Open exercises' })

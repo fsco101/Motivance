@@ -139,3 +139,28 @@ test('patient Exercises is a card grid, each card showing its own movement and r
   await expect(page.getByRole('img', { name: /Animated guide: Elbow flexion/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /the guide$/ })).toHaveCount(0)
 })
+
+test('a patient record keeps each plan row to one line of actions, with the rest in a menu (#151)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/design/therapist/patients/p1')
+  const row = page.getByRole('row', { name: /Elbow flexion/ }).first()
+  await expect(row.getByRole('link', { name: 'Edit plan' })).toBeVisible()
+  await expect(row.getByRole('button', { name: 'Send in chat' })).toHaveCount(0)
+  // One row of buttons: the Edit plan link and the menu button sit side by side.
+  const edit = (await row.getByRole('link', { name: 'Edit plan' }).boundingBox())!
+  const more = (await row.getByRole('button', { name: 'Actions for Elbow flexion' }).boundingBox())!
+  expect(Math.abs(edit.y + edit.height / 2 - (more.y + more.height / 2))).toBeLessThan(4)
+
+  // By keyboard: open the menu, choose Remove, and the confirmation opens; cancelling returns to the menu button.
+  await row.getByRole('button', { name: 'Actions for Elbow flexion' }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('menuitem', { name: 'Send in chat' })).toBeVisible()
+  await page.getByRole('menuitem', { name: 'Remove' }).focus()
+  await page.keyboard.press('Enter')
+  const confirm = page.getByRole('alertdialog')
+  await expect(confirm).toBeVisible()
+  await confirm.getByRole('button', { name: 'Cancel' }).click()
+  await expect(row.getByRole('button', { name: 'Actions for Elbow flexion' })).toBeFocused()
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
+  expect(results.violations.map((v) => v.id)).toEqual([])
+})
