@@ -1,14 +1,15 @@
 import { CalendarBlankIcon, CalendarCheckIcon, CalendarDotsIcon, CalendarPlusIcon, CaretDoubleLeftIcon, CaretDoubleRightIcon, CaretDownIcon, CaretRightIcon, ChartLineUpIcon, ChatCircleDotsIcon, ClockCounterClockwiseIcon, GaugeIcon, HouseIcon, LinkSimpleIcon, ListChecksIcon, PersonSimpleTaiChiIcon, SignOutIcon, SwapIcon, TrayIcon, UserCircleIcon, UsersThreeIcon, type Icon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu, Tooltip as RadixTooltip } from 'radix-ui'
-import { useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
+import { useCallback, useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useMatches } from 'react-router'
 import type { Workspace } from '@/auth/roles'
 import { Avatar, Tooltip } from '@/components/Display'
 import { cn } from '@/lib/cn'
 import { spring } from '@/motion/tokens'
-import { LanguageSwitch } from './LanguageSwitch'
+import { setLanguage, type Language } from '@/locales/i18n'
+import { LANGUAGES, LanguageSwitch } from './LanguageSwitch'
 
 type NavItem = { path: string; label: string; icon: Icon; end?: boolean; /** For the bottom bar, where a long label would be cut off. */ short?: string; /** Left off the bottom bar, which holds five. The pages around it link to it. */ wide?: boolean }
 
@@ -48,14 +49,19 @@ const NAV: Record<Workspace, readonly NavItem[]> = {
 
 const SIDEBAR_KEY = 'motivance.sidebar'
 const readCollapsed = () => { try { return window.localStorage.getItem(SIDEBAR_KEY) === 'collapsed' } catch { return false } }
-const WIDE_QUERY = '(min-width: 64rem)'
-const subscribeWide = (changed: () => void) => {
-  const list = window.matchMedia(WIDE_QUERY)
-  list.addEventListener('change', changed)
-  return () => list.removeEventListener('change', changed)
+/** True while the window matches `query`, following resizes. */
+function useMedia(query: string) {
+  const subscribe = useCallback((changed: () => void) => {
+    const list = window.matchMedia(query)
+    list.addEventListener('change', changed)
+    return () => list.removeEventListener('change', changed)
+  }, [query])
+  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => true)
 }
 /** True on a window wide enough for the sidebar's labels. Narrower windows fold it to icons by themselves. */
-const useWideWindow = () => useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE_QUERY).matches, () => true)
+const useWideWindow = () => useMedia('(min-width: 64rem)')
+/** True from tablet width up; below it, the header has room only for the page's title. */
+const useTabletWindow = () => useMedia('(min-width: 48rem)')
 
 /**
  * The sidebar keeps the goniometer's graduated edge, and a needle marks where you are. The person can fold it to icons with
@@ -162,9 +168,12 @@ function Breadcrumbs() {
     if (!crumb) return []
     return [{ id: match.id, path: match.pathname, label: typeof crumb === 'string' ? t(crumb) : crumb(match.params) }]
   })
+  const page = trail[trail.length - 1]
   return (
     <nav aria-label={t('nav.breadcrumbs')} className="min-w-0">
-      <ol className="flex items-center gap-1.5 text-sm text-slate">
+      {/* A phone has room for the page's title, not the trail to it (#148). */}
+      {page && <p aria-current="page" className="truncate font-display text-lg font-bold text-ink tablet:hidden">{page.label}</p>}
+      <ol className="hidden items-center gap-1.5 text-sm text-slate tablet:flex">
         {trail.map((step, index) => {
           const last = index === trail.length - 1
           return (
@@ -184,6 +193,9 @@ export type ShellAccount = { name: string; email: string; photo?: string | null;
 function AccountMenu({ account, current, profilePath, onSwitch, onSignOut }: { account: ShellAccount; current: Workspace; profilePath: string; onSwitch: (workspace: Workspace) => void; onSignOut: () => void }) {
   const { t } = useTranslation()
   const item = 'flex min-h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-sm outline-none data-highlighted:bg-tide'
+  // On a phone the header has no room for the language switch, so it moves in here.
+  const phone = !useTabletWindow()
+  const { i18n } = useTranslation()
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger aria-label={`${t('account.menu')}: ${account.name}`} className="flex items-center gap-2 rounded-control p-1 text-sm font-semibold transition-colors transition-quick hover:bg-mist">
@@ -202,6 +214,23 @@ function AccountMenu({ account, current, profilePath, onSwitch, onSignOut }: { a
           {account.workspaces.filter((workspace) => workspace !== current).map((workspace) => (
             <DropdownMenu.Item key={workspace} className={item} onSelect={() => onSwitch(workspace)}><SwapIcon aria-hidden className="text-lg" />{t(`account.open.${workspace}`)}</DropdownMenu.Item>
           ))}
+          {phone && (
+            <>
+              <DropdownMenu.Separator className="my-1 h-px bg-line" />
+              <DropdownMenu.Label className="px-2.5 pb-1 pt-1.5 text-xs font-semibold text-slate">{t('common.language')}</DropdownMenu.Label>
+              <DropdownMenu.RadioGroup value={i18n.language === 'fil' ? 'fil' : 'en'} onValueChange={(value) => setLanguage(value as Language)}>
+                {LANGUAGES.map((language) => (
+                  <DropdownMenu.RadioItem key={language.value} value={language.value} lang={language.value} className={item} onSelect={(event) => event.preventDefault()}>
+                    <span aria-hidden className="grid size-4 place-items-center rounded-full border border-line-strong">
+                      <DropdownMenu.ItemIndicator className="size-2 rounded-full bg-lagoon" />
+                    </span>
+                    {language.label}
+                  </DropdownMenu.RadioItem>
+                ))}
+              </DropdownMenu.RadioGroup>
+              <DropdownMenu.Separator className="my-1 h-px bg-line" />
+            </>
+          )}
           <DropdownMenu.Item className={item} onSelect={onSignOut}><SignOutIcon aria-hidden className="text-lg" />{t('account.signOut')}</DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -224,7 +253,7 @@ export function Shell({ workspace, base, account, onSwitch, onSignOut, bell, chi
             <div className={cn(CONTENT_WIDTH, 'flex h-14 items-center justify-between gap-4')}>
               <Breadcrumbs />
               <div className="flex shrink-0 items-center gap-3">
-                <LanguageSwitch />
+                <span className="hidden tablet:block"><LanguageSwitch /></span>
                 {bell}
                 <AccountMenu account={account} current={workspace} profilePath={`${base}/profile`} onSwitch={onSwitch} onSignOut={onSignOut} />
               </div>

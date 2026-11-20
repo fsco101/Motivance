@@ -95,3 +95,36 @@ test('a narrow window folds the sidebar by itself, without the button', async ({
   await expect.poll(async () => (await page.getByRole('navigation', { name: 'Main' }).boundingBox())!.width).toBe(64)
   await expect(page.getByRole('button', { name: /Collapse menu|Expand menu/ })).toHaveCount(0)
 })
+
+test('a phone header shows the whole page title, and the language moves into the account menu (#148)', async ({ page }) => {
+  // Patient pages: the staff workspaces start at tablet width (WEB-DESIGN.md).
+  await page.setViewportSize({ width: 390, height: 844 })
+  for (const [path, title] of [['/design/patient', 'Home'], ['/design/patient/exercises', 'Exercises'], ['/design/patient/book', 'Book'], ['/design/patient/bookings', 'My bookings'], ['/design/patient/camera-check', 'Camera check'], ['/design/patient/progress', 'Progress']] as const) {
+    await page.goto(path)
+    const heading = page.getByRole('navigation', { name: 'You are here' }).locator('p[aria-current="page"]')
+    await expect(heading, path).toHaveText(title)
+    // Shown in full, not cut short.
+    expect(await heading.evaluate((element) => element.scrollWidth <= element.clientWidth), path).toBe(true)
+  }
+  await expect(page.getByRole('group', { name: 'Language' })).toBeHidden()
+  await page.getByRole('button', { name: /^Account:/ }).click()
+  await page.getByRole('menuitemradio', { name: 'Filipino' }).click()
+  await expect(page.getByRole('menuitemradio', { name: 'Filipino' })).toHaveAttribute('aria-checked', 'true')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'fil')
+  await expect(page.locator('p[aria-current="page"]')).toHaveText('Pag-unlad')
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
+  expect(results.violations.map((v) => v.id)).toEqual([])
+  await page.getByRole('button', { name: /:/ }).first().click()
+  await page.getByRole('menuitemradio', { name: 'English' }).click()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+})
+
+test('a tablet or wider keeps the breadcrumb and the language switch in the header', async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 1000 })
+  await page.goto('/design/therapist/patients/p1')
+  const trail = page.getByRole('navigation', { name: 'You are here' })
+  await expect(trail.getByRole('link', { name: 'Patients' })).toBeVisible()
+  await expect(page.getByRole('group', { name: 'Language' })).toBeVisible()
+})

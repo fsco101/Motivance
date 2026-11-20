@@ -91,7 +91,7 @@ Visitors reach the landing page at `/`; a signed-in account skips it and goes to
 
 ## Patient workspace
 
-Patients are often on a phone, so this is the one workspace built for one. Below 768 px the sidebar gives way to a bottom bar, in reach of a thumb, and lists stack rather than sit in tables: a table cannot fit a phone without hiding the results. Above that it uses the same frame as the staff workspaces.
+Patients are often on a phone, so this is the one workspace built for one. Below 768 px the header shows the page's title in full instead of the breadcrumb trail, and the English/Filipino choice moves into the account menu (#148). The sidebar gives way to a bottom bar, in reach of a thumb, and lists stack rather than sit in tables: a table cannot fit a phone without hiding the results. Above that it uses the same frame as the staff workspaces.
 
 The next exercise is the page's one bold element, because it is what a patient came to do. Starting it opens the exercise in the browser: setup with the moving guide figure, the camera, then the session. A browser that cannot run the camera gets a dialog suggesting another browser or the mobile app, with a store link and QR code once the app has an address.
 
