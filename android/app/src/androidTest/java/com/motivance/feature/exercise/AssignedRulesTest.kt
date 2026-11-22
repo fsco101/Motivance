@@ -145,6 +145,14 @@ class AssignedRulesTest {
             text(if(ExerciseJson.rules(p.rulesJson).kind==ExerciseKind.ELBOW_FLEXION) R.string.elbow_flexion else R.string.shoulder_abduction),text(R.string.right_side))
 
         compose.onNodeWithText(text(R.string.calc_source_prescribed_short)).assertExists()
+        // The camera fills the screen; Start and the rest wait in the floating panel until the patient opens it.
+        compose.onNodeWithText(text(R.string.start_measurement)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.camera_controls_open)).performClick()
+        compose.onNodeWithText(text(R.string.camera_controls_title)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.start_measurement)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(text(R.string.camera_controls_close)).performClick()
+        compose.onNodeWithText(text(R.string.start_measurement)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.camera_controls_open)).performClick()
         compose.onNodeWithText(text(R.string.prescribed_assessment_notice)).assertExists()
         compose.onNodeWithText(text(R.string.calc_source_demo_short)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.demo_assessment_notice)).assertDoesNotExist()
@@ -155,7 +163,7 @@ class AssignedRulesTest {
         val other=if(active==shoulder.versionId) elbow else shoulder
         val current=if(active==shoulder.versionId) shoulder else elbow
         compose.onNodeWithText(switchLabel(current)).assertDoesNotExist()
-        compose.onNodeWithText(switchLabel(other)).performClick()
+        compose.onNodeWithText(switchLabel(other)).performScrollTo().performClick()
         compose.waitUntil(5_000) {vm.state.value.rules.prescriptionVersionId==other.versionId}
         compose.onNodeWithText(switchLabel(current)).assertExists()
     }

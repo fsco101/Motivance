@@ -64,6 +64,13 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
     metrics:AssessmentSnapshot, qualityLabel:String, modifier:Modifier=Modifier, details:Boolean=true,
     /** Shown between the header and the image, so it stays in view while the patient watches themselves. */
     coach:(@Composable () -> Unit)?=null,
+    /**
+     * The image fills the space it is given and the heading, status and readings float over it, so the camera
+     * can take the whole screen. [header] sits above the heading and [footer] below the readings.
+     */
+    fullScreen:Boolean=false,
+    header:(@Composable () -> Unit)?=null,
+    footer:(@Composable () -> Unit)?=null,
 ) {
     val ready=metrics.quality==TrackingQuality.READY
     val caution=metrics.quality==TrackingQuality.TRUNK_LEAN
@@ -89,9 +96,8 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
     } else null
     val measurer=rememberTextMeasurer()
 
-    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PreviewNavy)
-        .border(1.dp,Motion.NightLine,RoundedCornerShape(24.dp))) {
-        Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+    val heading:@Composable () -> Unit={
+        Column(verticalArrangement=Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 val live by rememberInfiniteTransition(label="live").animateFloat(1f,.3f,
                     infiniteRepeatable(tween(1100,easing=FastOutSlowInEasing),RepeatMode.Reverse),label="live-dot")
@@ -104,7 +110,27 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
             if(showBody && !focusVisible) Text(stringResource(R.string.focus_not_visible),color=CautionAmber,style=MaterialTheme.typography.bodySmall)
             coach?.invoke()
         }
-        Box(Modifier.fillMaxWidth().heightIn(max=440.dp).aspectRatio(4f/5f).onSizeChanged {viewport=it}
+    }
+    val chip by animateColorAsState(when {caution -> Color(0xE64A3410); ready -> Color(0xE6103C2A); else -> Color(0xE6132F38)},label="quality")
+    val status:@Composable (Modifier) -> Unit={chipModifier ->
+        Row(chipModifier.clip(RoundedCornerShape(50)).background(chip)
+            .padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            Canvas(Modifier.size(8.dp)) {drawCircle(if(caution) CautionAmber else if(ready) FocusMint else BodyInk)}
+            Text(qualityLabel,Modifier.semantics {liveRegion=LiveRegionMode.Polite},
+                color=if(caution) CautionAmber else Color.White,style=MaterialTheme.typography.labelLarge)
+        }
+    }
+    // These are measured values, not a tracking-confidence or exercise-quality score.
+    val readings:@Composable () -> Unit={
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            MetricTile(stringResource(R.string.measured_joint_angle,measurementJoint),degrees(liveAngle),Modifier.weight(1f))
+            MetricTile(stringResource(R.string.skeleton_reps),"${metrics.completed} / ${rules.targetRepetitions}",Modifier.weight(1f),
+                accent=metrics.completed>0,animate=true)
+            // Rounded up, so the clock reads 0:00 only when the side has actually ended.
+            SideSet.remainingMs(rules,metrics)?.let {MetricTile(stringResource(R.string.set_time_left),Seconds.clock((it+999)/1000),Modifier.weight(1f))}
+        }
+    }
+    val image:@Composable (Modifier) -> Unit={imageModifier -> Box(imageModifier.onSizeChanged {viewport=it}
             .semantics {contentDescription=description},contentAlignment=Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
                 if(size.width<=0 || size.height<=0) return@Canvas
@@ -152,12 +178,14 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
                         protractor?.let {drawProtractor(it,mapping,rules,liveAngle,measurer)}
                     }
                 }
-                // Lightweight brackets frame the image without suggesting an anatomical target.
+                // Lightweight brackets frame the image without suggesting an anatomical target. Full screen, the screen edge is the frame.
+                if(!fullScreen) {
                 val inset=16.dp.toPx();val length=20.dp.toPx();val width=1.5.dp.toPx()
                 listOf(Offset(inset,inset) to Offset(1f,1f),Offset(size.width-inset,inset) to Offset(-1f,1f),
                     Offset(inset,size.height-inset) to Offset(1f,-1f),Offset(size.width-inset,size.height-inset) to Offset(-1f,-1f)).forEach {(p,direction) ->
                     drawLine(BodyInk.copy(alpha=.6f),p,p+Offset(length*direction.x,0f),width,StrokeCap.Round)
                     drawLine(BodyInk.copy(alpha=.6f),p,p+Offset(0f,length*direction.y),width,StrokeCap.Round)
+                }
                 }
             }
             if(bitmap==null) Column(Modifier.padding(32.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -165,24 +193,36 @@ private fun degrees(value:Double?)=value?.takeIf {it.isFinite()}?.let {"%.1f°".
                 Text(stringResource(if(metrics.quality==TrackingQuality.PAUSED) R.string.camera_paused else R.string.skeleton_position),color=BodyInk,
                     style=MaterialTheme.typography.bodyMedium,textAlign=TextAlign.Center)
             }
-            val chip by animateColorAsState(when {caution -> Color(0xE64A3410); ready -> Color(0xE6103C2A); else -> Color(0xE6132F38)},label="quality")
-            Row(Modifier.align(Alignment.BottomCenter).padding(12.dp).clip(RoundedCornerShape(50)).background(chip)
-                .padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                Canvas(Modifier.size(8.dp)) {drawCircle(if(caution) CautionAmber else if(ready) FocusMint else BodyInk)}
-                Text(qualityLabel,Modifier.semantics {liveRegion=LiveRegionMode.Polite},
-                    color=if(caution) CautionAmber else Color.White,style=MaterialTheme.typography.labelLarge)
-            }
+            if(!fullScreen) status(Modifier.align(Alignment.BottomCenter).padding(12.dp))
         }
+    }
+
+    if(fullScreen) Box(modifier.fillMaxSize().background(PreviewNavy)) {
+        // The same FIT_CENTER image as the card, so the letterbox bands above and below hold the overlays.
+        image(Modifier.fillMaxSize())
+        Column(Modifier.align(Alignment.TopCenter).fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(PreviewNavy.copy(alpha=.92f),PreviewNavy.copy(alpha=.6f),Color.Transparent)))
+            .padding(start=16.dp,end=16.dp,top=12.dp,bottom=24.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            header?.invoke()
+            heading()
+        }
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(Color.Transparent,PreviewNavy.copy(alpha=.6f),PreviewNavy.copy(alpha=.92f))))
+            .padding(start=16.dp,end=16.dp,top=24.dp,bottom=12.dp),
+            horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            status(Modifier)
+            readings()
+            footer?.invoke()
+        }
+    } else Column(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PreviewNavy)
+        .border(1.dp,Motion.NightLine,RoundedCornerShape(24.dp))) {
+        header?.let {Box(Modifier.padding(start=16.dp,end=16.dp,top=16.dp)) {it()}}
+        Box(Modifier.padding(16.dp)) {heading()}
+        image(Modifier.fillMaxWidth().heightIn(max=440.dp).aspectRatio(4f/5f))
         Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            // These are measured values, not a tracking-confidence or exercise-quality score.
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                MetricTile(stringResource(R.string.measured_joint_angle,measurementJoint),degrees(liveAngle),Modifier.weight(1f))
-                MetricTile(stringResource(R.string.skeleton_reps),"${metrics.completed} / ${rules.targetRepetitions}",Modifier.weight(1f),
-                    accent=metrics.completed>0,animate=true)
-                // Rounded up, so the clock reads 0:00 only when the side has actually ended.
-                SideSet.remainingMs(rules,metrics)?.let {MetricTile(stringResource(R.string.set_time_left),Seconds.clock((it+999)/1000),Modifier.weight(1f))}
-            }
+            readings()
             if(details) CalculationContent(rules,metrics,liveAngle,guide,measurementJoint)
+            footer?.invoke()
         }
     }
 }

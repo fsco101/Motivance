@@ -21,6 +21,9 @@
     <string name="tracking_lost">Position yourself in view; reliable body tracking is unavailable.</string>
     <string name="tracking_found">Body landmarks detected. Prototype only.</string>
     <string name="switch_camera">Switch camera</string>
+    <string name="camera_controls_open">Show controls</string>
+    <string name="camera_controls_title">Session controls</string>
+    <string name="camera_controls_close">Hide controls</string>
     <string name="back">Back</string>
     <string name="back_to_sign_in">Back to sign in</string>
     <string name="role_patient">Patient workspace</string>
@@ -1017,7 +1020,7 @@
     <string name="timing_maximum_help">More than the shortest time, up to 300. A slower repetition is not counted and starts again. Example: 30</string>
     <string name="timing_hold_help">0 to 5. How long the patient stays at the target. Example: 1 means hold for 1 second</string>
     <string name="timing_lean_help">0 to 90. How far the upper body may tilt from upright. Leaning further stops the repetition from counting. Example: 15</string>
-    <string name="coach_not_recording">Not counting yet. Tap Start measurement below.</string>
+    <string name="coach_not_recording">Not counting yet. Tap Show controls, then Start measurement.</string>
     <string name="coach_paused">Paused. Repetitions are not counting.</string>
     <string name="coach_tracking">Waiting for tracking. Stay in view of the camera.</string>
     <string name="coach_step">Step %1$d of 4</string>

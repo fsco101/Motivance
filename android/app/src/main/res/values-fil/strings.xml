@@ -21,6 +21,9 @@
     <string name="tracking_lost">Pumuwesto sa harap ng camera; hindi pa maaasahan ang pagsubaybay.</string>
     <string name="tracking_found">Nakita ang mga palatandaan ng katawan. Prototipo lamang.</string>
     <string name="switch_camera">Palitan ang camera</string>
+    <string name="camera_controls_open">Ipakita ang mga kontrol</string>
+    <string name="camera_controls_title">Mga kontrol ng session</string>
+    <string name="camera_controls_close">Itago ang mga kontrol</string>
     <string name="back">Bumalik</string>
     <string name="back_to_sign_in">Bumalik sa pag-sign in</string>
     <string name="role_patient">Lugar para sa pasyente</string>
@@ -1017,7 +1020,7 @@
     <string name="timing_maximum_help">Higit sa pinakamaikling oras, hanggang 300. Hindi bibilangin ang mas matagal na ulit at magsisimula itong muli. Halimbawa: 30</string>
     <string name="timing_hold_help">0 hanggang 5. Gaano katagal mananatili ang pasyente sa target. Halimbawa: ang 1 ay paghawak nang 1 segundo</string>
     <string name="timing_lean_help">0 hanggang 90. Gaano kalayo maaaring tumagilid ang itaas na katawan mula sa pagkakatuwid. Hindi bibilangin ang ulit kapag mas kumiling pa. Halimbawa: 15</string>
-    <string name="coach_not_recording">Hindi pa nagbibilang. I-tap ang Simulan ang pagsukat sa ibaba.</string>
+    <string name="coach_not_recording">Hindi pa nagbibilang. I-tap ang Ipakita ang mga kontrol, saka ang Simulan ang pagsukat.</string>
     <string name="coach_paused">Naka-pause. Hindi nagbibilang ng ulit.</string>
     <string name="coach_tracking">Hinihintay ang tracking. Manatili sa harap ng camera.</string>
     <string name="coach_step">Hakbang %1$d sa 4</string>
