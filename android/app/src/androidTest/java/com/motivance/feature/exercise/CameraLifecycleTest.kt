@@ -18,6 +18,8 @@ class CameraLifecycleTest {
         val context=instrumentation.targetContext
         compose.onNodeWithText(context.getString(R.string.try_camera)).performScrollTo().performClick()
         compose.onNodeWithText(context.getString(R.string.start_camera_check)).performScrollTo().performClick()
+        // The inference readout is with the other details in the floating controls panel.
+        compose.onNodeWithText(context.getString(R.string.camera_controls_open)).performClick()
         fun waitForInference() {
             compose.waitUntil(30_000) {compose.onAllNodesWithText("Inference:",substring=true).fetchSemanticsNodes().isNotEmpty()}
         }

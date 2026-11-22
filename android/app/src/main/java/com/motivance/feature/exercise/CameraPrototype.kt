@@ -13,6 +13,16 @@ import android.graphics.Matrix
 import android.os.SystemClock
 import android.os.Build
 import android.os.PowerManager
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
@@ -253,97 +263,165 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         return
     }
     DarkStage()
+    // The camera fills the screen. Everything that is not watched while moving lives in a floating panel the patient opens.
+    var controlsOpen by rememberSaveable {mutableStateOf(false)}
+    // Starting or resuming gives the screen back to the camera; a finished set brings the panel back for what comes next.
+    LaunchedEffect(exercise.metrics.running) {if(exercise.metrics.running) controlsOpen=false}
+    LaunchedEffect(exercise.saved) {if(exercise.saved) controlsOpen=true}
+    BackHandler(controlsOpen) {controlsOpen=false}
+    val switching=exercise.switching
+    val shown=display
     SessionTheme {
-    Column(Modifier.fillMaxSize().background(Motion.Night).verticalScroll(rememberScrollState()).padding(horizontal=16.dp,vertical=12.dp),
-        verticalArrangement=Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-            Image(painterResource(R.drawable.motivance_logo),null,Modifier.size(32.dp))
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.camera_title),style=MaterialTheme.typography.labelMedium,color=Motion.NightInk)
-                Text(exerciseName,style=MaterialTheme.typography.titleLarge,color=Color.White,modifier=Modifier.semantics {heading()})
-            }
-            StatusPill(stringResource(if(exercise.rules.demo) R.string.calc_source_demo_short else R.string.calc_source_prescribed_short),
-                if(exercise.rules.demo) PillTone.NEUTRAL else PillTone.POSITIVE)
-        }
-        if(recording.live) StatusPill(stringResource(R.string.video_recording),PillTone.ATTENTION)
-        if(exercise.id==null && exercise.switching==null) {
-            if(exercise.rules.demo) {
-                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                    FilterChip(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION,{haptics.tick();session.select(ExerciseKind.ELBOW_FLEXION,exercise.rules.side)},label={Text(stringResource(R.string.elbow_flexion))})
-                    FilterChip(exercise.rules.kind==ExerciseKind.SHOULDER_ABDUCTION,{haptics.tick();session.select(ExerciseKind.SHOULDER_ABDUCTION,exercise.rules.side)},label={Text(stringResource(R.string.shoulder_abduction))})
-                }
-                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                    BodySide.entries.forEach { side -> FilterChip(exercise.rules.side==side,{haptics.tick();session.select(exercise.rules.kind,side)},label={Text(stringResource(if(side==BodySide.LEFT) R.string.left_side else R.string.right_side))}) }
-                }
-            }
-            exercise.cached.filter {it.usableAt() && it.versionId!=exercise.rules.prescriptionVersionId}.forEach { cached ->
-                val rules=ExerciseJson.rules(cached.rulesJson)
-                OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) {
-                    Text(stringResource(R.string.use_cached_prescription,rules.displayName(),rules.sideText()))
-                }
-            }
-        }
-        if(!permission) Surface(shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.surface) {
-            Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.camera_privacy),style=MaterialTheme.typography.bodyMedium,color=Motion.NightInk)
-                Button({launcher.launch(Manifest.permission.CAMERA)},Modifier.fillMaxWidth().heightIn(min=52.dp)) { Text(stringResource(R.string.allow_camera)) }
-                TextButton({context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.open_app_settings)) }
-            }
-        }
-        error?.let { FeedbackNotice(it,error=true) }
-        val shown=display
+    Box(Modifier.fillMaxSize().background(Motion.Night)) {
         // The coach replaces a result banner that the engine cleared on the very next frame (issue #95).
-        SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()),details=false,
-            coach={RepCoach(exercise,paused)})
-        // A reminder of the movement before starting. Once running, the patient follows their own measured movement instead.
-        if(!exercise.metrics.running) GuideStage(guideMotion(exercise.rules),exerciseName,Modifier.height(220.dp),dark=true)
-        val switching=exercise.switching
-        if(switching!=null) SideSwitchCard(switching,{haptics.tick();session.pauseSwitch()},{haptics.confirm();session.startNextSide()})
-        if(switching==null && exercise.id==null && !exercise.saved && permission) RecordChoice(record) {on ->
-            haptics.tick()
-            if(!on) record=false else if(videoStore.consented(ownerId)) turnOnRecording() else askingToRecord=true
-        }
-        if(askingToRecord) RecordConsentDialog({askingToRecord=false}) {askingToRecord=false; videoStore.consent(ownerId,true); turnOnRecording()}
-        if(switching==null) MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
-            {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
-        RepSoundToggle(voice) {haptics.tick(); voice=it; voiceSetting.enabled=it}
-        FinishSoundToggle(finishSound) {haptics.tick(); finishSound=it; finishSetting.enabled=it}
-        SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
-        exercise.cached.firstOrNull { it.versionId==exercise.rules.prescriptionVersionId }?.let {
-            Text(it.instructions,style=MaterialTheme.typography.bodyMedium,color=Color.White)
-        }
-        Text(stringResource(if(exercise.rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
-        Text(stringResource(R.string.camera_setup),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
-        Text(stringResource(R.string.session_metrics,exercise.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",exercise.metrics.incomplete,exercise.metrics.durationMs/1000),
-            style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
-        if(BuildConfig.DEBUG) {
-            if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height),style=MaterialTheme.typography.labelSmall,color=Motion.NightInk)
-            diagnostics?.let {Text(stringResource(R.string.diagnostics_summary,"%.1f".format(it.fps),it.p95LatencyMs,thermalStatus),style=MaterialTheme.typography.labelSmall,color=Motion.NightInk)}
-        }
-        if(diagnostics?.let {PerformancePolicy.slow(it)}==true) FeedbackNotice(R.string.camera_slow_warning,error=true)
-        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            OutlinedButton({haptics.tick();front=!front; display=null; error=null},modifier=Modifier.weight(1f).heightIn(min=52.dp),shape=MaterialTheme.shapes.medium) {
-                Icon(Icons.Default.Refresh,null,Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.switch_camera),textAlign=TextAlign.Center)
+        SkeletonPreview(shown?.bitmap,shown?.points.orEmpty(),front,exercise.rules,exercise.metrics,stringResource(exercise.metrics.quality.label()),
+            Modifier.fillMaxSize(),details=false,coach={RepCoach(exercise,paused)},fullScreen=true,
+            header={
+                Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                        Image(painterResource(R.drawable.motivance_logo),null,Modifier.size(28.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(stringResource(R.string.camera_title),style=MaterialTheme.typography.labelMedium,color=Motion.NightInk)
+                            Text(exerciseName,style=MaterialTheme.typography.titleMedium,color=Color.White,modifier=Modifier.semantics {heading()})
+                        }
+                        StatusPill(stringResource(if(exercise.rules.demo) R.string.calc_source_demo_short else R.string.calc_source_prescribed_short),
+                            if(exercise.rules.demo) PillTone.NEUTRAL else PillTone.POSITIVE)
+                    }
+                    if(recording.live) StatusPill(stringResource(R.string.video_recording),PillTone.ATTENTION)
+                    error?.let {FeedbackNotice(it,error=true)}
+                }
+            },
+            footer={
+                if(!permission) Surface(shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.surface) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                        Text(stringResource(R.string.camera_privacy),style=MaterialTheme.typography.bodyMedium,color=Motion.NightInk)
+                        Button({launcher.launch(Manifest.permission.CAMERA)},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.allow_camera))}
+                        TextButton({context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.open_app_settings))}
+                    }
+                }
+                // Between sides the countdown and its choices stay on the camera, where the patient is looking.
+                if(switching!=null) SideSwitchCard(switching,{haptics.tick();session.pauseSwitch()},{haptics.confirm();session.startNextSide()})
+                if(!controlsOpen) ControlsButton(exercise.metrics.running,exercise.saved,{haptics.tick();controlsOpen=true},
+                    pause=if(exercise.metrics.running && switching==null) ({haptics.tick();session.pause()}) else null)
+            })
+        ControlsPanel(controlsOpen,{controlsOpen=false}) {
+            if(switching==null) MeasurementControls(exercise,consent,paused,BuildConfig.DEBUG,{consent=it},
+                {haptics.confirm();session.start(consent || exercise.id!=null)},{haptics.tick();session.pause()})
+            if(exercise.id==null && exercise.switching==null) {
+                if(exercise.rules.demo) {
+                    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        FilterChip(exercise.rules.kind==ExerciseKind.ELBOW_FLEXION,{haptics.tick();session.select(ExerciseKind.ELBOW_FLEXION,exercise.rules.side)},label={Text(stringResource(R.string.elbow_flexion))})
+                        FilterChip(exercise.rules.kind==ExerciseKind.SHOULDER_ABDUCTION,{haptics.tick();session.select(ExerciseKind.SHOULDER_ABDUCTION,exercise.rules.side)},label={Text(stringResource(R.string.shoulder_abduction))})
+                    }
+                    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        BodySide.entries.forEach {side -> FilterChip(exercise.rules.side==side,{haptics.tick();session.select(exercise.rules.kind,side)},label={Text(stringResource(if(side==BodySide.LEFT) R.string.left_side else R.string.right_side))})}
+                    }
+                }
+                exercise.cached.filter {it.usableAt() && it.versionId!=exercise.rules.prescriptionVersionId}.forEach {cached ->
+                    val rules=ExerciseJson.rules(cached.rulesJson)
+                    OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) {
+                        Text(stringResource(R.string.use_cached_prescription,rules.displayName(),rules.sideText()))
+                    }
+                }
             }
-            OutlinedButton({haptics.tick();if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f).heightIn(min=52.dp),enabled=!exercise.saving,shape=MaterialTheme.shapes.medium) {
-                Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera),textAlign=TextAlign.Center)
+            if(switching==null && exercise.id==null && !exercise.saved && permission) RecordChoice(record) {on ->
+                haptics.tick()
+                if(!on) record=false else if(videoStore.consented(ownerId)) turnOnRecording() else askingToRecord=true
+            }
+            // A reminder of the movement before starting. Once running, the patient follows their own measured movement instead.
+            if(!exercise.metrics.running) GuideStage(guideMotion(exercise.rules),exerciseName,Modifier.height(220.dp),dark=true)
+            RepSoundToggle(voice) {haptics.tick(); voice=it; voiceSetting.enabled=it}
+            FinishSoundToggle(finishSound) {haptics.tick(); finishSound=it; finishSetting.enabled=it}
+            Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                OutlinedButton({haptics.tick();front=!front; display=null; error=null},modifier=Modifier.weight(1f).heightIn(min=52.dp),shape=MaterialTheme.shapes.medium) {
+                    Icon(Icons.Default.Refresh,null,Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.switch_camera),textAlign=TextAlign.Center)
+                }
+                OutlinedButton({haptics.tick();if(!paused) session.interrupt(); paused=!paused},modifier=Modifier.weight(1f).heightIn(min=52.dp),enabled=!exercise.saving,shape=MaterialTheme.shapes.medium) {
+                    Text(stringResource(if(paused) R.string.resume_camera else R.string.pause_camera),textAlign=TextAlign.Center)
+                }
+            }
+            if(exercise.recoverable!=null && exercise.id==null && exercise.switching==null) TextButton({session.restore()},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.recover_interrupted))}
+            if(exercise.saved) {
+                FeedbackNotice(R.string.session_saved_local)
+                OutlinedButton({finishRecording(); session.newSession(); consent=false; record=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
+            }
+            if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
+            if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.usableAt()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
+            if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({finishRecording();session.newSession();consent=false;record=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
+            // Between sides there is a set to finish too: its first side is already saved.
+            val finishable=(exercise.id!=null || exercise.switching!=null) && !exercise.saved
+            ActionButton(if(finishable) R.string.finish_save_session else R.string.finish_camera,
+                {if(finishable) {exitRequested=true; session.finish()} else onBack()},busy=exercise.saving,busyLabel=R.string.saving_session,
+                outlined=!finishable)
+            if(diagnostics?.let {PerformancePolicy.slow(it)}==true) FeedbackNotice(R.string.camera_slow_warning,error=true)
+            SessionCalculations(shown!=null,exercise.rules,exercise.metrics)
+            exercise.cached.firstOrNull {it.versionId==exercise.rules.prescriptionVersionId}?.let {
+                Text(it.instructions,style=MaterialTheme.typography.bodyMedium,color=Color.White)
+            }
+            Text(stringResource(if(exercise.rules.demo) R.string.demo_assessment_notice else R.string.prescribed_assessment_notice),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+            Text(stringResource(R.string.camera_setup),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+            Text(stringResource(R.string.session_metrics,exercise.metrics.romDegrees?.let {"%.1f".format(it)} ?: "--",exercise.metrics.incomplete,exercise.metrics.durationMs/1000),
+                style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+            if(BuildConfig.DEBUG) {
+                if(shown!=null) Text(stringResource(R.string.inference_summary,shown.latency,shown.bitmap.width,shown.bitmap.height),style=MaterialTheme.typography.labelSmall,color=Motion.NightInk)
+                diagnostics?.let {Text(stringResource(R.string.diagnostics_summary,"%.1f".format(it.fps),it.p95LatencyMs,thermalStatus),style=MaterialTheme.typography.labelSmall,color=Motion.NightInk)}
             }
         }
-        if(exercise.recoverable!=null && exercise.id==null && exercise.switching==null) TextButton({session.restore()},Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.recover_interrupted)) }
-        if(exercise.saved) {
-            FeedbackNotice(R.string.session_saved_local)
-            OutlinedButton({finishRecording(); session.newSession(); consent=false; record=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
-        }
-        if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
-        if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.usableAt()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
-        if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({finishRecording();session.newSession();consent=false;record=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
-        // Between sides there is a set to finish too: its first side is already saved.
-        val finishable=(exercise.id!=null || exercise.switching!=null) && !exercise.saved
-        ActionButton(if(finishable) R.string.finish_save_session else R.string.finish_camera,
-            {if(finishable) {exitRequested=true; session.finish()} else onBack()},busy=exercise.saving,busyLabel=R.string.saving_session,
-            outlined=!finishable)
-        Spacer(Modifier.height(8.dp))
     }
+    if(askingToRecord) RecordConsentDialog({askingToRecord=false}) {askingToRecord=false; videoStore.consent(ownerId,true); turnOnRecording()}
+    }
+}
+
+/**
+ * The floating button over the camera that opens the session controls. While measuring it also offers Pause,
+ * so stopping never takes two taps.
+ */
+@Composable private fun ControlsButton(running:Boolean,saved:Boolean,open:()->Unit,pause:(()->Unit)?) {
+    Row(horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically) {
+        val pulse by rememberInfiniteTransition(label="controls").animateFloat(1f,.35f,
+            infiniteRepeatable(tween(900,easing=FastOutSlowInEasing),RepeatMode.Reverse),label="controls-dot")
+        Surface(open,Modifier.heightIn(min=56.dp),shape=RoundedCornerShape(50),color=Motion.NightPanel,contentColor=Color.White,
+            border=BorderStroke(1.dp,Motion.NightLine),shadowElevation=6.dp) {
+            Row(Modifier.padding(horizontal=20.dp,vertical=14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                Canvas(Modifier.size(10.dp).alpha(if(running) pulse else 1f)) {
+                    drawCircle(when {running -> Color(0xFFFF6B5E); saved -> Motion.SproutBright; else -> Motion.NightInk})
+                }
+                Text(stringResource(R.string.camera_controls_open),style=MaterialTheme.typography.titleSmall)
+                Icon(Icons.Default.KeyboardArrowUp,null,Modifier.size(20.dp))
+            }
+        }
+        pause?.let {
+            Surface(it,Modifier.heightIn(min=56.dp),shape=RoundedCornerShape(50),color=Color.White,contentColor=Motion.Night,shadowElevation=6.dp) {
+                Text(stringResource(R.string.pause_measurement),Modifier.padding(horizontal=20.dp,vertical=16.dp),style=MaterialTheme.typography.titleSmall)
+            }
+        }
+    }
+}
+
+/** A floating window over the camera, holding everything that is read or set rather than watched while moving. */
+@Composable private fun ControlsPanel(open:Boolean,close:()->Unit,content:@Composable ColumnScope.()->Unit) {
+    val maxHeight=(LocalConfiguration.current.screenHeightDp*.82f).dp
+    Box(Modifier.fillMaxSize()) {
+        AnimatedVisibility(open,enter=fadeIn(),exit=fadeOut()) {
+            // Tapping the camera around the panel closes it, like the system's own sheets.
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.35f)).pointerInput(close) {detectTapGestures {close()}})
+        }
+        AnimatedVisibility(open,Modifier.align(Alignment.BottomCenter),enter=slideInVertically {it}+fadeIn(),exit=slideOutVertically {it}+fadeOut()) {
+            Surface(Modifier.padding(12.dp).widthIn(max=640.dp).fillMaxWidth().heightIn(max=maxHeight),shape=RoundedCornerShape(28.dp),
+                color=Motion.Night,border=BorderStroke(1.dp,Motion.NightLine),shadowElevation=12.dp) {
+                Column {
+                    Row(Modifier.fillMaxWidth().padding(start=20.dp,end=8.dp,top=8.dp),verticalAlignment=Alignment.CenterVertically) {
+                        Text(stringResource(R.string.camera_controls_title),Modifier.weight(1f).semantics {heading()},
+                            style=MaterialTheme.typography.titleMedium,color=Color.White)
+                        IconButton(close,Modifier.size(48.dp)) {
+                            Icon(Icons.Default.KeyboardArrowDown,stringResource(R.string.camera_controls_close),tint=Color.White)
+                        }
+                    }
+                    Column(Modifier.verticalScroll(rememberScrollState()).padding(start=16.dp,end=16.dp,bottom=16.dp),
+                        verticalArrangement=Arrangement.spacedBy(12.dp),content=content)
+                }
+            }
+        }
     }
 }
 

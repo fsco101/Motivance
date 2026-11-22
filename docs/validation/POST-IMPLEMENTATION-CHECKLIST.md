@@ -362,6 +362,10 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] #161: Leave a phone offline for just under 72 hours after its last refresh and confirm today's exercises still start; after 72 hours confirm they show Expired with the "connect and refresh" text, and that one refresh online makes them usable again.
 - [ ] #162: Offline, open Home and Exercises with TalkBack on. Confirm TalkBack reads "You're offline" and what still works, no error toast appears, and the saved exercises stay below the notice. Reconnect and confirm Retry clears the notice.
 
+## Android full-screen camera (2026-11-22)
+
+- [ ] On a physical phone, open an assigned exercise. Confirm the camera fills the screen and the overlays do not cover the measured joint while the patient stands where the setup asks. Open the controls, tick consent, start, and confirm the panel closes and Pause measurement appears beside the controls button. Repeat at twice the font size in Filipino and with TalkBack.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.
