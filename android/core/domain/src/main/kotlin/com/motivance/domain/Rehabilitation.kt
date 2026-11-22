@@ -53,3 +53,6 @@ class RemoteFailure(val status:Int,val code:String?=null):Exception("Request fai
     val authenticationRequired get()=status==401
     val retryable get()=status==408 || status==429 || status>=500
 }
+
+/** The server could not be reached at all, which is normal while exercising offline; a refusal from the server is not. */
+fun Throwable.isOffline()=this is java.io.IOException

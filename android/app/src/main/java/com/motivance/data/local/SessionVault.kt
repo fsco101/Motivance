@@ -14,8 +14,11 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Where the signed-in account is kept between launches. */
+interface SessionSecrets {fun read():String?; fun write(value:String); fun clear()}
+
 /** Android Keystore AES/GCM; backup is disabled for the application. No passwords. */
-@Singleton class SessionVault @Inject constructor(@ApplicationContext context:Context) {
+@Singleton class SessionVault @Inject constructor(@ApplicationContext context:Context):SessionSecrets {
     private val file=AtomicFile(File(context.noBackupFilesDir,"auth-session.bin"))
     private val alias="motivance.session.v1"
     private fun key():SecretKey {
@@ -26,7 +29,7 @@ import javax.inject.Singleton
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
         }.generateKey()
     }
-    @Synchronized fun read():String? {
+    @Synchronized override fun read():String? {
         if(!file.baseFile.exists()) return null
         return try {
             val bytes=file.readFully(); val length=bytes[0].toInt()
@@ -36,11 +39,11 @@ import javax.inject.Singleton
             String(cipher.doFinal(bytes.copyOfRange(length+1,bytes.size)),Charsets.UTF_8)
         } catch(_:Exception) {clear(); null}
     }
-    @Synchronized fun write(value:String) {
+    @Synchronized override fun write(value:String) {
         val cipher=Cipher.getInstance("AES/GCM/NoPadding").apply {init(Cipher.ENCRYPT_MODE,key())}
         val bytes=byteArrayOf(cipher.iv.size.toByte())+cipher.iv+cipher.doFinal(value.toByteArray(Charsets.UTF_8))
         val stream=file.startWrite()
         try {stream.write(bytes); file.finishWrite(stream)} catch(e:Exception) {file.failWrite(stream); throw e}
     }
-    @Synchronized fun clear()=file.delete()
+    @Synchronized override fun clear()=file.delete()
 }

@@ -16,6 +16,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import com.motivance.data.local.SessionStore
 import com.motivance.data.local.SessionVault
+import com.motivance.data.local.SessionSecrets
 import java.io.IOException
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -27,7 +28,7 @@ import java.time.OffsetDateTime
     private val publicKey: String,
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
     private val cache:SessionStore?=null,
-    private val vault:SessionVault?=null,
+    private val vault:SessionSecrets?=null,
 ) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository, SessionVideoRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
@@ -93,7 +94,9 @@ import java.time.OffsetDateTime
     override suspend fun restoreSession():UserSession?=mutex.withLock {
         loadStored(); val id=userId ?: return@withLock null
         try {accept(call("/auth/v1/token?grant_type=refresh_token",JSONObject().put("refresh_token",refreshToken)))}
-        catch(e:IOException) {if(expiresAt>System.currentTimeMillis()/1000) UserSession(id,cachedRoles) else null}
+        // Offline, the stored account stays signed in even after the access token expires: server calls fail until the
+        // connection returns, then renew the token once. Only the server refusing the refresh token signs the person out.
+        catch(e:IOException) {if(!refreshToken.isNullOrBlank()) UserSession(id,cachedRoles) else null}
         catch(e:RemoteFailure) {if(e.status in setOf(400,401)) clearSession(); throw e}
     }
     override suspend fun signIn(email: String, password: String) = mutex.withLock { accept(call("/auth/v1/token?grant_type=password", JSONObject().put("email",email).put("password",password))) }

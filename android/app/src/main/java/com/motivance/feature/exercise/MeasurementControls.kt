@@ -27,7 +27,7 @@ import com.motivance.domain.*
 ) {
     val metrics=state.metrics
     val unavailableDemo=state.rules.demo && !demoAllowed
-    val assignmentValid=state.rules.demo || state.cached.any {it.versionId==state.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}
+    val assignmentValid=state.rules.demo || state.cached.any {it.versionId==state.rules.prescriptionVersionId && it.usableAt()}
     val status=when {
         state.saved -> R.string.measurement_saved
         metrics.running -> R.string.measurement_recording

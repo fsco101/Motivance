@@ -149,6 +149,11 @@
     <string name="local_history">On-device sessions</string>
     <string name="local_history_detail">Account-isolated local records. Pending uploads are not discarded at logout.</string>
     <string name="connected_failed">Request failed. Check your connection, invitation details and account permissions, then retry.</string>
+    <string name="offline_title">You\'re offline</string>
+    <string name="offline_detail_patient">Today\'s saved exercises, your local history and sessions waiting to upload still work on this phone. New assignments, results and messages wait for a connection.</string>
+    <string name="offline_detail_staff">Patient records, plans and messages wait for a connection. What is already on screen stays here.</string>
+    <string name="offline_detail_action">This needs a connection. Try again once you\'re back online.</string>
+    <string name="offline_action">You\'re offline. This needs a connection; try again once you\'re back online.</string>
     <string name="connected_ready">Ready. Refresh to retrieve the latest server records.</string>
     <string name="refresh_connected">Refresh assignments and results</string>
     <string name="invite_patient">Invite a patient</string>
@@ -164,10 +169,10 @@
     <string name="join_therapist_help">Register and confirm using the invited email, then enter the code your therapist gave you.</string>
     <string name="invitation_code">Invitation code</string>
     <string name="accept_invitation">Accept invitation</string>
-    <string name="assignment_cache_policy">Downloaded instructions work offline for 24 hours. Refresh online to check for changes or revoked access.</string>
+    <string name="assignment_cache_policy">Downloaded exercises work offline for 72 hours after the last refresh. Refresh online to check for changes or removed access.</string>
     <string name="last_downloaded">Last downloaded: %1$s</string>
     <string name="pinned_version">Prescription reference: %1$s</string>
-    <string name="assignment_expired">This downloaded assignment is unavailable or expired. Connect and refresh before starting.</string>
+    <string name="assignment_expired">This downloaded exercise has expired or is no longer available. Connect to the internet, then tap Refresh assignments and results to use it again.</string>
     <string name="assignment_unavailable">Some assigned exercises could not be loaded. Refresh online, or ask your therapist to check the exercise and its instructions.</string>
     <string name="start_assigned_exercise">Start assigned exercise</string>
     <string name="synced_results">Uploaded session results</string>

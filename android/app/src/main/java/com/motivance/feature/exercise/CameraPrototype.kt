@@ -276,7 +276,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
                     BodySide.entries.forEach { side -> FilterChip(exercise.rules.side==side,{haptics.tick();session.select(exercise.rules.kind,side)},label={Text(stringResource(if(side==BodySide.LEFT) R.string.left_side else R.string.right_side))}) }
                 }
             }
-            exercise.cached.filter {it.expiresAt>System.currentTimeMillis() && it.versionId!=exercise.rules.prescriptionVersionId}.forEach { cached ->
+            exercise.cached.filter {it.usableAt() && it.versionId!=exercise.rules.prescriptionVersionId}.forEach { cached ->
                 val rules=ExerciseJson.rules(cached.rulesJson)
                 OutlinedButton({session.usePrescription(cached)},Modifier.heightIn(min=48.dp)) {
                     Text(stringResource(R.string.use_cached_prescription,rules.displayName(),rules.sideText()))
@@ -335,7 +335,7 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             OutlinedButton({finishRecording(); session.newSession(); consent=false; record=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
         }
         if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
-        if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
+        if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.usableAt()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
         if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({finishRecording();session.newSession();consent=false;record=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
         // Between sides there is a set to finish too: its first side is already saved.
         val finishable=(exercise.id!=null || exercise.switching!=null) && !exercise.saved

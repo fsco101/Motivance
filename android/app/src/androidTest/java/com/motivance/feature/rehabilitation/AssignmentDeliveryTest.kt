@@ -40,6 +40,7 @@ class AssignmentDeliveryTest {
     @Volatile private var profilesFail=false
     @Volatile private var offline=false
     @Volatile private var publishFails=false
+    @Volatile private var assignmentsStatus=200
     @Volatile private var downloads=0
 
     private fun row(version:String)="""{"id":"assignment-$version","patient_id":"$owner","prescription_versions":[{"id":"$version","version":1,"side":"left","minimum_degrees":20,"maximum_degrees":90,"target_repetitions":5,"parameters":{},"exercise_version_id":"exercise","exercise_versions":{"id":"exercise","algorithm_key":"elbow-flexion-v1","definition":{"measurement_convention":"2d_flexion_degrees","instructions_en":"Fixture instruction"}}}]}"""
@@ -52,6 +53,7 @@ class AssignmentDeliveryTest {
             path.endsWith("publish_prescription") -> {if(publishFails) code=500;"\"version\""}
             path.endsWith("exercise_assignments") -> {
                 if(request.url.queryParameter("select").orEmpty().contains("exercise_versions(")) downloads++
+                code=assignmentsStatus
                 assignments.joinToString(",","[","]")
             }
             path.endsWith("patient_profiles") -> {if(profilesFail) code=500;"[]"}
@@ -104,6 +106,31 @@ class AssignmentDeliveryTest {
         delay(300)
         assertEquals(1,store.dao.prescriptions(owner).first().size)
         assertFalse(vm.state.value.failed);assertNull(toasts.current.value)
+    }
+    @Test fun anOfflineRefreshSaysOfflineKeepsTheListAndShowsNoErrorToast()=runBlocking {
+        assignments=listOf(row("version-1"))
+        vm.configure(owner);idle();cached(1)
+        val shown=vm.state.value.workspace
+        offline=true
+        vm.refreshNow();idle()
+        assertTrue(vm.state.value.offline)
+        assertEquals(shown,vm.state.value.workspace)
+        assertEquals(1,store.dao.prescriptions(owner).first().size)
+        assertNull("no error toast, and no leftover Refreshing toast",toasts.current.value)
+        // The connection returns: Retry clears the notice.
+        offline=false
+        vm.refreshNow();idle()
+        assertFalse(vm.state.value.offline);assertFalse(vm.state.value.failed)
+    }
+    @Test fun aServerRefusalKeepsTheExistingFailure()=runBlocking {
+        vm.configure(owner);idle()
+        for(status in listOf(403,500)) {
+            assignmentsStatus=status
+            vm.refreshNow();idle()
+            assertTrue(vm.state.value.failed);assertFalse(vm.state.value.offline)
+            assertEquals(ToastTone.ERROR,toast(R.string.connected_failed).tone)
+            toasts.current.value?.let {toasts.dismiss(it.id)}
+        }
     }
     @Test fun endedAssignmentsLeaveTheList()=runBlocking {
         assignments=listOf(row("version-1"))

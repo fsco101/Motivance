@@ -1,6 +1,7 @@
 package com.motivance.data.remote
 
 import com.motivance.data.local.ExerciseJson
+import com.motivance.data.local.OFFLINE_EXERCISE_WINDOW_MS
 import com.motivance.domain.*
 import org.json.JSONArray
 import org.junit.Assert.*
@@ -35,7 +36,20 @@ class PrescriptionCacheTest {
         val rules=ExerciseJson.rules(result.rulesJson)
         assertFalse(rules.demo); assertEquals("version1",rules.prescriptionVersionId)
         assertEquals("Fixture instruction",result.instructions)
-        assertEquals(100L+24*60*60*1000,result.expiresAt)
+        assertEquals(100L+OFFLINE_EXERCISE_WINDOW_MS,result.expiresAt)
+    }
+    @Test fun aDownloadIsUsableFor72HoursAndARefreshRenewsIt() {
+        assertEquals(72L*60*60*1000,OFFLINE_EXERCISE_WINDOW_MS)
+        val downloaded=1_000_000L
+        val first=PrescriptionCache.decode("patient",fixture(),downloaded).single()
+        assertTrue("usable just before the window ends",first.usableAt(downloaded+OFFLINE_EXERCISE_WINDOW_MS-1))
+        assertFalse("expired when it ends",first.usableAt(downloaded+OFFLINE_EXERCISE_WINDOW_MS))
+        assertFalse("expired just after",first.usableAt(downloaded+OFFLINE_EXERCISE_WINDOW_MS+1))
+        val refreshed=downloaded+OFFLINE_EXERCISE_WINDOW_MS-60_000
+        val renewed=PrescriptionCache.decode("patient",fixture(),refreshed).single()
+        assertEquals(refreshed,renewed.cachedAt)
+        assertTrue("a refresh counts the window from the new download",renewed.usableAt(downloaded+OFFLINE_EXERCISE_WINDOW_MS+1))
+        assertFalse(renewed.usableAt(refreshed+OFFLINE_EXERCISE_WINDOW_MS))
     }
     @Test fun crossAccountAndUnknownAlgorithmsAreNotCached() {
         assertTrue(PrescriptionCache.decode("other",fixture(),100).isEmpty())

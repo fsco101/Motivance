@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.style.TextAlign
@@ -77,6 +78,27 @@ import com.motivance.R
                     tint = if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary)
                 Text(stringResource(message), style = MaterialTheme.typography.bodyMedium,
                     color = if (error) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer)
+            }
+            if (retry != null) TextButton(retry, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.retry)) }
+        }
+    }
+}
+
+/**
+ * Being offline is normal while exercising, so this is calm rather than an error: it says what still works on the phone and what
+ * waits for a connection, and TalkBack reads it once when it appears.
+ */
+@Composable fun OfflineNotice(detail: Int, retry: (() -> Unit)? = null) {
+    Surface(Modifier.testTag("offline-notice"), color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = MaterialTheme.shapes.medium) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.weight(1f).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                Icon(Icons.Default.Info, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(stringResource(R.string.offline_title), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(detail), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             if (retry != null) TextButton(retry, Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.retry)) }
         }

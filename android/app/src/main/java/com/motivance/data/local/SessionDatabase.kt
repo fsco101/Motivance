@@ -10,7 +10,17 @@ data class OutboxEntry(@PrimaryKey val sessionId:String,val ownerId:String,val s
 @Entity(tableName="cached_prescriptions",primaryKeys=["ownerId","versionId"])
 data class CachedPrescription(val ownerId:String,val versionId:String,val assignmentId:String,val patientId:String,val rulesJson:String,val instructions:String,val expiresAt:Long,@ColumnInfo(defaultValue="0") val cachedAt:Long=0,
     /** The exercise's schedule (#127): dates and rest days, so today's list works offline. Null is an every-day exercise. */
-    @ColumnInfo(defaultValue="NULL") val scheduleJson:String?=null)
+    @ColumnInfo(defaultValue="NULL") val scheduleJson:String?=null) {
+    /** Usable until [expiresAt]: the download time plus [OFFLINE_EXERCISE_WINDOW_MS]. */
+    fun usableAt(now:Long=System.currentTimeMillis())=expiresAt>now
+}
+
+/**
+ * How long a downloaded exercise stays usable without reaching the server, counted from its last
+ * successful download (owner's decision on #161: 72 hours). A phone that stays offline cannot learn
+ * that access was removed or the plan changed until it reconnects; the server still checks every upload.
+ */
+const val OFFLINE_EXERCISE_WINDOW_MS=72L*60*60*1000
 
 @Entity(tableName="consent_events",indices=[Index("ownerId")])
 data class LocalConsent(@PrimaryKey val id:String,val ownerId:String,val event:String,val version:String,val occurredAt:Long,val state:String="PENDING",val attempts:Int=0,val lastError:String?=null)

@@ -149,6 +149,11 @@
     <string name="local_history">Mga session sa telepono</string>
     <string name="local_history_detail">Mga lokal na rekord para lamang sa account. Hindi binubura sa logout ang mga hindi pa na-upload.</string>
     <string name="connected_failed">Hindi natuloy ang request. Suriin ang koneksyon, invitation at pahintulot ng account, saka subukang muli.</string>
+    <string name="offline_title">Offline ka</string>
+    <string name="offline_detail_patient">Gumagana pa rin sa phone na ito ang mga naka-save na ehersisyo para ngayon, ang iyong lokal na history at ang mga session na naghihintay i-upload. Ang mga bagong assignment, resulta at mensahe ay maghihintay ng koneksyon.</string>
+    <string name="offline_detail_staff">Kailangan ng koneksyon para sa mga record ng pasyente, plano at mensahe. Mananatili rito ang nasa screen na.</string>
+    <string name="offline_detail_action">Kailangan nito ng koneksyon. Subukang muli kapag online ka na.</string>
+    <string name="offline_action">Offline ka. Kailangan nito ng koneksyon; subukang muli kapag online ka na.</string>
     <string name="connected_ready">Handa na. I-refresh upang makuha ang pinakabagong tala sa server.</string>
     <string name="refresh_connected">I-refresh ang exercises at resulta</string>
     <string name="invite_patient">Mag-imbita ng pasyente</string>
@@ -164,10 +169,10 @@
     <string name="join_therapist_help">Magparehistro at kumpirmahin ang inimbitahang email, saka ilagay ang code mula sa therapist.</string>
     <string name="invitation_code">Invitation code</string>
     <string name="accept_invitation">Tanggapin ang invitation</string>
-    <string name="assignment_cache_policy">Gumagana nang offline ang na-download na instructions sa loob ng 24 oras. Mag-refresh online upang makita ang pagbabago o binawing access.</string>
+    <string name="assignment_cache_policy">Gumagana nang offline ang na-download na ehersisyo sa loob ng 72 oras mula sa huling refresh. Mag-refresh online upang makita ang pagbabago o binawing access.</string>
     <string name="last_downloaded">Huling download: %1$s</string>
     <string name="pinned_version">Prescription reference: %1$s</string>
-    <string name="assignment_expired">Hindi available o nag-expire ang assignment. Kumonekta at mag-refresh bago magsimula.</string>
+    <string name="assignment_expired">Nag-expire na o hindi na available ang na-download na ehersisyong ito. Kumonekta sa internet, saka i-tap ang I-refresh ang assignment at resulta upang magamit itong muli.</string>
     <string name="assignment_unavailable">Hindi ma-load ang ilang exercise. Mag-refresh online o ipasuri sa therapist ang exercise at instructions.</string>
     <string name="start_assigned_exercise">Simulan ang nakatalagang exercise</string>
     <string name="synced_results">Mga na-upload na resulta</string>
