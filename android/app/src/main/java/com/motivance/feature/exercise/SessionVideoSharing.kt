@@ -8,6 +8,7 @@ import com.motivance.data.local.MediaProblem
 import com.motivance.designsystem.ToastTone
 import com.motivance.designsystem.Toaster
 import com.motivance.domain.RemoteFailure
+import com.motivance.domain.isOffline
 import com.motivance.domain.SessionVideoRepository
 import com.motivance.domain.SharedVideo
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +31,7 @@ internal fun videoRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
     "video_already_shared" -> R.string.video_share_error_already
     "video_too_large" -> R.string.video_share_error_too_large
     "video_rate_limited" -> R.string.video_share_error_rate
-    else -> if(e is MediaProblem) R.string.video_share_error_prepare else R.string.connected_failed
+    else -> when {e is MediaProblem -> R.string.video_share_error_prepare; e.isOffline() -> R.string.offline_action; else -> R.string.connected_failed}
 }
 
 /**
@@ -87,7 +88,7 @@ internal fun videoRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
                 mutable.update {it.copy(shared=it.shared-shared.sessionId)}
                 toasts.show(R.string.video_share_stopped)
             } catch(e:CancellationException) {throw e}
-            catch(_:Exception) {toasts.show(R.string.connected_failed,ToastTone.ERROR)}
+            catch(e:Exception) {if(e.isOffline()) toasts.show(R.string.offline_action,ToastTone.INFO) else toasts.show(R.string.connected_failed,ToastTone.ERROR)}
         }
     }
 

@@ -65,10 +65,11 @@ internal fun RehabAction.loadingLabel()=when(this) {
 }
 
 /** Workspace status notices plus a compact refresh action, so the page content stays the visual focus. */
-/** [showRefresh] is off on pages where pull-to-refresh is the only refresh people need. */
-@Composable fun ConnectedStatus(state:RehabilitationState,showRefresh:Boolean=true,refresh:()->Unit) {
+/** [showRefresh] is off on pages where pull-to-refresh is the only refresh people need. [offlineDetail] says what still works offline. */
+@Composable fun ConnectedStatus(state:RehabilitationState,showRefresh:Boolean=true,offlineDetail:Int=R.string.offline_detail_patient,refresh:()->Unit) {
     when {
         state.busy -> LoadingNotice(state.activeAction?.loadingLabel() ?: R.string.ui_loading_workspace)
+        state.offline -> OfflineNotice(offlineDetail,retry=refresh)
         state.failed -> FeedbackNotice(R.string.connected_failed,error=true,retry=refresh)
     }
     if(!state.failed && showRefresh) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
@@ -239,7 +240,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
     if(prescriptions.isEmpty() && !loading) EmptyState(R.string.no_assignments,R.string.no_assignments_detail)
     prescriptions.forEach {p ->
         val rules=ExerciseJson.rules(p.rulesJson)
-        val valid=p.expiresAt>System.currentTimeMillis()
+        val valid=p.usableAt()
         val side=rules.sideText()
         var details by rememberSaveable(p.versionId) {mutableStateOf(false)}
         ClinicalCard(accent=if(valid) MaterialTheme.colorScheme.primary else null) {
@@ -453,7 +454,7 @@ internal fun RehabAction.loadingLabel()=when(this) {
         }
         if(!valid) Text(stringResource(R.string.ui_review_incomplete),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)
         ActionButton(R.string.publish_prescription,{onPublish(PrescriptionDraft(assignmentId,requestId,patient,exercise,if(side=="right") BodySide.RIGHT else BodySide.LEFT,l!!,h!!,r!!,min!!,max!!,peak!!,trunk!!,parameters.optDouble("confidence",.7),focusJoint.takeIf {it.isNotBlank()}?.let {BodyJoint.valueOf(it)},bilateral=side=="bilateral",sideSeconds=sideSeconds.takeIf {timed}))},enabled=valid && !state.busy,busy=state.activeAction==RehabAction.PRESCRIBE,busyLabel=R.string.ui_publishing_prescription)
-        if(state.failed && !state.busy) FeedbackNotice(R.string.connected_failed,error=true)
+        if(state.failed && !state.busy) {if(state.offline) OfflineNotice(R.string.offline_detail_action) else FeedbackNotice(R.string.connected_failed,error=true)}
     }
 }
 

@@ -31,7 +31,7 @@ Solved implementation issues and implemented sprint milestones may close while t
 - [ ] Create left/right elbow-flexion and shoulder-abduction prescriptions, including low/high targets, repetitions, cycle timing, hold and visible trunk-lean threshold.
 - [ ] Edit a prescription and confirm a new version is appended. A session already started retains its original version/targets.
 - [ ] Patient refreshes Exercises, sees instructions, version and last download time, and starts the selected assignment. Confirm invalid fields are disabled/rejected and an expired cache has a refresh action.
-- [ ] Revoke the link. Confirm future therapist reads fail immediately and new queued uploads for revoked assignments are rejected. A disconnected phone can retain downloaded instructions for up to 24 hours; it cannot discover revocation while offline.
+- [ ] Revoke the link. Confirm future therapist reads fail immediately and new queued uploads for revoked assignments are rejected. A disconnected phone can retain downloaded instructions for up to 72 hours after its last refresh (#161); it cannot discover revocation while offline.
 
 ## Camera, ROM and repetitions
 
@@ -354,6 +354,13 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 - [ ] #141: Ask a therapist to compare web and phone results for the same patient movement, with both apps watching the same exercise, and to say whether the counts, ranges and coaching match.
 - [ ] #149: On a real laptop, stand two and three metres from the screen in exercise mode. Confirm a patient can read the count and the instruction, sees each "Counted!" or "Not counted", and can use Space to pause and resume after walking up. Repeat in full screen, and on a phone browser propped up as a patient would.
 - [ ] #139: Close the tab with an unsaved recording and confirm the browser asks first. On a shared computer, confirm the downloaded file is where the patient expects and can be deleted.
+
+## Android offline exercise (#163, 2026-11-22)
+
+- [ ] #160: On a physical phone, sign in as a patient, refresh exercises, then turn on airplane mode and wait more than an hour (or until the access token has expired). Force-stop and reopen the app. Confirm it opens the patient's Home with today's saved exercises, not the welcome screen, and that a session can be recorded and shows as waiting to upload.
+- [ ] #160: Turn the connection back on. Confirm the sign-in renews without asking for the password, the queued session uploads once and appears once in the therapist's results.
+- [ ] #161: Leave a phone offline for just under 72 hours after its last refresh and confirm today's exercises still start; after 72 hours confirm they show Expired with the "connect and refresh" text, and that one refresh online makes them usable again.
+- [ ] #162: Offline, open Home and Exercises with TalkBack on. Confirm TalkBack reads "You're offline" and what still works, no error toast appears, and the saved exercises stay below the notice. Reconnect and confirm Retry clears the notice.
 
 ## Recording results
 

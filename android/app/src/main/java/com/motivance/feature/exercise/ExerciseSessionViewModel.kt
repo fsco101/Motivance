@@ -125,7 +125,7 @@ data class ExerciseSessionState(
             recoverable=recoverable(current.history,rows,current.id))
     }
     private fun prescribed(p:CachedPrescription):ExerciseRules? {
-        if(p.ownerId!=owner || p.patientId!=owner || p.expiresAt<=System.currentTimeMillis()) return null
+        if(p.ownerId!=owner || p.patientId!=owner || !p.usableAt()) return null
         return ExerciseJson.rules(p.rulesJson).takeIf {!it.demo && it.prescriptionVersionId==p.versionId}
     }
     /** Demo thresholds are only for an account with no valid assignment; [preferred] keeps the one already in use. */
@@ -167,7 +167,7 @@ data class ExerciseSessionState(
     fun start(consent:Boolean) {
         val current=mutable.value
         if(!consent || current.saving || current.saved || current.switching!=null || owner.isBlank() || (current.rules.demo && !BuildConfig.DEBUG)) return
-        if(!current.rules.demo && current.cached.none { it.versionId==current.rules.prescriptionVersionId && it.ownerId==owner && it.expiresAt>System.currentTimeMillis() }) return
+        if(!current.rules.demo && current.cached.none { it.versionId==current.rules.prescriptionVersionId && it.ownerId==owner && it.usableAt() }) return
         val account=owner
         val revision=lifecycleRevision
         mutable.value=current.copy(saving=true,error=false)
@@ -321,7 +321,7 @@ data class ExerciseSessionState(
         val row=mutable.value.recoverable ?: return
         if(row.ownerId!=owner || mutable.value.switching!=null) return
         val rules=ExerciseJson.rules(row.rulesJson)
-        if(!rules.demo && mutable.value.cached.none { it.versionId==rules.prescriptionVersionId && it.expiresAt>System.currentTimeMillis() }) return
+        if(!rules.demo && mutable.value.cached.none { it.versionId==rules.prescriptionVersionId && it.usableAt() }) return
         engine=MovementAssessment(rules,ExerciseJson.snapshot(row.snapshotJson)); startedAt=row.startedAt
         mutable.value=mutable.value.copy(id=row.id,rules=rules,metrics=engine.snapshot,saved=false,error=false,recoverable=null,sides=emptyList())
         toasts.show(R.string.toast_session_restored,ToastTone.INFO)

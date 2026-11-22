@@ -20,7 +20,9 @@ import kotlinx.coroutines.flow.first
 
 enum class RehabAction { REFRESH, INVITE, ACCEPT, REVOKE, PRESCRIBE, CREATE_EXERCISE, ARCHIVE_EXERCISE, SYNC, WITHDRAW, EXPORT, DELETE, SAVE_SCHEDULE, END_SCHEDULE, STOP_EXERCISE }
 
-data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=RehabWorkspace(),val busy:Boolean=false,val activeAction:RehabAction?=null,val failed:Boolean=false,val invitation:String?=null,val outbox:List<OutboxEntry> = emptyList(),val consents:List<LocalConsent> = emptyList(),
+data class RehabilitationState(val owner:String="",val workspace:RehabWorkspace=RehabWorkspace(),val busy:Boolean=false,val activeAction:RehabAction?=null,val failed:Boolean=false,
+    /** The last refresh failed because the phone has no connection; saved exercises and local history still work. */
+    val offline:Boolean=false,val invitation:String?=null,val outbox:List<OutboxEntry> = emptyList(),val consents:List<LocalConsent> = emptyList(),
     /** Each patient's exercise day, read when their record opens. */
     val days:Map<String,ExerciseDay> = emptyMap())
 
@@ -46,7 +48,7 @@ internal fun scheduleRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
     "schedule_rest_days" -> R.string.exercise_schedule_error_rest_days
     "schedule_no_day" -> R.string.exercise_schedule_error_no_day
     "schedule_gone" -> R.string.exercise_schedule_error_gone
-    else -> R.string.connected_failed
+    else -> if(e.isOffline()) R.string.offline_action else R.string.connected_failed
 }
 
 @HiltViewModel class RehabilitationViewModel @Inject constructor(private val repository:RehabilitationRepository,private val store:SessionStore,@ApplicationContext private val context:Context,private val toasts:Toaster=Toaster()):ViewModel() {
@@ -87,7 +89,8 @@ internal fun scheduleRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
         if(owner.isBlank() || mutable.value.busy) return
         background?.cancel()
         if(announce) toasts.show(kind.loadingLabel(),ToastTone.PENDING)
-        mutable.value=mutable.value.copy(busy=true,activeAction=kind,failed=false)
+        val pending=if(announce) toasts.current.value?.id else null
+        mutable.value=mutable.value.copy(busy=true,activeAction=kind,failed=false,offline=false)
         action=viewModelScope.launch {
             try {
                 val before=assignments(owner)
@@ -102,10 +105,17 @@ internal fun scheduleRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
                     done()
                 }
             } catch(e:CancellationException) {throw e}
-            catch(_:Exception) {
+            catch(e:Exception) {
                 if(mutable.value.owner==owner) {
-                    mutable.value=mutable.value.copy(failed=true,workspace=RehabWorkspace())
-                    if(announce) toasts.show(R.string.connected_failed,ToastTone.ERROR)
+                    if(e.isOffline()) {
+                        // Offline is normal: the page keeps what it showed and says what still works. A refresh needs no toast; the notice says it.
+                        mutable.value=mutable.value.copy(failed=true,offline=true)
+                        if(announce && kind!=RehabAction.REFRESH) toasts.show(R.string.offline_action,ToastTone.INFO)
+                        else pending?.let(toasts::dismiss)
+                    } else {
+                        mutable.value=mutable.value.copy(failed=true,workspace=RehabWorkspace())
+                        if(announce) toasts.show(R.string.connected_failed,ToastTone.ERROR)
+                    }
                 }
             }
             finally {if(mutable.value.owner==owner) mutable.value=mutable.value.copy(busy=false,activeAction=null)}
@@ -127,7 +137,7 @@ internal fun scheduleRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
                 val before=assignments(owner)
                 val data=repository.loadWorkspace()
                 if(mutable.value.owner==owner && !mutable.value.busy) {
-                    mutable.value=mutable.value.copy(workspace=data,failed=false)
+                    mutable.value=mutable.value.copy(workspace=data,failed=false,offline=false)
                     if((assignments(owner)-before).isNotEmpty()) toasts.show(R.string.toast_new_assignment,ToastTone.INFO)
                 }
             } catch(e:CancellationException) {throw e}
@@ -185,7 +195,7 @@ internal fun scheduleRefusal(e:Exception)=when((e as? RemoteFailure)?.code) {
                 val data=repository.loadWorkspace()
                 val day=repository.loadExerciseDay(patientId)
                 if(mutable.value.owner==owner) {
-                    mutable.value=mutable.value.copy(workspace=data,days=mutable.value.days+(patientId to day),failed=false)
+                    mutable.value=mutable.value.copy(workspace=data,days=mutable.value.days+(patientId to day),failed=false,offline=false)
                     val (message,tone)=kind.doneToast()
                     toasts.show(message,tone)
                     done()

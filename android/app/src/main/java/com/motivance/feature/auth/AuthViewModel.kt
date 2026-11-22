@@ -9,6 +9,7 @@ import com.motivance.domain.PushDevices
 import com.motivance.domain.UserSession
 import com.motivance.domain.WorkspaceOverview
 import com.motivance.domain.RemoteFailure
+import com.motivance.domain.isOffline
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -18,7 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class AuthAction { SIGN_IN, REGISTER, CONFIRM, RESEND_CONFIRMATION, REQUEST_RECOVERY, RECOVER, REFRESH, SIGN_OUT }
 enum class AuthNotice { INVALID_EMAIL, PASSWORD_REQUIRED, CODE_REQUIRED, CONFIRM_EMAIL, RECOVERY_SENT, REQUEST_FAILED, SESSION_EXPIRED, EMAIL_UNCONFIRMED, INVALID_CODE, SIGNUP_CODE_EXPIRED, RATE_LIMITED, PASSWORD_POLICY }
 data class AuthState(val session: UserSession? = null, val busy: Boolean = false, val notice: AuthNotice? = null, val restoring: Boolean = false, val activeAction: AuthAction? = null)
-data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean = false, val failed: Boolean = false)
+data class OverviewState(val data: WorkspaceOverview? = null, val busy: Boolean = false, val failed: Boolean = false, val offline: Boolean = false)
 private fun AuthAction.doneToast()=when(this) {
     AuthAction.SIGN_IN -> R.string.toast_signed_in to ToastTone.SUCCESS
     AuthAction.REGISTER -> R.string.toast_account_created to ToastTone.PENDING
@@ -47,13 +48,14 @@ private fun AuthAction.doneToast()=when(this) {
     fun loadOverview() {
         val user=mutable.value.session?.userId ?: return
         if(overviewMutable.value.busy) return
+        val shown=overviewMutable.value.data
         overviewMutable.value=OverviewState(busy=true)
         viewModelScope.launch {
             try {
                 val result=auth.loadOverview()
                 if(mutable.value.session?.userId==user) overviewMutable.value=OverviewState(data=result)
             } catch(e: CancellationException) { throw e }
-            catch(e: Exception) { if(mutable.value.session?.userId==user) overviewMutable.value=OverviewState(failed=true) }
+            catch(e: Exception) { if(mutable.value.session?.userId==user) overviewMutable.value=if(e.isOffline()) OverviewState(data=shown,failed=true,offline=true) else OverviewState(failed=true) }
         }
     }
     fun registerPush() {viewModelScope.launch {devices.register()}}

@@ -193,6 +193,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
         Landing({route="AUTH"},{route="SETUP"}); return
     }
     val actualRole=auth.session?.workspace(role) ?: UserRole.PATIENT
+    val offlineDetail=if(actualRole==UserRole.PATIENT) R.string.offline_detail_patient else R.string.offline_detail_staff
     // A patient's exercises arrive on their own: on opening these pages, on returning to the app, and while it stays open.
     val lifecycle=LocalLifecycleOwner.current
     val patientAccount=auth.session?.userId?.takeIf {actualRole==UserRole.PATIENT}
@@ -382,7 +383,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                         if(actualRole==UserRole.PATIENT) ActionButton(R.string.local_history,{route="LOCAL_HISTORY"},outlined=true)
                         ActionButton(R.string.sign_out,{vm.act(AuthAction.SIGN_OUT)},outlined=true,enabled=!auth.busy,busy=auth.activeAction==AuthAction.SIGN_OUT,busyLabel=R.string.ui_signing_out)
                     }
-                    ConnectedStatus(connected,showRefresh=false) {rehabilitation.refreshNow(); vm.loadOverview()}
+                    ConnectedStatus(connected,showRefresh=false,offlineDetail=offlineDetail) {rehabilitation.refreshNow(); vm.loadOverview()}
                     SyncAndPrivacy(connected,rehabilitation,actualRole==UserRole.PATIENT) {exercise.newSession(); rehabilitation.withdraw()}
                 }
                 "LOCAL_HISTORY" -> {
@@ -434,7 +435,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "ADMIN" -> if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
                 "PATIENTS" -> {
                     PageHeader(R.string.patient_management,R.string.assigned_patients_only)
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
+                    ConnectedStatus(connected,offlineDetail=offlineDetail) {rehabilitation.refreshNow(); vm.loadOverview()}
                     if(actualRole==UserRole.ADMIN) AdministrationScreen(administration)
                     else PatientManagement(connected,rehabilitation) {selectedPatient=it; route="PATIENT_DETAIL"}
                 }
@@ -446,7 +447,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                         Icon(Icons.Default.Email,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.chat_message_patient))
                     }
                     patient?.profile?.let {PatientProfileSummary(it)}
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview(); patientId?.let(rehabilitation::loadDay)}
+                    ConnectedStatus(connected,offlineDetail=offlineDetail) {rehabilitation.refreshNow(); vm.loadOverview(); patientId?.let(rehabilitation::loadDay)}
                     if(patientId!=null) {
                         LaunchedEffect(patientId) {rehabilitation.loadDay(patientId)}
                         PatientSchedules(connected,patientId,patient?.name?.ifBlank {null} ?: patientId.take(8),{rehabilitation.endSchedule(patientId,it)},{rehabilitation.stopExercise(patientId,it)},
@@ -463,7 +464,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 "ASSIGN" -> {
                     val existing=connected.workspace.prescriptions.firstOrNull {it.assignmentId==editingAssignment}
                     PageHeader(R.string.exercise_assignment,R.string.professional_targets)
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
+                    ConnectedStatus(connected,offlineDetail=offlineDetail) {rehabilitation.refreshNow(); vm.loadOverview()}
                     // Leaving on success also retires the form's assignment ID: reusing it would turn the next exercise into a new
                     // version of this one and replace it on the patient's phone.
                     val schedule=assignSchedule?.let {id -> connected.days[patientId]?.schedules?.firstOrNull {it.id==id}}
@@ -486,7 +487,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "EXERCISES" -> {
                     PageHeader(R.string.your_exercises,R.string.professional_targets)
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); vm.loadOverview()}
+                    ConnectedStatus(connected,offlineDetail=offlineDetail) {rehabilitation.refreshNow(); vm.loadOverview()}
                     // Only today's exercises (#127): one finished today is gone until its next exercise day.
                     LaunchedEffect(connected.owner) {if(connected.owner.isNotBlank()) rehabilitation.loadDay(connected.owner)}
                     val today=patientToday(local.cached,local.history,connected.days[connected.owner],centerDate())
@@ -532,7 +533,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "PROGRESS" -> {
                     PageHeader(R.string.recovery_progress,R.string.valid_measurements_only)
-                    ConnectedStatus(connected) {rehabilitation.refreshNow(); history.refresh()}
+                    ConnectedStatus(connected,offlineDetail=offlineDetail) {rehabilitation.refreshNow(); history.refresh()}
                     if(actualRole==UserRole.PATIENT && connected.owner.isNotBlank()) LaunchedEffect(connected.owner) {videos.load(connected.owner)}
                     ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}},
                         videoFor={videoState.shared[it]},link=videos::link)
@@ -542,12 +543,12 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     val greeting=overview.data?.displayName?.takeIf {it.isNotBlank()}?.let {stringResource(R.string.home_greeting,it.substringBefore(' '))}
                     PageHeader(if(patientRole) R.string.your_recovery else R.string.clinical_overview,
                         if(patientRole) R.string.personal_rehabilitation else R.string.assigned_patients_only,eyebrow=greeting)
-                    OverviewStatus(overview) { vm.loadOverview() }
+                    OverviewStatus(overview,offlineDetail) { vm.loadOverview() }
                     when(actualRole) {
                         UserRole.PATIENT -> {
                             val now=System.currentTimeMillis()
                             LaunchedEffect(connected.owner) {if(connected.owner.isNotBlank()) rehabilitation.loadDay(connected.owner)}
-                            val today=patientToday(local.cached.filter {it.expiresAt>now && it.instructions.isNotBlank()},local.history,connected.days[connected.owner],centerDate(now))
+                            val today=patientToday(local.cached.filter {it.usableAt(now) && it.instructions.isNotBlank()},local.history,connected.days[connected.owner],centerDate(now))
                             when {
                                 today.todo.isNotEmpty() -> today.todo.first().let {next -> TodayPlan(next,today.todo.size,{exercise.newSession(); exercise.usePrescription(next); route="SETUP"}) {route="EXERCISES"}}
                                 today.state==TodayState.NONE -> WorkspaceHero(actualRole) {route="EXERCISES"}
@@ -846,9 +847,10 @@ internal fun parentRoute(route:String,signedIn:Boolean,therapist:Boolean=false)=
     }
 }
 
-@Composable private fun OverviewStatus(state:OverviewState,retry:()->Unit) {
+@Composable private fun OverviewStatus(state:OverviewState,offlineDetail:Int,retry:()->Unit) {
     if(state.busy) LoadingNotice(R.string.ui_loading_dashboard)
-    if(state.failed) FeedbackNotice(R.string.dashboard_load_failed,error=true,retry=retry)
+    if(state.offline) OfflineNotice(offlineDetail,retry=retry)
+    else if(state.failed) FeedbackNotice(R.string.dashboard_load_failed,error=true,retry=retry)
 }
 
 @Composable private fun MetricRow(first:Int,value:String,firstIcon:ImageVector,second:Int,other:String,secondIcon:ImageVector) {

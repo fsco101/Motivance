@@ -211,6 +211,27 @@ class AuthViewModelTest {
         }
     }
 
+    @Test fun anUnreachableServerReportsOfflineAndKeepsTheOverviewButARefusalIsAFailure()=runTest(dispatcher) {
+        val vm=AuthViewModel(repository)
+        vm.act(AuthAction.SIGN_IN,"a@example.test","password"); advanceUntilIdle()
+        vm.loadOverview(); advanceUntilIdle()
+        val shown=vm.overview.value.data
+        assertNotNull(shown)
+        repository.overviewFailure=java.net.UnknownHostException("no connection")
+        vm.loadOverview(); advanceUntilIdle()
+        assertTrue(vm.overview.value.offline); assertTrue(vm.overview.value.failed)
+        assertEquals(shown,vm.overview.value.data)
+        for(status in listOf(403,500)) {
+            repository.overviewFailure=RemoteFailure(status)
+            vm.loadOverview(); advanceUntilIdle()
+            assertFalse(vm.overview.value.offline); assertTrue(vm.overview.value.failed)
+            assertNull(vm.overview.value.data)
+        }
+        repository.overviewFailure=null
+        vm.loadOverview(); advanceUntilIdle()
+        assertFalse(vm.overview.value.offline); assertFalse(vm.overview.value.failed)
+    }
+
     @Test fun aSignUpCodeThatFailsSaysToSignUpAgainButARecoveryCodeDoesNot()=runTest(dispatcher) {
         // An expired sign-up is deleted, so a new code cannot help it; a password reset can still ask for one.
         val vm=AuthViewModel(repository)
@@ -248,6 +269,7 @@ class AuthViewModelTest {
         override suspend fun recover(email:String,token:String,newPassword:String):UserSession { calls++; codeFailure?.let {throw it}; return session }
         override suspend fun refresh():UserSession { calls++; if(failRefresh) error("expired token"); return session }
         override suspend fun signOut() { calls++; signOutGate?.await() }
-        override suspend fun loadOverview()=overviewGate?.await() ?: WorkspaceOverview()
+        var overviewFailure:Exception?=null
+        override suspend fun loadOverview():WorkspaceOverview {overviewFailure?.let {throw it}; return overviewGate?.await() ?: WorkspaceOverview()}
     }
 }
