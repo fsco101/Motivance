@@ -127,6 +127,8 @@ class AuthScreenTest {
         compose.onNodeWithText(text(R.string.auth_sign_in_description)).assertIsDisplayed()
         button(R.string.auth_create_account).assertExists()
         button(R.string.sign_in).assertIsEnabled()
+        // Without a Google handler, as while Google is off on Android, there is no Google button.
+        compose.onNode(hasText(text(R.string.auth_google))).assertDoesNotExist()
     }
     @Test fun loadingScreenShowsStatusWithoutSignInForm() {
         compose.setContent { MotivanceTheme { AuthLoadingScreen() } }

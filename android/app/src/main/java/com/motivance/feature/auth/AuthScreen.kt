@@ -50,7 +50,8 @@ fun AuthScreen(viewModel: AuthViewModel, openCamera: () -> Unit, onBack: () -> U
     val activity = LocalContext.current
     val google = remember { GoogleSignIn() }
     AuthContent(state, viewModel::act, viewModel::clearNotice, openCamera, onBack,viewModel::registerProfile,
-        onGoogle = { viewModel.continueWithGoogle { google.token(activity) } })
+        // Hidden until the owner turns Google on for Android (GOOGLE_SIGN_IN_ON_ANDROID); with no handler the button is not drawn.
+        onGoogle = if (GOOGLE_SIGN_IN_ON_ANDROID) ({ viewModel.continueWithGoogle { google.token(activity) } }) else null)
 }
 
 @Composable

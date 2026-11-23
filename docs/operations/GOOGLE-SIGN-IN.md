@@ -1,6 +1,8 @@
 # Google sign-in
 
-Patients and staff can sign in with their Google account on Android and the web, alongside email and password (#166-#170). Google is one more way to prove who someone is. It never creates staff and never skips a consent.
+Patients and staff can sign in with their Google account on the web, alongside email and password (#166-#170). Google is one more way to prove who someone is. It never creates staff and never skips a consent.
+
+> **Android's button is hidden for now** (owner's instruction, 2026-11-23), until the Android OAuth clients exist. Everything behind it is built and tested. To show it, set `GOOGLE_SIGN_IN_ON_ANDROID = true` in `android/app/src/main/java/com/motivance/feature/auth/GoogleSignIn.kt`, create the Android clients below, fill `GOOGLE_WEB_CLIENT_ID` in `android/.env`, and rebuild. While it is hidden, a Google-created account can still use the Android app: after setting a password in Profile on the web, it signs in with email and password, and Android's Profile and finish-profile screen behave as described here.
 
 ## How it works
 

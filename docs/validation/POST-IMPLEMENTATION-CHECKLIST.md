@@ -375,8 +375,8 @@ Auth checks a Google ID token against Google's own signing keys, so automated te
 - [ ] #166: On the owner's instruction, `configure_google_sign_in.py --target hosted --apply` reads back the provider on, the Web client ID, the nonce check on, and `https://motivance.vercel.app/**` in the redirect list.
 - [ ] #167: With a real Google account whose address already has a Motivance account (a patient, then a therapist), sign in with Google. Confirm no second account appears in the administrator's accounts, and the account keeps its roles, patients, plans, sessions and messages.
 - [ ] #167: With a Google account that has no Motivance account, sign in. Confirm it becomes a patient, finishes its details and privacy agreement before Home, and that Profile offers *Set a password*; set one and sign in with it.
-- [ ] #168: On a physical phone (debug, then release build), tap Continue with Google: choose an account; cancel the picker; try with no Google account on the phone; try in airplane mode. Each gives its own message. Repeat at twice the font size in Filipino and with TalkBack.
-- [ ] #168: On a shared phone, sign in with one Google account, sign out, tap Continue with Google again, and confirm the picker asks which account rather than signing the first person back in.
+- [ ] #168 (after Android's button is turned on; it is hidden for now by the owner's instruction): On a physical phone (debug, then release build), tap Continue with Google: choose an account; cancel the picker; try with no Google account on the phone; try in airplane mode. Each gives its own message. Repeat at twice the font size in Filipino and with TalkBack.
+- [ ] #168 (after Android's button is turned on): On a shared phone, sign in with one Google account, sign out, tap Continue with Google again, and confirm the picker asks which account rather than signing the first person back in.
 - [ ] #169: After the owner's Vercel redeploy, sign in with a real Google account on the live site in Chrome, Edge, Firefox and Safari: existing account, new patient, cancelled Google page. Check the button with the keyboard and a screen reader, and in Filipino.
 
 ## Recording results

@@ -24,6 +24,12 @@ import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Whether Android shows Continue with Google. Off on the owner's instruction (2026-11-23) until the Android OAuth clients exist;
+ * the web keeps its button. Everything behind it stays built and tested, so turning it on is this one change.
+ */
+internal const val GOOGLE_SIGN_IN_ON_ANDROID=false
+
 /** A fresh random nonce for each attempt. Google signs its SHA-256 into the token; Auth hashes the raw one and compares. */
 internal fun newNonce(random:SecureRandom=SecureRandom()):String {
     val bytes=ByteArray(32).also {random.nextBytes(it)}
