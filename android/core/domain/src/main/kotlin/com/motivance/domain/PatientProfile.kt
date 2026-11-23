@@ -3,7 +3,9 @@ package com.motivance.domain
 import java.time.LocalDate
 import java.time.Period
 
-data class PatientProfile(val username:String="",val name:String="",val gender:String="",val birthdate:String="",val address:String="",val contact:String="",val photoUrl:String?=null,val consent:Boolean=false,val email:String="",val firstName:String=name.substringBefore(" "),val lastName:String=name.substringAfter(" ","")) {
+data class PatientProfile(val username:String="",val name:String="",val gender:String="",val birthdate:String="",val address:String="",val contact:String="",val photoUrl:String?=null,val consent:Boolean=false,val email:String="",val firstName:String=name.substringBefore(" "),val lastName:String=name.substringAfter(" ",""),
+    /** False for a Google-only account, which sets a first password rather than changing one. */
+    val passwordSet:Boolean=true,val googleLinked:Boolean=false) {
     val age:Int? get()=runCatching {Period.between(LocalDate.parse(birthdate),LocalDate.now()).years}.getOrNull()
     val displayName:String get()=listOf(firstName.trim(),lastName.trim()).filter {it.isNotEmpty()}.joinToString(" ")
     /** Name, birthdate and gender: the signup "personal details" step. */

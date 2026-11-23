@@ -9,6 +9,8 @@ import com.motivance.data.push.FirebaseDeviceTokens
 import com.motivance.data.push.PushRegistrar
 import com.motivance.data.remote.SupabaseAuthRepository
 import com.motivance.domain.PushDevices
+import com.motivance.domain.GoogleAccounts
+import com.motivance.feature.auth.CredentialManagerAccounts
 import com.motivance.domain.ChatRepository
 import com.motivance.domain.SessionVideoRepository
 import com.motivance.domain.ChatOutbox
@@ -36,4 +38,5 @@ abstract class AppModule {
     @Binds @Singleton abstract fun chatMedia(impl: ChatMediaFiles): ChatMediaStore
     @Binds @Singleton abstract fun deviceTokens(impl: FirebaseDeviceTokens): DeviceTokens
     @Binds @Singleton abstract fun pushDevices(impl: PushRegistrar): PushDevices
+    @Binds @Singleton abstract fun googleAccounts(impl: CredentialManagerAccounts): GoogleAccounts
 }

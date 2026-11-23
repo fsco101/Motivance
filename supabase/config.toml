@@ -17,7 +17,17 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
+# Where Auth may send someone back after Google (#169). The hosted list is set by scripts/configure_google_sign_in.py.
+additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:3000/**"]
 enable_signup = true
+# Google sign-in (#166). The web app signs in through Auth's redirect, which needs the Web client's secret. Android sends
+# Google's ID token, which Google issues for the same Web client ID, so that ID is the one accepted audience. The nonce
+# check stays on. Both values come from ignored supabase/.env; docs/operations/GOOGLE-SIGN-IN.md has the console steps.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = false
 [auth.email]
 enable_signup = true
 enable_confirmations = true

@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -45,7 +46,12 @@ import com.motivance.R
 @Composable
 fun AuthScreen(viewModel: AuthViewModel, openCamera: () -> Unit, onBack: () -> Unit = {}) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AuthContent(state, viewModel::act, viewModel::clearNotice, openCamera, onBack,viewModel::registerProfile)
+    // Google's picker opens over the activity on screen, which is the context here.
+    val activity = LocalContext.current
+    val google = remember { GoogleSignIn() }
+    AuthContent(state, viewModel::act, viewModel::clearNotice, openCamera, onBack,viewModel::registerProfile,
+        // Hidden until the owner turns Google on for Android (GOOGLE_SIGN_IN_ON_ANDROID); with no handler the button is not drawn.
+        onGoogle = if (GOOGLE_SIGN_IN_ON_ANDROID) ({ viewModel.continueWithGoogle { google.token(activity) } }) else null)
 }
 
 @Composable
@@ -57,6 +63,7 @@ internal fun AuthContent(
     onBack: () -> Unit,
     onRegister: ((String,String,com.motivance.domain.PatientProfile)->Unit)? = null,
     initialProfile: com.motivance.domain.PatientProfile = com.motivance.domain.PatientProfile(),
+    onGoogle: (() -> Unit)? = null,
 ) {
     var action by rememberSaveable { mutableStateOf(AuthAction.SIGN_IN) }
     var email by rememberSaveable { mutableStateOf("") }
@@ -162,14 +169,24 @@ internal fun AuthContent(
                         onClick = { changeAction(AuthAction.REQUEST_RECOVERY) }, enabled = !state.busy, modifier = Modifier.align(Alignment.End),
                     ) { Text(stringResource(R.string.auth_forgot_password)) }
                     state.notice?.let { AuthNoticeCard(it) }
+                    // While Google is opening, only its own button says so; this one is simply unavailable.
+                    val formBusy = state.busy && state.activeAction != AuthAction.GOOGLE
                     Button(onClick = { submit() }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                         shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(16.dp)) {
-                        if (state.busy) {
+                        if (formBusy) {
                             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
                             Spacer(Modifier.width(12.dp))
                         }
-                        Text(stringResource(if (state.busy) (state.activeAction ?: action).busyLabel() else action.label()), textAlign = TextAlign.Center,
+                        Text(stringResource(if (formBusy) (state.activeAction ?: action).busyLabel() else action.label()), textAlign = TextAlign.Center,
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                    }
+                    if (action == AuthAction.SIGN_IN && onGoogle != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
+                            Text(stringResource(R.string.auth_or), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = .08f))
+                        }
+                        GoogleButton(busy = state.busy && state.activeAction == AuthAction.GOOGLE, enabled = !state.busy, onClick = onGoogle)
                     }
                     if(action==AuthAction.CONFIRM || action==AuthAction.RECOVER) {
                         Text(stringResource(R.string.auth_delivery_help),style=MaterialTheme.typography.bodySmall)
@@ -270,8 +287,25 @@ fun AuthLoadingScreen() {
     }
 }
 
+/**
+ * Continue with Google, drawn to Google's sign-in branding: the unchanged mark on white with a grey outline and dark text. Its words are
+ * its TalkBack label, and it is as tall as the buttons above it.
+ */
+@Composable internal fun GoogleButton(busy: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val ink = Color(0xFF1F1F1F)
+    OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, Color(0xFF747775)), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = ink, disabledContainerColor = Color.White, disabledContentColor = ink.copy(alpha = .5f))) {
+        if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = ink)
+        else Image(painterResource(R.drawable.ic_google_mark), null, Modifier.size(20.dp))
+        Spacer(Modifier.width(12.dp))
+        Text(stringResource(if (busy) R.string.auth_google_working else R.string.auth_google), textAlign = TextAlign.Center, fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+    }
+}
+
 @Composable private fun AuthNoticeCard(notice: AuthNotice) {
-    val info = notice == AuthNotice.CONFIRM_EMAIL || notice == AuthNotice.RECOVERY_SENT
+    val info = notice == AuthNotice.CONFIRM_EMAIL || notice == AuthNotice.RECOVERY_SENT || notice == AuthNotice.GOOGLE_CANCELLED
     Surface(color = if (info) MaterialTheme.colorScheme.secondary.copy(alpha = .08f) else MaterialTheme.colorScheme.errorContainer,
         contentColor = if (info) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onErrorContainer, shape = RoundedCornerShape(12.dp)) {
         Text(stringResource(notice.label()), Modifier.fillMaxWidth().padding(14.dp).semantics { liveRegion = LiveRegionMode.Polite }, style = MaterialTheme.typography.bodyMedium)
@@ -302,6 +336,7 @@ internal fun AuthAction.busyLabel() = when (this) {
     AuthAction.SIGN_OUT -> R.string.ui_signing_out
     AuthAction.REFRESH -> R.string.ui_refreshing_session
     AuthAction.RECOVER -> R.string.auth_updating_password
+    AuthAction.GOOGLE -> R.string.auth_google_working
 }
 private fun AuthAction.label() = when (this) {
     AuthAction.SIGN_IN -> R.string.sign_in
@@ -312,6 +347,7 @@ private fun AuthAction.label() = when (this) {
     AuthAction.RECOVER -> R.string.auth_save_password
     AuthAction.REFRESH -> R.string.refresh_session
     AuthAction.SIGN_OUT -> R.string.sign_out
+    AuthAction.GOOGLE -> R.string.auth_google
 }
 internal fun AuthNotice.label() = when (this) {
     AuthNotice.INVALID_EMAIL -> R.string.invalid_email
@@ -326,4 +362,12 @@ internal fun AuthNotice.label() = when (this) {
     AuthNotice.SIGNUP_CODE_EXPIRED -> R.string.auth_signup_code_expired
     AuthNotice.RATE_LIMITED -> R.string.auth_rate_limited
     AuthNotice.PASSWORD_POLICY -> R.string.auth_password_policy
+    AuthNotice.GOOGLE_CANCELLED -> R.string.auth_google_cancelled
+    AuthNotice.GOOGLE_NO_ACCOUNT -> R.string.auth_google_no_account
+    AuthNotice.GOOGLE_OFFLINE -> R.string.auth_google_offline
+    AuthNotice.GOOGLE_REFUSED -> R.string.auth_google_refused
+    AuthNotice.GOOGLE_UNAVAILABLE -> R.string.auth_google_unavailable
+    AuthNotice.GOOGLE_NOT_CONFIGURED -> R.string.auth_google_not_configured
+    AuthNotice.GOOGLE_CLOSED -> R.string.auth_google_closed
+    AuthNotice.GOOGLE_FAILED -> R.string.auth_google_failed
 }

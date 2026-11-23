@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -187,6 +189,8 @@ internal fun photoFailure(e:Exception)=when {
     fun refresh()=perform {repository.loadProfile()}
     fun save(p:PatientProfile)=perform(R.string.profile_saved) {repository.saveProfile(p);repository.loadProfile()}
     fun password(old:String,new:String)=perform(R.string.profile_password_saved) {repository.changePassword(old,new);repository.loadProfile()}
+    /** A Google-only account's first password; there is no current one to prove. */
+    fun setPassword(new:String)=perform(R.string.profile_password_set) {repository.setFirstPassword(new);repository.loadProfile()}
     fun uploadPhoto(webp:ByteArray)=perform(R.string.profile_photo_saved,photo=true) {repository.uploadProfilePhoto(webp);repository.loadProfile()}
     fun removePhoto()=perform(R.string.profile_photo_removed,photo=true) {repository.removeProfilePhoto();repository.loadProfile()}
     /** The picked file could not be decoded on the device; nothing was uploaded. */
@@ -220,7 +224,25 @@ internal fun photoFailure(e:Exception)=when {
         ProfileIdentityCard(loaded,fallbackName,badge,state,vm)
         // Keyed without the photo, so changing the photo does not discard an edit in progress.
         key(loaded.copy(photoUrl=null)) {ProfileDetailsCard(loaded,state.busy,vm)}
-        PasswordCard(state,vm)
+        if(loaded.passwordSet) PasswordCard(state,vm) else SetPasswordCard(state,vm)
+    }
+}
+
+/**
+ * The first screen after a Google sign-up (#167): the same details and privacy agreement as an email sign-up, before Home. Saving
+ * calls [onSaved]; signing out is always offered, for someone who chose the wrong account.
+ */
+@Composable fun ColumnScope.FinishProfileContent(vm:PatientProfileViewModel,onSaved:()->Unit) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    Text(stringResource(R.string.finish_profile_title),style=MaterialTheme.typography.headlineMedium,color=MaterialTheme.colorScheme.primary,
+        modifier=Modifier.semantics {heading()})
+    Text(stringResource(R.string.finish_profile_detail),style=MaterialTheme.typography.bodyLarge,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    if(state.busy && state.profile==null) LoadingNotice(R.string.profile_loading)
+    if(state.failed) FeedbackNotice(R.string.profile_failed,error=true,retry={vm.refresh()})
+    LaunchedEffect(state.message) {if(state.message==R.string.profile_saved) onSaved()}
+    state.profile?.let {loaded ->
+        Text(stringResource(R.string.finish_profile_signed_in_as,loaded.email),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        key(loaded.copy(photoUrl=null)) {ProfileDetailsCard(loaded,state.busy,vm)}
     }
 }
 
@@ -272,6 +294,10 @@ internal fun photoFailure(e:Exception)=when {
             }
         }
         Text(stringResource(R.string.profile_email_fixed),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        if(p.googleLinked) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.ic_google_mark),null,Modifier.size(16.dp))
+            Text(stringResource(R.string.profile_google_linked),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
         CardTitle(R.string.profile_photo)
         Text(stringResource(if(p.photoUrl==null) R.string.profile_photo_empty else R.string.profile_photo_set),
@@ -364,6 +390,41 @@ internal fun photoFailure(e:Exception)=when {
             field(R.string.profile_confirm_password,confirmation,if(mismatch) R.string.form_password_match else null) {confirmation=it}
             ActionButton(R.string.profile_change_password,{vm.password(old,new);old="";new="";confirmation=""},outlined=true,
                 enabled=!state.busy && old.isNotBlank() && new.length>=8 && new==confirmation && old!=new,busy=state.busy,busyLabel=R.string.profile_loading)
+        }
+    }
+}
+
+/** A Google-only account has no password to change, so it is offered a first one: the new password and its confirmation only. */
+@Composable private fun SetPasswordCard(state:ProfileState,vm:PatientProfileViewModel) {
+    key(state.message) {
+        var new by remember {mutableStateOf("")};var confirmation by remember {mutableStateOf("")}
+        val short=new.isNotEmpty() && new.length<8
+        val mismatch=confirmation.isNotEmpty() && confirmation!=new
+        @Composable fun field(label:Int,value:String,error:Int?,set:(String)->Unit) {
+            OutlinedTextField(value,set,enabled=!state.busy,label={Text(stringResource(label))},isError=error!=null,
+                supportingText=error?.let {message -> {Text(stringResource(message))}},visualTransformation=PasswordVisualTransformation(),singleLine=true,
+                keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password),shape=RoundedCornerShape(12.dp),modifier=Modifier.fillMaxWidth())
+        }
+        ClinicalCard {
+            CardTitle(R.string.profile_set_password)
+            Text(stringResource(R.string.profile_set_password_help),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            field(R.string.auth_new_password,new,if(short) R.string.form_password_length else null) {new=it}
+            field(R.string.profile_confirm_password,confirmation,if(mismatch) R.string.form_password_match else null) {confirmation=it}
+            ActionButton(R.string.profile_set_password,{vm.setPassword(new);new="";confirmation=""},outlined=true,
+                enabled=!state.busy && new.length>=8 && new==confirmation,busy=state.busy,busyLabel=R.string.profile_loading)
+        }
+    }
+}
+
+/** The whole screen around [FinishProfileContent], with a way to sign out instead. */
+@Composable fun FinishProfileScreen(vm:PatientProfileViewModel,signingOut:Boolean,onSignOut:()->Unit,onSaved:()->Unit) {
+    Surface(Modifier.fillMaxSize(),color=MaterialTheme.colorScheme.background) {
+        Column(Modifier.fillMaxSize().imePadding().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal=20.dp,vertical=24.dp),
+            horizontalAlignment=Alignment.CenterHorizontally) {
+            Column(Modifier.widthIn(max=560.dp).fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(16.dp)) {
+                FinishProfileContent(vm,onSaved)
+                ActionButton(R.string.sign_out,onSignOut,Modifier.fillMaxWidth(),outlined=true,enabled=!signingOut,busy=signingOut,busyLabel=R.string.ui_signing_out)
+            }
         }
     }
 }

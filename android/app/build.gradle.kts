@@ -13,6 +13,8 @@ android {
     defaultConfig { applicationId = "com.motivance"; minSdk = 26; targetSdk = 35; versionCode = 3; versionName = "0.3.0"; buildConfigField("String", "SUPABASE_URL", config("SUPABASE_URL")); buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", config("SUPABASE_PUBLISHABLE_KEY")) }
     // Optional. All four come from android/.env, and until they are set the app does nothing push-related.
     listOf("FIREBASE_PROJECT_ID", "FIREBASE_APP_ID", "FIREBASE_API_KEY", "FIREBASE_SENDER_ID").forEach { defaultConfig.buildConfigField("String", it, config(it)) }
+    // Optional. The Google Web client ID, a public value from android/.env (#168). Until it is set, Continue with Google says so.
+    defaultConfig.buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", config("GOOGLE_WEB_CLIENT_ID"))
     defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     // MediaPipe 0.10.21 has ARM32/ARM64 JNI, but no x86_64 JNI. Avoid a
@@ -39,6 +41,8 @@ dependencies {
     // Care chat video (#106): re-encodes a picked clip to 480p H.264 on the phone before upload.
     implementation(libs.media3.transformer); implementation(libs.media3.effect); implementation(libs.media3.common)
     implementation(platform(libs.firebase.bom)); implementation(libs.firebase.messaging)
+    // Google sign-in (#168): Credential Manager shows Google's account picker and returns an ID token for Supabase Auth.
+    implementation(libs.credentials); implementation(libs.credentials.play.services); implementation(libs.googleid)
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:core:1.6.1")

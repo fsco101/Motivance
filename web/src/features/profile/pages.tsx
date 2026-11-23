@@ -4,6 +4,7 @@ import { useSignedIn } from '@/auth/AuthProvider'
 import { toast } from '@/components/Toast'
 import { supabase } from '@/data/client'
 import { changePassword, loadMyProfile, removeMyPhoto, saveMyProfile, uploadPhoto } from '@/data/profile'
+import { loadSignInMethods, setFirstPassword } from '@/data/signIn'
 import { asLoad } from '@/features/shared'
 import { ProfileView } from './ProfileView'
 
@@ -12,10 +13,12 @@ export function ProfilePage() {
   const { userId, email } = useSignedIn()
   const client = useQueryClient()
   const profile = useQuery({ queryKey: ['profile', userId], queryFn: () => loadMyProfile(supabase(), userId, email) })
+  // If this cannot be read, the page offers the usual password change, which still checks the current password.
+  const methods = useQuery({ queryKey: ['signIn', userId], queryFn: () => loadSignInMethods(supabase()) })
   // The name and photo appear across the app, so everything reloads, not just this page.
   const refresh = () => client.invalidateQueries()
   return (
-    <ProfileView load={asLoad(profile)} actions={{
+    <ProfileView load={asLoad(profile)} methods={methods.data} actions={{
       onSave: async (details) => {
         await saveMyProfile(supabase(), details)
         await refresh()
@@ -34,6 +37,11 @@ export function ProfilePage() {
       onPassword: async (current, next) => {
         await changePassword(supabase(), userId, email, current, next)
         toast.show(t('profile.passwordSaved'))
+      },
+      onSetPassword: async (next) => {
+        await setFirstPassword(supabase(), next)
+        await client.invalidateQueries({ queryKey: ['signIn', userId] })
+        toast.show(t('profile.passwordSet'))
       },
     }} />
   )

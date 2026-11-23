@@ -73,7 +73,7 @@ import java.time.OffsetDateTime
             if(!response.isSuccessful) {
                 val failure=runCatching {JSONObject(response.body?.string().orEmpty())}.getOrNull()
                 // Only known codes pass: other server messages can name tables and columns.
-                val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password")}
+                val code=failure?.optString("code")?.takeIf {it in setOf("email_not_confirmed","otp_expired","over_email_send_rate_limit","weak_password","same_password","signup_disabled","provider_disabled")}
                     ?: failure?.optString("message")?.takeIf {it.startsWith("booking_") || it.startsWith("chat_") || it.startsWith("schedule_") || it.startsWith("video_")}
                 throw RemoteFailure(response.code,code)
             }
@@ -100,6 +100,17 @@ import java.time.OffsetDateTime
         catch(e:RemoteFailure) {if(e.status in setOf(400,401)) clearSession(); throw e}
     }
     override suspend fun signIn(email: String, password: String) = mutex.withLock { accept(call("/auth/v1/token?grant_type=password", JSONObject().put("email",email).put("password",password))) }
+    /** Google's ID token for the Web client, with the raw nonce whose hash Google signed into it (#168). */
+    override suspend fun signInWithGoogle(token:GoogleToken)=mutex.withLock {
+        accept(call("/auth/v1/token?grant_type=id_token",JSONObject().put("provider","google").put("id_token",token.idToken).put("nonce",token.rawNonce)))
+    }
+    override suspend fun signInMethods()=authorized {token,_ -> readMethods(call("/rest/v1/rpc/my_sign_in",JSONObject(),token))}
+    /** A disabled account reads null; it is signed out elsewhere, so nothing here holds it back. */
+    private fun readMethods(raw:String):SignInMethods {
+        val j=raw.trim().takeIf {it.startsWith("{")}?.let {JSONObject(it)} ?: return SignInMethods()
+        return SignInMethods(j.optBoolean("password",true),j.optBoolean("google",false),j.optBoolean("profile_required",false))
+    }
+    override suspend fun setFirstPassword(newPassword:String) {require(newPassword.length>=8);authorized {token,_ -> call("/auth/v1/user",JSONObject().put("password",newPassword),token,"PUT")}}
     override suspend fun register(email: String, password: String) { call("/auth/v1/signup", JSONObject().put("email",email).put("password",password)) }
     private fun profileJson(p:PatientProfile)=JSONObject().put("username",p.username.trim()).put("first_name",p.firstName.trim()).put("last_name",p.lastName.trim())
         .put("gender",p.gender).put("birthdate",p.birthdate).put("address",p.address.trim()).put("contact",p.contact.trim()).put("consent",p.consent)
@@ -113,7 +124,10 @@ import java.time.OffsetDateTime
         val rows=JSONArray(call("/rest/v1/patient_profiles?select=*&user_id=eq.$id",null,token,"GET"))
         val account=JSONArray(call("/rest/v1/profiles?select=photo_url&id=eq.$id",null,token,"GET"))
         val photo=if(account.length()>0) account.getJSONObject(0).text("photo_url") else null
-        (if(rows.length()>0) readProfile(rows.getJSONObject(0),user.getString("email")) else PatientProfile(email=user.getString("email"))).copy(photoUrl=photo)
+        // If this cannot be read, Profile offers the usual password change, which still checks the current password.
+        val methods=try {readMethods(call("/rest/v1/rpc/my_sign_in",JSONObject(),token))} catch(e:RemoteFailure) {if(e.status==401) throw e else SignInMethods()}
+        (if(rows.length()>0) readProfile(rows.getJSONObject(0),user.getString("email")) else PatientProfile(email=user.getString("email")))
+            .copy(photoUrl=photo,passwordSet=methods.password,googleLinked=methods.google)
     }
     override suspend fun saveProfile(profile:PatientProfile) {require(profile.valid());authorized {token,_ -> call("/rest/v1/rpc/save_my_profile",JSONObject().put("p_details",profileJson(profile)),token)} }
     override suspend fun uploadProfilePhoto(webp:ByteArray):String {

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useNavigate, useSearchParams, type RouteObject } from 'react-router'
+import { AuthCallbackPage } from '@/auth/AuthCallbackPage'
 import { useAuth, useSignedIn } from '@/auth/AuthProvider'
 import { IdleGuard } from '@/auth/IdleGuard'
 import { SignInPage } from '@/auth/SignInPage'
@@ -11,6 +12,7 @@ import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { SkeletonLines } from '@/features/shared'
 import { saveLanguage } from '@/data/notifications'
+import { loadSignInMethods } from '@/data/signIn'
 import { MessagesLink, MessagesPage } from '@/features/chat/pages'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { Shell } from '@/layout/Shell'
@@ -56,6 +58,7 @@ const PatientProfile = patient('PatientProfilePage')
 const PatientCameraCheck = lazy(async () => ({ default: (await import('@/features/exercise/pages')).PatientCameraCheckPage }))
 const PatientExerciseSession = lazy(async () => ({ default: (await import('@/features/exercise/pages')).PatientExerciseSessionPage }))
 const Profile = lazy(async () => ({ default: (await import('@/features/profile/pages')).ProfilePage }))
+const FinishProfile = lazy(async () => ({ default: (await import('@/features/profile/FinishProfile')).FinishProfile }))
 const LandingPage = lazy(async () => ({ default: (await import('@/landing/LandingPage')).LandingPage }))
 const SignUpPage = lazy(async () => ({ default: (await import('@/auth/SignUpPage')).SignUpPage }))
 
@@ -131,8 +134,13 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
       return data
     },
   })
+  // A patient who came through Google finishes their details and the privacy agreement before Home (#167). If this cannot be
+  // read, the workspace opens as usual: the server still refuses what a profile is needed for.
+  const methods = useQuery({ queryKey: ['signIn', userId], queryFn: () => loadSignInMethods(supabase()), enabled: workspace === 'patient' })
   // The server enforces this too; here it simply keeps people out of pages that would only fail.
   if (!held.includes(workspace)) return workspace === 'scheduler' ? <Forbidden /> : <Navigate to={homePath(roles)} replace />
+  if (workspace === 'patient' && methods.isPending) return <Splash />
+  if (workspace === 'patient' && methods.data?.profileRequired) return <Suspense fallback={<Splash />}><FinishProfile /></Suspense>
   return (
     <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))} bell={workspace === 'admin' ? undefined : <>{(workspace === 'patient' || workspace === 'therapist') && <MessagesLink base={workspacePath(workspace)} />}<NotificationBell base={workspacePath(workspace)} /></>}
       account={{ name: profile.data?.display_name || email, email, photo: profile.data?.photo_url, workspaces: held }}>
@@ -145,6 +153,7 @@ export const routes: RouteObject[] = [
   { index: true, element: <Front /> },
   { path: 'sign-in', element: <SignedOutOnly /> },
   { path: 'sign-up', element: <SignedOutOnly signUp /> },
+  { path: 'auth/callback', element: <AuthCallbackPage /> },
   {
     element: <SignedInOnly />,
     children: [

@@ -127,6 +127,8 @@ class AuthScreenTest {
         compose.onNodeWithText(text(R.string.auth_sign_in_description)).assertIsDisplayed()
         button(R.string.auth_create_account).assertExists()
         button(R.string.sign_in).assertIsEnabled()
+        // Without a Google handler, as while Google is off on Android, there is no Google button.
+        compose.onNode(hasText(text(R.string.auth_google))).assertDoesNotExist()
     }
     @Test fun loadingScreenShowsStatusWithoutSignInForm() {
         compose.setContent { MotivanceTheme { AuthLoadingScreen() } }
@@ -152,5 +154,40 @@ class AuthScreenTest {
         compose.onNodeWithText(localized.getString(R.string.back_to_sign_in)).tap()
         compose.onNodeWithText(localized.getString(R.string.auth_forgot_password)).tap()
         compose.onNode(hasText(localized.getString(R.string.auth_send_code)) and hasClickAction()).performScrollTo().assertIsDisplayed()
+    }
+    @Test fun googleButtonStatesAtTwiceTheFontSizeInFilipino() {
+        val configuration = Configuration(context.resources.configuration).apply { setLocale(Locale.forLanguageTag("fil")) }
+        val localized = context.createConfigurationContext(configuration)
+        var taps = 0
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalContext provides localized, LocalConfiguration provides configuration,
+                LocalDensity provides Density(density.density, 2f)) {
+                MotivanceTheme { Box(Modifier.widthIn(max = 360.dp).fillMaxSize()) {
+                    AuthContent(state.value, { _, _, _, _ -> }, { state.value = state.value.copy(notice = null) }, {}, {}, onGoogle = { taps++ })
+                } }
+            }
+        }
+        val google = compose.onNode(hasText(localized.getString(R.string.auth_google)) and hasClickAction())
+        // Ready: below the password form, at least 48dp tall, named by its own words for TalkBack.
+        google.performScrollTo().assertIsDisplayed().assertIsEnabled().assertHeightIsAtLeast(48.dp)
+        capture("google-ready-fil-2x")
+        google.performSemanticsAction(SemanticsActions.OnClick)
+        compose.runOnIdle { assertEquals(1, taps) }
+        // Working: says so, and neither it nor the password form can be used twice.
+        compose.runOnIdle { state.value = AuthState(busy = true, activeAction = AuthAction.GOOGLE) }
+        compose.onNode(hasText(localized.getString(R.string.auth_google_working)) and hasClickAction()).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
+        compose.onNode(hasText(localized.getString(R.string.sign_in)) and hasClickAction()).assertIsNotEnabled()
+        capture("google-busy-fil-2x")
+        // Each outcome reads in Filipino, in full, and the button is ready again.
+        for (notice in listOf(AuthNotice.GOOGLE_CANCELLED, AuthNotice.GOOGLE_NO_ACCOUNT, AuthNotice.GOOGLE_OFFLINE, AuthNotice.GOOGLE_REFUSED, AuthNotice.GOOGLE_UNAVAILABLE)) {
+            compose.runOnIdle { state.value = AuthState(notice = notice) }
+            compose.onNodeWithText(localized.getString(notice.label())).performScrollTo().assertIsDisplayed()
+            google.performScrollTo().assertIsEnabled()
+        }
+        capture("google-refused-fil-2x")
+        // Only the sign-in step offers Google.
+        compose.onNodeWithText(localized.getString(R.string.auth_forgot_password)).tap()
+        compose.onNode(hasText(localized.getString(R.string.auth_google))).assertDoesNotExist()
     }
 }

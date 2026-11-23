@@ -14,7 +14,8 @@ function environment() {
 export function supabase() {
   if (!client) {
     const { url, key } = environment()
-    client = createClient<Database>(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } })
+    // PKCE keeps Google's answer from being usable by anyone but this browser. /auth/callback finishes it, so the URL is not read here.
+    client = createClient<Database>(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' } })
   }
   return client
 }

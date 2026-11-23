@@ -155,4 +155,65 @@ class SupabaseAuthRepositoryTest {
         val payload=buffer.readUtf8()
         assertFalse(payload.contains("role")); assertFalse(payload.contains("admin"))
     }
+
+    /** One fixture backend for the Google tests: answers by path, and can refuse the ID token. */
+    private fun googleBackend(seen:MutableList<Pair<Request,String>>,refuse:Int?=null,methods:String="""{"password":false,"google":true,"profile_required":true}""")=OkHttpClient.Builder().addInterceptor {chain ->
+        val r=chain.request()
+        val body=r.body?.let {val b=okio.Buffer();it.writeTo(b);b.readUtf8()}.orEmpty();seen+=r to body
+        val idToken=r.url.queryParameter("grant_type")=="id_token"
+        val (code,answer)=when {
+            idToken && refuse!=null -> refuse to """{"code":"bad_jwt","message":"Bad ID token"}"""
+            r.url.encodedPath=="/rest/v1/user_roles" -> 200 to """[{"role":"patient"}]"""
+            r.url.encodedPath=="/rest/v1/rpc/my_sign_in" -> 200 to methods
+            r.url.encodedPath=="/auth/v1/user" -> 200 to """{"email":"google@example.test"}"""
+            r.url.encodedPath.startsWith("/rest/v1/") -> 200 to "[]"
+            else -> 200 to session
+        }
+        Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(code).message("Fixture").body(answer.toResponseBody("application/json".toMediaType())).build()
+    }.build()
+    @Test fun googleSignInSendsTheIdTokenAndRawNonceAndStoresTheSession()=runBlocking {
+        val seen=mutableListOf<Pair<Request,String>>()
+        val repo=SupabaseAuthRepository(googleBackend(seen),"https://fixture.invalid","public-fixture")
+        val result=repo.signInWithGoogle(com.motivance.domain.GoogleToken("stub.id.token","raw-nonce"))
+        val (request,body)=seen.first()
+        assertEquals("/auth/v1/token",request.url.encodedPath);assertEquals("id_token",request.url.queryParameter("grant_type"))
+        assertEquals("POST",request.method)
+        val sent=JSONObject(body)
+        assertEquals("google",sent.getString("provider"));assertEquals("stub.id.token",sent.getString("id_token"));assertEquals("raw-nonce",sent.getString("nonce"))
+        assertEquals(setOf(UserRole.PATIENT),result.roles)
+        // Stored exactly like a password sign-in: later calls carry the same session's token.
+        repo.signInMethods()
+        assertEquals("Bearer test-access",seen.last().first.header("Authorization"))
+    }
+    @Test fun aRefusedGoogleTokenFailsWithItsStatusAndStoresNothing()=runBlocking {
+        val seen=mutableListOf<Pair<Request,String>>()
+        val repo=SupabaseAuthRepository(googleBackend(seen,refuse=400),"https://fixture.invalid","public-fixture")
+        val failure=runCatching {repo.signInWithGoogle(com.motivance.domain.GoogleToken("forged","raw-nonce"))}.exceptionOrNull()
+        assertEquals(400,(failure as RemoteFailure).status)
+        assertNull("The server's own words are not passed on",failure.code)
+        assertEquals(1,seen.size)
+        assertTrue(runCatching {repo.signInMethods()}.exceptionOrNull() is RemoteFailure)
+    }
+    @Test fun signInMethodsAndProfileShowAGoogleOnlyAccount()=runBlocking {
+        val seen=mutableListOf<Pair<Request,String>>()
+        val repo=SupabaseAuthRepository(googleBackend(seen),"https://fixture.invalid","public-fixture")
+        repo.signInWithGoogle(com.motivance.domain.GoogleToken("stub.id.token","raw-nonce"))
+        assertEquals(com.motivance.domain.SignInMethods(password=false,google=true,profileRequired=true),repo.signInMethods())
+        val profile=repo.loadProfile()
+        assertFalse(profile.passwordSet);assertTrue(profile.googleLinked)
+        val disabled=SupabaseAuthRepository(googleBackend(mutableListOf(),methods="null"),"https://fixture.invalid","public-fixture")
+        disabled.signInWithGoogle(com.motivance.domain.GoogleToken("stub.id.token","raw-nonce"))
+        assertEquals(com.motivance.domain.SignInMethods(),disabled.signInMethods())
+    }
+    @Test fun aGoogleOnlyAccountSetsItsFirstPasswordWithoutACurrentOne()=runBlocking {
+        val seen=mutableListOf<Pair<Request,String>>()
+        val repo=SupabaseAuthRepository(googleBackend(seen),"https://fixture.invalid","public-fixture")
+        repo.signInWithGoogle(com.motivance.domain.GoogleToken("stub.id.token","raw-nonce"));seen.clear()
+        repo.setFirstPassword("new-password-1")
+        val (request,body)=seen.single()
+        assertEquals("PUT",request.method);assertEquals("/auth/v1/user",request.url.encodedPath)
+        assertEquals("new-password-1",JSONObject(body).getString("password"))
+        assertFalse(seen.any {it.first.url.queryParameter("grant_type")=="password"})
+        assertTrue(runCatching {repo.setFirstPassword("short")}.isFailure)
+    }
 }

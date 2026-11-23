@@ -192,6 +192,11 @@ private const val NOTIFICATION_CHECK_MS=60_000L
     if(auth.session==null && route=="LANDING") {
         Landing({route="AUTH"},{route="SETUP"}); return
     }
+    // A patient who came through Google finishes their details and the privacy agreement before Home (#167).
+    if(auth.session!=null && auth.profileRequired) {
+        com.motivance.feature.auth.FinishProfileScreen(profile,auth.activeAction==AuthAction.SIGN_OUT,{vm.act(AuthAction.SIGN_OUT)}) {vm.profileFinished();vm.loadOverview()}
+        return
+    }
     val actualRole=auth.session?.workspace(role) ?: UserRole.PATIENT
     val offlineDetail=if(actualRole==UserRole.PATIENT) R.string.offline_detail_patient else R.string.offline_detail_staff
     // A patient's exercises arrive on their own: on opening these pages, on returning to the app, and while it stays open.
