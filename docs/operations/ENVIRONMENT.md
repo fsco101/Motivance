@@ -30,6 +30,7 @@ The app builds and runs with all of these empty.
 | Variable | Where | Value and source |
 |---|---|---|
 | `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`, `FIREBASE_API_KEY`, `FIREBASE_SENDER_ID` | `android/.env` | Public Firebase client values for push. All four are needed, and until then the app does nothing push-related. [NOTIFICATIONS.md](NOTIFICATIONS.md) lists where each one is |
+| `GOOGLE_WEB_CLIENT_ID` | `android/.env` | The Google **Web** OAuth client ID, a public value ending in `.apps.googleusercontent.com`. Android's Continue with Google asks Google for a token for this ID. Until it is set, the button says Google sign-in is not set up. See [GOOGLE-SIGN-IN.md](GOOGLE-SIGN-IN.md) |
 | `VITE_ANDROID_APP_URL` | `web/.env` | The app's store address, which must use `https://`. Until it is set, the landing page and the suggestion to use the phone say so rather than offering a link |
 
 ## Backend values for booking
@@ -45,6 +46,17 @@ These are Edge Function secrets or Vault entries, never Android or browser value
 | `PUBLIC_SITE_URL`, `PUBLIC_FUNCTIONS_URL` | Edge secrets | Links in emails, and where calendar links point |
 | `FCM_SERVICE_ACCOUNT` | Edge secrets | The Firebase service account's JSON file, added by the owner. A secret. Until it is set, pushes are marked skipped |
 | `FCM_API_URL` | Edge secrets, tests only | Points the dispatcher at a stub. Leave it unset everywhere real |
+
+## Backend values for Google sign-in
+
+[GOOGLE-SIGN-IN.md](GOOGLE-SIGN-IN.md) has the Google Cloud console steps. The web app needs no new value: it asks Supabase Auth, which holds the secret.
+
+| Variable | Where | For |
+|---|---|---|
+| `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` | ignored `supabase/.env`; read by `supabase/config.toml` and `scripts/configure_google_sign_in.py` | The Web client ID. Public, and the one audience Auth accepts for Android's ID tokens |
+| `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` | ignored `supabase/.env`, and Supabase Auth on the hosted project | The Web client's secret. A secret: never in an app, `web/.env`, `android/.env` or Git |
+
+The local stack reads both at start, so restart it (stop, then start) after changing them. The hosted provider and its redirect allow-list are set by `python scripts/configure_google_sign_in.py --target hosted --apply`, on the owner's instruction.
 
 ## Local setup
 

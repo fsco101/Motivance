@@ -46,13 +46,20 @@
     "202611150006_chat_list_speed.sql",
     "202611170001_profile_photo_storage.sql",
     "202611170002_admin_backend_status.sql",
-    "202611170003_booking_visit_reason.sql"
+    "202611170003_booking_visit_reason.sql",
+    "202611170004_exercise_schedules.sql",
+    "202611170005_exercise_day_reminders.sql",
+    "202611170006_missed_exercise_days.sql",
+    "202611170007_session_videos.sql",
+    "202611200001_session_client.sql",
+    "202611230001_google_sign_in.sql"
   ],
   "scheduled_jobs_resolved": [
     "booking-reminders",
     "delete-expired-signups",
     "expire-booking-requests",
     "inactivity-alerts",
+    "missed-exercise-days",
     "notification-dispatch",
     "practice-reminders",
     "send-scheduled-messages"

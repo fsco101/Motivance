@@ -218,7 +218,7 @@ const Catalogue = () => <CatalogueView load={useDemo(data.exercises, [])} action
 const Activity = () => <ActivityView load={useDemo({ events: data.activity, hasMore: true }, { events: [], hasMore: false })} onMore={said('Loaded older activity')} />
 
 const profileActions: ProfileActions = {
-  onSave: async () => toast.show('Profile updated.'), onPhoto: async () => toast.show('Profile photo updated.'), onRemovePhoto: async () => toast.show('Profile photo removed.'), onPassword: async () => toast.show('Password changed.'),
+  onSave: async () => toast.show('Profile updated.'), onPhoto: async () => toast.show('Profile photo updated.'), onRemovePhoto: async () => toast.show('Profile photo removed.'), onPassword: async () => toast.show('Password changed.'), onSetPassword: async () => toast.show('Password set.'),
 }
 const Profile = () => <ProfileView load={useDemo(data.profile, { ...data.profile, complete: false, consent: false, username: '', photo: null })} actions={profileActions} />
 

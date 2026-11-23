@@ -366,6 +366,19 @@ Engineering evidence is in [CARE-CHAT.md](CARE-CHAT.md). None of these checks ha
 
 - [ ] On a physical phone, open an assigned exercise. Confirm the camera fills the screen and the overlays do not cover the measured joint while the patient stands where the setup asks. Open the controls, tick consent, start, and confirm the panel closes and Pause measurement appears beside the controls button. Repeat at twice the font size in Filipino and with TalkBack.
 
+## Google sign-in (#166-#170, 2026-11-23)
+
+Auth checks a Google ID token against Google's own signing keys, so automated tests stub Google's steps or make Auth's rows directly (`scripts/test_google_sign_in.py`, `web/tests/e2e/google-sign-in.spec.ts`, Android unit and Compose tests). None of these used a real Google account.
+
+- [ ] #166: The owner creates the consent screen, the Web client and the two Android clients ([GOOGLE-SIGN-IN.md](../operations/GOOGLE-SIGN-IN.md)), fills `supabase/.env` and `android/.env`, restarts the local stack, and `configure_google_sign_in.py --target local` reads back the client ID.
+- [ ] #166: On the local stack, a real Google sign-in from the debug app is accepted. A real Google ID token issued for a different client ID (for example the OAuth Playground's) is refused at `/auth/v1/token?grant_type=id_token`.
+- [ ] #166: On the owner's instruction, `configure_google_sign_in.py --target hosted --apply` reads back the provider on, the Web client ID, the nonce check on, and `https://motivance.vercel.app/**` in the redirect list.
+- [ ] #167: With a real Google account whose address already has a Motivance account (a patient, then a therapist), sign in with Google. Confirm no second account appears in the administrator's accounts, and the account keeps its roles, patients, plans, sessions and messages.
+- [ ] #167: With a Google account that has no Motivance account, sign in. Confirm it becomes a patient, finishes its details and privacy agreement before Home, and that Profile offers *Set a password*; set one and sign in with it.
+- [ ] #168: On a physical phone (debug, then release build), tap Continue with Google: choose an account; cancel the picker; try with no Google account on the phone; try in airplane mode. Each gives its own message. Repeat at twice the font size in Filipino and with TalkBack.
+- [ ] #168: On a shared phone, sign in with one Google account, sign out, tap Continue with Google again, and confirm the picker asks which account rather than signing the first person back in.
+- [ ] #169: After the owner's Vercel redeploy, sign in with a real Google account on the live site in Chrome, Edge, Firefox and Safari: existing account, new patient, cancelled Google page. Check the button with the keyboard and a screen reader, and in Filipino.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

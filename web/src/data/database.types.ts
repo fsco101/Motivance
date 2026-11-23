@@ -2315,6 +2315,10 @@ export type Database = {
         Args: { p_conversation: string }
         Returns: Json
       }
+      my_sign_in: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       my_unread_messages: {
         Args: Record<PropertyKey, never>
         Returns: number

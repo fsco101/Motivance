@@ -7,7 +7,9 @@ import { Avatar, Notice, PageHeader, Panel } from '@/components/Display'
 import { PasswordField, SelectField, TextArea, TextField } from '@/components/Field'
 import { failureKey } from '@/data/errors'
 import { ageOn, GENDERS, PhotoFailure, usernameBlocked, validAddress, validBirthdate, validContact, validDetails, validName, validUsername, type MyProfile, type ProfileDetails } from '@/data/profile'
+import type { SignInMethods } from '@/data/signIn'
 import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
+import { GoogleMark } from '@/auth/GoogleButton'
 import { PhotoCropper } from './PhotoCropper'
 
 export type ProfileActions = {
@@ -16,11 +18,13 @@ export type ProfileActions = {
   onPhoto: (photo: Blob) => Promise<void>
   onRemovePhoto: () => Promise<void>
   onPassword: (current: string, next: string) => Promise<void>
+  /** A Google-only account has no current password, so it sets its first one. */
+  onSetPassword: (next: string) => Promise<void>
 }
 
 const displayName = (profile: MyProfile) => [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email
 
-function PhotoPanel({ profile, actions }: { profile: MyProfile; actions: ProfileActions }) {
+function PhotoPanel({ profile, actions, google }: { profile: MyProfile; actions: ProfileActions; google: boolean }) {
   const { t } = useTranslation()
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -45,6 +49,7 @@ function PhotoPanel({ profile, actions }: { profile: MyProfile; actions: Profile
         <h2 className="text-lg font-bold">{displayName(profile)}</h2>
         <p className="break-all text-sm text-slate">{profile.email}</p>
         <p className="mt-1 text-sm text-slate">{t('profile.emailFixed')}</p>
+        {google && <p className="mt-1 flex items-center gap-2 text-sm text-slate"><GoogleMark className="size-4" />{t('profile.googleLinked')}</p>}
       </div>
       <div className="border-t border-line pt-4">
         <h3 className="text-sm font-bold">{t('profile.photo')}</h3>
@@ -76,7 +81,7 @@ function PhotoPanel({ profile, actions }: { profile: MyProfile; actions: Profile
   )
 }
 
-function DetailsForm({ profile, onSave, onCancel }: { profile: MyProfile; onSave: ProfileActions['onSave']; onCancel?: () => void }) {
+export function DetailsForm({ profile, onSave, onCancel }: { profile: MyProfile; onSave: ProfileActions['onSave']; onCancel?: () => void }) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState<ProfileDetails>(profile)
   const [tried, setTried] = useState(false)
@@ -208,7 +213,42 @@ function Password({ onPassword }: { onPassword: ProfileActions['onPassword'] }) 
   )
 }
 
-export function ProfileView({ load, actions }: { load: Load<MyProfile>; actions: ProfileActions }) {
+/** The first password of a Google-only account. There is no current one to prove, so only the new one and its confirmation are asked. */
+function SetPassword({ onSetPassword }: { onSetPassword: ProfileActions['onSetPassword'] }) {
+  const { t } = useTranslation()
+  const [next, setNext] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState<string | null>(null)
+  const ready = next.length >= 8 && next === confirmation
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!ready) return
+    setBusy(true)
+    setProblem(null)
+    try {
+      await onSetPassword(next)
+      setNext('')
+      setConfirmation('')
+    } catch (failure) {
+      setProblem(t(failureKey(failure)))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <Panel title={t('profile.setPassword')} description={t('profile.setPasswordHelp')}>
+      <form onSubmit={(event) => void submit(event)} className="flex max-w-md flex-col gap-4">
+        {problem && <Notice>{problem}</Notice>}
+        <PasswordField label={t('profile.newPassword')} autoComplete="new-password" value={next} error={next && next.length < 8 ? t('auth.passwordShort') : null} onChange={(event) => setNext(event.target.value)} />
+        <PasswordField label={t('profile.confirmPassword')} autoComplete="new-password" value={confirmation} error={confirmation && confirmation !== next ? t('profile.passwordMatch') : null} onChange={(event) => setConfirmation(event.target.value)} />
+        <Button type="submit" variant="secondary" className="self-start" disabled={!ready} busy={busy} busyLabel={t('profile.saving')}>{t('profile.setPassword')}</Button>
+      </form>
+    </Panel>
+  )
+}
+
+export function ProfileView({ load, actions, methods }: { load: Load<MyProfile>; actions: ProfileActions; methods?: SignInMethods }) {
   const { t } = useTranslation()
   return (
     <>
@@ -216,10 +256,10 @@ export function ProfileView({ load, actions }: { load: Load<MyProfile>; actions:
       <Loadable load={load} skeleton={<SkeletonLines rows={8} />}>
         {(profile) => (
           <div className="grid items-start gap-5 desk:grid-cols-[17rem_minmax(0,1fr)]">
-            <PhotoPanel profile={profile} actions={actions} />
+            <PhotoPanel profile={profile} actions={actions} google={methods?.google ?? false} />
             <div className="flex min-w-0 flex-col gap-5">
               <Details profile={profile} onSave={actions.onSave} />
-              <Password onPassword={actions.onPassword} />
+              {methods?.password === false ? <SetPassword onSetPassword={actions.onSetPassword} /> : <Password onPassword={actions.onPassword} />}
             </div>
           </div>
         )}

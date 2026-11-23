@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '@/data/client'
+import { googleRedirect } from '@/data/signIn'
 import { clearActivity, idleState, readActivity, writeActivity } from './idle'
 import type { Role } from './roles'
 
@@ -16,6 +17,8 @@ export type AuthState =
 type Auth = {
   state: AuthState
   signIn: (email: string, password: string) => Promise<void>
+  /** Leaves for Google. The person comes back to /auth/callback, which finishes the sign-in. */
+  signInWithGoogle: (next: string | null) => Promise<void>
   signOut: (reason?: SignOutReason) => Promise<void>
   retry: () => void
 }
@@ -100,11 +103,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const signInWithGoogle = useCallback(async (next: string | null) => {
+    writeActivity(Date.now())
+    const { error } = await supabase().auth.signInWithOAuth({
+      provider: 'google',
+      // Google always asks which account, so on a shared computer the next person chooses their own.
+      options: { redirectTo: googleRedirect(window.location.origin, next), queryParams: { prompt: 'select_account' } },
+    })
+    if (error) {
+      clearActivity()
+      throw error
+    }
+  }, [])
+
   const retry = useCallback(() => {
     setState({ status: 'loading' })
     setAttempt((value) => value + 1)
   }, [])
 
-  const value = useMemo(() => ({ state, signIn, signOut, retry }), [state, signIn, signOut, retry])
+  const value = useMemo(() => ({ state, signIn, signInWithGoogle, signOut, retry }), [state, signIn, signInWithGoogle, signOut, retry])
   return <Context.Provider value={value}>{children}</Context.Provider>
 }

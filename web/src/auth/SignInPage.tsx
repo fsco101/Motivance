@@ -12,6 +12,7 @@ import { LanguageSwitch } from '@/layout/LanguageSwitch'
 import { duration, ease } from '@/motion/tokens'
 import { useAuth } from './AuthProvider'
 import { FormFigure } from './FormFigure'
+import { GoogleButton } from './GoogleButton'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const BAND: readonly [number, number] = [20, 120]
@@ -20,10 +21,13 @@ type Step = 'signIn' | 'requestCode' | 'newPassword'
 
 export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
   const { t } = useTranslation()
-  const { signIn } = useAuth()
+  const { signIn, signInWithGoogle } = useAuth()
   const reduced = useReducedMotion()
   const [params] = useSearchParams()
   const next = params.get('next') === 'book' ? '?next=book' : ''
+  // A cancelled Google page comes back here quietly, with a note rather than an error.
+  const googleCancelled = params.get('google') === 'cancelled'
+  const [leaving, setLeaving] = useState(false)
   const [step, setStep] = useState<Step>('signIn')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -97,6 +101,15 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
       })
     }
   }
+  const continueWithGoogle = () => {
+    setLeaving(true)
+    setError(null)
+    signInWithGoogle(params.get('next')).catch((failure: unknown) => {
+      setLeaving(false)
+      setError(t(failureKey(failure)))
+      setAttempt((value) => value + 1)
+    })
+  }
   const watchCapsLock = (event: KeyboardEvent) => setCapsLock(event.getModifierState('CapsLock'))
 
   const emailReady = EMAIL.test(email.trim())
@@ -132,6 +145,7 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
               {step !== 'signIn' && <p className="mb-2 font-semibold text-lagoon-deep">{t('auth.recoveryStep', { step: step === 'requestCode' ? 1 : 2 })}</p>}
               <h1 className="text-4xl font-bold">{heading}</h1>
               <p className="mt-2 text-lg text-slate">{detail}</p>
+              {googleCancelled && !notice && !error && step === 'signIn' && <Notice tone="info" className="mt-6">{t('auth.googleCancelled')}</Notice>}
               {notice && step === 'signIn' && <Notice tone="info" className="mt-6">{t(notice === 'idle' ? 'auth.signedOutIdle' : 'auth.accountDisabled')}</Notice>}
               {sent && !error && <Notice tone="info" className="mt-6">{t('auth.recoverySent')}</Notice>}
               {error && (
@@ -146,7 +160,7 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
                   <PasswordField label={t(step === 'signIn' ? 'auth.password' : 'auth.newPassword')} autoComplete={step === 'signIn' ? 'current-password' : 'new-password'} value={password} error={field.password}
                     hint={capsLock ? t('auth.capsLock') : undefined} onKeyUp={watchCapsLock} onKeyDown={watchCapsLock} onChange={(event) => setPassword(event.target.value)} disabled={busy} />
                 )}
-                <Button type="submit" size="lg" busy={busy} busyLabel={t('common.working')} className="mt-1 w-full">
+                <Button type="submit" size="lg" busy={busy} disabled={leaving} busyLabel={t('common.working')} className="mt-1 w-full">
                   {t(step === 'signIn' ? 'auth.signIn' : step === 'requestCode' ? 'auth.sendCode' : 'auth.savePassword')}
                 </Button>
               </form>
@@ -156,6 +170,14 @@ export function SignInPage({ notice }: { notice?: 'idle' | 'disabled' }) {
                   : <Button variant="quiet" size="sm" className="-ml-3" onClick={() => go('signIn')}>{t('auth.backToSignIn')}</Button>}
                 {step === 'newPassword' && <Button variant="quiet" size="sm" className="-mr-3" onClick={() => go('requestCode')}>{t('auth.resendCode')}</Button>}
               </div>
+              {step === 'signIn' && (
+                <>
+                  <div className="my-5 flex items-center gap-3 text-sm text-slate" aria-hidden>
+                    <span className="h-px flex-1 bg-line" />{t('auth.or')}<span className="h-px flex-1 bg-line" />
+                  </div>
+                  <GoogleButton busy={leaving} disabled={busy} onClick={continueWithGoogle} />
+                </>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
