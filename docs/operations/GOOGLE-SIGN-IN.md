@@ -35,7 +35,7 @@ These need the owner's Google account, so an agent does not do them.
 2. **OAuth consent screen** (Google Auth Platform → Branding):
    - App name **Motivance**, a support email, and the logo `web/public/logo-256.png`.
    - App home page and privacy policy: `https://motivance.vercel.app`.
-   - Authorised domains: `vercel.app` and `supabase.co`.
+   - Authorised domains: `motivance.vercel.app` and `nlmpvelcycedhhcmtgmx.supabase.co`. Not `vercel.app` or `supabase.co`: both are public suffixes, so Google refuses them as "must be a top private domain".
    - Data access (scopes): `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile` only.
    - Audience: while the app is in **Testing**, only the listed test users can sign in. Add each tester's Google address. Publishing the app removes that limit.
 3. **Web client** (Clients → Create client → Web application), named for example *Motivance web*:
