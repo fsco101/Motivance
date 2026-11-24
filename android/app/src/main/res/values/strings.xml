@@ -1438,4 +1438,14 @@
     <string name="video_shared_by_patient">Shared by the patient until %1$s.</string>
     <string name="video_link_failed">The video could not be opened. Try again.</string>
     <string name="video_close">Close</string>
+    <string name="progress_open_record">Open patient record</string>
+    <string name="booking_reject_slot_unavailable">The time you asked for is no longer available.</string>
+    <string name="booking_reject_therapist_away">The therapist is away at that time.</string>
+    <string name="booking_reject_outside_hours">That time is outside the center\'s opening hours.</string>
+    <string name="booking_reject_duplicate_request">This request repeats another request you already made.</string>
+    <string name="booking_reject_call_center">Please call the center first to arrange this visit.</string>
+    <string name="booking_note">Note from the center</string>
+    <string name="booking_note_line">Note from the center: %1$s</string>
+    <string name="booking_request_again">Request another time</string>
+    <string name="booking_request_again_hint">Your reason for the visit is filled in for you.</string>
 </resources>

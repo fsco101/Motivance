@@ -5,7 +5,7 @@ import { Button } from '@/components/Button'
 import { Dialog } from '@/components/Dialog'
 import { Avatar, StatusPill } from '@/components/Display'
 import { TextArea } from '@/components/Field'
-import { CENTER_ZONE, shiftMonth, todayAt, type Availability, type Slot } from '@/data/booking'
+import { CENTER_ZONE, REJECTION_CODES, REJECTION_NOTE_MAX, shiftMonth, todayAt, validRejection, type Availability, type Rejection, type Slot } from '@/data/booking'
 import type { RequestRow, TherapistChoice } from '@/data/scheduler'
 import { useCenterFormat } from '@/features/booking/format'
 import { SlotPicker } from '@/features/booking/SlotPicker'
@@ -20,10 +20,10 @@ export type RequestActions = {
   availability: (month: string) => Promise<Availability>
   confirm: (row: RequestRow, therapist: string) => Promise<void>
   assign: (row: RequestRow, therapist: string) => Promise<void>
-  reject: (row: RequestRow, reason: string) => Promise<void>
+  reject: (row: RequestRow, rejection: Rejection) => Promise<void>
   cancel: (row: RequestRow, reason: string) => Promise<void>
   reschedule: (row: RequestRow, startsAt: string, therapist: string) => Promise<void>
-  bulkReject: (reason: string) => Promise<void>
+  bulkReject: (rejection: Rejection) => Promise<void>
   cancelSeries: (row: RequestRow, reason: string) => Promise<void>
 }
 
@@ -95,17 +95,58 @@ function TherapistDialog({ kind, row, actions, onClose }: { kind: 'confirm' | 'a
   )
 }
 
-function ReasonDialog({ kind, row, actions, onClose }: { kind: 'reject' | 'cancel'; row: RequestRow; actions: RequestActions; onClose: () => void }) {
+const NO_REJECTION: Rejection = { code: 'slot_unavailable', reason: '', note: '' }
+
+/** The center's common reasons, or Other in the Scheduler's own words (#172). A common reason can carry a short note. */
+function RejectionFields({ value, onChange }: { value: Rejection; onChange: (next: Rejection) => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="grid gap-4">
+      <fieldset>
+        <legend className="mb-1 font-semibold">{t('scheduler.rejectReasonLabel')}</legend>
+        <p className="mb-2 text-sm text-slate">{t('scheduler.rejectReasonHint')}</p>
+        <div className="grid gap-2">
+          {[...REJECTION_CODES, 'other' as const].map((code) => (
+            <label key={code} className={cn('flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-line px-3 py-2 hover:border-lagoon', value.code === code && 'border-lagoon bg-tide')}>
+              <input type="radio" name="rejection" className="accent-lagoon" checked={value.code === code} onChange={() => onChange({ ...value, code })} />
+              <span className="font-semibold">{t(`scheduler.rejectChoice.${code}`)}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      {value.code === 'other'
+        ? <TextArea label={t('scheduler.rejectOther')} hint={t('scheduler.rejectOtherHint')} value={value.reason} onChange={(event) => onChange({ ...value, reason: event.target.value })} maxLength={300} />
+        : <TextArea label={t('scheduler.rejectNote')} hint={t('scheduler.rejectNoteHint')} rows={2} value={value.note} onChange={(event) => onChange({ ...value, note: event.target.value })} maxLength={REJECTION_NOTE_MAX} />}
+    </div>
+  )
+}
+
+function RejectDialog({ row, actions, onClose }: { row: RequestRow; actions: Pick<RequestActions, 'reject'>; onClose: () => void }) {
+  const { t } = useTranslation()
+  const format = useCenterFormat()
+  const [rejection, setRejection] = useState(NO_REJECTION)
+  const { busy, run } = useSubmit(onClose)
+  return (
+    <Dialog open onOpenChange={onClose} title={t('scheduler.reject')} description={t('scheduler.forWhom', { patient: row.patient, when: format.when(row.startsAt, row.endsAt) })}>
+      <div className="max-h-[60dvh] overflow-y-auto pr-1"><RejectionFields value={rejection} onChange={setRejection} /></div>
+      <Actions onClose={onClose}>
+        <Button variant="danger" busy={busy} busyLabel={t('common.working')} disabled={!validRejection(rejection)} onClick={() => run(() => actions.reject(row, rejection))}>{t('scheduler.reject')}</Button>
+      </Actions>
+    </Dialog>
+  )
+}
+
+function ReasonDialog({ row, actions, onClose }: { row: RequestRow; actions: Pick<RequestActions, 'cancel'>; onClose: () => void }) {
   const { t } = useTranslation()
   const format = useCenterFormat()
   const [reason, setReason] = useState('')
   const { busy, run } = useSubmit(onClose)
-  const confirm = t(kind === 'reject' ? 'scheduler.reject' : 'booking.cancel')
+  const confirm = t('booking.cancel')
   return (
     <Dialog open onOpenChange={onClose} title={confirm} description={t('scheduler.forWhom', { patient: row.patient, when: format.when(row.startsAt, row.endsAt) })}>
       <TextArea label={t('booking.reason')} hint={t('scheduler.reasonHint')} value={reason} onChange={(event) => setReason(event.target.value)} maxLength={300} />
-      <Actions onClose={onClose} keep={kind === 'cancel' ? t('booking.keep') : undefined}>
-        <Button variant="danger" busy={busy} busyLabel={t('common.working')} disabled={!validReason(reason)} onClick={() => run(() => actions[kind](row, reason.trim()))}>{confirm}</Button>
+      <Actions onClose={onClose} keep={t('booking.keep')}>
+        <Button variant="danger" busy={busy} busyLabel={t('common.working')} disabled={!validReason(reason)} onClick={() => run(() => actions.cancel(row, reason.trim()))}>{confirm}</Button>
       </Actions>
     </Dialog>
   )
@@ -140,13 +181,13 @@ function RescheduleDialog({ row, actions, onClose }: { row: RequestRow; actions:
 
 export function BulkRejectDialog({ count, actions, onClose }: { count: number; actions: Pick<RequestActions, 'bulkReject'>; onClose: () => void }) {
   const { t } = useTranslation()
-  const [reason, setReason] = useState('')
+  const [rejection, setRejection] = useState(NO_REJECTION)
   const { busy, run } = useSubmit(onClose)
   return (
     <Dialog open onOpenChange={onClose} title={t('scheduler.rejectSelected')} description={t('scheduler.bulkDetail', { count })}>
-      <TextArea label={t('booking.reason')} hint={t('scheduler.reasonHint')} value={reason} onChange={(event) => setReason(event.target.value)} maxLength={300} />
+      <div className="max-h-[60dvh] overflow-y-auto pr-1"><RejectionFields value={rejection} onChange={setRejection} /></div>
       <Actions onClose={onClose}>
-        <Button variant="danger" busy={busy} busyLabel={t('common.working')} disabled={!validReason(reason)} onClick={() => run(() => actions.bulkReject(reason.trim()))}>{t('scheduler.rejectCount', { count })}</Button>
+        <Button variant="danger" busy={busy} busyLabel={t('common.working')} disabled={!validRejection(rejection)} onClick={() => run(() => actions.bulkReject(rejection))}>{t('scheduler.rejectCount', { count })}</Button>
       </Actions>
     </Dialog>
   )
@@ -169,6 +210,7 @@ function SeriesCancelDialog({ row, remaining, actions, onClose }: { row: Request
 export function RequestDialog({ kind, row, remaining = 0, actions, onClose }: { kind: RequestActionKind; row: RequestRow; remaining?: number; actions: RequestActions; onClose: () => void }) {
   if (kind === 'series') return <SeriesCancelDialog row={row} remaining={remaining} actions={actions} onClose={onClose} />
   if (kind === 'reschedule') return <RescheduleDialog row={row} actions={actions} onClose={onClose} />
-  if (kind === 'reject' || kind === 'cancel') return <ReasonDialog kind={kind} row={row} actions={actions} onClose={onClose} />
+  if (kind === 'reject') return <RejectDialog row={row} actions={actions} onClose={onClose} />
+  if (kind === 'cancel') return <ReasonDialog row={row} actions={actions} onClose={onClose} />
   return <TherapistDialog kind={kind} row={row} actions={actions} onClose={onClose} />
 }

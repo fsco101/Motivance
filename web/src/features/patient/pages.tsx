@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { ButtonLink } from '@/components/Button'
 import { toast } from '@/components/Toast'
@@ -117,7 +117,9 @@ export function PatientBookPage() {
   const navigate = useNavigate()
   const { chosen, setChosen, availability, picker } = useSlotChoice()
   const [busy, setBusy] = useState(false)
-  const [reason, setReason] = useState('')
+  // "Request another time" on a rejected request hands over its reason for the visit (#172).
+  const handed = (useLocation().state as { visitReason?: unknown } | null)?.visitReason
+  const [reason, setReason] = useState(typeof handed === 'string' ? handed : '')
   const [reasonTried, setReasonTried] = useState(false)
   // One ID per chosen time, so trying again after a lost response returns the same booking instead of a second one.
   const attempt = useRef<{ startsAt: string; request: string } | null>(null)

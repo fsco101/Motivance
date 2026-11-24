@@ -33,6 +33,8 @@ data class AppNotification(
     val conversationId:String?=null,val sender:String?=null,
     /** A missed exercise day (#128): the calendar day, and how many of the exercises due were done. */
     val day:String?=null,val due:Int?=null,val done:Int?=null,
+    /** The Scheduler's note beside a common reason for a rejection (#172). */
+    val note:String?=null,
 ) {
     val unread get()=readAt==null
 }

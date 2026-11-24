@@ -142,6 +142,7 @@
     "stopped": "Video no longer shared", "loadFailed": "The video could not be opened. Try again."
   },
   "progress": {
+    "openRecord": "Open patient record",
     "noPatientsTitle": "No patients yet", "noPatientsDetail": "Progress appears here once a patient is linked to you.",
     "description": "Measured movement over time, one patient at a time.", "rom": "Range of motion", "notValidated": "Movement estimates are not clinically validated.", "notMeasured": "Not measured",
     "chartLabel": "{{title}} chart with {{count}} sessions. Use the left and right arrow keys to read each session.", "showTable": "Show as a table", "date": "Date", "unknown": "Unknown exercise", "targets": "Prescribed", "result": "Result",

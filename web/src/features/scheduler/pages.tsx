@@ -88,10 +88,10 @@ export function SchedulerRequestsPage() {
     availability: (month) => loadStaffAvailability(supabase(), month),
     confirm: (row, therapist) => actAndForget(() => confirmBooking(supabase(), row.id, therapist), t('scheduler.confirmed')),
     assign: (row, therapist) => actAndForget(() => assignTherapist(supabase(), row.id, therapist), t('scheduler.assigned')),
-    reject: (row, reason) => actAndForget(() => rejectBooking(supabase(), row.id, reason), t('scheduler.rejected')),
+    reject: (row, rejection) => actAndForget(() => rejectBooking(supabase(), row.id, rejection), t('scheduler.rejected')),
     cancel: (row, reason) => actAndForget(() => cancelBooking(supabase(), row.id, reason), t('booking.cancelled')),
     reschedule: (row, startsAt, therapist) => actAndForget(() => rescheduleBooking(supabase(), row.id, startsAt, therapist), t('scheduler.rescheduled')),
-    bulkReject: (reason) => actAndForget(async () => { const count = await bulkReject(supabase(), selection, reason); setChecked([]); return count }, (count) => t('scheduler.bulkDone', { count })),
+    bulkReject: (rejection) => actAndForget(async () => { const count = await bulkReject(supabase(), selection, rejection); setChecked([]); return count }, (count) => t('scheduler.bulkDone', { count })),
     cancelSeries: (row, reason) => actAndForget(() => cancelSeries(supabase(), row.seriesId!, reason), (count) => t('scheduler.seriesCancelled', { count })),
   }
   return (

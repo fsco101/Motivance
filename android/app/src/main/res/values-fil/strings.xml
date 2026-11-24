@@ -1438,4 +1438,14 @@
     <string name="video_shared_by_patient">Ibinahagi ng pasyente hanggang %1$s.</string>
     <string name="video_link_failed">Hindi mabuksan ang video. Subukan muli.</string>
     <string name="video_close">Isara</string>
+    <string name="progress_open_record">Buksan ang record ng pasyente</string>
+    <string name="booking_reject_slot_unavailable">Hindi na available ang oras na hiniling mo.</string>
+    <string name="booking_reject_therapist_away">Wala ang therapist sa oras na iyon.</string>
+    <string name="booking_reject_outside_hours">Labas sa oras ng pagbubukas ng center ang oras na iyon.</string>
+    <string name="booking_reject_duplicate_request">Kapareho ito ng isa pang kahilingang nagawa mo na.</string>
+    <string name="booking_reject_call_center">Pakitawagan muna ang center para maiayos ang pagbisitang ito.</string>
+    <string name="booking_note">Tala mula sa center</string>
+    <string name="booking_note_line">Tala mula sa center: %1$s</string>
+    <string name="booking_request_again">Humiling ng ibang oras</string>
+    <string name="booking_request_again_hint">Nakalagay na ang dahilan mo sa pagbisita.</string>
 </resources>

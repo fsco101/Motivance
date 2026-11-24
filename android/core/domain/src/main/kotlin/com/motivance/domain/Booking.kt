@@ -36,6 +36,8 @@ data class Booking(
     val rescheduleUntil:String?=null,val canReschedule:Boolean=false,val reschedulesLeft:Int=0,val therapistPhoto:String?=null,
     /** Why the patient is coming, as they wrote it. [reason] is the Scheduler's reason for a cancellation or rejection. */
     val visitReason:String?=null,val patient:String?=null,val patientPhoto:String?=null,
+    /** The Scheduler's own words beside a common reason for a rejection (#172), shown as written. */
+    val note:String?=null,
 ) {
     fun upcoming(now:Instant)=status.active && bookingInstant(endsAt).isAfter(now)
 }

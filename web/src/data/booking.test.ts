@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, bookingFailureKey, decodeAvailability, decodeBooking, isStale, isUpcoming, monthRange, nextBooking, shiftMonth, todayAt, upcomingBookings, type Booking, type RawBooking } from './booking'
+import { addDays, bookingFailureKey, decodeAvailability, decodeBooking, isRejectionCode, isStale, isUpcoming, monthRange, nextBooking, REJECTION_CODES, rejectionArgs, shiftMonth, todayAt, upcomingBookings, validRejection, type Booking, type RawBooking, type Rejection } from './booking'
 
 const row = (extra: Partial<RawBooking> = {}): RawBooking => ({
   id: 'b1', reference_no: 'BK-2026-000001', status: 'pending', status_reason: null, starts_at: '2026-12-07T01:00:00+00:00', ends_at: '2026-12-07T02:00:00+00:00',
@@ -83,5 +83,28 @@ describe('a refused booking', () => {
   it('falls back to the ordinary failures', () => {
     expect(bookingFailureKey({ code: '42501' })).toBe('errors.forbidden')
     expect(bookingFailureKey(new Error('Something else'))).toBe('errors.request')
+  })
+})
+
+describe('a rejection (#172)', () => {
+  const other = (reason: string): Rejection => ({ code: 'other', reason, note: '' })
+  it('sends a common reason as its code, with a trimmed note or none', () => {
+    expect(rejectionArgs({ code: 'therapist_away', reason: 'ignored', note: '  Back Monday. ' })).toEqual({ p_code: 'therapist_away', p_note: 'Back Monday.' })
+    expect(rejectionArgs({ code: 'call_center', reason: '', note: '   ' })).toEqual({ p_code: 'call_center', p_note: undefined })
+  })
+  it('sends Other as the words, 3 to 300 characters', () => {
+    expect(rejectionArgs(other('  Room repairs  '))).toEqual({ p_code: 'other', p_reason: 'Room repairs' })
+    expect(validRejection(other('ab'))).toBe(false)
+    expect(validRejection(other('abc'))).toBe(true)
+    expect(validRejection(other('x'.repeat(301)))).toBe(false)
+  })
+  it('keeps a note within 300 characters', () => {
+    expect(validRejection({ code: 'outside_hours', reason: '', note: 'x'.repeat(300) })).toBe(true)
+    expect(validRejection({ code: 'outside_hours', reason: '', note: 'x'.repeat(301) })).toBe(false)
+  })
+  it('knows its codes, and words that are not one', () => {
+    expect(REJECTION_CODES).toHaveLength(5)
+    expect(isRejectionCode('duplicate_request')).toBe(true)
+    expect(isRejectionCode('The room is closed')).toBe(false)
   })
 })

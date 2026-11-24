@@ -80,13 +80,13 @@ describe('scheduling on the local backend', () => {
   it('rejects one request, or several at once', async () => {
     const db = await signedIn(scheduler)
     const [ben_] = (await loadRequests(db, { ...search, search: `Ben ${tag}` }, NEWEST, 0)).rows
-    await rejectBooking(db, ben_!.id, 'Too far away')
-    const failure = await rejectBooking(db, ben_!.id, 'Again').catch((error: unknown) => error)
+    await rejectBooking(db, ben_!.id, { code: 'other', reason: 'Too far away', note: '' })
+    const failure = await rejectBooking(db, ben_!.id, { code: 'slot_unavailable', reason: '', note: 'Again' }).catch((error: unknown) => error)
     expect(bookingFailureKey(failure)).toBe('booking.errors.state')
     const a = await request(ana, manila(workingDay(34), 9))
     const b = await request(ben, manila(workingDay(34), 10))
     await confirmBooking(db, a.id, other.id)
-    expect(await bulkReject(db, [a.id, b.id], 'Outdated request')).toBe(1)
+    expect(await bulkReject(db, [a.id, b.id], { code: 'duplicate_request', reason: '', note: '' })).toBe(1)
     const rows = (await loadRequests(db, search, NEWEST, 0)).rows
     expect(rows.find((row) => row.id === a.id)?.status).toBe('confirmed')
     expect(rows.find((row) => row.id === b.id)?.status).toBe('rejected')

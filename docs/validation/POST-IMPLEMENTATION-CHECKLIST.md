@@ -379,6 +379,17 @@ Auth checks a Google ID token against Google's own signing keys, so automated te
 - [ ] #168 (after Android's button is turned on): On a shared phone, sign in with one Google account, sign out, tap Continue with Google again, and confirm the picker asks which account rather than signing the first person back in.
 - [ ] #169: After the owner's Vercel redeploy, sign in with a real Google account on the live site in Chrome, Edge, Firefox and Safari: existing account, new patient, cancelled Google page. Check the button with the keyboard and a screen reader, and in Filipino.
 
+## Rejection reasons (#172, 2026-11-25)
+
+Automated: `supabase/tests/rejection_reasons.test.sql`, the dispatcher's push and email tests (`web/tests/contract/push.test.ts`, `email.test.ts`), `web/tests/e2e/rejection-reasons.spec.ts`, Android `RejectionReasonTest` and `RejectedBookingTest`. No real email or push was sent.
+
+- [ ] #172: After the owner applies `202611240001_rejection_reasons.sql` and redeploys `notification-dispatch`, reject a real request with a common reason and a note, and another with Other. On a physical Android phone, read both pushes on the lock screen and in the shade, in English and in Filipino, including one long reason cut short. Open the real emails in Gmail on a phone and on a computer.
+- [ ] #172: On the phone, open the rejected booking at twice the font size in Filipino and with TalkBack, tap Request another time, and confirm the reason for the visit is already written.
+
+## Therapist Progress avatar (#174, 2026-11-25)
+
+- [ ] #174: On a physical phone and in a browser, open therapist Progress with a patient who has a real profile photo and one who has none. Confirm the photo loads in the patient choice and the header, initials show otherwise, TalkBack and a screen reader read only the name, and tapping the header opens the patient's record.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

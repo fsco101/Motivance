@@ -506,7 +506,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                 }
                 "BOOKINGS" -> {
                     PageHeader(R.string.booking_my_title,R.string.booking_my_detail)
-                    MyBookings(bookingState,booking,{route="SCHEDULE"},{booking.startMove(it);route="MOVE"}) {route="BOOK"}
+                    MyBookings(bookingState,booking,{route="SCHEDULE"},{booking.startMove(it);route="MOVE"},{booking.setReason(it.visitReason.orEmpty());route="BOOK"}) {route="BOOK"}
                 }
                 "NOTIFICATIONS" -> {
                     PageHeader(R.string.nav_notifications,R.string.notifications_detail)
@@ -541,7 +541,7 @@ private const val NOTIFICATION_CHECK_MS=60_000L
                     ConnectedStatus(connected,offlineDetail=offlineDetail) {rehabilitation.refreshNow(); history.refresh()}
                     if(actualRole==UserRole.PATIENT && connected.owner.isNotBlank()) LaunchedEffect(connected.owner) {videos.load(connected.owner)}
                     ResultsDashboard(connected.workspace,connected.owner,if(actualRole==UserRole.PATIENT) auth.session?.userId else null,history,share=chatOwner?.let {{patient,card -> sharing=patient to card}},
-                        videoFor={videoState.shared[it]},link=videos::link)
+                        videoFor={videoState.shared[it]},link=videos::link,openPatient={selectedPatient=it; route="PATIENT_DETAIL"})
                 }
                 else -> if(actualRole==UserRole.SCHEDULER) SchedulerHome() else {
                     val patientRole=actualRole==UserRole.PATIENT

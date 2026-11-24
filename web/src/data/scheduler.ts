@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { decodeAvailability, monthRange, type Attendance, type Availability, type BookingStatus } from './booking'
+import { decodeAvailability, monthRange, rejectionArgs, type Attendance, type Availability, type BookingStatus, type Rejection } from './booking'
 import type { Database } from './database.types'
 import { must } from './workspace'
 
@@ -43,20 +43,20 @@ export async function loadRequests(db: Db, filters: RequestFilters, sort: Reques
   return { rows: rows.map(decodeRow), total }
 }
 
-export type BookingEvent = { id: number; action: string; actorRole: string; actor: string | null; actorPhoto: string | null; fromStatus: string | null; toStatus: string | null; toStartsAt: string | null; reason: string | null; toAttendance: Attendance | null; recordedAt: string }
-export type RequestDetail = { id: string; seriesId: string | null; seriesRemaining: number; events: BookingEvent[] }
+export type BookingEvent = { id: number; action: string; actorRole: string; actor: string | null; actorPhoto: string | null; fromStatus: string | null; toStatus: string | null; toStartsAt: string | null; reason: string | null; note: string | null; toAttendance: Attendance | null; recordedAt: string }
+export type RequestDetail = { id: string; seriesId: string | null; seriesRemaining: number; note: string | null; events: BookingEvent[] }
 
 type RawDetail = {
-  id: string; series_id?: string | null; series_remaining?: number
-  events: Array<{ id: number; action: string; actor_role: string; actor_name: string | null; actor_photo?: string | null; from_status: string | null; to_status: string | null; to_starts_at: string | null; reason: string | null; to_attendance?: Attendance | null; recorded_at: string }>
+  id: string; series_id?: string | null; series_remaining?: number; status_note?: string | null
+  events: Array<{ id: number; action: string; actor_role: string; actor_name: string | null; actor_photo?: string | null; from_status: string | null; to_status: string | null; to_starts_at: string | null; reason: string | null; note?: string | null; to_attendance?: Attendance | null; recorded_at: string }>
 }
 
 export async function loadDetail(db: Db, booking: string): Promise<RequestDetail> {
   const row = must(await db.rpc('scheduler_booking_detail', { p_booking: booking })) as unknown as RawDetail
   return {
-    id: row.id, seriesId: row.series_id ?? null, seriesRemaining: row.series_remaining ?? 0,
+    id: row.id, seriesId: row.series_id ?? null, seriesRemaining: row.series_remaining ?? 0, note: row.status_note ?? null,
     events: row.events.map((event) => ({
-      id: event.id, action: event.action, actorRole: event.actor_role, actor: event.actor_name, actorPhoto: event.actor_photo ?? null, fromStatus: event.from_status, toStatus: event.to_status, toStartsAt: event.to_starts_at, toAttendance: event.to_attendance ?? null, reason: event.reason, recordedAt: event.recorded_at,
+      id: event.id, action: event.action, actorRole: event.actor_role, actor: event.actor_name, actorPhoto: event.actor_photo ?? null, fromStatus: event.from_status, toStatus: event.to_status, toStartsAt: event.to_starts_at, toAttendance: event.to_attendance ?? null, reason: event.reason, note: event.note ?? null, recordedAt: event.recorded_at,
     })),
   }
 }
@@ -106,7 +106,7 @@ export async function loadStaffAvailability(db: Db, month: string): Promise<Avai
 }
 
 export const confirmBooking = async (db: Db, booking: string, therapist: string) => { must(await db.rpc('scheduler_confirm', { p_booking: booking, p_therapist: therapist })) }
-export const rejectBooking = async (db: Db, booking: string, reason: string) => { must(await db.rpc('scheduler_reject', { p_booking: booking, p_reason: reason })) }
+export const rejectBooking = async (db: Db, booking: string, rejection: Rejection) => { must(await db.rpc('scheduler_reject', { p_booking: booking, ...rejectionArgs(rejection) })) }
 export const rescheduleBooking = async (db: Db, booking: string, startsAt: string, therapist: string) => { must(await db.rpc('scheduler_reschedule', { p_booking: booking, p_starts: startsAt, p_therapist: therapist })) }
 export const assignTherapist = async (db: Db, booking: string, therapist: string) => { must(await db.rpc('scheduler_assign_therapist', { p_booking: booking, p_therapist: therapist })) }
 export const cancelBooking = async (db: Db, booking: string, reason: string) => { must(await db.rpc('scheduler_cancel', { p_booking: booking, p_reason: reason })) }
@@ -135,4 +135,4 @@ export const createSeries = async (db: Db, request: string, draft: SeriesDraft) 
 export const cancelSeries = async (db: Db, series: string, reason: string) => must(await db.rpc('scheduler_series_cancel', { p_series: series, p_reason: reason })) as number
 export const searchPatients = async (db: Db, search: string) => must(await db.rpc('scheduler_patients', { p_search: search || undefined })) as unknown as PatientChoice[]
 
-export const bulkReject = async (db: Db, bookings: readonly string[], reason: string) => must(await db.rpc('scheduler_bulk_reject', { p_bookings: [...bookings], p_reason: reason })) as number
+export const bulkReject = async (db: Db, bookings: readonly string[], rejection: Rejection) => must(await db.rpc('scheduler_bulk_reject', { p_bookings: [...bookings], ...rejectionArgs(rejection) })) as number

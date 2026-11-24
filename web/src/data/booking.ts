@@ -59,19 +59,21 @@ export const ACTIVE: readonly BookingStatus[] = ['pending', 'confirmed', 'resche
 
 export type Booking = {
   id: string; reference: string; status: BookingStatus; reason: string | null; startsAt: string; endsAt: string; previousStartsAt: string | null
+  /** The Scheduler's own words beside a common reason for a rejection (#172), shown to the patient as written. */
+  note: string | null
   /** Why the patient is coming, as they wrote it. `reason` is the Scheduler's reason for a cancellation or rejection. */
   visitReason: string | null; patient: string | null; patientPhoto: string | null
   therapist: string | null; therapistPhoto: string | null; location: string; cancelUntil: string | null; canCancel: boolean; rescheduleUntil: string | null; canReschedule: boolean; reschedulesLeft: number
 }
 
 export type RawBooking = {
-  id: string; reference_no: string; status: BookingStatus; status_reason: string | null; starts_at: string; ends_at: string; previous_starts_at: string | null
+  id: string; reference_no: string; status: BookingStatus; status_reason: string | null; status_note?: string | null; starts_at: string; ends_at: string; previous_starts_at: string | null
   visit_reason?: string | null; patient_name?: string | null; patient_photo?: string | null
   therapist_name: string | null; therapist_photo?: string | null; location?: string; cancel_until?: string | null; can_cancel?: boolean; reschedule_until?: string | null; can_reschedule?: boolean; reschedules_left?: number
 }
 
 export const decodeBooking = (row: RawBooking): Booking => ({
-  id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, startsAt: row.starts_at, endsAt: row.ends_at, previousStartsAt: row.previous_starts_at,
+  id: row.id, reference: row.reference_no, status: row.status, reason: row.status_reason, note: row.status_note ?? null, startsAt: row.starts_at, endsAt: row.ends_at, previousStartsAt: row.previous_starts_at,
   visitReason: row.visit_reason ?? null, patient: row.patient_name ?? null, patientPhoto: row.patient_photo ?? null,
   therapist: row.therapist_name, therapistPhoto: row.therapist_photo ?? null, location: row.location ?? '', cancelUntil: row.cancel_until ?? null, canCancel: row.can_cancel ?? false,
   rescheduleUntil: row.reschedule_until ?? null, canReschedule: row.can_reschedule ?? false, reschedulesLeft: row.reschedules_left ?? 0,
@@ -80,6 +82,24 @@ export const decodeBooking = (row: RawBooking): Booking => ({
 export async function loadMyBookings(db: Db) {
   return (must(await db.rpc('my_bookings')) as unknown as RawBooking[]).map(decodeBooking)
 }
+
+/**
+ * The center's common reasons for turning down a request (#172), in the order a Scheduler sees them. Each is stored as this code,
+ * so the patient reads it in their own language. "Other" is the Scheduler's own words, 3 to 300 characters, shown as written.
+ */
+export const REJECTION_CODES = ['slot_unavailable', 'therapist_away', 'outside_hours', 'duplicate_request', 'call_center'] as const
+export type RejectionCode = (typeof REJECTION_CODES)[number]
+export type Rejection = { code: RejectionCode | 'other'; /** The Scheduler's own words, for "Other". */ reason: string; /** Optional words beside a common reason. */ note: string }
+export const REJECTION_NOTE_MAX = 300
+export const isRejectionCode = (reason: string | null | undefined): reason is RejectionCode => REJECTION_CODES.includes(reason as RejectionCode)
+export function validRejection(rejection: Rejection) {
+  if (rejection.code === 'other') { const length = rejection.reason.trim().length; return length >= 3 && length <= 300 }
+  return rejection.note.trim().length <= REJECTION_NOTE_MAX
+}
+/** What the server is sent: a code with an optional note, or "Other" with the words. */
+export const rejectionArgs = (rejection: Rejection) => (rejection.code === 'other'
+  ? { p_code: 'other', p_reason: rejection.reason.trim() }
+  : { p_code: rejection.code, p_note: rejection.note.trim() || undefined })
 
 /** The server's limits for a reason for visit: blank is refused by the forms, and these lengths by the server too. */
 export const VISIT_REASON_MIN = 3

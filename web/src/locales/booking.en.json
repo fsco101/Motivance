@@ -139,7 +139,22 @@
     "previewToday": "Today's sessions",
     "previewTodayEmpty": "No sessions today.",
     "previewAll_one": "See all {{count}}",
-    "previewAll_other": "See all {{count}}"
+    "previewAll_other": "See all {{count}}",
+    "rejectReasonLabel": "Why is this request rejected?",
+    "rejectReasonHint": "The patient sees the reason in their own language.",
+    "rejectChoice": {
+      "slot_unavailable": "Time no longer available",
+      "therapist_away": "Therapist away",
+      "outside_hours": "Outside the center's hours",
+      "duplicate_request": "Duplicate of another request",
+      "call_center": "Please call the center first",
+      "other": "Other"
+    },
+    "rejectOther": "Reason in your own words",
+    "rejectOtherHint": "3 to 300 characters. The patient sees it as you write it.",
+    "rejectNote": "Note for the patient (optional)",
+    "rejectNoteHint": "Up to 300 characters. The patient sees it as you write it, after the reason.",
+    "noteBy": "Note: {{note}}"
   },
   "patient": {
     "greeting": "Hello, {{name}}",
@@ -292,7 +307,9 @@
       "not_started": "This session has not started yet.",
       "series_empty": "None of those dates can be booked now. Check them again.",
       "patient_unavailable": "That patient cannot be booked.",
-      "visit_reason": "The reason for the visit must be 3 to 500 characters."
+      "visit_reason": "The reason for the visit must be 3 to 500 characters.",
+      "reason_unknown": "Choose one of the reasons, or Other.",
+      "note_too_long": "The note can be up to 300 characters."
     },
     "keep": "Keep booking",
     "scheduleDetailPatient": "Sessions a Scheduler has confirmed, by date and time. Requests still waiting are on My bookings.",
@@ -347,7 +364,17 @@
     "therapistRole": "Therapist",
     "youSuffix": "You",
     "bookPlaceTitle": "Book this place",
-    "bookPlaceDetail": "Say why you are coming, then the request goes to the Scheduler."
+    "bookPlaceDetail": "Say why you are coming, then the request goes to the Scheduler.",
+    "rejectReason": {
+      "slot_unavailable": "The time you asked for is no longer available.",
+      "therapist_away": "The therapist is away at that time.",
+      "outside_hours": "That time is outside the center's opening hours.",
+      "duplicate_request": "This request repeats another request you already made.",
+      "call_center": "Please call the center first to arrange this visit."
+    },
+    "note": "Note from the center",
+    "requestAgain": "Request another time",
+    "requestAgainHint": "Your reason for the visit is filled in for you."
   },
   "calendar": {
     "title": "Center calendar",

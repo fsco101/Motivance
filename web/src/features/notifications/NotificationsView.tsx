@@ -54,6 +54,7 @@ export function NotificationsView({ load, onOpen, onMarkAll }: { load: Load<Inbo
                     <span className="min-w-0 flex-1">
                       <span className={cn('block', !note.readAt && 'font-semibold')}>{text(note)}</span>
                       {note.reason && <span className="block text-sm">{reasonText(note.reason)}</span>}
+                      {note.reason && note.note && <span className="block text-sm">{t('booking.note')}: {note.note}</span>}
                       <span className="block text-sm text-slate">
                         {format.day(note.createdAt)}, {format.time(note.createdAt)}
                         {!note.readAt && <span className="sr-only">, {t('notifications.unread')}</span>}

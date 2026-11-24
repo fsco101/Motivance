@@ -274,11 +274,12 @@ export function ProgressPage() {
     return item ? [{ id: item.id, name: item.name }] : []
   })
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state
-    : ready({ patients: patients.map((patient) => ({ id: patient.id, name: nameOf(patient) })), patientId, exercises: [...new Map(exercises.map((item) => [item.id, item])).values()] })
+    : ready({ patients: patients.map((patient) => ({ id: patient.id, name: nameOf(patient), photo: patient.photoUrl })), patientId, exercises: [...new Map(exercises.map((item) => [item.id, item])).values()] })
   return (
     <>
       <ProgressView choices={choices} results={results} activity={activity} filters={filters} onFilters={(next) => setChosen({ patientId, filters: next })}
-        onPatient={(id) => setParams({ patient: id })} onMore={onMore} onShare={sharing.share} videoFor={videos.videoFor} onWatch={videos.onWatch} />
+        onPatient={(id) => setParams({ patient: id })} onMore={onMore} onShare={sharing.share} videoFor={videos.videoFor} onWatch={videos.onWatch}
+        recordPath={(id) => `${BASE}/patients/${id}`} />
       {sharing.dialog}
       {videos.dialog}
     </>

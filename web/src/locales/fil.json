@@ -142,6 +142,7 @@
     "stopped": "Hindi na ibinabahagi ang video", "loadFailed": "Hindi mabuksan ang video. Subukan muli."
   },
   "progress": {
+    "openRecord": "Buksan ang record ng pasyente",
     "noPatientsTitle": "Wala pang pasyente", "noPatientsDetail": "Lalabas dito ang pag-unlad kapag may nakaugnay na pasyente sa iyo.",
     "description": "Nasukat na galaw sa paglipas ng panahon, isang pasyente sa bawat pagkakataon.", "rom": "Saklaw ng galaw", "notValidated": "Hindi pa clinically validated ang mga sukat.", "notMeasured": "Hindi nasukat",
     "chartLabel": "Chart ng {{title}} na may {{count}} sesyon. Gamitin ang kaliwa at kanang arrow key para basahin ang bawat sesyon.", "showTable": "Ipakita bilang talahanayan", "date": "Petsa", "unknown": "Hindi kilalang ehersisyo", "targets": "Nireseta", "result": "Resulta",

@@ -17,7 +17,7 @@ object BookingJson {
     fun booking(json:JSONObject)=Booking(json.getString("id"),json.getString("reference_no"),BookingStatus.of(json.getString("status")) ?: BookingStatus.PENDING,json.text("status_reason"),
         json.getString("starts_at"),json.getString("ends_at"),json.text("previous_starts_at"),json.text("therapist_name"),
         json.text("location").orEmpty(),json.text("cancel_until"),json.optBoolean("can_cancel"),json.text("reschedule_until"),json.optBoolean("can_reschedule"),json.optInt("reschedules_left"),
-        json.text("therapist_photo"),json.text("visit_reason"),json.text("patient_name"),json.text("patient_photo"))
+        json.text("therapist_photo"),json.text("visit_reason"),json.text("patient_name"),json.text("patient_photo"),json.text("status_note"))
 
     fun bookings(json:JSONArray)=json.objects().map {booking(it)}
 
@@ -33,7 +33,7 @@ object BookingJson {
             AppNotification(row.getString("id"),kind,data.text("reference_no").orEmpty(),data.text("starts_at"),data.text("ends_at"),data.text("previous_starts_at"),
                 data.text("patient_name"),data.text("therapist_name"),data.text("reason"),row.text("read_at"),row.getString("created_at"),data.optInt("sessions"),data.text("last_starts_at"),
                 row.text("subject_id"),row.text("subject_name"),row.text("subject_photo"),data.number("completed"),data.number("target"),data.number("days"),data.text("conversation_id"),data.text("sender_name"),
-                data.text("day"),data.number("due"),data.number("done"))
+                data.text("day"),data.number("due"),data.number("done"),note=data.text("note"))
         }
     })
 

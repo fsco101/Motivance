@@ -88,6 +88,7 @@ import com.motivance.feature.booking.rememberSessionFormat
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 Text(notificationText(note,format),style=MaterialTheme.typography.bodyMedium,fontWeight=if(note.unread) FontWeight.SemiBold else FontWeight.Normal)
                 note.reason?.let {Text(bookingReasonText(it),style=MaterialTheme.typography.bodySmall)}
+                if(note.reason!=null) note.note?.let {Text(stringResource(R.string.booking_note_line,it),style=MaterialTheme.typography.bodySmall)}
                 if(note.createdAt.isNotBlank()) Text("${format.day(note.createdAt)}, ${format.time(note.createdAt)}",style=MaterialTheme.typography.bodySmall)
             }
         }

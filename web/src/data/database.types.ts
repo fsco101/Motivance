@@ -79,6 +79,7 @@ export type Database = {
           from_status: string | null
           from_therapist: string | null
           id: number
+          note: string | null
           reason: string | null
           recorded_at: string
           to_attendance: string | null
@@ -96,6 +97,7 @@ export type Database = {
           from_status?: string | null
           from_therapist?: string | null
           id?: never
+          note?: string | null
           reason?: string | null
           recorded_at?: string
           to_attendance?: string | null
@@ -113,6 +115,7 @@ export type Database = {
           from_status?: string | null
           from_therapist?: string | null
           id?: never
+          note?: string | null
           reason?: string | null
           recorded_at?: string
           to_attendance?: string | null
@@ -253,6 +256,7 @@ export type Database = {
           series_id: string | null
           starts_at: string
           status: string
+          status_note: string | null
           status_reason: string | null
           therapist_id: string | null
           updated_at: string
@@ -274,6 +278,7 @@ export type Database = {
           series_id?: string | null
           starts_at: string
           status?: string
+          status_note?: string | null
           status_reason?: string | null
           therapist_id?: string | null
           updated_at?: string
@@ -295,6 +300,7 @@ export type Database = {
           series_id?: string | null
           starts_at?: string
           status?: string
+          status_note?: string | null
           status_reason?: string | null
           therapist_id?: string | null
           updated_at?: string
@@ -2007,6 +2013,7 @@ export type Database = {
           series_id: string | null
           starts_at: string
           status: string
+          status_note: string | null
           status_reason: string | null
           therapist_id: string | null
           updated_at: string
@@ -2437,6 +2444,14 @@ export type Database = {
         Args: { p_token: string; p_platform?: string }
         Returns: undefined
       }
+      rejection: {
+        Args: { p_code: string; p_reason: string; p_note: string }
+        Returns: Record<string, unknown>
+      }
+      rejection_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       release_therapist_bookings: {
         Args: { p_therapist: string }
         Returns: undefined
@@ -2569,7 +2584,12 @@ export type Database = {
         Returns: Json
       }
       scheduler_bulk_reject: {
-        Args: { p_bookings: string[]; p_reason: string }
+        Args: {
+          p_bookings: string[]
+          p_reason?: string
+          p_code?: string
+          p_note?: string
+        }
         Returns: number
       }
       scheduler_calendar_impact: {
@@ -2605,7 +2625,12 @@ export type Database = {
         Returns: Json
       }
       scheduler_reject: {
-        Args: { p_booking: string; p_reason: string }
+        Args: {
+          p_booking: string
+          p_reason?: string
+          p_code?: string
+          p_note?: string
+        }
         Returns: Json
       }
       scheduler_reschedule: {

@@ -45,9 +45,9 @@ export function Button({ variant = 'primary', size = 'md', busy, busyLabel, lead
 }
 
 /** Goes somewhere rather than doing something: a real link that looks like a button, never a button inside a link. */
-export function ButtonLink({ to, variant = 'primary', size = 'md', leading, children, className }: { to: string; variant?: keyof typeof variants; size?: keyof typeof sizes; leading?: ReactNode; children: ReactNode; className?: string }) {
+export function ButtonLink({ to, state, variant = 'primary', size = 'md', leading, children, className }: { to: string; /** Handed to the next page without showing in its address. */ state?: unknown; variant?: keyof typeof variants; size?: keyof typeof sizes; leading?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <Link to={to} className={cn('inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold transition-colors transition-quick', variants[variant], sizes[size], className)}>
+    <Link to={to} state={state} className={cn('inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold transition-colors transition-quick', variants[variant], sizes[size], className)}>
       {leading}<span>{children}</span>
     </Link>
   )

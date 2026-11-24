@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -45,7 +47,9 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     /** Shares a progress card about the patient shown, into chat. Absent where there is no chat. */
     share: ((String, ChatCard.Progress) -> Unit)? = null,
     /** The video shared for a session, and a way to have a link to watch it (#129). */
-    videoFor: (String) -> SharedVideo? = { null }, link: (suspend (SharedVideo) -> String?)? = null) {
+    videoFor: (String) -> SharedVideo? = { null }, link: (suspend (SharedVideo) -> String?)? = null,
+    /** Opens the chosen patient's record from the header above their results (#174). */
+    openPatient: ((String) -> Unit)? = null) {
     val self = patientId == owner
     val zone = remember { ZoneId.systemDefault() }
     var patient by rememberSaveable(owner, patientId) { mutableStateOf(patientId.orEmpty()) }
@@ -67,10 +71,10 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     val rows = if (state.owner == owner && state.query == query && query != null) state.rows else emptyList()
 
     var filtersExpanded by rememberSaveable(owner,patientId) {mutableStateOf(false)}
+    val choosable = workspace.patients.filter { it.id != owner }
     ClinicalCard {
     Text(stringResource(R.string.history_filters), style = MaterialTheme.typography.titleLarge)
-    if (patientId == null) HistoryChoice(R.string.select_patient,
-        workspace.patients.filter { it.id != owner }.map { it.id to it.name.ifBlank { it.id.take(8) } }, patient) { patient = it }
+    if (patientId == null) PatientChoice(choosable, patient) { patient = it }
     TextButton({filtersExpanded=!filtersExpanded}) {Text(stringResource(if(filtersExpanded) R.string.ui_hide_filters else R.string.ui_show_filters)); Icon(Icons.Default.KeyboardArrowDown,null)}
     if(filtersExpanded) {
     val exercises = (workspace.catalogue.map { it.id to it.name } + rows.mapNotNull { it.prescription }
@@ -88,6 +92,7 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
     }
     if (validDates == null) Text(stringResource(R.string.history_date_error), color = MaterialTheme.colorScheme.error)
     }
+    if (patientId == null) choosable.firstOrNull { it.id == patient }?.let { chosen -> ProgressPatientHeader(chosen, openPatient?.let { { it(chosen.id) } }) }
     if (query == null) {
         if (patient.isBlank()) Text(stringResource(R.string.history_choose_patient))
         return
@@ -144,6 +149,45 @@ fun ColumnScope.ResultsDashboard(workspace: RehabWorkspace, owner: String, patie
             options.forEach { (id, name) -> DropdownMenuItem(text = { Text(name) }, onClick = { choose(id); expanded = false }) }
         }
     }
+}
+
+private fun LinkedPatient.shownName() = name.ifBlank { id.take(8) }
+
+/** The patient choice, with each patient's face beside their name, or their initials (#174). The name is what is read. */
+@Composable internal fun PatientChoice(patients: List<LinkedPatient>, selected: String, choose: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val current = patients.firstOrNull { it.id == selected }
+    Box {
+        OutlinedButton({ expanded = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), shape = MaterialTheme.shapes.small) {
+            if (current != null) {
+                PersonAvatar(current.photoUrl, current.shownName(), 28.dp, decorative = true)
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(stringResource(R.string.history_filter_value, stringResource(R.string.select_patient),
+                current?.shownName() ?: stringResource(R.string.history_select)), Modifier.weight(1f, fill = false))
+        }
+        DropdownMenu(expanded, { expanded = false }) {
+            patients.forEach { person ->
+                DropdownMenuItem(text = { Text(person.shownName()) }, onClick = { choose(person.id); expanded = false },
+                    leadingIcon = { PersonAvatar(person.photoUrl, person.shownName(), 32.dp, decorative = true) })
+            }
+        }
+    }
+}
+
+/** Whose results these are: the chosen patient's face and full name, opening their record when [open] is given (#174). */
+@Composable internal fun ProgressPatientHeader(patient: LinkedPatient, open: (() -> Unit)?) {
+    val body: @Composable RowScope.() -> Unit = {
+        PersonAvatar(patient.photoUrl, patient.shownName(), 56.dp, decorative = true)
+        Column(Modifier.weight(1f)) {
+            Text(patient.shownName(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            if (open != null) Text(stringResource(R.string.progress_open_record), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+    val row = Modifier.fillMaxWidth().heightIn(min = 56.dp).testTag("progress_patient")
+    if (open != null) Surface(onClick = open, shape = MaterialTheme.shapes.medium, color = Color.Transparent, modifier = row) {
+        Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), content = body)
+    } else Row(row.semantics(mergeDescendants = true) {}.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), content = body)
 }
 
 /** A large figure under a quiet label, read as one phrase by a screen reader. */

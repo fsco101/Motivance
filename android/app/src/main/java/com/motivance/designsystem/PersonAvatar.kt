@@ -20,7 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -49,11 +51,17 @@ fun initials(name:String):String {
     return when {words.isEmpty() -> "?";words.size==1 -> words[0].take(2);else -> "${words.first().first()}${words.last().first()}"}.uppercase()
 }
 
+/** What a decorative avatar shows, as its test tag. */
+const val AVATAR_PHOTO="avatar_photo"
+const val AVATAR_INITIALS="avatar_initials"
+
 /** Small in-memory cache over the app's HTTP stack, sized for avatar lists. Each photo is one small file, whatever its drawn size. */
-private object AvatarImages {
+internal object AvatarImages {
     private val client by lazy {OkHttpClient()}
     private val cache=LruCache<String,ImageBitmap>(64)
     fun cached(url:String):ImageBitmap?=cache.get(url)
+    /** Lets a test show a photo without a server. */
+    @androidx.annotation.VisibleForTesting fun put(url:String,image:ImageBitmap) {cache.put(url,image)}
     suspend fun load(url:String):ImageBitmap?=cache.get(url) ?: withContext(Dispatchers.IO) {
         runCatching {
             client.newCall(Request.Builder().url(url).build()).execute().use {response ->
@@ -69,10 +77,16 @@ private object AvatarImages {
  */
 @Composable fun PersonAvatar(photoUrl:String?,name:String,size:Dp=48.dp,modifier:Modifier=Modifier,
     container:Color=MaterialTheme.colorScheme.primaryContainer,content:Color=MaterialTheme.colorScheme.onPrimaryContainer,
-    description:String?=null) {
+    description:String?=null,
+    /** True beside text that already names the person: neither the photo nor the initials are read, and tests see which is shown. */
+    decorative:Boolean=false) {
     val url=avatarAddress(photoUrl)
     val image by produceState(url?.let {AvatarImages.cached(it)},url) {value=url?.let {AvatarImages.load(it)}}
-    val semantics=if(description!=null) Modifier.semantics {contentDescription=description} else Modifier
+    val semantics=when {
+        decorative -> Modifier.clearAndSetSemantics {testTag=if(image!=null) AVATAR_PHOTO else AVATAR_INITIALS}
+        description!=null -> Modifier.semantics {contentDescription=description}
+        else -> Modifier
+    }
     Surface(modifier.size(size).then(semantics),shape=CircleShape,color=container,contentColor=content) {
         val bitmap=image
         if(bitmap!=null) Image(bitmap,null,Modifier.size(size).clip(CircleShape),contentScale=ContentScale.Crop)

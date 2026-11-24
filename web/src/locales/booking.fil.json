@@ -139,7 +139,22 @@
     "previewToday": "Mga session ngayon",
     "previewTodayEmpty": "Walang session ngayong araw.",
     "previewAll_one": "Tingnan ang lahat ({{count}})",
-    "previewAll_other": "Tingnan ang lahat ({{count}})"
+    "previewAll_other": "Tingnan ang lahat ({{count}})",
+    "rejectReasonLabel": "Bakit tinatanggihan ang kahilingang ito?",
+    "rejectReasonHint": "Makikita ng pasyente ang dahilan sa sarili niyang wika.",
+    "rejectChoice": {
+      "slot_unavailable": "Hindi na available ang oras",
+      "therapist_away": "Wala ang therapist",
+      "outside_hours": "Labas sa oras ng center",
+      "duplicate_request": "Kapareho ng ibang kahilingan",
+      "call_center": "Tumawag muna sa center",
+      "other": "Iba pa"
+    },
+    "rejectOther": "Dahilan sa sarili mong salita",
+    "rejectOtherHint": "3 hanggang 300 titik. Makikita ito ng pasyente gaya ng pagkakasulat mo.",
+    "rejectNote": "Tala para sa pasyente (opsiyonal)",
+    "rejectNoteHint": "Hanggang 300 titik. Makikita ito ng pasyente gaya ng pagkakasulat mo, kasunod ng dahilan.",
+    "noteBy": "Tala: {{note}}"
   },
   "patient": {
     "greeting": "Kumusta, {{name}}",
@@ -292,7 +307,9 @@
       "not_started": "Hindi pa nagsisimula ang session na ito.",
       "series_empty": "Wala sa mga petsang iyon ang maaaring i-book ngayon. Suriin muli ang mga ito.",
       "patient_unavailable": "Hindi maaaring i-book ang pasyenteng iyon.",
-      "visit_reason": "Dapat 3 hanggang 500 character ang dahilan ng pagbisita."
+      "visit_reason": "Dapat 3 hanggang 500 character ang dahilan ng pagbisita.",
+      "reason_unknown": "Pumili ng isa sa mga dahilan, o Iba pa.",
+      "note_too_long": "Hanggang 300 titik lang ang tala."
     },
     "keep": "Panatilihin ang booking",
     "scheduleDetailPatient": "Ang mga session na kinumpirma ng Scheduler, ayon sa petsa at oras. Nasa Mga booking ko ang mga kahilingang naghihintay pa.",
@@ -347,7 +364,17 @@
     "therapistRole": "Therapist",
     "youSuffix": "Ikaw",
     "bookPlaceTitle": "I-book ang puwestong ito",
-    "bookPlaceDetail": "Sabihin kung bakit ka darating, saka ipapadala ang kahilingan sa Scheduler."
+    "bookPlaceDetail": "Sabihin kung bakit ka darating, saka ipapadala ang kahilingan sa Scheduler.",
+    "rejectReason": {
+      "slot_unavailable": "Hindi na available ang oras na hiniling mo.",
+      "therapist_away": "Wala ang therapist sa oras na iyon.",
+      "outside_hours": "Labas sa oras ng pagbubukas ng center ang oras na iyon.",
+      "duplicate_request": "Kapareho ito ng isa pang kahilingang nagawa mo na.",
+      "call_center": "Pakitawagan muna ang center para maiayos ang pagbisitang ito."
+    },
+    "note": "Tala mula sa center",
+    "requestAgain": "Humiling ng ibang oras",
+    "requestAgainHint": "Nakalagay na ang dahilan mo sa pagbisita."
   },
   "calendar": {
     "title": "Kalendaryo ng center",
