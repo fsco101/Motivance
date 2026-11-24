@@ -44,8 +44,9 @@ class ProgressPatientHeaderTest {
         return localized
     }
 
+    /** The open menu is a window of its own, so the last root is what is on top. */
     private fun capture(name: String) =
-        File(base.getExternalFilesDir(null), name).outputStream().use { compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) }
+        File(base.getExternalFilesDir(null), name).outputStream().use { compose.onAllNodes(isRoot()).let { roots -> roots[roots.fetchSemanticsNodes().size - 1] }.captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) }
 
     @Test fun headerWithPhotoOpensTheRecordAndReadsOnlyTheName() {
         var opened: String? = null
