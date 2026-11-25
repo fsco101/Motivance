@@ -32,6 +32,8 @@ data class AdminWorkspace(
     val next:String?=null,val summary:AdminSummary?=null,val activity:List<AuditEvent> = emptyList(),val activityNext:Long?=null,
     /** Null when it could not be read; the rest of the workspace still loads, as the web overview does. */
     val backend:BackendStatus?=null,
+    /** Colleague links between therapists (#173), open requests included. */
+    val colleagueLinks:List<ColleagueLink> = emptyList(),
 )
 
 /** How the backend is doing, from admin_backend(): sizes against the plan's limits, queues, jobs and daily activity. */
@@ -144,4 +146,6 @@ interface AdministrationRepository {
     suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String)
     /** Moderation: removes another account's profile photo. */
     suspend fun clearPhoto(user:String)
+    /** Links two therapists as colleagues, or ends their link or request (#173). */
+    suspend fun setColleagues(first:String,second:String,active:Boolean) {throw UnsupportedOperationException()}
 }

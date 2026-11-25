@@ -29,7 +29,7 @@ import java.time.OffsetDateTime
     private val allowLocalDevelopment: Boolean = BuildConfig.DEBUG,
     private val cache:SessionStore?=null,
     private val vault:SessionSecrets?=null,
-) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository, SessionVideoRepository {
+) : AuthRepository, RehabilitationRepository, AdministrationRepository, BookingRepository, NotificationRepository, ChatRepository, SessionVideoRepository, ColleagueRepository {
     @Inject constructor(store:SessionStore,vault:SessionVault) : this(OkHttpClient(), BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY,BuildConfig.DEBUG,store,vault)
     private val mutex = Mutex()
     private var access: String? = null
@@ -222,6 +222,7 @@ import java.time.OffsetDateTime
         val exercises=JSONArray(call("/rest/v1/exercises?select=id,code,active,exercise_versions(version,algorithm_key,definition)&order=code&limit=500",null,token,"GET"))
         val summary=JSONObject(call("/rest/v1/rpc/admin_summary",JSONObject(),token))
         val activity=auditPage(JSONArray(call("/rest/v1/rpc/admin_activity",JSONObject(),token)))
+        val colleagueLinks=ColleagueJson.links(JSONArray(call("/rest/v1/rpc/admin_colleague_links",JSONObject(),token)))
         // Backend status is extra: if it cannot be read, the overview says so and everything else still works.
         val backend=try {BackendJson.status(JSONObject(call("/rest/v1/rpc/admin_backend",JSONObject(),token)))}
             catch(e:RemoteFailure) {if(e.status==401) throw e else null}
@@ -238,7 +239,7 @@ import java.time.OffsetDateTime
             AdminSummary(summary.optInt("accounts"),summary.optInt("disabled"),summary.optInt("patients"),summary.optInt("therapists"),summary.optInt("admins"),
                 summary.optInt("active_links"),summary.optInt("unlinked_patients"),summary.optInt("exercises"),summary.optInt("active_exercises"),
                 summary.optInt("sessions_week"),summary.optInt("pending_requests"),summary.optInt("schedulers")),
-            activity.events,activity.next,backend)
+            activity.events,activity.next,backend,colleagueLinks)
     }
     override suspend fun clearPhoto(user:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_clear_photo",JSONObject().put("p_user",user),t)}}
     override suspend fun loadActivity(before:Long)=authorized {token,_ -> auditPage(JSONArray(call("/rest/v1/rpc/admin_activity",JSONObject().put("p_before",before),token)))}
@@ -250,6 +251,20 @@ import java.time.OffsetDateTime
     }
     override suspend fun setAccount(user:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_account",JSONObject().put("p_user",user).put("p_active",active),t)}}
     override suspend fun setRole(user:String,role:String,granted:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_role",JSONObject().put("p_user",user).put("p_role",role).put("p_granted",granted),t)}}
+    override suspend fun setColleagues(first:String,second:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_colleagues",JSONObject().put("p_first",first).put("p_second",second).put("p_active",active),t)}}
+    override suspend fun loadColleagues()=authorized {t,_ -> ColleagueJson.colleagues(JSONArray(call("/rest/v1/rpc/my_colleagues",JSONObject(),t)))}
+    override suspend fun inviteColleague(email:String)=authorized {t,_ -> ColleagueJson.colleague(JSONObject(call("/rest/v1/rpc/invite_colleague",JSONObject().put("p_email",email.trim()),t)))}
+    override suspend fun respondColleague(id:String,accept:Boolean)=authorized {t,_ -> ColleagueJson.colleague(JSONObject(call("/rest/v1/rpc/respond_colleague",JSONObject().put("p_link",id).put("p_accept",accept),t)))}
+    override suspend fun endColleague(id:String) {authorized {t,_ -> call("/rest/v1/rpc/end_colleague",JSONObject().put("p_link",id),t)}}
+    override suspend fun loadColleaguePatients()=authorized {t,_ -> ColleagueJson.patients(JSONArray(call("/rest/v1/rpc/colleague_patients",JSONObject(),t)))}
+    override suspend fun openColleaguePatient(patientId:String)=authorized {t,_ -> ColleagueJson.opened(JSONObject(call("/rest/v1/rpc/open_colleague_patient",JSONObject().put("p_patient",patientId),t)))}
+    override suspend fun loadColleaguePlan(patientId:String)=authorized {t,_ ->
+        val id=java.net.URLEncoder.encode(patientId,"UTF-8")
+        ColleagueJson.plan(JSONArray(call("/rest/v1/exercise_assignments?select=id,prescription_versions(version,side,minimum_degrees,maximum_degrees,target_repetitions,exercise:exercise_versions(definition))&active=eq.true&patient_id=eq.$id",null,t,"GET")))
+    }
+    override suspend fun loadColleagueAccess(patientId:String)=authorized {t,_ -> ColleagueJson.access(JSONObject(call("/rest/v1/rpc/patient_colleague_access",JSONObject().put("p_patient",patientId),t)))}
+    override suspend fun loadColleagueSharing()=authorized {t,_ -> JSONObject(call("/rest/v1/rpc/my_colleague_sharing",JSONObject(),t)).optBoolean("granted")}
+    override suspend fun setColleagueSharing(granted:Boolean)=authorized {t,_ -> JSONObject(call("/rest/v1/rpc/set_colleague_sharing",JSONObject().put("p_granted",granted),t)).optBoolean("granted")}
     override suspend fun setLink(therapist:String,patient:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_link",JSONObject().put("p_therapist",therapist).put("p_patient",patient).put("p_active",active),t)}}
     override suspend fun setExercise(exercise:String,active:Boolean) {authorized {t,_ -> call("/rest/v1/rpc/admin_set_exercise",JSONObject().put("p_exercise",exercise).put("p_active",active),t)}}
     override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {authorized {t,_ -> call("/rest/v1/rpc/admin_publish_exercise",JSONObject().put("p_exercise",exercise).put("p_name",name).put("p_english",english).put("p_filipino",filipino),t)}}
@@ -307,6 +322,13 @@ import java.time.OffsetDateTime
         SessionVideoJson.list(JSONArray(call("/rest/v1/session_videos?select=${SessionVideoJson.SELECT}&patient_id=eq.$patientId",null,token,"GET")))
     }
     override suspend fun startSessionVideo(id:String,sessionId:String,width:Int,height:Int,durationMs:Long)=authorized {token,_ ->
+        ChatJson.places(call("/rest/v1/rpc/start_session_video",JSONObject().put("p_id",id).put("p_session",sessionId).put("p_width",width).put("p_height",height)
+            .put("p_duration_ms",durationMs),token))
+    }
+    override suspend fun everSharedVideo(patientId:String)=authorized {token,_ ->
+        call("/rest/v1/rpc/patient_ever_shared_video",JSONObject().put("p_patient",patientId),token).trim()=="true"
+    }
+    override suspend fun startSessionVideoAs(owner:String,id:String,sessionId:String,width:Int,height:Int,durationMs:Long)=authorized(owner) {token,_ ->
         ChatJson.places(call("/rest/v1/rpc/start_session_video",JSONObject().put("p_id",id).put("p_session",sessionId).put("p_width",width).put("p_height",height)
             .put("p_duration_ms",durationMs),token))
     }

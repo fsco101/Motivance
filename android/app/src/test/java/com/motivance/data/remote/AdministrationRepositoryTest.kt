@@ -32,6 +32,7 @@ class AdministrationRepositoryTest {
             val body=when(path) {
                 "/rest/v1/user_roles" -> """[{"role":"admin"}]"""
                 "/rest/v1/rpc/admin_accounts" -> JSONArray((0..50).map {account(it)}).toString()
+                "/rest/v1/rpc/admin_colleague_links" -> """[{"id":"c1","state":"active","first_id":"t","first_name":"Thea","second_id":"u","second_name":"Uma"}]"""
                 "/rest/v1/rpc/admin_links" -> """[{"therapist_id":"t","patient_id":"p","active":true,"therapist_name":"Thea","patient_name":null,"therapist_photo":"00000000-0000-0000-0000-746865617468/74686561746865617468656174686561.webp","patient_photo":null}]"""
                 "/rest/v1/exercises" -> """[{"id":"e","code":"elbow","active":true,"exercise_versions":[{"version":1,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Old"}},{"version":2,"algorithm_key":"elbow-flexion-v1","definition":{"name":"Elbow","instructions_en":"Bend","instructions_fil":"Baluktot"}}]}]"""
                 "/rest/v1/rpc/admin_summary" -> """{"accounts":51,"disabled":1,"patients":49,"therapists":1,"admins":1,"schedulers":4,"active_links":1,"unlinked_patients":48,"exercises":2,"active_exercises":1,"sessions_week":7,"pending_requests":2}"""
@@ -47,6 +48,7 @@ class AdministrationRepositoryTest {
     @Test fun workspaceParsesDirectoryLinksCatalogueSummaryAndActivity()=runBlocking {
         val workspace=repository().loadAdministration(null,"  maria ")
         assertEquals(50,workspace.accounts.size)
+        assertEquals("Uma",workspace.colleagueLinks.single().secondName)
         assertEquals(workspace.accounts.last().id,workspace.next)
         val first=workspace.accounts[0]
         assertNull("JSON null must not become the text \"null\"",first.lastSignInAt)

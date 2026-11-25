@@ -48,16 +48,21 @@ test('a patient does today\'s exercise in the browser, and it is saved like a ph
   await expect(page).toHaveURL(/\/patient\/exercises\/[0-9a-f-]+\/session$/)
   await expect(page.getByText('20° to 90° · 2 repetitions')).toBeVisible()
   // The model person shows the prescribed range, and can be paused.
-  await expect(page.getByRole('img', { name: 'Animated guide: Elbow flexion, moving between 20° and 90°.' })).toBeVisible()
-  await page.getByRole('button', { name: 'Pause the guide' }).click()
-  await expect(page.getByRole('button', { name: 'Play the guide' })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Animated guide: Elbow flexion, moving between 20° and 90°.' }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Pause the guide' }).first().click()
+  await expect(page.getByRole('button', { name: 'Play the guide' }).first()).toBeVisible()
   // With reduced motion the guide holds the target position, with nothing to pause.
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await expect(page.getByRole('img', { name: /Animated guide/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /Animated guide/ }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: /the guide$/ })).toHaveCount(0)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.getByRole('button', { name: 'Open camera' }).click()
+  // A patient who was never asked is asked to record as the session opens (#175); Not now leaves this session unrecorded.
+  const ask = page.getByRole('dialog', { name: 'Record your sessions?' })
+  await expect(ask).toContainText('Your therapist can watch how you move')
+  await ask.getByRole('button', { name: 'Not now' }).click()
   await page.getByRole('button', { name: 'Allow camera access' }).click()
+  await expect(page.getByText('Recording lets your therapist review your form.')).toBeVisible()
   // Voice off is remembered after the page reloads.
   await page.getByRole('switch', { name: /Voice on/ }).click()
   await page.reload()

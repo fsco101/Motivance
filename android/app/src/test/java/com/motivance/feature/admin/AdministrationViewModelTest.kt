@@ -35,6 +35,7 @@ class AdministrationViewModelTest {
         override suspend fun setExercise(exercise:String,active:Boolean) {changed+="exercise"}
         override suspend fun publishExercise(exercise:String,name:String,english:String,filipino:String) {changed+="publish:$name:$english:$filipino"}
         override suspend fun clearPhoto(user:String) {changed+="photo:$user"}
+        override suspend fun setColleagues(first:String,second:String,active:Boolean) {changed+="colleagues:$first:$second:$active"}
     }
     @Test fun lateDirectoryResponseCannotLeakAcrossAccounts()=runTest {
         val remote=Remote();val gate=CompletableDeferred<AdminWorkspace>();remote.wait=gate
@@ -128,5 +129,13 @@ class AdministrationViewModelTest {
         val remote=Remote();val vm=AdministrationViewModel(remote);vm.configure("admin")
         vm.link(" t ","p  ",true);advanceUntilIdle()
         assertEquals(listOf("link:t:p:true"),remote.changed)
+    }
+    /** #173: an administrator links two therapists and ends the link, through the same function as the web. */
+    @Test fun colleagueLinksAreMadeAndEndedAndReportedAsSaved()=runTest {
+        val remote=Remote();val toasts=Toaster();val vm=AdministrationViewModel(remote,toasts);vm.configure("admin")
+        vm.colleagues(" t1 ","t2 ",true);advanceUntilIdle()
+        assertEquals(R.string.colleagues_admin_saved,toasts.current.value?.message)
+        vm.colleagues("t1","t2",false);advanceUntilIdle()
+        assertEquals(listOf("colleagues:t1:t2:true","colleagues:t1:t2:false"),remote.changed)
     }
 }

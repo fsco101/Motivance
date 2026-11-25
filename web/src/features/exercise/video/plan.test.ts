@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PrepareError, recordBitrate, recordSize, recordVideoConsent, SESSION_VIDEO, shareRefusalKey, sharePlan, videoConsented, videoFileName } from './plan'
+import { PrepareError, recordBitrate, recordSize, SESSION_VIDEO, shareRefusalKey, sharePlan, videoFileName } from './plan'
 
 describe('session video rules, as on Android', () => {
   it('records at the camera picture\'s shape, at most 1280 pixels long and even', () => {
@@ -44,15 +44,5 @@ describe('session video rules, as on Android', () => {
     expect(shareRefusalKey(new Error('video_rate_limited'))).toBe('recording.errorRate')
     expect(shareRefusalKey(new PrepareError('no decoder'))).toBe('recording.errorPrepare')
     expect(shareRefusalKey(new TypeError('Failed to fetch'))).toBe('recording.errorFailed')
-  })
-
-  it('remembers the recording agreement for each account in this browser', () => {
-    const store = new Map<string, string>()
-    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v) } }
-    expect(videoConsented('patient-1', storage)).toBe(false)
-    recordVideoConsent('patient-1', 1000, storage)
-    expect(videoConsented('patient-1', storage)).toBe(true)
-    expect(videoConsented('patient-2', storage)).toBe(false)
-    expect(videoConsented('patient-1', { getItem: () => { throw new Error('blocked') } })).toBe(false)
   })
 })

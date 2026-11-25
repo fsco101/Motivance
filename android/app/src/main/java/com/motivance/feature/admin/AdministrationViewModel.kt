@@ -12,7 +12,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class AdminAction { REFRESH, SEARCH, MORE, ACTIVITY, ACCOUNT, ROLE, LINK, EXERCISE, PUBLISH, PHOTO }
+enum class AdminAction { REFRESH, SEARCH, MORE, ACTIVITY, ACCOUNT, ROLE, LINK, EXERCISE, PUBLISH, PHOTO, COLLEAGUE }
 /** Reads only change what is displayed; every other action changes server state and is reported as saved. */
 val AdminAction.mutates get()=this !in setOf(AdminAction.REFRESH,AdminAction.SEARCH,AdminAction.MORE,AdminAction.ACTIVITY)
 
@@ -83,6 +83,8 @@ data class AdministrationState(
     fun account(user:String,active:Boolean)=perform(AdminAction.ACCOUNT,{repository.setAccount(user,active)})
     fun role(user:String,role:String,granted:Boolean)=perform(AdminAction.ROLE,{repository.setRole(user,role,granted)})
     fun link(therapist:String,patient:String,active:Boolean)=perform(AdminAction.LINK,{repository.setLink(therapist.trim(),patient.trim(),active)})
+    /** Links two therapists as colleagues, or ends their link (#173), as the web's Colleague links does. */
+    fun colleagues(first:String,second:String,active:Boolean)=perform(AdminAction.COLLEAGUE,{repository.setColleagues(first.trim(),second.trim(),active)})
     fun exercise(id:String,active:Boolean)=perform(AdminAction.EXERCISE,{repository.setExercise(id,active)})
     fun clearPhoto(user:String)=perform(AdminAction.PHOTO,{repository.clearPhoto(user)})
     fun publish(id:String,name:String,en:String,fil:String)=perform(AdminAction.PUBLISH,{repository.publishExercise(id,name.trim(),en.trim(),fil.trim())})

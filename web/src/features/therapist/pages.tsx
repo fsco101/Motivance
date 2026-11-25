@@ -12,10 +12,13 @@ import { archiveCustomExercise, createCustomExercise, invitePatient, loadLatestS
 import { endSchedule, loadExerciseDay, publishScheduledPrescription, saveSchedule, stopExercise, type ExerciseDay } from '@/data/exerciseSchedule'
 import { loadCatalogue, loadOverview, loadPatients, loadPlans } from '@/data/workspace'
 import { SchedulePage } from '@/features/booking/SchedulePage'
-import { asLoad, ready, useFormat, type Load } from '@/features/shared'
+import { asLoad, ready, SkeletonLines, useFormat, type Load } from '@/features/shared'
 import { AssignmentEditorView } from './AssignmentEditorView'
 import { ExercisesView } from './ExercisesView'
-import { loadConversations, shareExercise } from '@/data/chat'
+import { loadConversations, sendMessage, shareExercise } from '@/data/chat'
+import { canAskToRecord, everSharedVideo } from '@/data/sessionVideos'
+import { colleagueFailureKey, endColleague, inviteColleague, loadColleagueAccess, loadColleaguePatients, loadColleaguePlan, loadColleagues, openColleaguePatient, respondColleague } from '@/data/colleagues'
+import { ColleagueAccessPanel, ColleaguePatientHeader, ColleaguePatientsPanel, ColleaguePlan, ColleaguesPanel, ColleagueUnavailable } from './ColleaguesView'
 import { useShareProgress } from '@/features/chat/ShareDialog'
 import { useActivity, useProgressResults } from './history'
 import { PatientRecordView, type PatientRecord, type PlanCard } from './PatientRecordView'
@@ -77,13 +80,64 @@ export function PatientsPage() {
     onSuccess: async () => { await refresh(); toast.show(t('toast.accessRevoked')) },
     onError: (failure) => toast.show(t(failureKey(failure)), 'error'),
   })
+  // Colleagues (#173): their patients who opted in are listed apart from one's own, and read-only.
+  const client = useQueryClient()
+  const colleagues = useQuery({ queryKey: ['colleagues'], queryFn: () => loadColleagues(supabase()) })
+  const colleaguePatients = useQuery({ queryKey: ['colleague-patients'], queryFn: () => loadColleaguePatients(supabase()) })
+  const colleagueAct = (done: string) => async (work: Promise<unknown>) => {
+    try {
+      await work
+      await Promise.all([client.invalidateQueries({ queryKey: ['colleagues'] }), client.invalidateQueries({ queryKey: ['colleague-patients'] })])
+      toast.show(t(done))
+    } catch (failure) {
+      toast.show(t(colleagueFailureKey(failure) ?? failureKey(failure)), 'error')
+      throw failure
+    }
+  }
   return (
-    <PatientsView load={load} base={BASE} onRevoke={(id) => revoke.mutate(id)}
-      onInvite={async (email) => {
-        const code = await invitePatient(supabase(), email)
-        toast.show(t('toast.invitationCreated'))
-        return code
-      }} />
+    <>
+      <PatientsView load={load} base={BASE} onRevoke={(id) => revoke.mutate(id)}
+        onInvite={async (email) => {
+          const code = await invitePatient(supabase(), email)
+          toast.show(t('toast.invitationCreated'))
+          return code
+        }} />
+      <div className="mt-5 grid items-start gap-5 desk:grid-cols-2">
+        <ColleaguePatientsPanel load={asLoad(colleaguePatients)} base={BASE} />
+        <ColleaguesPanel load={asLoad(colleagues)} actions={{
+          onInvite: (email) => colleagueAct('colleagues.invited')(inviteColleague(supabase(), email)),
+          onRespond: (colleague, accept) => colleagueAct(accept ? 'colleagues.accepted' : 'colleagues.declined')(respondColleague(supabase(), colleague.id, accept)),
+          onEnd: (colleague) => colleagueAct('colleagues.ended')(endColleague(supabase(), colleague.id)),
+        }} />
+      </div>
+    </>
+  )
+}
+
+/**
+ * A colleague's patient (#173), read-only: progress, results, shared videos and the current plan. Opening it is recorded in the
+ * audit trail first, and only then is anything read; the server allows the reads for 30 minutes after.
+ */
+export function ColleaguePatientPage() {
+  const { id = '' } = useParams()
+  const opened = useQuery({ queryKey: ['colleague-open', id], queryFn: () => openColleaguePatient(supabase(), id), retry: false, staleTime: 20 * 60_000, gcTime: 0 })
+  const ready_ = opened.isSuccess
+  const plan = useQuery({ queryKey: ['colleague-plan', id], queryFn: () => loadColleaguePlan(supabase(), id), enabled: ready_ })
+  const [filters, setFilters] = useState(NO_FILTERS)
+  const { results, onMore } = useProgressResults(ready_ ? id : '', filters)
+  const activity = useActivity(ready_ ? id : '')
+  const videos = useSessionVideos(ready_ ? id : '', false)
+  if (opened.isError) return <ColleagueUnavailable />
+  if (!opened.data) return <SkeletonLines />
+  const choices: Load<ProgressChoices> = ready({ patients: [{ id, name: opened.data.name, photo: opened.data.photo }], patientId: id, exercises: [] })
+  return (
+    <>
+      <ColleaguePatientHeader patient={opened.data} />
+      <ColleaguePlan load={asLoad(plan)} />
+      <ProgressView choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore}
+        videoFor={videos.videoFor} onWatch={videos.onWatch} />
+      {videos.dialog}
+    </>
   )
 }
 
@@ -127,6 +181,11 @@ export function PatientRecordPage() {
     },
   })
   const day = useQuery({ queryKey: ['exercise-day', id], queryFn: () => loadExerciseDay(supabase(), id), enabled: id !== '' })
+  // "Ask to record" needs a conversation the patient agreed to, and no video ever shared (#175). Either failing to load hides it.
+  const conversations = useQuery({ queryKey: ['conversations'], queryFn: () => loadConversations(supabase()) })
+  const everShared = useQuery({ queryKey: ['ever-shared-video', id], queryFn: () => everSharedVideo(supabase(), id), enabled: id !== '' })
+  const [asked, setAsked] = useState(false)
+  const access = useQuery({ queryKey: ['colleague-access', id], queryFn: () => loadColleagueAccess(supabase(), id), enabled: id !== '' })
   const sessions = useMemo(() => details.data?.sessions ?? [], [details.data])
   const plans = usePlanCards(id, sessions, day.data)
   const patient = workspace.data?.patients.find((item) => item.id === id)
@@ -171,8 +230,22 @@ export function PatientRecordPage() {
       toast.show(t(failureKey(failure)), 'error')
     }
   }
+  const askToRecord = async () => {
+    const conversation = conversations.data?.find((item) => item.otherId === id && item.open)
+    if (!conversation) return
+    try {
+      await sendMessage(supabase(), crypto.randomUUID(), conversation.id, t('record.askToRecordMessage'))
+      setAsked(true)
+      toast.show(t('record.askedToRecord'))
+    } catch (failure) {
+      toast.show(t(failureKey(failure)), 'error')
+      throw failure
+    }
+  }
+  const offerAsk = !asked && canAskToRecord(conversations.data?.find((item) => item.otherId === id && item.open), everShared.data)
   return (
-    <PatientRecordView load={load} base={BASE} actions={{
+    <PatientRecordView load={load} base={BASE} aside={<ColleagueAccessPanel load={asLoad(access)} />} actions={{
+      onAskToRecord: offerAsk ? askToRecord : undefined,
       onSaveSchedule: (draft) => act('toast.scheduleSaved')(saveSchedule(supabase(), draft)),
       onEndSchedule: (scheduleId) => act('toast.scheduleEnded')(endSchedule(supabase(), scheduleId)),
       onRemovePlan: (planId) => act('toast.planExerciseRemoved')(stopExercise(supabase(), planId)),

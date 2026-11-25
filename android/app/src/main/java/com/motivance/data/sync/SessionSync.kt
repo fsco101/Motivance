@@ -72,7 +72,9 @@ class SessionSyncWorker(context:Context,parameters:WorkerParameters):CoroutineWo
         val owner=inputData.getString("owner") ?: return Result.failure()
         val services=EntryPointAccessors.fromApplication(applicationContext,SyncServices::class.java)
         return try {
-            if(SessionSync(services.sessionStore(),services.rehabilitationRepository()).drain(owner)) Result.retry() else Result.success()
+            if(SessionSync(services.sessionStore(),services.rehabilitationRepository()).drain(owner)) Result.retry()
+            // A video waiting for this session's result can go now (#175).
+            else {VideoUploadScheduler.schedule(applicationContext,owner); Result.success()}
         } catch(e:CancellationException) {throw e}
         catch(_:Exception) {if(runAttemptCount<7) Result.retry() else Result.failure()}
     }

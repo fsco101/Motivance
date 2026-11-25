@@ -50,16 +50,3 @@ export function shareRefusalKey(error: unknown) {
 
 /** The video could not be made ready to send in this browser. */
 export class PrepareError extends Error {}
-
-/** The patient's agreement to recording, kept in this browser for each account, as the phone keeps it (SessionVideoStore). */
-const CONSENT_VERSION = 'web-1'
-const consentKey = (owner: string) => `motivance.video.consent:${owner}`
-export function videoConsented(owner: string, store: Pick<Storage, 'getItem'> | null = storage()) {
-  try { return store?.getItem(consentKey(owner))?.startsWith(`${CONSENT_VERSION}|`) === true } catch { return false }
-}
-export function recordVideoConsent(owner: string, now: number, store: Pick<Storage, 'setItem'> | null = storage()) {
-  try { store?.setItem(consentKey(owner), `${CONSENT_VERSION}|${now}`) } catch { /* Asked again next time. */ }
-}
-function storage() {
-  try { return typeof window === 'undefined' ? null : window.localStorage } catch { return null }
-}

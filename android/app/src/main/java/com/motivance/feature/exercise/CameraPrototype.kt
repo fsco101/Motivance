@@ -45,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -95,10 +97,20 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
     var active by remember { mutableStateOf(lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
     var diagnostics by remember { mutableStateOf<CameraDiagnostics.Snapshot?>(null) }
     var thermalStatus by remember { mutableStateOf(-1) }
-    // Recording is the patient's own choice for each session, off until they turn it on (issue #114).
+    // Recording is the patient's choice: once agreed, each prescribed session starts recorded and the switch turns it off for one
+    // (#175). The camera check and demonstrations are never recorded.
     val videoStore=remember {SessionVideoStore(context)}
-    var record by remember {mutableStateOf(false)}
+    var prompt by remember(ownerId) {mutableStateOf(videoStore.prompt(ownerId))}
+    val opened=remember(ownerId) {prompt to System.currentTimeMillis()}
+    var answered by remember(ownerId) {mutableStateOf(false)}
+    val storageReady=!GalleryVideos.needsStoragePermission || ContextCompat.checkSelfPermission(context,Manifest.permission.WRITE_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED
+    var record by remember(ownerId) {mutableStateOf(prompt.agreed && storageReady)}
     var askingToRecord by remember {mutableStateOf(false)}
+    var recordedRun by remember {mutableStateOf(false)}
+    val prescribed=!exercise.rules.demo
+    LaunchedEffect(prescribed) {if(!prescribed) record=false}
+    val appAsking=prescribed && permission && exercise.id==null && !exercise.saved && !answered && RecordPrompts.shouldAsk(opened.first,opened.second)
+    fun savePrompt(next:RecordPrompt) {videoStore.savePrompt(ownerId,next); prompt=next}
     val recording=remember {ActiveRecording()}
     val videoCaption by rememberUpdatedState(exercise.rules.displayName())
     val storageLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {record=it}
@@ -121,10 +133,16 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
         if(recording.recorder==null) {
             recording.recorder=SessionRecorder(java.io.File(context.cacheDir,"session-video/$id.mp4"))
             recording.live=true
+            recordedRun=true
         }
         if(id !in recording.sessions) recording.sessions+=id
     }
-    LaunchedEffect(exercise.saved) {if(exercise.saved) finishRecording()}
+    LaunchedEffect(exercise.saved) {
+        if(!exercise.saved) return@LaunchedEffect
+        finishRecording()
+        // A prescribed session saved without recording counts toward asking again.
+        if(prescribed && !recordedRun) savePrompt(RecordPrompts.unrecorded(videoStore.prompt(ownerId)))
+    }
     DisposableEffect(Unit) {onDispose {finishRecording()}}
     DisposableEffect(lifecycle) {
         val observer=LifecycleEventObserver { _, event ->
@@ -324,9 +342,9 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
                     }
                 }
             }
-            if(switching==null && exercise.id==null && !exercise.saved && permission) RecordChoice(record) {on ->
+            if(switching==null && exercise.id==null && !exercise.saved && permission && prescribed) RecordChoice(record) {on ->
                 haptics.tick()
-                if(!on) record=false else if(videoStore.consented(ownerId)) turnOnRecording() else askingToRecord=true
+                if(!on) record=false else if(prompt.agreed) turnOnRecording() else askingToRecord=true
             }
             // A reminder of the movement before starting. Once running, the patient follows their own measured movement instead.
             if(!exercise.metrics.running) GuideStage(guideMotion(exercise.rules),exerciseName,Modifier.height(220.dp),dark=true)
@@ -343,11 +361,11 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             if(exercise.recoverable!=null && exercise.id==null && exercise.switching==null) TextButton({session.restore()},Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.recover_interrupted))}
             if(exercise.saved) {
                 FeedbackNotice(R.string.session_saved_local)
-                OutlinedButton({finishRecording(); session.newSession(); consent=false; record=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
+                OutlinedButton({finishRecording(); session.newSession(); consent=false; record=prompt.agreed && prescribed; recordedRun=false},Modifier.fillMaxWidth().heightIn(min=52.dp)) {Text(stringResource(R.string.new_session))}
             }
             if(exercise.error) FeedbackNotice(R.string.local_save_failed,error=true)
             if(!exercise.rules.demo && exercise.cached.none {it.versionId==exercise.rules.prescriptionVersionId && it.usableAt()}) Text(stringResource(R.string.assignment_expired),color=MaterialTheme.colorScheme.error)
-            if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({finishRecording();session.newSession();consent=false;record=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
+            if(exercise.id!=null && !exercise.metrics.running && !exercise.saved) TextButton({finishRecording();session.newSession();consent=false;record=prompt.agreed && prescribed;recordedRun=false},enabled=!exercise.saving,modifier=Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.new_session))}
             // Between sides there is a set to finish too: its first side is already saved.
             val finishable=(exercise.id!=null || exercise.switching!=null) && !exercise.saved
             ActionButton(if(finishable) R.string.finish_save_session else R.string.finish_camera,
@@ -368,7 +386,11 @@ private data class DisplayFrame(val bitmap: Bitmap, val points: List<Landmark>, 
             }
         }
     }
-    if(askingToRecord) RecordConsentDialog({askingToRecord=false}) {askingToRecord=false; videoStore.consent(ownerId,true); turnOnRecording()}
+    if(askingToRecord || appAsking) RecordConsentDialog(
+        dismiss={if(appAsking && !askingToRecord) savePrompt(RecordPrompts.declined(prompt,System.currentTimeMillis())); answered=true; askingToRecord=false},
+        never=if(appAsking && !askingToRecord && prompt.declines>0) ({savePrompt(RecordPrompts.neverAsk(prompt)); answered=true}) else null) {
+        answered=true; askingToRecord=false; savePrompt(RecordPrompts.accepted(prompt)); turnOnRecording()
+    }
     }
 }
 
@@ -432,30 +454,47 @@ private class ActiveRecording {
     var live by mutableStateOf(false)
 }
 
-@Composable private fun RecordChoice(on:Boolean,change:(Boolean)->Unit) {
+/** The switch for this one session, with a short line under it while it is off (#175): never a pop-up, and Start stays free. */
+@Composable internal fun RecordChoice(on:Boolean,change:(Boolean)->Unit) {
     Surface(shape=MaterialTheme.shapes.large,color=Motion.NightPanel) {
-        Row(Modifier.fillMaxWidth().toggleable(on,role=Role.Switch,onValueChange=change).padding(16.dp),verticalAlignment=Alignment.CenterVertically,
-            horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.video_record),style=MaterialTheme.typography.titleSmall,color=Color.White)
-                Text(stringResource(R.string.video_record_detail),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+        Column {
+            Row(Modifier.fillMaxWidth().toggleable(on,role=Role.Switch,onValueChange=change).padding(16.dp),verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.video_record),style=MaterialTheme.typography.titleSmall,color=Color.White)
+                    Text(stringResource(R.string.video_record_detail),style=MaterialTheme.typography.bodySmall,color=Motion.NightInk)
+                }
+                Switch(on,null)
             }
-            Switch(on,null)
+            if(!on) Text(stringResource(R.string.video_record_off_note),Modifier.padding(start=16.dp,end=16.dp,bottom=14.dp).testTag("record_off_note"),
+                style=MaterialTheme.typography.bodySmall,color=Motion.SproutBright)
         }
     }
 }
 
-/** The recording's own agreement, separate from movement summaries, asked the first time the patient turns recording on. */
-@Composable private fun RecordConsentDialog(dismiss:()->Unit,accept:()->Unit) {
+/**
+ * The recording's own agreement, separate from movement summaries. It leads with why recording helps (#175). When the app asks
+ * again after Not now, [never] offers to stop asking.
+ */
+@Composable internal fun RecordConsentDialog(dismiss:()->Unit,never:(()->Unit)?=null,accept:()->Unit) {
     AlertDialog(dismiss,title={Text(stringResource(R.string.video_consent_title))},
-        text={
-            Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                listOf(R.string.video_consent_point1,R.string.video_consent_point2,R.string.video_consent_point3,R.string.video_consent_point4,R.string.video_consent_point5)
-                    .forEach {Text("• "+stringResource(it),style=MaterialTheme.typography.bodyMedium)}
+        text={RecordConsentText()},
+        confirmButton={Button(accept,Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.video_consent_accept))}},
+        dismissButton={
+            Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) {
+                never?.let {TextButton(it,Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.video_never_ask))}}
+                OutlinedButton(dismiss,Modifier.heightIn(min=48.dp)) {Text(stringResource(R.string.video_consent_decline))}
             }
-        },
-        confirmButton={TextButton(accept) {Text(stringResource(R.string.video_consent_accept))}},
-        dismissButton={TextButton(dismiss) {Text(stringResource(R.string.video_consent_decline))}})
+        })
+}
+
+/** What the question says: why recording helps first, then what is recorded, where it stays and for how long (#175). */
+@Composable internal fun RecordConsentText() {
+    Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.video_consent_benefit),style=MaterialTheme.typography.bodyLarge,fontWeight=FontWeight.SemiBold)
+        listOf(R.string.video_consent_point1,R.string.video_consent_point2,R.string.video_consent_point3,R.string.video_consent_point4,R.string.video_consent_point5)
+            .forEach {Text("• "+stringResource(it),style=MaterialTheme.typography.bodyMedium)}
+    }
 }
 
 private fun TrackingQuality.label()=when(this) {
