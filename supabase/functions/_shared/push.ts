@@ -1,5 +1,5 @@
 /** Plain functions with no Deno in them, so the web tests can run them directly. The network is passed in. */
-import { renderEmail, type Delivery } from './email.ts'
+import { reasonSentence, renderEmail, type Delivery } from './email.ts'
 import { careText, type CareFacts } from './push_text.ts'
 
 export type ServiceAccount = { project_id: string; client_email: string; private_key: string; token_uri: string }
@@ -47,11 +47,31 @@ export async function accessToken(account: ServiceAccount, send: typeof fetch = 
  */
 export function pushMessage(token: string, delivery: PushDelivery) {
   const care = careText(delivery.kind, delivery.language, delivery.data as CareFacts)
-  const { title, body } = care ?? (({ subject, sentence }) => ({ title: subject, body: sentence }))(renderEmail(delivery, { site: '', functions: '' }))
+  const { title, body } = care ?? (({ subject, sentence }) => ({ title: subject, body: withReason(delivery, sentence) }))(renderEmail(delivery, { site: '', functions: '' }))
   // Whose notification it is lets the phone drop a practice reminder for a session it has not uploaded yet. Which conversation lets a
   // tap open it, and lets the phone stay quiet about the one already on screen.
   const conversation = (delivery.data as CareFacts).conversation_id ?? ''
   return { message: { token, data: { title, body, kind: delivery.kind, booking_id: delivery.booking_id ?? '', user_id: delivery.user_id ?? '', conversation_id: conversation }, android: { priority: 'HIGH' as const } } }
+}
+
+/** A lock screen shows a few lines, so a long reason is cut at a word with an ellipsis; the app shows it whole. */
+export const PUSH_BODY_LIMIT = 180
+
+export function shortened(text: string, limit = PUSH_BODY_LIMIT) {
+  const flat = text.replace(/\s+/g, ' ').trim()
+  if (flat.length <= limit) return flat
+  const cut = flat.slice(0, limit - 1)
+  const space = cut.lastIndexOf(' ')
+  return `${(space > limit * 0.6 ? cut.slice(0, space) : cut).replace(/[\s.,;:]+$/, '')}…`
+}
+
+/** A rejected request says why, in the reader's language, with the Scheduler's note after it (#172). */
+function withReason(delivery: PushDelivery, sentence: string) {
+  if (delivery.kind !== 'rejected') return sentence
+  const reason = reasonSentence(delivery.data.reason, delivery.language)
+  if (!reason) return sentence
+  const note = delivery.data.note?.trim()
+  return shortened([sentence, reason, note].filter(Boolean).join(' '))
 }
 
 /** What FCM's answer means for this token. A bad token will never work, and anything else may work later. */

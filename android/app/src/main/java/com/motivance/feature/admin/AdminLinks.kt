@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,8 @@ private const val PICKER_SUGGESTIONS=6
         ActionButton(R.string.admin_link,{confirm(AdminConfirmation(title,message,title,false) {vm.link(therapist,patient,true)})},enabled=valid && existing?.active!=true && !state.busy,busy=state.activeAction==AdminAction.LINK)
         Text(stringResource(R.string.admin_relink_notice),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
     }
+
+    ColleagueLinksCard(state,vm,confirm)
 
     var filter by rememberSaveable {mutableStateOf(LinkFilter.ACTIVE)}
     var text by rememberSaveable {mutableStateOf("")}
@@ -142,3 +145,36 @@ private const val PICKER_SUGGESTIONS=6
         }
     }
 }
+
+/** Colleague links between therapists (#173), the same as the web: link two therapists directly, and end any link or request. */
+@Composable private fun ColleagueLinksCard(state:AdministrationState,vm:AdministrationViewModel,confirm:(AdminConfirmation)->Unit) {
+    var first by rememberSaveable {mutableStateOf("")}
+    var second by rememberSaveable {mutableStateOf("")}
+    val therapists=state.data.accounts.filter {it.active && "therapist" in it.roles}
+    fun nameOf(id:String)=state.data.accounts.firstOrNull {it.id.equals(id.trim(),true)}?.label ?: shortId(id.trim())
+    ClinicalCard(Modifier.testTagColleagueLinks()) {
+        Text(stringResource(R.string.colleagues_admin_title),style=MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.colleagues_admin_description),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        AccountPicker(R.string.colleagues_admin_first,first,therapists,!state.busy) {first=it}
+        AccountPicker(R.string.colleagues_admin_second,second,therapists,!state.busy) {second=it}
+        val valid=ACCOUNT_ID.matches(first.trim()) && ACCOUNT_ID.matches(second.trim()) && !first.trim().equals(second.trim(),ignoreCase=true)
+        val title=stringResource(R.string.colleagues_admin_link)
+        val message=stringResource(R.string.colleagues_admin_confirm_link,nameOf(first),nameOf(second))
+        ActionButton(R.string.colleagues_admin_link,{confirm(AdminConfirmation(title,message,title,false) {vm.colleagues(first,second,true)})},
+            enabled=valid && !state.busy,busy=state.activeAction==AdminAction.COLLEAGUE)
+        if(state.data.colleagueLinks.isEmpty()) Text(stringResource(R.string.colleagues_admin_none),style=MaterialTheme.typography.bodyMedium)
+        val endTitle=stringResource(R.string.colleagues_end)
+        state.data.colleagueLinks.forEach {link -> key(link.id) {
+            Column(verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                Text("${link.firstName.ifBlank {shortId(link.firstId)}} ↔ ${link.secondName.ifBlank {shortId(link.secondId)}}",style=MaterialTheme.typography.titleSmall)
+                StatusPill(stringResource(if(link.state==ColleagueState.ACTIVE) R.string.colleagues_linked else R.string.colleagues_waiting),
+                    if(link.state==ColleagueState.ACTIVE) PillTone.POSITIVE else PillTone.ATTENTION)
+                val message=stringResource(R.string.colleagues_admin_confirm_end,link.firstName,link.secondName)
+                TextButton({confirm(AdminConfirmation(endTitle,message,endTitle,true) {vm.colleagues(link.firstId,link.secondId,false)})},
+                    Modifier.fillMaxWidth().heightIn(min=48.dp),enabled=!state.busy) {Text(endTitle,color=MaterialTheme.colorScheme.error)}
+            }
+        }}
+    }
+}
+
+private fun Modifier.testTagColleagueLinks()=this.testTag("colleague_links")

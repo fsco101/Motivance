@@ -314,13 +314,17 @@ internal object SessionVideoJson {
  */
 class SessionVideoStore(context:Context) {
     private val prefs=context.applicationContext.getSharedPreferences("session_videos",Context.MODE_PRIVATE)
-    fun consented(owner:String)=prefs.getString("consent:$owner",null)?.startsWith("$CONSENT_VERSION|")==true
+    fun consented(owner:String)=prompt(owner).agreed
     fun consent(owner:String,granted:Boolean) {
-        prefs.edit().apply {if(granted) putString("consent:$owner","$CONSENT_VERSION|${System.currentTimeMillis()}") else remove("consent:$owner")}.apply()
+        val current=prompt(owner)
+        savePrompt(owner,if(granted) RecordPrompts.accepted(current) else current.copy(agreed=false))
     }
+    /** When to ask to record (#175). An agreement given to v1, which said recording stays off, is asked for again. */
+    fun prompt(owner:String)=RecordPrompts.read(prefs.getString("prompt:$owner",null),CONSENT_VERSION)
+    fun savePrompt(owner:String,prompt:RecordPrompt) {prefs.edit().putString("prompt:$owner",RecordPrompts.write(prompt,CONSENT_VERSION)).remove("consent:$owner").apply()}
     fun all(owner:String)=SessionVideoJson.read(prefs.getString("videos:$owner",null))
     fun add(owner:String,video:SessionVideo) {prefs.edit().putString("videos:$owner",SessionVideoJson.write(all(owner).filter {it.uri!=video.uri}+video)).apply()}
     fun forSession(owner:String,session:String)=all(owner).lastOrNull {session in it.sessions}
     fun remove(owner:String,uri:String) {prefs.edit().putString("videos:$owner",SessionVideoJson.write(all(owner).filter {it.uri!=uri})).apply()}
-    companion object {const val CONSENT_VERSION="session-video-v1"}
+    companion object {const val CONSENT_VERSION="session-video-v2"}
 }

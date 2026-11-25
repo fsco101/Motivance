@@ -79,6 +79,7 @@ export type Database = {
           from_status: string | null
           from_therapist: string | null
           id: number
+          note: string | null
           reason: string | null
           recorded_at: string
           to_attendance: string | null
@@ -96,6 +97,7 @@ export type Database = {
           from_status?: string | null
           from_therapist?: string | null
           id?: never
+          note?: string | null
           reason?: string | null
           recorded_at?: string
           to_attendance?: string | null
@@ -113,6 +115,7 @@ export type Database = {
           from_status?: string | null
           from_therapist?: string | null
           id?: never
+          note?: string | null
           reason?: string | null
           recorded_at?: string
           to_attendance?: string | null
@@ -253,6 +256,7 @@ export type Database = {
           series_id: string | null
           starts_at: string
           status: string
+          status_note: string | null
           status_reason: string | null
           therapist_id: string | null
           updated_at: string
@@ -274,6 +278,7 @@ export type Database = {
           series_id?: string | null
           starts_at: string
           status?: string
+          status_note?: string | null
           status_reason?: string | null
           therapist_id?: string | null
           updated_at?: string
@@ -295,6 +300,7 @@ export type Database = {
           series_id?: string | null
           starts_at?: string
           status?: string
+          status_note?: string | null
           status_reason?: string | null
           therapist_id?: string | null
           updated_at?: string
@@ -742,6 +748,39 @@ export type Database = {
           {
             foreignKeyName: "chat_scheduled_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colleague_views: {
+        Row: {
+          opened_at: string
+          patient_id: string
+          viewer_id: string
+        }
+        Insert: {
+          opened_at?: string
+          patient_id: string
+          viewer_id: string
+        }
+        Update: {
+          opened_at?: string
+          patient_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colleague_views_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colleague_views_viewer_id_fkey"
+            columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1766,6 +1805,71 @@ export type Database = {
           },
         ]
       }
+      therapist_colleagues: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          ended_by: string | null
+          id: string
+          invitee_id: string
+          requested_by: string
+          requester_id: string
+          started_at: string | null
+          state: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          invitee_id: string
+          requested_by: string
+          requester_id: string
+          started_at?: string | null
+          state?: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          invitee_id?: string
+          requested_by?: string
+          requester_id?: string
+          started_at?: string | null
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_colleagues_ended_by_fkey"
+            columns: ["ended_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "therapist_colleagues_invitee_id_fkey"
+            columns: ["invitee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "therapist_colleagues_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "therapist_colleagues_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       therapist_patients: {
         Row: {
           active: boolean
@@ -1905,6 +2009,10 @@ export type Database = {
         Args: { p_user: string }
         Returns: undefined
       }
+      admin_colleague_links: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       admin_links: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1920,6 +2028,10 @@ export type Database = {
       }
       admin_set_account: {
         Args: { p_user: string; p_active: boolean }
+        Returns: undefined
+      }
+      admin_set_colleagues: {
+        Args: { p_first: string; p_second: string; p_active: boolean }
         Returns: undefined
       }
       admin_set_exercise: {
@@ -2007,6 +2119,7 @@ export type Database = {
           series_id: string | null
           starts_at: string
           status: string
+          status_note: string | null
           status_reason: string | null
           therapist_id: string | null
           updated_at: string
@@ -2036,6 +2149,10 @@ export type Database = {
       }
       can_read_patient: {
         Args: { target: string }
+        Returns: boolean
+      }
+      can_view_progress: {
+        Args: { p_patient: string }
         Returns: boolean
       }
       cancel_my_booking: {
@@ -2181,6 +2298,34 @@ export type Database = {
         Args: { p_user: string }
         Returns: undefined
       }
+      colleague_may_view: {
+        Args: { p_patient: string }
+        Returns: boolean
+      }
+      colleague_patients: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      colleague_sharing_on: {
+        Args: { p_patient: string }
+        Returns: boolean
+      }
+      colleague_sharing_version: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      colleague_view: {
+        Args: { l: Database["public"]["Tables"]["therapist_colleagues"]["Row"] }
+        Returns: Json
+      }
+      colleague_viewing: {
+        Args: { p_patient: string }
+        Returns: boolean
+      }
+      colleagues_linked: {
+        Args: { p_a: string; p_b: string }
+        Returns: boolean
+      }
       conversation_messages: {
         Args: {
           p_conversation: string
@@ -2209,6 +2354,10 @@ export type Database = {
       }
       dispatch_notifications: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      end_colleague: {
+        Args: { p_link: string }
         Returns: undefined
       }
       end_exercise_schedule: {
@@ -2255,6 +2404,10 @@ export type Database = {
         Args: { p_payload: Json }
         Returns: Json
       }
+      invite_colleague: {
+        Args: { p_email: string }
+        Returns: Json
+      }
       invite_patient: {
         Args: { p_email: string }
         Returns: Json
@@ -2292,6 +2445,14 @@ export type Database = {
         Returns: Json
       }
       my_chat_consent: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      my_colleague_sharing: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      my_colleagues: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
@@ -2362,6 +2523,18 @@ export type Database = {
           p_actor: string
         }
         Returns: undefined
+      }
+      open_colleague_patient: {
+        Args: { p_patient: string }
+        Returns: Json
+      }
+      patient_colleague_access: {
+        Args: { p_patient: string }
+        Returns: Json
+      }
+      patient_ever_shared_video: {
+        Args: { p_patient: string }
+        Returns: boolean
       }
       person_name: {
         Args: { p_person: string }
@@ -2437,6 +2610,14 @@ export type Database = {
         Args: { p_token: string; p_platform?: string }
         Returns: undefined
       }
+      rejection: {
+        Args: { p_code: string; p_reason: string; p_note: string }
+        Returns: Record<string, unknown>
+      }
+      rejection_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       release_therapist_bookings: {
         Args: { p_therapist: string }
         Returns: undefined
@@ -2463,6 +2644,10 @@ export type Database = {
       }
       reschedule_my_booking: {
         Args: { p_booking: string; p_starts: string }
+        Returns: Json
+      }
+      respond_colleague: {
+        Args: { p_link: string; p_accept: boolean }
         Returns: Json
       }
       revoke_patient_link: {
@@ -2569,7 +2754,12 @@ export type Database = {
         Returns: Json
       }
       scheduler_bulk_reject: {
-        Args: { p_bookings: string[]; p_reason: string }
+        Args: {
+          p_bookings: string[]
+          p_reason?: string
+          p_code?: string
+          p_note?: string
+        }
         Returns: number
       }
       scheduler_calendar_impact: {
@@ -2605,7 +2795,12 @@ export type Database = {
         Returns: Json
       }
       scheduler_reject: {
-        Args: { p_booking: string; p_reason: string }
+        Args: {
+          p_booking: string
+          p_reason?: string
+          p_code?: string
+          p_note?: string
+        }
         Returns: Json
       }
       scheduler_reschedule: {
@@ -2788,6 +2983,10 @@ export type Database = {
         Returns: boolean
       }
       set_chat_consent: {
+        Args: { p_granted: boolean }
+        Returns: Json
+      }
+      set_colleague_sharing: {
         Args: { p_granted: boolean }
         Returns: Json
       }

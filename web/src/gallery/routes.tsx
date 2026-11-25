@@ -25,6 +25,7 @@ import { AssignmentEditorView } from '@/features/therapist/AssignmentEditorView'
 import { ProfileView, type ProfileActions } from '@/features/profile/ProfileView'
 import { ExercisesView } from '@/features/therapist/ExercisesView'
 import { CameraCheckPage } from '@/features/exercise/CameraCheckPage'
+import { SessionVideoPanel } from '@/features/exercise/video/SessionVideo'
 import { PatientRecordView } from '@/features/therapist/PatientRecordView'
 import { PatientsView } from '@/features/therapist/PatientsView'
 import { NO_FILTERS, ProgressView } from '@/features/therapist/ProgressView'
@@ -91,6 +92,12 @@ function PatientHome() {
   const [open, setOpen] = useState(false)
   return <><PatientHomeView base={PATIENT} load={useDemo(data.patientHome, { ...data.patientHome, today: { ...data.restDay, state: 'none' }, recent: [] })} onStart={() => setOpen(true)} /><UseThePhone open={open} onOpenChange={setOpen} exercise={data.patientHome.today.todo[0]?.name} /></>
 }
+/** The finish screen's video (#175): the upload message, and Not now leaving the Upload button. Nothing is sent from here. */
+function PatientSessionVideo() {
+  const [video] = useState(() => { const blob = new Blob([], { type: 'video/mp4' }); return { blob, url: URL.createObjectURL(blob), width: 640, height: 480, durationMs: 30_000, sessions: ['gallery-session'], preview: null, at: Date.UTC(2026, 10, 25, 2) } })
+  return <div className="max-w-[40rem]"><SessionVideoPanel video={video} owner="gallery" /></div>
+}
+
 function PatientExercises() {
   const navigate = useNavigate()
   return <PatientExercisesView base={PATIENT} load={useDemo(data.myToday, data.restDay)} onStart={said('Suggested the phone')} onCamera={() => void navigate(`${PATIENT}/camera-check`)} />
@@ -275,6 +282,7 @@ export const galleryRoutes: RouteObject[] = [{
         { path: 'bookings', element: <PatientBookings />, handle: { crumb: 'nav.bookings' } },
         { path: 'bookings/move', element: <PatientMove />, handle: { crumb: 'nav.moveSession' } },
         { path: 'exercises', element: <PatientExercises />, handle: { crumb: 'nav.exercises' } },
+        { path: 'session-video', element: <PatientSessionVideo />, handle: { crumb: 'recording.title' } },
         { path: 'camera-check', element: <CameraCheckPage base={PATIENT} />, handle: { crumb: 'nav.cameraCheck' } },
         { path: 'progress', element: <PatientProgress />, handle: { crumb: 'nav.progress' } },
         { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <Messages self /> }, { path: ':id', element: <Messages self /> }] },

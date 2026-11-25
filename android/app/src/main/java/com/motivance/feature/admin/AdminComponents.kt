@@ -69,6 +69,7 @@ internal fun AdminAction.savedLabel()=when(this) {
     AdminAction.EXERCISE -> R.string.admin_saved_exercise
     AdminAction.PUBLISH -> R.string.admin_saved_publish
     AdminAction.PHOTO -> R.string.admin_saved_photo
+    AdminAction.COLLEAGUE -> R.string.colleagues_admin_saved
     else -> R.string.ui_changes_saved
 }
 

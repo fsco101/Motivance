@@ -1,4 +1,4 @@
-import { CalendarPlusIcon, ChatCircleDotsIcon, DotsThreeIcon, PencilSimpleIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react'
+import { CalendarPlusIcon, ChatCircleDotsIcon, DotsThreeIcon, PencilSimpleIcon, PlusIcon, TrashIcon, VideoCameraIcon } from '@phosphor-icons/react'
 import { m as motion } from 'motion/react'
 import { DropdownMenu } from 'radix-ui'
 import { useRef, useState, type ReactNode } from 'react'
@@ -50,6 +50,8 @@ export type RecordActions = {
   onEndSchedule: (scheduleId: string) => Promise<void>
   onRemovePlan: (planId: string) => Promise<void>
   onSendExercise?: (planId: string) => void
+  /** Offered only to a patient who agreed to messages and has never shared a video (#175). */
+  onAskToRecord?: () => Promise<void>
 }
 
 const todayTone = { done: 'positive', todo: 'primary', rest: 'neutral' } as const
@@ -173,7 +175,7 @@ function ScheduleCard({ schedule, today, assignTo, onEdit, onEnd, children }: {
 
 type Asking = { kind: 'form'; schedule?: ScheduleGroup } | { kind: 'end'; schedule: ScheduleGroup } | { kind: 'remove'; plan: PlanCard } | null
 
-export function PatientRecordView({ load, base, actions }: { load: Load<PatientRecord>; base: string; actions?: RecordActions }) {
+export function PatientRecordView({ load, base, actions, aside }: { load: Load<PatientRecord>; base: string; actions?: RecordActions; /** Shown at the foot of the patient's card. */ aside?: ReactNode }) {
   const { t } = useTranslation()
   const format = useFormat()
   const [asking, setAsking] = useState<Asking>(null)
@@ -195,12 +197,19 @@ export function PatientRecordView({ load, base, actions }: { load: Load<PatientR
               <h1 className="mt-3 text-title font-bold">{patient.name}</h1>
               {patient.username && <p className="text-slate">@{patient.username}</p>}
               <ButtonLink to={`${base}/messages?with=${patient.id}`} variant="secondary" size="sm" className="mt-4" leading={<ChatCircleDotsIcon aria-hidden />}>{t('record.message')}</ButtonLink>
+              {actions?.onAskToRecord && (
+                <div className="mt-2">
+                  <Button variant="quiet" size="sm" leading={<VideoCameraIcon aria-hidden />} busy={busy} onClick={() => void run(actions.onAskToRecord!)}>{t('record.askToRecord')}</Button>
+                  <p className="mt-1 text-xs text-slate">{t('record.askToRecordHint')}</p>
+                </div>
+              )}
               <dl className="mt-6 grid gap-3 border-t border-line pt-5">
                 {patient.gender && <Fact term={t('record.gender')}>{patient.gender}</Fact>}
                 {patient.birthdate && <Fact term={t('record.birthdate')}>{format.day(patient.birthdate)}</Fact>}
                 {patient.contact && <Fact term={t('record.contact')}>{patient.contact}</Fact>}
                 {patient.address && <Fact term={t('record.address')}>{patient.address}</Fact>}
               </dl>
+              {aside}
             </aside>
             <div className="flex min-w-0 flex-col gap-5">
               <Panel title={t('schedule.title')} description={t('schedule.help')} flush

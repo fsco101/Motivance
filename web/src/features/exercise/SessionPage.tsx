@@ -108,15 +108,25 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
   const [consent, setConsent] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const done = state.phase === 'done'
-  // Recording is the patient's own choice for each session, off until they turn it on (#114, #139).
+  // Recording is the patient's choice: once they agree, each session starts recorded and the switch turns it off for one (#175).
   const support = useRecordingSupport()
-  const recordChoice = useRecordChoice(owner)
+  const recordChoice = useRecordChoice(owner, Boolean(support))
   const stream = live?.stream ?? null
   const cameraSize = useMemo(() => {
     const settings = stream?.getVideoTracks()[0]?.getSettings()
     return settings?.width && settings.height ? { width: settings.width, height: settings.height } : null
   }, [stream])
   const recording = useSessionRecording(state, recordChoice.record, support, cameraSize)
+  // A saved session without a recording counts toward asking again, once per run.
+  const counted = useRef<string | null>(null)
+  const { finished } = recordChoice
+  const recorded = recordChoice.record && Boolean(support)
+  const savedRun = done && state.saves.length > 0 && !state.unsaved ? state.saves[0]?.sessionId ?? 'run' : null
+  useEffect(() => {
+    if (!savedRun || counted.current === savedRun) return
+    counted.current = savedRun
+    finished(recorded)
+  }, [savedRun, recorded, finished])
   const tracking = useTracking({
     video, stream: done ? null : stream,
     draw: (frame, snapshot) => {
@@ -182,7 +192,7 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
     return (
       <>
         <PageHeader title={name} description={t('session.title')} />
-        <SessionResult state={state} base={base} onRetry={() => controller.retry()} recording={recording} />
+        <SessionResult state={state} base={base} owner={owner} onRetry={() => controller.retry()} recording={recording} />
       </>
     )
   }
@@ -250,7 +260,10 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
       {(started || state.switching) && <Button size="lg" variant="secondary" leading={<FlagCheckeredIcon aria-hidden />} onClick={() => { coach.unlock(); controller.finish() }}>{t('session.finish')}</Button>}
       <div className="flex flex-wrap items-center gap-2 desk:ml-auto">
         {!started && !state.switching && state.sides.length === 0 && support && (
-          <ToggleChip on={recordChoice.record} label={t('recording.record')} onChange={(on) => { coach.unlock(); recordChoice.change(on) }} />
+          <span className="flex flex-col gap-1">
+            <ToggleChip on={recordChoice.record} label={t('recording.record')} onChange={(on) => { coach.unlock(); recordChoice.change(on) }} />
+            {!recordChoice.record && <span data-testid="record-off-note" className="max-w-[32ch] text-xs text-night-ink">{t('recording.offNote')}</span>}
+          </span>
         )}
         <ToggleChip on={coach.voice} label={t(coach.voice ? 'coach.voiceOn' : 'coach.voiceOff')} onChange={coach.setVoice} />
         <ToggleChip on={coach.finishSound} label={t(coach.finishSound ? 'coach.finishOn' : 'coach.finishOff')} onChange={coach.setFinishSound} />
@@ -279,7 +292,7 @@ function LiveSession({ rules, name, owner, base }: { rules: ExerciseRules; name:
         panel={panel}
         bar={bar}
       />
-      <RecordConsentDialog open={recordChoice.asking} onDecline={recordChoice.decline} onAccept={recordChoice.accept} />
+      <RecordConsentDialog open={recordChoice.asking} onDecline={recordChoice.decline} onAccept={recordChoice.accept} onNever={recordChoice.canNever ? recordChoice.never : undefined} />
       <ConfirmDialog open={leaving} onOpenChange={setLeaving} title={t('mode.leaveTitle')} message={t('mode.leaveDetail')} confirmLabel={t('mode.leave')} cancelLabel={t('mode.stay')} destructive
         onConfirm={() => navigate(`${base}/exercises`)} />
     </>
@@ -324,7 +337,7 @@ function sideLine(t: (key: string, values?: Record<string, unknown>) => string, 
 }
 
 /** Closing screen: the count against the target, range, misses and time, whether it reached the server, and any video beside it. */
-function SessionResult({ state, base, onRetry, recording }: { state: SessionState; base: string; onRetry: () => void; recording: ReturnType<typeof useSessionRecording> }) {
+function SessionResult({ state, base, owner, onRetry, recording }: { state: SessionState; base: string; owner: string; onRetry: () => void; recording: ReturnType<typeof useSessionRecording> }) {
   const { t } = useTranslation()
   const last: AssessmentSnapshot = state.sides[state.sides.length - 1]?.snapshot ?? state.snapshot
   const target = state.sides[state.sides.length - 1]?.target ?? state.rules.targetRepetitions
@@ -360,7 +373,7 @@ function SessionResult({ state, base, onRetry, recording }: { state: SessionStat
         <div className="grid gap-4">
           {recording.finishing && <Notice tone="info">{t('recording.finishing')}</Notice>}
           {recording.failed && !recording.video && <Notice tone="caution">{t('recording.failed')}</Notice>}
-          {recording.video && <SessionVideoPanel video={recording.video} saved={state.saves.length > 0 && !state.unsaved} />}
+          {recording.video && <SessionVideoPanel video={recording.video} owner={owner} />}
         </div>
       )}
     </div>

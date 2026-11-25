@@ -5,6 +5,8 @@ import com.motivance.data.local.ChatMediaStore
 import com.motivance.data.local.MediaProblem
 import com.motivance.data.remote.SessionVideoJson
 import com.motivance.data.remote.SupabaseAuthRepository
+import com.motivance.data.sync.QueuedVideo
+import com.motivance.data.sync.VideoQueueService
 import com.motivance.designsystem.Toaster
 import com.motivance.domain.*
 import kotlinx.coroutines.*
@@ -17,8 +19,9 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import androidx.lifecycle.viewModelScope
 
-/** Sharing a session video with the therapist (#129): the phone's steps, its refusals, and the calls it makes. */
+/** Sharing a session video with the therapist (#129, #175): queueing the smaller copy, its refusals, and the calls it makes. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionVideoSharingTest {
     private val dispatcher=StandardTestDispatcher()
@@ -54,25 +57,58 @@ class SessionVideoSharingTest {
     }
     private val video=SessionVideo("content://gallery/1",listOf("s1","s2"),0)
 
-    @Test fun sharingMakesItSmallerSendsBothFilesThenShares()=runTest(dispatcher) {
-        val remote=FakeVideos(); val toasts=Toaster()
-        val vm=SessionVideoViewModel(remote,FakeMedia(),toasts)
-        vm.share("p1",video)
-        assertEquals("content://gallery/1",vm.state.value.sending)
-        advanceUntilIdle()
-        // A both-sides run has one recording: it goes with the first side's session.
-        assertEquals(listOf("start s1 480x270 95000","upload media.mp4 video/mp4 5","upload preview.jpg image/jpeg 2","share"),remote.steps)
-        assertNotNull(vm.state.value.shared["s1"])
-        assertNull(vm.state.value.sending)
-        assertEquals(R.string.video_shared,toasts.current.value?.message)
+    /** The queue in memory, with its copies in a temporary folder. */
+    private class FakeQueue:VideoQueueService {
+        val items=mutableListOf<QueuedVideo>(); val scheduled=mutableListOf<String>()
+        val root:java.io.File=kotlin.io.path.createTempDirectory("queue").toFile()
+        override fun list(owner:String)=items.filter {it.owner==owner}
+        override fun folder(owner:String)=java.io.File(root,owner).apply {mkdirs()}
+        override fun enqueue(video:QueuedVideo) {items+=video}
+        override fun cancel(owner:String,id:String) {items.removeAll {it.id==id}}
+        override fun retry(owner:String,id:String) {}
+        override fun schedule(owner:String) {scheduled+=owner}
+    }
+    /** Makes real temporary files, as the phone's preparation does, so they can be moved into the queue's folder. */
+    private class TempMedia:ChatMediaStore {
+        override suspend fun prepare(owner:String,uri:String,onProgress:(Float)->Unit)=throw UnsupportedOperationException()
+        override suspend fun prepareSessionVideo(owner:String,uri:String,onProgress:(Float)->Unit):MediaDraft {
+            onProgress(.5f)
+            val file=java.io.File.createTempFile("video",".mp4").apply {writeBytes(ByteArray(5))}
+            val preview=java.io.File.createTempFile("preview",".jpg").apply {writeBytes(ByteArray(2))}
+            return MediaDraft(MediaKind.VIDEO,file.path,"video/mp4",preview.path,480,270,95_000)
+        }
+        override suspend fun read(path:String)=java.io.File(path).readBytes()
+        override suspend fun keep(owner:String,id:String,draft:MediaDraft) {}
+        override suspend fun discard(draft:MediaDraft) {}
+        override suspend fun copy(owner:String,id:String,attachment:Attachment,preview:Boolean,link:suspend (String)->String):String?=null
     }
 
-    @Test fun aSessionStillUploadingSaysSoAndNothingIsShared()=runTest(dispatcher) {
-        val remote=FakeVideos("video_session_missing"); val toasts=Toaster()
-        val vm=SessionVideoViewModel(remote,FakeMedia(),toasts)
-        vm.share("p1",video); advanceUntilIdle()
-        assertTrue(vm.state.value.shared.isEmpty())
-        assertEquals(R.string.video_share_error_uploading,toasts.current.value?.message)
+    @Test fun uploadMakesTheSmallerCopyFirstThenQueuesItForTheFirstSide()=runTest(dispatcher) {
+        val queue=FakeQueue(); val toasts=Toaster()
+        val vm=SessionVideoViewModel(FakeVideos(),TempMedia(),toasts,queue)
+        vm.upload("p1",video)
+        assertEquals("content://gallery/1",vm.state.value.sending)
+        // The copies move on the IO thread, which the test clock does not run.
+        repeat(100) {advanceUntilIdle(); if(queue.items.isNotEmpty() && vm.state.value.sending==null) return@repeat; Thread.sleep(20)}
+        advanceUntilIdle()
+        // A both-sides run has one recording: it goes with the first side's session, and nothing is sent from here.
+        assertNull("toast: ${toasts.current.value?.message}",toasts.current.value)
+        val queued=queue.items.single()
+        assertEquals("s1",queued.sessionId); assertEquals(480,queued.width); assertEquals(95_000L,queued.durationMs)
+        assertTrue(java.io.File(queued.file).exists() && queued.file.startsWith(queue.root.path))
+        assertTrue(java.io.File(queued.preview).exists())
+        assertTrue("p1" in queue.scheduled)
+        assertNull(vm.state.value.sending)
+        // The queue's events are shared by the whole app, so this screen stops listening before the next test.
+        vm.viewModelScope.cancel()
+    }
+
+    @Test fun aVideoThatCannotBeMadeSmallerSaysSoAndIsNotQueued()=runTest(dispatcher) {
+        val queue=FakeQueue(); val toasts=Toaster()
+        val vm=SessionVideoViewModel(FakeVideos(),FakeMedia(fail=true),toasts,queue)
+        vm.upload("p1",video); advanceUntilIdle()
+        assertTrue(queue.items.isEmpty())
+        assertEquals(R.string.video_share_error_prepare,toasts.current.value?.message)
     }
 
     @Test fun eachRefusalHasItsOwnWords() {
@@ -85,12 +121,23 @@ class SessionVideoSharingTest {
     }
 
     @Test fun stoppingRemovesItFromWhatIsShown()=runTest(dispatcher) {
-        val remote=FakeVideos()
-        val vm=SessionVideoViewModel(remote,FakeMedia(),Toaster())
-        vm.share("p1",video); advanceUntilIdle()
+        val remote=object:SessionVideoRepository by FakeVideos() {
+            val stopped=mutableListOf<String>()
+            override suspend fun loadSharedVideos(patientId:String)=listOf(SessionVideoJson.video(JSONObject(row)))
+            override suspend fun stopSharingVideo(id:String) {stopped+=id}
+        }
+        val vm=SessionVideoViewModel(remote,FakeMedia(),Toaster(),FakeQueue())
+        vm.load("p1"); advanceUntilIdle()
         vm.stop(vm.state.value.shared.getValue("s1")); advanceUntilIdle()
         assertTrue(vm.state.value.shared.isEmpty())
-        assertTrue(remote.steps.last().startsWith("stop "))
+        assertEquals(listOf("v1"),remote.stopped)
+    }
+
+    @Test fun eachQueuedRefusalHasItsOwnWords() {
+        assertEquals(R.string.video_share_error_rate,queueRefusal("video_rate_limited"))
+        assertEquals(R.string.video_share_error_too_large,queueRefusal("video_too_large"))
+        assertEquals(R.string.video_share_error_no_therapist,queueRefusal("video_unavailable"))
+        assertEquals(R.string.connected_failed,queueRefusal(null))
     }
 
     @Test fun aLongSessionSharesItsFirstFiveMinutes() {

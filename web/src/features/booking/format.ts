@@ -1,17 +1,21 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CENTER_ZONE, type BookingStatus } from '@/data/booking'
+import { CENTER_ZONE, isRejectionCode, type BookingStatus } from '@/data/booking'
 
 export const statusTone: Record<BookingStatus, 'positive' | 'neutral' | 'caution' | 'danger' | 'primary'> = {
   pending: 'caution', confirmed: 'positive', rescheduled: 'primary', rejected: 'danger', cancelled: 'neutral',
 }
 
-/** The server writes a code for reasons of its own, and a person's own words otherwise, which are shown as they are. */
+/**
+ * The server writes a code for reasons of its own and for a Scheduler's common reasons (#172), and a person's own words otherwise,
+ * which are shown as they are. A patient reads a sentence; a Scheduler reads the short name of the choice they made.
+ */
 export function useReasonText(reader: 'patient' | 'scheduler' = 'patient') {
   const { t } = useTranslation()
   return (reason: string) => {
     if (reason === 'therapist_unavailable') return t(reader === 'patient' ? 'booking.reasonTherapist' : 'scheduler.reasonTherapist')
     if (reason === 'request_expired') return t(reader === 'patient' ? 'booking.reasonExpired' : 'scheduler.reasonExpired')
+    if (isRejectionCode(reason)) return t(reader === 'patient' ? `booking.rejectReason.${reason}` : `scheduler.rejectChoice.${reason}`)
     return reason
   }
 }

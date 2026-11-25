@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { accessToken, fcmUrl, pushMessage, pushOutcome, readServiceAccount, sendToDevices, signedAssertion, type PushDelivery, type ServiceAccount } from '../../../supabase/functions/_shared/push'
+import { accessToken, fcmUrl, PUSH_BODY_LIMIT, pushMessage, pushOutcome, readServiceAccount, sendToDevices, shortened, signedAssertion, type PushDelivery, type ServiceAccount } from '../../../supabase/functions/_shared/push'
 
 const delivery = (overrides: Partial<PushDelivery> = {}): PushDelivery => ({
   id: 'd1', kind: 'confirmed', email: null, name: 'Ana', language: 'en', calendar_token: 'secret', location: '12 Mabini Street', center_name: 'Motivance', time_zone: 'Asia/Manila', booking_id: 'b1', tokens: ['one'],
@@ -28,6 +28,33 @@ describe('a push message', () => {
 
   it('uses the same words as the email, in the reader\'s language', () => {
     expect(pushMessage('one', delivery({ language: 'fil' })).message.data.title).toBe('Kumpirmado ang iyong session')
+  })
+
+  // #172: the push says why a request was rejected, as the email and the app do.
+  const rejected = (reason: string, extra: Record<string, unknown> = {}, language: 'en' | 'fil' = 'en') =>
+    pushMessage('one', delivery({ kind: 'rejected', language, data: { ...delivery().data, reason, ...extra } })).message.data.body
+
+  it('turns a chosen reason into a sentence in the reader’s language, with the note after it', () => {
+    expect(rejected('therapist_away')).toBe('Your request for Monday, December 7, 2026, 9:00 AM – 10:00 AM was not approved. The therapist is away at that time.')
+    expect(rejected('therapist_away', { note: 'Back on the 12th.' })).toMatch(/The therapist is away at that time\. Back on the 12th\.$/)
+    expect(rejected('slot_unavailable', {}, 'fil')).toMatch(/Hindi na available ang oras na hiniling mo\.$/)
+    expect(rejected('call_center')).not.toContain('call_center')
+  })
+
+  it('shows a Scheduler’s own words as written', () => {
+    expect(rejected('The room is being repaired.')).toMatch(/was not approved\. The room is being repaired\.$/)
+  })
+
+  it('shortens a long reason at a word, and the app keeps it whole', () => {
+    const body = rejected(`${'Our physiotherapy room is closed for repairs '.repeat(8)}end`)
+    expect(body.length).toBeLessThanOrEqual(PUSH_BODY_LIMIT)
+    expect(body.endsWith('…')).toBe(true)
+    expect(body).toContain('was not approved. Our physiotherapy room')
+    expect(shortened('short words')).toBe('short words')
+  })
+
+  it('adds no reason to other kinds', () => {
+    expect(pushMessage('one', delivery({ kind: 'confirmed', data: { ...delivery().data, reason: 'therapist_away' } })).message.data.body).not.toContain('away')
   })
 
   it('sends nothing secret', () => {

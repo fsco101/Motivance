@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useEffect, type ComponentType } from 'react'
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useNavigate, useSearchParams, type RouteObject } from 'react-router'
 import { AuthCallbackPage } from '@/auth/AuthCallbackPage'
@@ -8,6 +8,7 @@ import { IdleGuard } from '@/auth/IdleGuard'
 import { SignInPage } from '@/auth/SignInPage'
 import { homePath, workspacePath, workspacesOf, type Workspace } from '@/auth/roles'
 import { ButtonLink } from '@/components/Button'
+import { ConfirmDialog } from '@/components/Dialog'
 import { EmptyState, Notice } from '@/components/Display'
 import { supabase } from '@/data/client'
 import { SkeletonLines } from '@/features/shared'
@@ -15,6 +16,7 @@ import { saveLanguage } from '@/data/notifications'
 import { loadSignInMethods } from '@/data/signIn'
 import { MessagesLink, MessagesPage } from '@/features/chat/pages'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
+import { useVideoQueue, videoQueue } from '@/features/exercise/video/useVideoQueue'
 import { Shell } from '@/layout/Shell'
 import { MotionArc } from '@/motion/MotionArc'
 import { AnimatedOutlet } from '@/motion/AnimatedOutlet'
@@ -31,6 +33,7 @@ const therapist = (name: keyof typeof import('@/features/therapist/pages')) => l
 const TherapistHome = therapist('TherapistHomePage')
 const Patients = therapist('PatientsPage')
 const PatientRecord = therapist('PatientRecordPage')
+const ColleaguePatient = therapist('ColleaguePatientPage')
 const AssignExercise = therapist('AssignExercisePage')
 const Exercises = therapist('ExercisesPage')
 const Progress = therapist('ProgressPage')
@@ -123,7 +126,11 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   const { userId, email, roles } = useSignedIn()
   const navigate = useNavigate()
   const held = workspacesOf(roles)
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
+  // A patient's waiting videos upload whenever Motivance is open, and leave the browser with them on sign-out (#175).
+  const uploads = useVideoQueue(workspace === 'patient' ? userId : null)
+  const [leaving, setLeaving] = useState(false)
+  const leave = async () => { setLeaving(false); await videoQueue.clear(userId).catch(() => undefined); await signOut() }
   // Quietly, because failing only leaves email in the language it was in. The next visit tries again.
   useEffect(() => { void saveLanguage(supabase(), i18n.language).catch(() => undefined) }, [i18n.language, userId])
   const profile = useQuery({
@@ -142,10 +149,15 @@ function WorkspaceFrame({ workspace }: { workspace: Workspace }) {
   if (workspace === 'patient' && methods.isPending) return <Splash />
   if (workspace === 'patient' && methods.data?.profileRequired) return <Suspense fallback={<Splash />}><FinishProfile /></Suspense>
   return (
-    <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => void signOut()} onSwitch={(next) => void navigate(workspacePath(next))} bell={workspace === 'admin' ? undefined : <>{(workspace === 'patient' || workspace === 'therapist') && <MessagesLink base={workspacePath(workspace)} />}<NotificationBell base={workspacePath(workspace)} /></>}
+    <>
+    <Shell workspace={workspace} base={workspacePath(workspace)} onSignOut={() => { if (uploads.items.length > 0) setLeaving(true); else void leave() }} onSwitch={(next) => void navigate(workspacePath(next))} bell={workspace === 'admin' ? undefined : <>{(workspace === 'patient' || workspace === 'therapist') && <MessagesLink base={workspacePath(workspace)} />}<NotificationBell base={workspacePath(workspace)} /></>}
       account={{ name: profile.data?.display_name || email, email, photo: profile.data?.photo_url, workspaces: held }}>
       <Suspense fallback={<SkeletonLines />}><AnimatedOutlet /></Suspense>
     </Shell>
+    {/* On a shared computer, a video still waiting would otherwise go up for the next person's session (#175). */}
+    <ConfirmDialog open={leaving} onOpenChange={setLeaving} title={t('uploads.signOutTitle')} message={t('uploads.signOutDetail')}
+      confirmLabel={t('uploads.signOutConfirm')} cancelLabel={t('uploads.signOutStay')} destructive onConfirm={() => void leave()} />
+    </>
   )
 }
 
@@ -173,6 +185,7 @@ export const routes: RouteObject[] = [
               },
             ],
           },
+          { path: 'colleague-patients/:id', element: <ColleaguePatient />, handle: { crumb: 'colleagues.colleaguePatient' } },
           { path: 'exercises', element: <Exercises />, handle: { crumb: 'nav.exercises' } },
           { path: 'progress', element: <Progress />, handle: { crumb: 'nav.progress' } },
           { path: 'messages', handle: { crumb: 'nav.messages' }, children: [{ index: true, element: <MessagesPage base="/therapist" /> }, { path: ':id', element: <MessagesPage base="/therapist" /> }] },

@@ -28,16 +28,17 @@ class VideoShareControlsTest {
         assertEquals(1,shares)
     }
 
+    /** While the smaller copy is made (#175), before it waits in the upload queue. */
     @Test fun whileSendingItShowsHowFar() {
         compose.setContent {MotivanceTheme {Surface {Column {VideoShareControls(null,true,.4f,onShare={},onStop={})}}}}
-        compose.onNodeWithText(context.getString(R.string.video_sharing_progress,40)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.video_preparing)).assertIsDisplayed()
         compose.onNodeWithText(context.getString(R.string.video_share)).assertDoesNotExist()
     }
 
     @Test fun aSharedVideoSaysUntilWhenAndCanBeStopped() {
         var stops=0
         compose.setContent {MotivanceTheme {Surface {Column {VideoShareControls(shared,false,null,onShare={},onStop={stops+=1})}}}}
-        compose.onNodeWithText(context.getString(R.string.video_shared_until,sharedUntil(shared))).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.video_status_shared,sharedUntil(shared))).assertIsDisplayed()
         compose.onNodeWithText(context.getString(R.string.video_stop_sharing)).performClick()
         compose.onNodeWithText(context.getString(R.string.video_stop_detail)).assertIsDisplayed()
         compose.onAllNodesWithText(context.getString(R.string.video_stop_sharing)).filterToOne(hasAnyAncestor(isDialog())).performClick()

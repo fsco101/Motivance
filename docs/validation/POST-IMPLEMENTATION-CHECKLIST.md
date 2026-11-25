@@ -379,6 +379,36 @@ Auth checks a Google ID token against Google's own signing keys, so automated te
 - [ ] #168 (after Android's button is turned on): On a shared phone, sign in with one Google account, sign out, tap Continue with Google again, and confirm the picker asks which account rather than signing the first person back in.
 - [ ] #169: After the owner's Vercel redeploy, sign in with a real Google account on the live site in Chrome, Edge, Firefox and Safari: existing account, new patient, cancelled Google page. Check the button with the keyboard and a screen reader, and in Filipino.
 
+## Rejection reasons (#172, 2026-11-25)
+
+Automated: `supabase/tests/rejection_reasons.test.sql`, the dispatcher's push and email tests (`web/tests/contract/push.test.ts`, `email.test.ts`), `web/tests/e2e/rejection-reasons.spec.ts`, Android `RejectionReasonTest` and `RejectedBookingTest`. No real email or push was sent.
+
+- [ ] #172: After the owner applies `202611240001_rejection_reasons.sql` and redeploys `notification-dispatch`, reject a real request with a common reason and a note, and another with Other. On a physical Android phone, read both pushes on the lock screen and in the shade, in English and in Filipino, including one long reason cut short. Open the real emails in Gmail on a phone and on a computer.
+- [ ] #172: On the phone, open the rejected booking at twice the font size in Filipino and with TalkBack, tap Request another time, and confirm the reason for the visit is already written.
+
+## Therapist Progress avatar (#174, 2026-11-25)
+
+- [ ] #174: On a physical phone and in a browser, open therapist Progress with a patient who has a real profile photo and one who has none. Confirm the photo loads in the patient choice and the header, initials show otherwise, TalkBack and a screen reader read only the name, and tapping the header opens the patient's record.
+
+## Recording and queued video uploads (#175, 2026-11-25)
+
+Automated: Android `RecordPromptTest`, `VideoUploadQueueTest`, `SessionVideoSharingTest`, `AskToRecordTest` and the Compose `SessionVideoUploadTest`; web `prompt.test.ts`, `uploadQueue.test.ts`, `sessionVideos.test.ts` and `web/tests/e2e/session-video-upload.spec.ts` (the backend cut by Playwright; nothing sent outside the local stack); `supabase/tests/ask_to_record.test.sql`. The wording in English and Filipino is the starting point the owner asked for and is still open for their review.
+
+- [ ] #175: On a physical phone, agree to recording, run a prescribed session, choose Upload video, turn on airplane mode before it finishes, close the app, restart the phone, reconnect, and confirm the video arrives once for the therapist with "Shared until" on the patient's card. Repeat with the session itself recorded offline, so the video waits for the result first.
+- [ ] #175: On the phone, choose Not now at the first question, finish three prescribed sessions without recording and confirm the question returns once; choose Not now again and confirm it does not return before 30 days (by changing the phone's date on a test phone), then never again. Check the line under the switch and the finish-screen message at twice the font size in Filipino and with TalkBack.
+- [ ] #175: In Chrome and Edge, record a real session, choose Upload video, turn the network off in the operating system, reload, close the tab, reopen Motivance online and confirm the upload finishes by itself. On a shared computer, sign out with a video waiting and confirm the warning and that it is gone afterwards.
+- [ ] #175: As a therapist, confirm "Ask to record" appears only for a patient with messages on and no video ever shared, that the message reads well in both languages, and that it disappears once sent.
+- [ ] #175: The owner reviews the encouraging wording (benefit line, finish-screen message, line under the switch, Ask to record message) in English and Filipino.
+
+## Therapist colleagues (#173, 2026-11-25)
+
+Automated: `supabase/tests/therapist_colleagues.test.sql`, `web/tests/e2e/colleagues.spec.ts`, Android `ColleagueViewModelTest`, `AdministrationViewModelTest`, `AdministrationRepositoryTest` and the Compose `ColleagueScreensTest` (English, and Filipino at twice the font size). No real therapist or patient took part.
+
+- [ ] #173: A privacy review of the patient-facing wording ("Your therapist's colleagues" in Profile) and of whether the per-patient opt-in is a sufficient Data Privacy Act basis. The `system-purpose-v1` agreement still says only the connected therapist can view the details; decide whether it needs a new version that mentions the opt-in.
+- [ ] #173: With two real therapists on phones and in browsers: invite, accept, open a colleague's patient who opted in, confirm it is read-only (no plan changes, schedule, messages, contact details) and that the shared videos play; end the link and confirm access stops. Ask whether the 30-minute window after opening suits how they work.
+- [ ] #173: With a real patient, turn sharing on and off in Profile on Android and the web at twice the font size in Filipino and with TalkBack and a screen reader, and confirm the own therapist's "Colleagues who can see progress" updates.
+- [ ] #173: As an administrator on Android and the web, link two therapists and end the link; confirm the activity feed records it.
+
 ## Recording results
 
 For each check record tester/date, app commit/version, device/OS, setup, expected/actual result and de-identified evidence. Store reports in `docs/validation/`. Keep private camera/participant images out of the public repository. Open corrective issues for failures and update sprint JSON with executed evidence; do not mark a deferred physical check as passed by substituting a unit test.

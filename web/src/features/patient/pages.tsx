@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { useSignedIn } from '@/auth/AuthProvider'
 import { ButtonLink } from '@/components/Button'
 import { toast } from '@/components/Toast'
@@ -30,6 +30,9 @@ import { PatientExercisesView } from './PatientExercisesView'
 import { PatientHomeView, type PatientHome } from './PatientHomeView'
 import { UseThePhone } from './UseThePhone'
 import { cameraSupport } from '@/features/exercise/pose/support'
+import { WaitingVideos } from '@/features/exercise/video/SessionVideo'
+import { loadColleagueSharing, setColleagueSharing } from '@/data/colleagues'
+import { ColleagueSharingPanel } from '@/features/therapist/ColleaguesView'
 
 const BASE = '/patient'
 
@@ -82,9 +85,10 @@ export function PatientHomePage() {
 }
 
 export function PatientExercisesPage() {
+  const { userId } = useSignedIn()
   const today = useMyToday()
   const phone = usePhonePrompt()
-  return <><PatientExercisesView load={today} base={BASE} onStart={phone.start} onCamera={phone.camera} />{phone.dialog}</>
+  return <><PatientExercisesView load={today} base={BASE} onStart={phone.start} onCamera={phone.camera} /><div className="mt-5"><WaitingVideos owner={userId} /></div>{phone.dialog}</>
 }
 
 export function PatientSchedulePage() {
@@ -117,7 +121,9 @@ export function PatientBookPage() {
   const navigate = useNavigate()
   const { chosen, setChosen, availability, picker } = useSlotChoice()
   const [busy, setBusy] = useState(false)
-  const [reason, setReason] = useState('')
+  // "Request another time" on a rejected request hands over its reason for the visit (#172).
+  const handed = (useLocation().state as { visitReason?: unknown } | null)?.visitReason
+  const [reason, setReason] = useState(typeof handed === 'string' ? handed : '')
   const [reasonTried, setReasonTried] = useState(false)
   // One ID per chosen time, so trying again after a lost response returns the same booking instead of a second one.
   const attempt = useRef<{ startsAt: string; request: string } | null>(null)
@@ -231,7 +237,7 @@ export function PatientProgressPage() {
   const choices: Load<ProgressChoices> = state.status !== 'ready' ? state : ready({
     patients: [], patientId: userId, exercises: [...new Map(state.data.map((item) => [item.exerciseVersionId, { id: item.exerciseVersionId, name: item.name }])).values()],
   })
-  return <><ProgressView self choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} onShare={sharing.share} videoFor={videos.videoFor} onWatch={videos.onWatch} />{sharing.dialog}{videos.dialog}</>
+  return <><ProgressView self choices={choices} results={results} activity={activity} filters={filters} onFilters={setFilters} onPatient={() => undefined} onMore={onMore} onShare={sharing.share} videoFor={videos.videoFor} onWatch={videos.onWatch} /><div className="mt-5"><WaitingVideos owner={userId} /></div>{sharing.dialog}{videos.dialog}</>
 }
 
 export function PatientProfilePage() {
@@ -246,6 +252,7 @@ export function PatientProfilePage() {
     },
   })
   const messages = useChatAgreement(true)
+  const sharing = useQuery({ queryKey: ['colleague-sharing', userId], queryFn: () => loadColleagueSharing(supabase()) })
   // Reports the result here, so the panels only have to show they are working.
   const act = async (work: () => Promise<void>, done: string) => {
     try {
@@ -265,6 +272,8 @@ export function PatientProfilePage() {
           onWithdraw={() => act(() => withdrawConsent(supabase()), t('patient.consentWithdrawn'))}
           onRequest={(kind: DataRequestKind) => act(() => requestData(supabase(), kind), t('patient.requestStatus.requested'))} />
         <ChatConsentPanel load={asLoad(messages.load)} onChange={messages.change} />
+        <ColleagueSharingPanel load={asLoad(sharing)} onChange={(granted) => act(async () => { await setColleagueSharing(supabase(), granted); await client.invalidateQueries({ queryKey: ['colleague-sharing'] }) },
+          t(granted ? 'colleagues.sharingTurnedOn' : 'colleagues.sharingTurnedOff'))} />
       </div>
     </>
   )

@@ -30,11 +30,15 @@ interface SessionVideoRepository {
     suspend fun loadSharedVideos(patientId:String):List<SharedVideo>
     /** Step one: the server agrees to the file and names where it and its preview go. The same ID again is safe. */
     suspend fun startSessionVideo(id:String,sessionId:String,width:Int,height:Int,durationMs:Long):MediaPlaces
+    /** The same, only while [owner] is the signed-in account: a queued video waits for its own patient (#175). */
+    suspend fun startSessionVideoAs(owner:String,id:String,sessionId:String,width:Int,height:Int,durationMs:Long):MediaPlaces=startSessionVideo(id,sessionId,width,height,durationMs)
     /** A file already there from an earlier try counts as stored. */
     suspend fun uploadSessionVideo(path:String,bytes:ByteArray,mime:String)
     /** Step two, once both files are stored: shared for 15 days. A file over its limit is refused and removed. */
     suspend fun shareSessionVideo(id:String):SharedVideo
     suspend fun stopSharingVideo(id:String)
+    /** Whether the patient ever shared a video with their therapist, expired ones included; only their own therapist may ask (#175). */
+    suspend fun everSharedVideo(patientId:String):Boolean=throw UnsupportedOperationException()
     /** A short-lived link to watch, issued only while the video is shared. */
     suspend fun sessionVideoLink(path:String,seconds:Int=SessionVideoLimits.LINK_SECONDS):String
 }

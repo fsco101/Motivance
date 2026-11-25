@@ -3,7 +3,7 @@
 export type Language = 'en' | 'fil'
 export type Delivery = {
   id: string; kind: string; email: string | null; name: string | null; language: Language; calendar_token: string | null; location: string; center_name: string; time_zone: string
-  data: { reference_no?: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null; sessions?: number; last_starts_at?: string | null }
+  data: { reference_no?: string; starts_at: string; ends_at: string; previous_starts_at?: string | null; patient_name?: string | null; therapist_name?: string | null; reason?: string | null; note?: string | null; sessions?: number; last_starts_at?: string | null }
 }
 export type Links = { site: string; functions: string }
 
@@ -59,9 +59,39 @@ const LINES: Record<Language, Record<string, Line>> = {
   },
 }
 
+/**
+ * The sentence for a reason the server or a Scheduler chose as a code (#172), in the reader's language. A Scheduler's own words
+ * ("Other") are not a code and come back as written. The apps hold the same sentences.
+ */
+const REASONS: Record<Language, Record<string, string>> = {
+  en: {
+    therapist_unavailable: 'Your therapist is no longer available.',
+    request_expired: 'The time passed before this request could be confirmed.',
+    slot_unavailable: 'The time you asked for is no longer available.',
+    therapist_away: 'The therapist is away at that time.',
+    outside_hours: "That time is outside the center's opening hours.",
+    duplicate_request: 'This request repeats another request you already made.',
+    call_center: 'Please call the center first to arrange this visit.',
+  },
+  fil: {
+    therapist_unavailable: 'Hindi na available ang iyong therapist.',
+    request_expired: 'Lumipas ang oras bago makumpirma ang kahilingang ito.',
+    slot_unavailable: 'Hindi na available ang oras na hiniling mo.',
+    therapist_away: 'Wala ang therapist sa oras na iyon.',
+    outside_hours: 'Labas sa oras ng pagbubukas ng center ang oras na iyon.',
+    duplicate_request: 'Kapareho ito ng isa pang kahilingang nagawa mo na.',
+    call_center: 'Pakitawagan muna ang center para maiayos ang pagbisitang ito.',
+  },
+}
+
+export function reasonSentence(reason: string | null | undefined, language: Language): string | null {
+  if (!reason) return null
+  return (REASONS[language] ?? REASONS.en)[reason] ?? reason
+}
+
 const LABELS = {
-  en: { hello: 'Hello {name},', date: 'Date', time: 'Time', therapist: 'Therapist', location: 'Location', reference: 'Reference', reason: 'Reason', calendar: 'Add to calendar', open: 'Open Motivance', pending: 'To be assigned', unavailable: 'Your therapist is no longer available.', expired: 'The time passed before this request could be confirmed.' },
-  fil: { hello: 'Kumusta {name},', date: 'Petsa', time: 'Oras', therapist: 'Therapist', location: 'Lokasyon', reference: 'Reference', reason: 'Dahilan', calendar: 'Idagdag sa kalendaryo', open: 'Buksan ang Motivance', pending: 'Itatalaga pa', unavailable: 'Hindi na available ang iyong therapist.', expired: 'Lumipas ang oras bago makumpirma ang kahilingang ito.' },
+  en: { hello: 'Hello {name},', date: 'Date', time: 'Time', therapist: 'Therapist', location: 'Location', reference: 'Reference', reason: 'Reason', note: 'Note from the center', calendar: 'Add to calendar', open: 'Open Motivance', pending: 'To be assigned' },
+  fil: { hello: 'Kumusta {name},', date: 'Petsa', time: 'Oras', therapist: 'Therapist', location: 'Lokasyon', reference: 'Reference', reason: 'Dahilan', note: 'Tala mula sa center', calendar: 'Idagdag sa kalendaryo', open: 'Buksan ang Motivance', pending: 'Itatalaga pa' },
 }
 
 /** These kinds leave a session on the reader's calendar. A session that has gone needs no link to add it. */
@@ -90,13 +120,15 @@ export function renderEmail(delivery: Delivery, links: Links) {
   const was = data.previous_starts_at ?? data.starts_at
   const values = { when: `${day(data.starts_at)}, ${range}`, was: `${day(was)}, ${clock(was)}`, patient: data.patient_name ?? '', therapist: data.therapist_name ?? label.pending,
     sessions: String(data.sessions ?? ''), last: data.last_starts_at ? day(data.last_starts_at) : '' }
-  const reason = data.reason === 'therapist_unavailable' ? label.unavailable : data.reason === 'request_expired' ? label.expired : data.reason ?? null
+  const reason = reasonSentence(data.reason, delivery.language)
+  const note = data.note?.trim() || null
   // A place on the waitlist is a time, not yet a session, so it has no therapist or reference.
   const facts: Array<[string, string]> = [[label.date, day(data.starts_at)], [label.time, range]]
   if (data.reference_no) facts.push([label.therapist, data.therapist_name ?? label.pending])
   if (delivery.location) facts.push([label.location, delivery.location])
   if (data.reference_no) facts.push([label.reference, data.reference_no])
   if (reason) facts.push([label.reason, reason])
+  if (reason && note) facts.push([label.note, note])
   const calendar = CALENDAR_KINDS.has(delivery.kind) && delivery.calendar_token ? `${links.functions}/booking-calendar?token=${encodeURIComponent(delivery.calendar_token)}` : null
   const hello = fill(label.hello, { name: delivery.name ?? '' }).replace(' ,', ',')
   const sentence = fill(lines.body, values)

@@ -74,6 +74,16 @@ describe('a booking email', () => {
     expect(text).not.toContain('request_expired')
   })
 
+  it('writes a Scheduler’s chosen reason as a sentence, in English or Filipino, with their note (#172)', () => {
+    const { text } = renderEmail(delivery({ kind: 'rejected', data: { ...delivery().data, reason: 'outside_hours', note: 'Open 8 to 5.' } }), links)
+    expect(text).toContain("Reason: That time is outside the center's opening hours.")
+    expect(text).toContain('Note from the center: Open 8 to 5.')
+    expect(text).not.toContain('outside_hours')
+    const fil = renderEmail(delivery({ kind: 'rejected', language: 'fil', data: { ...delivery().data, reason: 'duplicate_request' } }), links).text
+    expect(fil).toContain('Dahilan: Kapareho ito ng isa pang kahilingang nagawa mo na.')
+    expect(fil).not.toContain('Tala mula sa center')
+  })
+
   it('reminds a therapist who is coming', () => {
     const { subject, text } = renderEmail(delivery({ kind: 'session_reminder' }), links)
     expect(subject).toBe('Session reminder: Ana Dela Cruz')

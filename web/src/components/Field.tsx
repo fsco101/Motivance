@@ -69,7 +69,8 @@ type SelectProps = {
   label: string
   value: string
   onChange: (value: string) => void
-  options: ReadonlyArray<{ value: string; label: string }>
+  /** `leading` sits before the label, also in the closed field, such as a person's face. It should be decorative: the label is the name. */
+  options: ReadonlyArray<{ value: string; label: string; leading?: ReactNode }>
   placeholder?: string
   hint?: string
   error?: string | null
@@ -91,7 +92,7 @@ export function SelectField({ label, value, onChange, options, placeholder, hint
               <RadixSelect.Viewport className="p-1">
                 {options.map((option) => (
                   <RadixSelect.Item key={option.value} value={option.value} className="flex min-h-9 cursor-pointer items-center justify-between gap-3 rounded-md px-3 text-sm outline-none data-highlighted:bg-tide">
-                    <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
+                    <RadixSelect.ItemText>{option.leading ? <span className="inline-flex min-w-0 items-center gap-2">{option.leading}<span className="truncate">{option.label}</span></span> : option.label}</RadixSelect.ItemText>
                     <RadixSelect.ItemIndicator><CheckIcon weight="bold" className="text-lagoon" aria-hidden /></RadixSelect.ItemIndicator>
                   </RadixSelect.Item>
                 ))}

@@ -37,12 +37,23 @@ private const val MONTHS_AHEAD=3L
     return remember(locale) {SessionFormat(locale)}
 }
 
-/** The server writes a code for reasons of its own, and a person's own words otherwise, which are shown as they are. */
-@Composable fun bookingReasonText(reason:String)=when(reason) {
-    "therapist_unavailable" -> stringResource(R.string.booking_reason_therapist)
-    "request_expired" -> stringResource(R.string.booking_reason_expired)
-    else -> reason
+/** The Scheduler's common reasons for turning down a request (#172). The server stores each as this code; the web holds the same list. */
+val REJECTION_CODES=listOf("slot_unavailable","therapist_away","outside_hours","duplicate_request","call_center")
+
+/** The sentence for a reason the server or a Scheduler chose as a code, or null for a person's own words. */
+fun bookingReasonRes(reason:String):Int?=when(reason) {
+    "therapist_unavailable" -> R.string.booking_reason_therapist
+    "request_expired" -> R.string.booking_reason_expired
+    "slot_unavailable" -> R.string.booking_reject_slot_unavailable
+    "therapist_away" -> R.string.booking_reject_therapist_away
+    "outside_hours" -> R.string.booking_reject_outside_hours
+    "duplicate_request" -> R.string.booking_reject_duplicate_request
+    "call_center" -> R.string.booking_reject_call_center
+    else -> null
 }
+
+/** The server writes a code for reasons of its own and for a Scheduler's common reasons, and a person's own words otherwise, shown as they are. */
+@Composable fun bookingReasonText(reason:String)=bookingReasonRes(reason)?.let {stringResource(it)} ?: reason
 
 internal fun BookingStatus.label()=when(this) {
     BookingStatus.PENDING -> R.string.booking_status_pending
@@ -194,7 +205,7 @@ internal fun BookingStatus.tone()=when(this) {
     }
 }
 
-@Composable private fun BookingCard(booking:Booking,enabled:Boolean,now:Instant,move:()->Unit,cancel:()->Unit) {
+@Composable internal fun BookingCard(booking:Booking,enabled:Boolean,now:Instant,move:()->Unit,cancel:()->Unit,again:()->Unit={}) {
     val format=rememberSessionFormat()
     ClinicalCard {
         Row(verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -210,6 +221,12 @@ internal fun BookingStatus.tone()=when(this) {
         DetailRow(stringResource(R.string.booking_reference),booking.reference)
         booking.previousStartsAt?.let {Text(stringResource(R.string.booking_moved_from,format.day(it)),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
         booking.reason?.let {DetailRow(stringResource(R.string.booking_reason),bookingReasonText(it))}
+        if(booking.reason!=null) booking.note?.let {DetailRow(stringResource(R.string.booking_note),it)}
+        // A next step after a rejection: book again, with the same reason for the visit already written (#172).
+        if(booking.status==BookingStatus.REJECTED) {
+            ActionButton(R.string.booking_request_again,again,enabled=enabled)
+            if(!booking.visitReason.isNullOrBlank()) Text(stringResource(R.string.booking_request_again_hint),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         if(booking.upcoming(now)) {
             if(booking.canReschedule) {
                 ActionButton(R.string.booking_reschedule,move,outlined=true,enabled=enabled)
@@ -239,7 +256,7 @@ internal fun BookingStatus.tone()=when(this) {
     }
 }
 
-@Composable fun ColumnScope.MyBookings(state:BookingState,vm:BookingViewModel,schedule:()->Unit,move:(Booking)->Unit,book:()->Unit) {
+@Composable fun ColumnScope.MyBookings(state:BookingState,vm:BookingViewModel,schedule:()->Unit,move:(Booking)->Unit,again:(Booking)->Unit={},book:()->Unit) {
     val format=rememberSessionFormat()
     val now=remember(state.bookings) {Instant.now()}
     var confirming by remember {mutableStateOf<Booking?>(null)}
@@ -251,11 +268,11 @@ internal fun BookingStatus.tone()=when(this) {
     if(state.loaded && state.bookings.isEmpty() && state.waitlist.isEmpty()) EmptyState(R.string.booking_empty_title,R.string.booking_empty_detail)
     val (upcoming,earlier)=state.bookings.partition {it.upcoming(now)}
     if(upcoming.isNotEmpty()) SectionHeading(R.string.booking_upcoming)
-    upcoming.sortedBy {bookingInstant(it.startsAt)}.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)}) {confirming=booking}}}
+    upcoming.sortedBy {bookingInstant(it.startsAt)}.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)},{confirming=booking}) {again(booking)}}}
     if(state.waitlist.isNotEmpty()) SectionHeading(R.string.booking_waitlist)
     state.waitlist.forEach {entry -> key(entry.id) {WaitlistCard(entry,!state.busy,{placing=entry},{vm.leaveWaitlist(entry.startsAt)})}}
     if(earlier.isNotEmpty()) SectionHeading(R.string.booking_earlier)
-    earlier.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)}) {confirming=booking}}}
+    earlier.forEach {booking -> key(booking.id) {BookingCard(booking,!state.busy,now,{move(booking)},{confirming=booking}) {again(booking)}}}
     placing?.let {entry -> BookPlaceDialog(entry,{placing=null}) {reason -> placing=null;vm.book(entry,reason)}}
     confirming?.let {booking ->
         AlertDialog({confirming=null},title={Text(stringResource(R.string.booking_cancel))},text={Text(stringResource(R.string.booking_cancel_message,format.whenAt(booking.startsAt,booking.endsAt)))},

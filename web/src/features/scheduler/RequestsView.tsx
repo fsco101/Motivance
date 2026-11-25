@@ -43,6 +43,7 @@ function History({ load }: { load: Load<RequestDetail> }) {
               {event.toStartsAt && event.action === 'rescheduled' && <p className="text-slate">{t('scheduler.movedTo', { when: `${format.day(event.toStartsAt)}, ${format.time(event.toStartsAt)}` })}</p>}
               {event.toAttendance && <p className="text-slate">{t(`booking.attendance.${event.toAttendance}`)}</p>}
               {event.reason && <p className="text-slate">{reasonText(event.reason)}</p>}
+              {event.note && <p className="text-slate">{t('scheduler.noteBy', { note: event.note })}</p>}
             </li>
           ))}
         </ol>
@@ -74,6 +75,7 @@ function Details({ row, detail, onClose, onAct }: { row: RequestRow; detail: Loa
       <dl className="mt-4 grid gap-3">
         <Fact term={t('scheduler.when')}>{format.when(row.startsAt, row.endsAt)}</Fact>
         {row.reason && <Fact term={t('booking.reason')}>{reasonText(row.reason)}</Fact>}
+        {detail?.status === 'ready' && detail.data.note && <Fact term={t('booking.note')}>{detail.data.note}</Fact>}
         {remaining > 0 && <Fact term={t('scheduler.seriesRemaining')}>{remaining}</Fact>}
       </dl>
       {active && (

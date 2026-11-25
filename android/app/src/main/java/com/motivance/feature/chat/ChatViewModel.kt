@@ -254,6 +254,14 @@ data class ChatState(
         viewModelScope.launch {outbox.add(owner,Outgoing(UUID.randomUUID().toString(),id,words,System.currentTimeMillis()))}
     }
 
+    /** Words sent into a given conversation without opening it, such as a therapist's request to record (#175). */
+    fun sendTo(conversationId:String,body:String) {
+        val owner=mutable.value.owner
+        val words=body.trim()
+        if(owner.isBlank() || words.isEmpty() || words.length>CHAT_BODY_LIMIT) return
+        viewModelScope.launch {outbox.add(owner,Outgoing(UUID.randomUUID().toString(),conversationId,words,System.currentTimeMillis()))}
+    }
+
     /**
      * A picked photo or video is made smaller on the phone first, then waits in the outbox like any message, so a closed app or a
      * lost connection does not lose it.

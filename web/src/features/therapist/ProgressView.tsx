@@ -1,11 +1,12 @@
 import { ShareNetworkIcon, VideoCameraIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
+import { Link } from 'react-router'
 import { Button } from '@/components/Button'
 import type { ProgressFacts } from '@/data/chat'
 import type { SessionVideo } from '@/data/sessionVideos'
 import { useTranslation } from 'react-i18next'
 import { DataTable, LoadMore, type Column } from '@/components/DataTable'
-import { EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
+import { Avatar, EmptyState, Notice, PageHeader, Panel, StatusPill } from '@/components/Display'
 import { SelectField, TextField } from '@/components/Field'
 import { rehabilitationProgress, resultStatus, rom, roundDegrees, seriesOutcome, trackingConcern, usable, type ActivitySummary, type HistoricalSession, type ProgressSeries, type ResultStatus } from '@/data/history'
 import { Fact, Loadable, SkeletonLines, useFormat, type Load } from '@/features/shared'
@@ -18,7 +19,7 @@ import { TrendChart } from './TrendChart'
 export type ProgressFilters = { exerciseVersionId: string; side: string; from: string; through: string }
 export const NO_FILTERS: ProgressFilters = { exerciseVersionId: 'all', side: 'all', from: '', through: '' }
 
-export type ProgressChoices = { patients: Array<{ id: string; name: string }>; patientId: string; exercises: Array<{ id: string; name: string }> }
+export type ProgressChoices = { patients: Array<{ id: string; name: string; photo?: string | null }>; patientId: string; exercises: Array<{ id: string; name: string }> }
 export type ProgressResults = { sessions: HistoricalSession[]; more: boolean; loadingMore?: boolean }
 
 const statusTone: Record<ResultStatus, 'positive' | 'neutral' | 'caution' | 'danger'> = { completed: 'positive', partial: 'caution', interrupted: 'neutral', empty: 'neutral', invalid: 'danger' }
@@ -41,6 +42,8 @@ type Props = {
   /** The video the patient shared for a session, if any, and a way to watch it (#129). */
   videoFor?: (sessionId: string) => SessionVideo | undefined
   onWatch?: (video: SessionVideo) => void
+  /** Where the chosen patient's record opens, from the header above the results (#174). */
+  recordPath?: (patientId: string) => string
 }
 
 /** A table cannot fit a phone without hiding the results, so there each session stacks. Only patients use this page on a phone. */
@@ -74,6 +77,23 @@ function SessionList({ sessions, videoFor, onWatch }: { sessions: readonly Histo
   )
 }
 
+/** Whose results these are, at a glance: their face and full name, opening their record (#174). */
+function PatientHeader({ patient, to }: { patient: { id: string; name: string; photo?: string | null }; to?: string }) {
+  const { t } = useTranslation()
+  const body = (
+    <>
+      <Avatar name={patient.name} photo={patient.photo} size={48} />
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate text-lg font-bold">{patient.name}</span>
+        {to && <span className="text-sm text-lagoon-deep">{t('progress.openRecord')}</span>}
+      </span>
+    </>
+  )
+  return to ? (
+    <Link to={to} data-testid="progress-patient" className="mb-5 flex w-fit max-w-full items-center gap-3 rounded-card pr-3 outline-offset-4 hover:bg-tide/60">{body}</Link>
+  ) : <div data-testid="progress-patient" className="mb-5 flex items-center gap-3">{body}</div>
+}
+
 /** The answer before the chart: where this plan stands now, at its best, and against where it started. */
 function Outcome({ series }: { series: ProgressSeries }) {
   const { t } = useTranslation()
@@ -96,7 +116,7 @@ function Outcome({ series }: { series: ProgressSeries }) {
   )
 }
 
-export function ProgressView({ self, choices, results, activity, filters, onFilters, onPatient, onMore, onShare, videoFor, onWatch }: Props) {
+export function ProgressView({ self, choices, results, activity, filters, onFilters, onPatient, onMore, onShare, videoFor, onWatch, recordPath }: Props) {
   const { t } = useTranslation()
   const format = useFormat()
   const sessions = results.status === 'ready' ? results.data.sessions : null
@@ -134,13 +154,17 @@ export function ProgressView({ self, choices, results, activity, filters, onFilt
         {(data) => (
           <>
             <div className={cn('mb-5 grid gap-3 rounded-card border border-line bg-paper p-4 shadow-rest tablet:grid-cols-2', self ? 'desk:grid-cols-4' : 'desk:grid-cols-5')}>
-              {!self && <SelectField label={t('progress.patient')} value={data.patientId} onChange={onPatient} options={data.patients.map((p) => ({ value: p.id, label: p.name }))} />}
+              {!self && <SelectField label={t('progress.patient')} value={data.patientId} onChange={onPatient} options={data.patients.map((p) => ({ value: p.id, label: p.name, leading: <Avatar name={p.name} photo={p.photo} size={24} /> }))} />}
               <SelectField label={t('assign.exercise')} value={filters.exerciseVersionId} onChange={(exerciseVersionId) => onFilters({ ...filters, exerciseVersionId })}
                 options={[{ value: 'all', label: t('progress.allExercises') }, ...data.exercises.map((item) => ({ value: item.id, label: item.name }))]} />
               <SelectField label={t('record.side')} value={filters.side} onChange={(side) => onFilters({ ...filters, side })} options={[{ value: 'all', label: t('progress.bothSides') }, { value: 'left', label: t('common.left') }, { value: 'right', label: t('common.right') }]} />
               <TextField label={t('progress.from')} type="date" value={filters.from} onChange={(event) => onFilters({ ...filters, from: event.target.value })} />
               <TextField label={t('progress.through')} type="date" value={filters.through} onChange={(event) => onFilters({ ...filters, through: event.target.value })} />
             </div>
+            {!self && (() => {
+              const chosen = data.patients.find((p) => p.id === data.patientId)
+              return chosen ? <PatientHeader patient={chosen} to={recordPath?.(chosen.id)} /> : null
+            })()}
             <Loadable load={results} skeleton={<SkeletonLines />}>
               {(found) => (found.sessions.length === 0 ? (filtered ? <Notice tone="info">{t('progress.noMatch')}</Notice> : <EmptyState title={t('progress.emptyTitle')} detail={t('progress.emptyDetail')} />) : (
               <div className="flex flex-col gap-5">

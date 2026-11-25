@@ -33,6 +33,8 @@ abstract class AppModule {
     @Binds @Singleton abstract fun notifications(impl: SupabaseAuthRepository): NotificationRepository
     @Binds @Singleton abstract fun chat(impl: SupabaseAuthRepository): ChatRepository
     @Binds @Singleton abstract fun sessionVideos(impl: SupabaseAuthRepository): SessionVideoRepository
+    @Binds abstract fun videoQueue(impl: com.motivance.data.sync.AppVideoQueue): com.motivance.data.sync.VideoQueueService
+    @Binds @Singleton abstract fun colleagues(impl: SupabaseAuthRepository): com.motivance.domain.ColleagueRepository
     @Binds @Singleton abstract fun chatOutbox(impl: RoomChatOutbox): ChatOutbox
     @Binds abstract fun chatLive(impl: LiveChat): ChatLive
     @Binds @Singleton abstract fun chatMedia(impl: ChatMediaFiles): ChatMediaStore

@@ -31,6 +31,14 @@ function BookingCard({ booking, base, onCancel }: { booking: Booking; base: stri
       </SessionCard>
       {booking.previousStartsAt && <p className="mt-3 text-sm text-slate">{t('booking.movedFrom', { when: format.day(booking.previousStartsAt) })}</p>}
       {booking.reason && <p className="mt-3 text-sm"><span className="font-semibold">{t('booking.reason')}: </span>{reasonText(booking.reason)}</p>}
+      {booking.reason && booking.note && <p className="mt-1 text-sm"><span className="font-semibold">{t('booking.note')}: </span>{booking.note}</p>}
+      {booking.status === 'rejected' && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+          {/* The visit reason travels in the page's state, not its address, so it stays out of history and logs (#172). */}
+          <ButtonLink size="sm" to={`${base}/book`} state={booking.visitReason ? { visitReason: booking.visitReason } : undefined}>{t('booking.requestAgain')}</ButtonLink>
+          {booking.visitReason && <span className="text-sm text-slate">{t('booking.requestAgainHint')}</span>}
+        </div>
+      )}
       {active && (
         <div className="mt-4 grid gap-2 border-t border-line pt-4">
           <div className="flex flex-wrap items-center gap-3">

@@ -1,3 +1,5 @@
+import { loadColleagueLinks, setColleagues } from '@/data/colleagues'
+import { ColleagueLinksPanel } from './ColleagueLinksView'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -97,7 +99,16 @@ export function LinksPage() {
   const accounts = useAccounts('')
   const change = useAdminChange()
   const value = links.data && accounts.data ? { links: links.data, accounts: accounts.data.pages.flatMap((page) => page.accounts), hasMore: accounts.hasNextPage } : undefined
-  return <LinksView load={adminLoad([links, accounts], value)} onMore={() => void accounts.fetchNextPage()} onLink={(therapist, patient, active) => change('admin.savedLink', (db) => setLink(db, therapist, patient, active))} />
+  const colleagueLinks = useQuery({ queryKey: ['admin', 'colleague-links'], queryFn: () => loadColleagueLinks(supabase()) })
+  return (
+    <>
+      <LinksView load={adminLoad([links, accounts], value)} onMore={() => void accounts.fetchNextPage()} onLink={(therapist, patient, active) => change('admin.savedLink', (db) => setLink(db, therapist, patient, active))} />
+      <div className="mt-5">
+        <ColleagueLinksPanel load={adminLoad([colleagueLinks], colleagueLinks.data)} accounts={value?.accounts ?? []}
+          onSet={(first, second, active) => change(active ? 'colleagues.admin.saved' : 'colleagues.admin.ended', (db) => setColleagues(db, first, second, active))} />
+      </div>
+    </>
+  )
 }
 
 export function CataloguePage() {

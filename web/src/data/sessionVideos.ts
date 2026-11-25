@@ -32,6 +32,20 @@ export async function loadSessionVideos(db: Db, patientId: string) {
   return (data as RawVideo[]).map(decodeVideo)
 }
 
+/** Whether the patient has ever shared a video with their therapist, expired ones included. Only their own therapist may ask (#175). */
+export async function everSharedVideo(db: Db, patientId: string) {
+  const { data, error } = await db.rpc('patient_ever_shared_video', { p_patient: patientId })
+  if (error) throw error
+  return data === true
+}
+
+/**
+ * "Ask to record" is offered only where it can reach the patient and is needed: a conversation they have agreed to messages in, and
+ * no video ever shared. The same rule as Android's canAskToRecord.
+ */
+export const canAskToRecord = (conversation: { open: boolean; consented: boolean } | undefined, everShared: boolean | undefined) =>
+  Boolean(conversation?.open && conversation.consented) && everShared === false
+
 /** A short-lived link to watch, issued only while the video is shared. */
 export async function videoLink(db: Db, path: string, seconds = VIDEO_LINK_SECONDS) {
   const { data, error } = await db.storage.from(VIDEO_BUCKET).createSignedUrl(path, seconds)
